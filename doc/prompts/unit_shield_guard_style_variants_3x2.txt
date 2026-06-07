@@ -1,0 +1,81 @@
+A single image containing a 3 columns x 2 rows grid, 6 cells total, showing six DISTINCT character style concepts for a casual cartoon mobile SRPG.
+
+Purpose: character style exploration for a future top-down walking sprite sheet. Each cell shows ONE shield-guard / small warrior character in a clean idle pose, viewed from a top-down / slightly tilted bird's-eye RPG map angle. The six characters should feel like they belong to the same cute casual game, but each one must have a memorable silhouette, unique outfit theme, and clearly different color palette.
+
+REFERENCE STYLE DIRECTION:
+- Inspired by bright casual mobile RPG screenshots: cute chibi heroes, soft rounded shapes, thick dark outlines, colorful UI-friendly palette, playful fantasy costumes.
+- Similar readability to small mobile game avatars and map characters.
+- Not realistic, not gritty, not dark fantasy, not pixel art.
+- Keep linework simple and clean. Avoid too many tiny decorations.
+- Use simple flat colors plus soft 1-step cel shading to show volume.
+- Characters must stay readable at 48-64px tall.
+
+GLOBAL ART STYLE:
+- Chibi / SD proportions: large head, small body, short limbs.
+- Thick clean dark outline, around 3-4px.
+- Rounded, toy-like shapes, friendly expressions.
+- Bright saturated colors with warm highlights.
+- Simple material cues: metal has one bright highlight and one soft shadow; cloth has one simple shadow area.
+- Each character fills about 75-80% of its cell height.
+- Solid uniform light gray background (#DDDDDD) in every cell for easy cutout.
+- No grid lines, no borders, no white gaps.
+
+TOP-DOWN / GAME SPRITE RULES:
+- Slightly top-down bird's-eye view, suitable for a 2D map character.
+- Show a little helmet/hair top, shoulders, shield top edge, and feet placement.
+- Characters face slightly front-right or front-left, like a cute tactical RPG idle unit.
+- Keep poses simple, not action-heavy.
+
+CHARACTER VARIANTS, row-major order:
+
+Cell 1: SUN KINGDOM SQUIRE
+- Cheerful small royal shield guard.
+- Palette: warm golden yellow, ivory white, sky blue accents.
+- Rounded crown-like helmet crest, small blue gem on shield, white tunic under light gold armor.
+- Shield shape: rounded kite shield with a simple sun emblem made of plain geometric shapes.
+- Feeling: bright, heroic, starter protagonist.
+
+Cell 2: FOREST ACORN GUARD
+- Cute woodland defender with nature motif.
+- Palette: fresh leaf green, warm tan, chestnut brown, small cream highlights.
+- Helmet resembles an acorn cap or leafy hood, simple leather armor.
+- Shield shape: rounded wooden leaf shield, simple green leaf mark.
+- Feeling: lively, agile, friendly forest unit.
+
+Cell 3: SEA CRYSTAL DEFENDER
+- Playful ocean-themed shield fighter.
+- Palette: turquoise, aqua blue, pearl white, coral orange accent.
+- Smooth shell-like helmet, small crystal charm, clean blue armor panels.
+- Shield shape: rounded shell shield with one simple pale wave stripe.
+- Feeling: fresh, magical, clean silhouette.
+
+Cell 4: CANDY RED BRAVE
+- Bold cute warrior with strong red-orange identity.
+- Palette: candy red, orange, cream, small dark brown belt.
+- Rounded helmet with tiny horn-like side caps, scarf or short shoulder cloth in orange.
+- Shield shape: chunky round shield with cream rim and simple red center.
+- Feeling: energetic, brave, immediately recognizable.
+
+Cell 5: MOON BUNNY PALADIN
+- Soft magical knight with bunny-inspired silhouette.
+- Palette: lavender, pale pink, white, soft gold.
+- Helmet or hood has very short rounded bunny-ear shapes, not long or detailed.
+- Shield shape: small crescent-shaped shield or round shield with crescent mark.
+- Feeling: cute, magical, gentle support tank.
+
+Cell 6: STONE PANDA SENTINEL
+- Sturdy mascot-like shield guard.
+- Palette: charcoal gray, warm white, jade green accent.
+- Helmet has simple panda-ear round forms; armor is chunky and rounded.
+- Shield shape: heavy rounded square shield with jade center.
+- Feeling: defensive, funny, strong silhouette.
+
+IMPORTANT DESIGN REQUIREMENTS:
+- The six characters must be clearly different from each other in color, helmet/hood shape, shield shape, and silhouette.
+- But all six must share the same simple casual mobile game style, same outline thickness, same scale, and same rendering method.
+- Do not make them too detailed; avoid tiny complex patterns, realistic armor joints, excessive ornaments, noisy textures, or thin lines.
+- Do not include full animation frames in this sheet. This is only concept selection: one clean idle pose per character.
+- No weapons that hide the shield; keep sword/weapon small and simple.
+- Every character should be cute, appealing, and suitable for a bright mobile SRPG like the provided reference screenshots.
+
+NO TEXT, no labels, no captions, no writing, no letters, no numbers anywhere in the image.

@@ -1,0 +1,47 @@
+A pure visual-only character concept sheet for a bright cute casual mobile SRPG.
+
+Create a 6 columns x 3 rows grid, 18 cells total. Each cell contains exactly one independent profession character. These are tiny top-down map units, not portrait illustrations.
+
+ABSOLUTE TEXT BAN:
+- NO text, NO words, NO letters, NO numbers, NO captions, NO labels, NO title, NO UI, NO frame marks.
+- The final image must contain only character drawings on plain light gray backgrounds.
+
+CRITICAL PROPORTION RULES:
+- Super-deformed mascot map-unit proportions.
+- Total character height is only about 1 to 1.5 head-heights tall.
+- Very large round head, tiny compact body, tiny feet, tiny arms.
+- Body must be short and simple; do NOT draw tall 2-head or 3-head anime proportions.
+- Think cute board-game token / tiny map avatar / WeChat mini-game chibi unit.
+
+CRITICAL CAMERA RULES:
+- Clear top-down / slightly tilted bird's-eye RPG map view.
+- Show the top surface of head, helmet, hat, shoulders, shield, weapon, mount back, and feet placement.
+- Characters face slightly down-right or down-left, but the camera looks from above.
+- NOT front portrait view, NOT side-scroller view, NOT isometric diamond view.
+
+GLOBAL STYLE:
+- Bright cute casual mobile RPG style.
+- Thick clean dark outlines, rounded toy-like shapes, simple readable silhouettes.
+- Bright saturated colors with one simple shadow color for volume.
+- No realistic anatomy, no thin details, no noisy textures, no gritty darkness, no pixel art.
+- Each cell has a solid uniform light gray background (#DDDDDD).
+- No cast shadows, no ground ellipses, no glows, no background effects.
+- Each character is centered and fills about 65-75% of the cell height.
+
+GRID CONTENT:
+- Column 1: swordsman, small sword visible, close-combat unit, no large shield.
+- Column 2: archer, tiny bow and quiver cue, ranged unit.
+- Column 3: cavalry, tiny rider on compact cute pony or mount, small lance/spear.
+- Column 4: shield guard, large readable shield, tiny weapon, sturdy unit.
+- Column 5: mage, small staff/wand, hat or robe silhouette, magic unit without spell effects.
+- Column 6: priest, healing staff, soft robe, gentle support unit.
+
+ROW STYLE THEMES:
+- Row 1: bright starter-adventurer versions, friendly and simple.
+- Row 2: nature / animal / mascot-inspired versions, playful silhouettes.
+- Row 3: magical / elite reward versions, more special palettes but still simple.
+
+IMPORTANT:
+- Every cell is a different independent person, not the same character changing clothes.
+- Each profession must remain clearly recognizable even at tiny size.
+- Use distinct colors and silhouettes, but keep the same overall game art style.

@@ -1,0 +1,29 @@
+A 3-column x 2-row grid (6 cells) of terrain tile sprites for a casual cartoon SRPG mobile game. Each cell has a plain LIGHT GRAY (#E0E0E0) solid background.
+
+CRITICAL PERSPECTIVE RULES:
+- The view is a STRAIGHT top-down / slightly tilted bird's-eye view — NOT isometric, NOT diamond-shaped.
+- The bottom edge of each tile is HORIZONTAL (parallel to the image frame).
+- Each tile sprite is roughly square-shaped but with ORGANIC irregular edges (not a perfect geometric square). Think of it as a patch of terrain seen from above, with soft rounded or rocky edges.
+
+CRITICAL DESIGN RULES:
+- ONLY the "high ground" tile (Cell 1) has visible height/elevation — it rises UP from the ground with visible side cliffs.
+- ALL other tiles (Cells 2-6) are FLAT surface features — they have NO thickness, NO cube shape, NO side faces. They are just surface patches that lay flat on the ground, like decals or stickers viewed from above.
+- Thick bold black outlines, simplified cartoon style, bright saturated colors, cel-shading.
+- Each sprite occupies roughly 75% of its cell, leaving clear gray background margin for easy slicing.
+- These sprites will be placed ON TOP of a grass background, so they should NOT include any grass — the grass is provided separately underneath.
+
+Per-cell contents (row-major, left-to-right, top-to-bottom):
+
+Cell 1 (HIGH GROUND): A raised rocky plateau viewed from slightly above. Tan/brown rocky top surface with cracks and pebbles. Visible cliff edges on the bottom/sides showing it rises above ground level. This is the ONLY tile with height. The cliff face is darker brown with rock layers.
+
+Cell 2 (FOREST): 2-3 small round-canopy cartoon trees seen from above, with visible tree trunks. Dark green leafy canopies. A small patch of brown dirt/shadow beneath them. FLAT — no cube, no side faces, just trees sitting on the surface.
+
+Cell 3 (RIVER): A patch of flowing blue water seen from above. Bright blue surface with white ripple/wave highlights and darker blue depth lines. Organic rounded edges like a natural stream section. FLAT on the ground — no side walls, no depth cube.
+
+Cell 4 (SWAMP): A flat patch of murky dark green-brown boggy water with small cattail reeds, bubbles, and lily pads. Muddy brown edges blending outward. FLAT — just a surface puddle, no cube.
+
+Cell 5 (WALL): A stone brick fortification seen from above. Grey stone bricks with mortar lines, forming a solid square block. This one CAN have moderate height since walls are tall structures — show slight thickness with a shadow. Crenellation (battlements) visible on the top edge.
+
+Cell 6 (ABYSS): A dark hole/chasm in the ground seen from above. Jagged rocky edges surrounding a dark purple-black void in the center. Cracks radiating outward from the hole. FLAT — it's a hole IN the ground, not a raised block. The edges are broken rock at ground level.
+
+NO TEXT, no labels, no captions, no letters, no numbers, no writing anywhere in the image.

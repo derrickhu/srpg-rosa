@@ -1,0 +1,23 @@
+A single image containing a **4 columns x 2 rows grid** (8 cells total) of top-down terrain tiles for a tactical RPG game.
+
+**Art style**: Simplified cartoon, clean bold outlines (2-3px black stroke), flat color fills with subtle cel-shading, bright saturated palette, warm and inviting colors similar to casual mobile games. Each tile must be clearly readable when displayed at 48px. NOT pixel art, NOT realistic, NOT isometric — pure **top-down / bird's-eye view**.
+
+**Layout**: Perfect 4x2 grid, even spacing, each cell is a square terrain tile viewed from directly above. Thin light grey divider lines between cells on a white background.
+
+**NO TEXT**, no labels, no captions, no numbers, no writing anywhere in the image.
+
+Per-cell contents (row-major, left-to-right, top-to-bottom):
+
+Row 1:
+(1) **Grass Plain** — bright green grass with subtle blade texture, cheerful meadow feel, light yellow-green highlights
+(2) **Highland** — elevated tan/brown rocky plateau with grass tufts on edges, visible height difference via shadow
+(3) **Forest** — lush round-crown tree canopy viewed from above (like the reference game's round green trees), dark green with lighter center highlights, trunk barely visible
+(4) **River** — clear blue flowing water with white ripple lines, gentle current direction visible
+
+Row 2:
+(5) **Swamp** — murky dark green-brown wetland with small bubble dots and reed tufts, slightly glossy surface
+(6) **Stone Wall** — grey stone brick pattern viewed from above, mortar lines visible, solid and impassable feel
+(7) **Abyss** — dark purple-black void with faint crackling energy lines at edges, ominous depth
+(8) **Grass Plain variant** — same as cell 1 but with a small wildflower cluster (backup/alternate plain)
+
+Every tile must be a clean square suitable for seamless tiling. One unified art style across all 8 cells.

@@ -1,0 +1,42 @@
+A visual-only character concept sheet for advanced professions in a bright cute casual mobile SRPG.
+
+Create a 6 columns x 2 rows grid, 12 cells total. Each column is one advanced profession, and each row is a different independent character style for that profession. These are different people, not palette swaps.
+
+No text in the image. Do not write profession names, labels, captions, letters, numbers, UI, or frame marks.
+
+GLOBAL STYLE:
+- Cute chibi / SD fantasy characters, bright cheerful mobile RPG look.
+- Thick dark outlines, rounded toy-like shapes, simple readable silhouettes.
+- Bright saturated colors with soft one-step cel shading.
+- Keep details simple; no realism, no horror, no gritty darkness, no pixel art.
+- Slight top-down RPG map angle, suitable for small unit sprites.
+- Each cell has one character centered on solid light gray background (#DDDDDD).
+- No shadows, no ground ellipse, no magical background effects.
+- Each character fills about 75-80% of its cell height.
+
+COLUMN ORDER:
+Column 1: Ballista, cute siege engineer with small portable ballista or large crossbow device.
+Column 2: Shadow, agile assassin with short dagger and stealthy silhouette.
+Column 3: Thunder Mage, chain-lightning mage with staff and lightning motif.
+Column 4: Wolf Rider, fast raider on a cute small wolf mount.
+Column 5: Holy Paladin, tank-healer hybrid with shield and gentle holy cues.
+Column 6: Necromancer, summon mage with tiny skull charm or bone staff, cute not scary.
+
+ROW STYLE THEMES:
+Row 1: clean heroic versions with clear profession identity and bright approachable colors.
+Row 2: more eccentric mascot/fantasy versions with stronger silhouettes and unusual palettes.
+
+PROFESSION VISUAL RULES:
+- Ballista: siege weapon cue must be visible but compact; do not cover whole character.
+- Shadow: dagger visible; dark purple/navy accents OK, but keep cute and readable.
+- Thunder Mage: yellow/blue/white lightning motif; staff or wand; no huge spell effects.
+- Wolf Rider: rider and mount both simple and readable; compact cell fit.
+- Holy Paladin: shield plus healing/holy icon cue; brighter than shield guard, not the same design.
+- Necromancer: cute spooky mage, small skull/bone cue; no gore, no horror, no realistic skeleton.
+
+IMPORTANT:
+- Every cell must be a unique independent character.
+- Do not use the same palette as the current shield-guard set for every design.
+- Keep a unified cute casual game style while making each profession visually distinct.
+
+ABSOLUTE TEXT BAN: NO TEXT, NO WORDS, NO LETTERS, NO NUMBERS, NO CAPTIONS, NO LABELS, NO WRITING ANYWHERE.

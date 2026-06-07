@@ -1,0 +1,18 @@
+[gd_scene load_steps=4 format=3 uid="uid://chitslashvfx01"]
+
+[ext_resource type="Script" path="res://scripts/vfx/HitSlashVfx.gd" id="1_script"]
+[ext_resource type="SpriteFrames" uid="uid://cslashvfx001" path="res://art/vfx/slash/slash_frames.tres" id="2_frames"]
+
+[sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_additive"]
+blend_mode = 1
+
+[node name="HitSlash" type="Node2D"]
+z_index = 30
+script = ExtResource("1_script")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+material = SubResource("CanvasItemMaterial_additive")
+scale = Vector2(0.42, 0.42)
+sprite_frames = ExtResource("2_frames")
+animation = &"slash"
+autoplay = "slash"

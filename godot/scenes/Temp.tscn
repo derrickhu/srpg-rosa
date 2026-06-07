@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://dvrfbkv030ih7"]
+
+[ext_resource type="SpriteFrames" uid="uid://brmgxxrqd5r5g" path="res://art/units/sword/sword_frames.tres" id="1_yy8i8"]
+
+[node name="Temp" type="Node2D" unique_id=1528507343]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=714511803]
+sprite_frames = ExtResource("1_yy8i8")

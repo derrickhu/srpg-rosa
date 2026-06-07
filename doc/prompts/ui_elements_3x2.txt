@@ -1,0 +1,25 @@
+A single image containing a **3 columns x 2 rows grid** (6 cells total) of UI elements for a casual mobile tactical RPG game.
+
+**Art style**: Clean cartoon UI, rounded corners, subtle gradients, warm and inviting colors matching a bright fantasy game theme. Bold but friendly design language. Each element should look polished at small display sizes (buttons ~120x40px, icons ~32x32px).
+
+**Layout**: Perfect 3x2 grid, even spacing, each cell contains ONE UI element centered on a **solid white background**. Elements should fill about 70% of their cell area.
+
+**NO TEXT**, no labels, no captions, no writing anywhere in the image. Buttons should be BLANK (no text on them).
+
+Per-cell contents (row-major, left-to-right, top-to-bottom):
+
+Row 1:
+(1) **Primary Button** — wide rounded rectangle button, warm golden-orange gradient fill, subtle inner glow/highlight at top edge, thin darker orange border, slightly convex/pillowy look. Landscape orientation (wider than tall).
+
+(2) **Secondary Button** — wide rounded rectangle button, cool blue-grey gradient fill, subtle highlight, thin darker border. Same shape/size as primary but cooler color. Landscape orientation.
+
+(3) **Panel Background** — rounded rectangle panel/card, semi-transparent dark blue-grey fill (like frosted glass), thin golden/warm border line, subtle inner shadow. More square-ish proportion.
+
+Row 2:
+(4) **Gold Coin Icon** — single shiny gold coin with a star/gem emblem stamped on face, metallic highlights, slight 3D depth, on white background
+
+(5) **Health Icon** — red heart shape or red health potion bottle, glossy surface with white highlight spot, on white background
+
+(6) **Speed/Arrow Icon** — green or teal upward arrow or wing symbol representing speed/agility, dynamic feel, on white background (bonus icon for future use)
+
+All elements must share the same art style and color temperature. One unified casual-game UI look.

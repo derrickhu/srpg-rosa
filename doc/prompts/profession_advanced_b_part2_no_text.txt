@@ -1,0 +1,23 @@
+A pure visual-only character concept sheet for a bright cute casual mobile SRPG.
+
+Create a 3 columns x 2 rows grid, 6 cells total. Each cell contains exactly one independent chibi fantasy character on a solid light gray background (#DDDDDD). The image must contain only character drawings.
+
+ABSOLUTE BAN: no text, no words, no letters, no numbers, no captions, no labels, no title, no UI, no empty label strip under characters, no typography anywhere.
+
+GLOBAL STYLE:
+- Cute chibi / SD mobile RPG characters.
+- Thick clean dark outlines, rounded toy-like shapes, simple readable silhouettes.
+- Bright saturated colors with soft one-step cel shading.
+- Slight top-down RPG map angle, suitable for unit sprites.
+- No shadows, no ground ellipse, no background effects.
+- Keep details simple; no realism, no gritty style, no pixel art.
+
+CELL DESIGNS, row-major order:
+1. Friendly fast raider riding a small brown wolf, green headband, short spear, lively motion-ready silhouette.
+2. Bright holy shield healer, blonde hair, white-gold armor, small staff, sun shield, gentle face.
+3. Cute young bone mage, dark robe, tiny skull staff, warm brown hair, spooky but harmless.
+4. Orange tribal rider on fluffy white wolf, fur hood, small axe, compact mount silhouette.
+5. Green-gold armored holy guardian, heart-shaped shield, small mace, teal and coral accents, warm protective look.
+6. Purple witchy summoner, wide hat, tiny skull charm, bone wand, cute mischievous expression.
+
+Every character must be a different person with a distinct silhouette and palette, while sharing the same cute casual game art style.

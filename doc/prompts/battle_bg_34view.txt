@@ -1,0 +1,22 @@
+A mobile game battlefield background in 3/4 top-down perspective (slightly tilted bird's eye view, about 60 degree angle from horizontal), PORTRAIT orientation (taller than wide, 9:16 ratio).
+
+Composition:
+- The viewpoint looks down at the ground at a slight angle, so you can see the FRONT of trees and objects slightly (not pure top-down).
+- TOP area: Dense conifer/pine trees in the background, smaller due to perspective. Mix of dark green pine trees and some deciduous trees. Trees are shown from a slight above-and-in-front angle so you see their tops and a bit of their front sides.
+- LEFT and RIGHT sides: Trees and bushes along both edges, getting larger toward the bottom (closer to camera). Tree trunks partially visible.
+- CENTER: Large open grassy clearing (about 55% of image area). Bright warm green grass with subtle texture. This is where the game grid will be placed, so keep it clean.
+- BOTTOM area: Larger foreground trees and bushes (closest to camera), showing more of their front/trunk. Some grass, small flowers, mushrooms near tree bases.
+- The ground/grass should have a very subtle perspective - slightly lighter/smaller texture at top, slightly darker/larger at bottom.
+
+Art style:
+- Simplified cartoon game style, clean outlines, bright comfortable colors
+- Similar to casual mobile strategy/tower defense games
+- Color palette: warm greens for grass (#7EC87E), darker greens for trees (#3A7A3A to #5A9A4A), brown tree trunks
+- Soft lighting from above, gentle shadows under trees
+- Cheerful forest glade atmosphere
+
+DO NOT include:
+- NO sky visible (the camera angle is steep enough that only ground and tree canopies fill the frame)
+- NO TEXT, no labels, no captions, no writing
+- NO grid lines, NO UI elements, NO characters
+- NO buildings or man-made structures

@@ -1,0 +1,32 @@
+A pure visual-only character concept sheet for a bright cute casual mobile SRPG.
+
+Create a 3 columns x 2 rows grid, 6 cells total. Each cell contains exactly one independent tiny top-down profession character on a solid light gray background (#DDDDDD).
+
+ABSOLUTE TEXT BAN: no text, no words, no letters, no numbers, no captions, no labels, no title, no UI, no typography anywhere.
+
+CRITICAL PROPORTION RULES:
+- Super-deformed mascot map-unit proportions.
+- Total character height is only about 1 to 1.5 head-heights tall.
+- Very large round head, tiny compact body, tiny feet, tiny arms.
+- Do NOT draw tall anime proportions. These are tiny cute map units.
+
+CRITICAL CAMERA RULES:
+- Clear top-down / slightly tilted bird's-eye RPG map view.
+- Show the top surface of head, hood, hat, shoulders, weapon, backpack, and feet placement.
+- NOT front portrait, NOT side-scroller, NOT isometric diamond.
+
+GLOBAL STYLE:
+- Bright cute mobile RPG style, thick dark outlines, rounded toy-like shapes.
+- Bright saturated colors with one simple shadow color.
+- No cast shadows, no ground ellipses, no background effects.
+- Keep details very simple and readable.
+
+CELL DESIGNS, row-major order:
+1. Tiny siege engineer, compact portable ballista, orange hair, green-brown outfit, cheerful technician.
+2. Tiny blue-black hooded dagger assassin, small curved dagger, stealthy but cute.
+3. Tiny thunder spellcaster, blue robe with yellow lightning accents, tiny staff, energetic expression.
+4. Tiny wild goggle engineer, oversized compact crossbow device, orange hair, tool backpack.
+5. Tiny purple masked shadow striker, twin daggers, rounded hood, not scary.
+6. Tiny spiky yellow-haired lightning mage, navy robe, white-yellow bolt staff.
+
+Every character must be a different independent person with distinct silhouette and palette.

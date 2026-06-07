@@ -1,0 +1,19 @@
+A single image containing a **2 columns x 2 rows grid** (4 cells total) of combat visual effects / VFX for a cartoon tactical RPG game.
+
+**Art style**: Stylized cartoon VFX — bold swoosh lines, bright glowing colors, clean shapes with motion blur trails, semi-transparent energy effects. Each effect should be dramatic and readable when displayed at 48-64px. NOT realistic, NOT pixel art. Effects should look dynamic and impactful.
+
+**Layout**: Perfect 2x2 grid, even spacing, each cell has ONE effect centered on a **solid dark grey or black background** (for easy background removal). Effects should be bright and pop against the dark background.
+
+**NO TEXT**, no labels, no captions, no writing anywhere in the image.
+
+Per-cell contents (row-major, left-to-right, top-to-bottom):
+
+(1) **Sword Slash** — white/silver crescent arc slash trail with yellow-orange energy sparks at the edges, single sweeping motion from upper-left to lower-right, speed lines
+
+(2) **Arrow Shot** — a flying arrow with a glowing blue-white tip and a trailing streak/afterimage behind it, moving from left to right, dynamic motion feel
+
+(3) **Shield Bash** — circular shockwave/impact burst in blue-white, radiating force lines outward from center, concentric rings of energy, defensive/stunning feel
+
+(4) **Whirlwind** — green-teal spinning tornado/vortex viewed from above or slight angle, swirling wind lines forming a spiral, leaves or debris particles caught in the wind
+
+All 4 effects must share the same art style, glow intensity, and color vibrancy. One unified VFX look.

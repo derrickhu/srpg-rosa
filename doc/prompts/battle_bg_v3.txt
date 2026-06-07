@@ -1,0 +1,22 @@
+A mobile game battlefield background in 3/4 top-down perspective, PORTRAIT orientation (9:16 ratio).
+
+CRITICAL LAYOUT - the image is divided into zones:
+- TOP 30%: Forest tree line. Small-to-medium sized pine trees and deciduous trees seen from a slight above angle. Trees are compact (not oversized), forming a dense but neat tree line across the top. Some trees overlap slightly, creating depth. Tree trunks visible. Mix of dark green pines and warm brown/orange deciduous trees.
+- LEFT and RIGHT edges (top 65% only): Narrow strips of small trees and bushes along the sides, about 15% width each. Trees get slightly larger toward the bottom but stay compact. These frame the central area without intruding.
+- CENTER (about 60-65% of total area): Large open grassy clearing. Bright warm green grass with subtle blade texture. MUST be clean and empty - no objects, no decorations. This is where the game grid goes.
+- BOTTOM 35%: NO TREES AT ALL. Just simple grass ground, slightly darker green than the center, fading to a warm earthy green. This area is for game UI controls and must be completely unobstructed. Maybe just a few tiny grass tufts or subtle ground texture, nothing tall.
+
+Perspective and scale:
+- 3/4 view (about 60 degrees from horizontal), you can see the front of trees slightly
+- Trees should be SMALL relative to the image - think of viewing a clearing from a moderate height
+- Background trees (top) are smaller, side trees are medium, no foreground trees at bottom
+- Natural depth: lighter green grass at top, slightly richer green at bottom
+
+Art style:
+- Simplified cartoon game style, clean outlines, bright comfortable colors
+- Similar to casual mobile strategy games
+- Warm greens for grass, darker greens for pine trees, warm brown/orange for deciduous trees
+- Soft lighting, gentle tree shadows on grass (small, subtle)
+- Cheerful forest glade atmosphere
+
+DO NOT include: NO sky, NO TEXT, NO labels, NO grid lines, NO UI elements, NO characters, NO buildings. The bottom third must be completely clear of any tall objects.

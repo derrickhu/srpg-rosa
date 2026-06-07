@@ -1,0 +1,8 @@
+node_modules/
+.DS_Store
+godot/.godot/
+tools/godot/
+wechat-godot/engine/*.bin
+wechat-godot/engine/*.wasm*
+wechat-godot/engine/godot*
+wechat-godot/subpack1/

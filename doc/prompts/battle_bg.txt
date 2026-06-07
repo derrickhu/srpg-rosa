@@ -1,0 +1,18 @@
+A **portrait-oriented** (9:16 aspect ratio) battle scene background for a casual mobile tactical RPG game. This is the full-screen background behind a grid-based battlefield.
+
+**Art style**: Simplified cartoon landscape, bright and cheerful colors, soft gradients, clean shapes. Similar to casual mobile strategy games — warm, inviting, not dark or gritty. Gentle cel-shading with no harsh shadows.
+
+**Composition** (top to bottom):
+- **Top 15%**: Soft gradient sky, light blue to white, with a few simple white clouds
+- **Upper sides (15-30%)**: Decorative cartoon trees (round green canopies, brown trunks) and grey stone structures/ruins on left and right edges, framing the scene. Similar to the reference game's border decorations.
+- **Center (30-70%)**: Large open area of bright green grass meadow — this is where the game grid will be overlaid, so keep it SIMPLE and UNIFORM. Subtle grass texture only, no objects or decorations in this zone. Light yellow-green color, cheerful.
+- **Lower sides (70-85%)**: More decorative elements on edges — small bushes, wildflowers, a wooden fence segment, or stone path corners. Again only on the LEFT and RIGHT edges, center stays clear.
+- **Bottom 15%**: Grass continues, slightly darker shade, a simple dirt path or stone tile border at very bottom edge.
+
+**Critical requirements**:
+- The CENTER area (roughly 60% of width, 40% of height) must be CLEAN and UNIFORM — no objects, just flat grass. The game grid overlays here.
+- Decorative elements (trees, rocks, structures) are ONLY on the edges/borders.
+- Overall mood: bright, warm, fantasy meadow battlefield.
+- Color palette: greens (#7ec87e, #5aa55a), sky blue (#87ceeb), warm browns (#8b6914), grey stones (#999999).
+
+**NO TEXT**, no labels, no UI elements, no characters, no writing anywhere in the image.

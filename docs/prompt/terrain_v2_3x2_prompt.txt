@@ -1,0 +1,24 @@
+A 3-column x 2-row grid (6 cells) of individual terrain tile objects for a casual cartoon SRPG mobile game. Each cell has a plain LIGHT GRAY (#E0E0E0) solid background.
+
+CRITICAL STYLE RULES:
+- Each tile is a 3/4 top-down perspective terrain object — NOT a flat square filling the cell. The object floats in the center of its cell with visible gray background around it.
+- Every tile has visible VOLUME and DEPTH: you can see the top surface AND the front/side faces of the block, giving it a 3D cube-like feel.
+- Thick bold black outlines on every object, simplified cartoon style with cel-shading, bright saturated colors.
+- The objects should look like they can be placed ON TOP of a grass field — they must NOT include any grass base or green border. The grass background is provided separately.
+- Each tile occupies roughly 70-80% of its cell area, leaving clear gray margin for easy slicing.
+
+Per-cell contents (row-major, left-to-right, top-to-bottom):
+
+Cell 1 (HIGH GROUND): A raised rocky plateau / mesa. Tan/brown rocky top surface with visible rock layers on the front face. Small cracks and pebbles on top. Looks like an elevated rock platform that rises above the surrounding grass.
+
+Cell 2 (FOREST): A cluster of 2-3 small round-canopy trees growing from a small earthy mound. Dark green leafy canopies with visible tree trunks. The mound has brown dirt visible on its side face.
+
+Cell 3 (RIVER): A section of flowing blue water in a natural channel / stream bed. The water surface is bright blue with white ripple highlights. Stone/dirt banks visible on the side faces.
+
+Cell 4 (SWAMP): A murky dark green-brown puddle of bog water on muddy ground. Small cattail reeds and bubbles on the surface. The side face shows dark wet mud layers.
+
+Cell 5 (WALL): A tall stone brick fortification block / castle wall segment. Grey stone bricks with mortar lines. This is the TALLEST tile — clearly taller than the others to show it's impassable. Crenellation (battlements) on top edge.
+
+Cell 6 (ABYSS): A dark void / chasm pit. The top surface is a dark hole with jagged rock edges. Purple-black interior visible, with faint eerie glow. The surrounding rock rim has cracks.
+
+NO TEXT, no labels, no captions, no letters, no numbers, no writing anywhere in the image. Each tile must be clearly separated for grid slicing.

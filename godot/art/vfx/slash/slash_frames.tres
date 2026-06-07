@@ -1,0 +1,30 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://cslashvfx001"]
+
+[ext_resource type="Texture2D" uid="uid://bolxybyq0rdev" path="res://art/vfx/slash/frames/slash_00.png" id="1"]
+[ext_resource type="Texture2D" uid="uid://bqk73b0p88275" path="res://art/vfx/slash/frames/slash_01.png" id="2"]
+[ext_resource type="Texture2D" uid="uid://bco5b27h82s55" path="res://art/vfx/slash/frames/slash_02.png" id="3"]
+[ext_resource type="Texture2D" uid="uid://cslvgj78bhgyx" path="res://art/vfx/slash/frames/slash_03.png" id="4"]
+[ext_resource type="Texture2D" uid="uid://47c8yrj1bysl" path="res://art/vfx/slash/frames/slash_04.png" id="5"]
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5")
+}],
+"loop": false,
+"name": &"slash",
+"speed": 16.0
+}]

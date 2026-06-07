@@ -1,0 +1,33 @@
+A single image containing a **1 column × 2 rows** vertical layout (2 panels total) for a casual mobile tactical RPG game's title screen assets.
+
+**Art style**: Bright, warm cartoon fantasy style — bold outlines, soft gradients, vibrant saturated colors (gold, emerald, royal blue). Consistent with a cheerful hand-painted storybook RPG aesthetic. Each asset must look polished and premium at mobile resolution.
+
+**Layout**: Two panels stacked vertically, each centered on a **solid light-gray (#e8e8e8) background**, with clear separation between panels.
+
+**ABSOLUTELY NO TEXT, no letters, no characters, no writing, no numbers, no symbols anywhere in the image. Every element must be purely graphical/illustrative.**
+
+---
+
+Panel 1 (top) — **Game Title Logo Emblem**:
+A decorative fantasy emblem/crest designed as the game's visual identity mark. This is NOT text — it is a **purely graphical heraldic shield emblem**.
+
+Design:
+- Central element: An ornate heraldic **shield** shape with a pointed bottom, featuring a stylized **infinity knot / celtic endless knot pattern** engraved into the shield face. The knot represents "endless" (无尽).
+- The shield surface has a rich metallic gradient — polished steel center fading to dark iron edges, with subtle golden inlay lines tracing the knot pattern.
+- Behind the shield: Two **crossed medieval swords** with ornate golden crossguards and wrapped leather grips, forming an X behind the shield.
+- Above the shield: A small **golden crown or laurel wreath** accent.
+- Below the shield: A flowing **ribbon/banner scroll** (empty — NO TEXT on it), in deep crimson with gold trim edges.
+- Subtle glow/sparkle effects around the emblem to convey magic and prestige.
+- The overall silhouette should be vertically balanced and recognizable as a game logo icon even at small sizes.
+
+Panel 2 (bottom) — **Start Button (no text)**:
+A large, eye-catching play/start button with no text or letters.
+
+Design:
+- Rounded rectangle shape with generously rounded corners (pill-like).
+- Rich gradient fill: warm golden-amber at top edge transitioning to deep orange-brown at bottom, giving a 3D convex/pillowy feel.
+- A bold **right-pointing triangle (play icon ▶)** centered on the button, rendered in clean white with a subtle drop shadow.
+- Thick outer border: dark brown with a thin inner highlight line (golden).
+- Subtle inner glow at the top edge for a glossy, tactile feel.
+- Small decorative sparkle/star accents near the corners of the button.
+- The button should look inviting, pressable, and premium — like a treasure chest latch.

@@ -1,0 +1,34 @@
+A visual-only 2 columns x 2 rows character concept sheet for a cute casual mobile SRPG.
+
+Draw four DISTINCT chibi shield-guard characters. Each cell contains only one character on a plain light gray background (#DDDDDD). The image must contain only character art.
+
+Style:
+- Bright cute mobile RPG style, cheerful fantasy, soft rounded shapes.
+- Chibi / SD proportions: large head, small body, short limbs.
+- Thick dark outline, simple readable silhouette.
+- Bright saturated colors with simple soft cel shading.
+- Not realistic, not gritty, not pixel art, not detailed.
+- Slight top-down RPG map view: show a little helmet top, shoulders, shield top edge, and feet.
+
+Layout:
+- Perfect 2x2 grid, four square cells.
+- Characters centered and filling about 75-80% of each cell.
+- No captions, no labels, no UI, no letters, no numbers, no written symbols.
+
+Four character designs:
+
+Top-left: moon bunny paladin. Lavender, pale pink, white, and soft gold palette. Short rounded bunny-ear helmet or hood, gentle cute face, small round shield with a simple crescent moon mark, tiny short sword. Magical support-tank feeling.
+
+Top-right: stone panda sentinel. Charcoal gray, warm white, and jade green palette. Chunky rounded armor, simple panda-ear helmet silhouette, heavy rounded square shield with jade center, very sturdy mascot-like feeling.
+
+Bottom-left: blossom fox guardian. Coral pink, peach, warm cream, and mint green palette. Small fox-ear helmet silhouette, short scarf, flower-petal shaped shield with simple central gem, cute agile guardian feeling.
+
+Bottom-right: thunder ram defender. Bright yellow, navy blue, white, and orange palette. Rounded helmet with tiny curled ram-horn shapes, compact armor, round shield with one simple lightning bolt shape, energetic defensive unit feeling.
+
+Important:
+- The four characters must have clearly different silhouettes, helmet shapes, shield shapes, and color palettes.
+- All four share the same cute casual mobile game style and same line thickness.
+- Keep weapons small and simple. Do not hide the shield.
+- Avoid excessive details, tiny patterns, complex armor joints, noisy textures, or thin lines.
+
+ABSOLUTE TEXT BAN: NO TEXT, NO LETTERS, NO NUMBERS, NO CAPTIONS, NO LABELS, NO WORDS, NO WRITING ANYWHERE.

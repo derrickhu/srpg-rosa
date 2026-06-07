@@ -1,0 +1,19 @@
+A single image containing a **2 columns x 2 rows grid** (4 cells total) of chibi/SD fantasy warrior characters for a tactical RPG game.
+
+**Art style**: Simplified cartoon chibi — large head (about 1/3 of body height), stubby limbs, clean bold outlines (2-3px black stroke), flat color fills with minimal cel-shading, bright saturated colors. Each character should be clearly recognizable when displayed at only 48px tall. NOT pixel art, NOT realistic. Characters have a neutral/warm color palette (blues, browns, silvers) so they can be tinted to represent different factions in-game.
+
+**Layout**: Perfect 2x2 grid, even spacing, each cell has ONE character on a **solid light grey background** (for easy background removal). Characters are centered in their cells, facing slightly right, in idle standing pose.
+
+**NO TEXT**, no labels, no captions, no writing anywhere in the image.
+
+Per-cell contents (row-major, left-to-right, top-to-bottom):
+
+(1) **Swordsman** — chibi warrior holding a straight sword in right hand, simple round shield on left arm, light armor (brown leather + silver chest plate), short brown hair, determined expression
+
+(2) **Archer** — chibi ranger holding a wooden bow with arrow nocked, green hooded cloak, quiver on back, lighter build than swordsman, focused expression
+
+(3) **Cavalry** — chibi knight riding a small cute horse/pony, holding a lance/spear upright, heavier silver armor, horse is brown with simple saddle, compact composition fitting the square cell
+
+(4) **Shield Guard** — chibi tank holding a large tower shield (covers most of body), short sword at hip, heavy plate armor (grey/silver), stocky build, protective stance
+
+All 4 characters must share the same art style, line weight, and color saturation level. One unified look.

@@ -1,0 +1,32 @@
+A pure visual-only character concept sheet for a bright cute casual mobile SRPG.
+
+Create a 3 columns x 2 rows grid, 6 cells total. Each cell contains exactly one independent tiny top-down profession character on a solid light gray background (#DDDDDD).
+
+ABSOLUTE TEXT BAN: no text, no words, no letters, no numbers, no captions, no labels, no title, no UI, no typography anywhere.
+
+CRITICAL PROPORTION RULES:
+- Super-deformed mascot map-unit proportions.
+- Total character height is only about 1 to 1.5 head-heights tall.
+- Very large round head, tiny compact body, tiny feet, tiny arms.
+- Do NOT draw tall anime proportions. These are tiny cute map units.
+
+CRITICAL CAMERA RULES:
+- Clear top-down / slightly tilted bird's-eye RPG map view.
+- Show the top surface of head, helmet, hat, shoulders, weapon, mount back, and feet placement.
+- NOT front portrait, NOT side-scroller, NOT isometric diamond.
+
+GLOBAL STYLE:
+- Bright cute mobile RPG style, thick dark outlines, rounded toy-like shapes.
+- Bright saturated colors with one simple shadow color.
+- No cast shadows, no ground ellipses, no background effects.
+- Keep details very simple and readable.
+
+CELL DESIGNS, row-major order:
+1. Tiny dual-blade fighter, red hair, teal scarf, two short blades, agile close-combat silhouette.
+2. Tiny green forest sharpshooter, bow and quiver, leaf hood, green-tan palette.
+3. Tiny dragon rider, small rider sitting on compact cute green dragon, tiny spear.
+4. Tiny cat-hood twin dagger rogue, black-purple outfit with yellow accents, cute not scary.
+5. Tiny goggle arbalest shooter, compact crossbow, orange-brown outfit, quirky engineer feel.
+6. Tiny horn-helmet dragon rider, small purple dragon mount, playful fantasy silhouette.
+
+Every character must be a different independent person with distinct silhouette and palette.

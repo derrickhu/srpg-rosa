@@ -1,0 +1,21 @@
+{
+  "libVersion": "3.15.1",
+  "projectname": "无尽纹章",
+  "setting": {
+    "urlCheck": false,
+    "coverView": false,
+    "lazyloadPlaceholderEnable": false,
+    "skylineRenderEnable": false,
+    "preloadBackgroundData": false,
+    "autoAudits": false,
+    "showShadowRootInWxmlPanel": false,
+    "showES6CompileOption": false,
+    "compileHotReLoad": false,
+    "bigPackageSizeSupport": false,
+    "useApiHook": true,
+    "checkInvalidKey": true,
+    "useStaticServer": false,
+    "useLanDebug": false,
+    "ignoreDevUnusedFiles": true
+  }
+}

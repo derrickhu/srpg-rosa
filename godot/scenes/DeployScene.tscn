@@ -1,0 +1,152 @@
+[gd_scene format=3 uid="uid://cn4cg6n56mk7s"]
+
+[ext_resource type="Script" uid="uid://dsrhgy20qaafa" path="res://scripts/scenes/DeployScene.gd" id="1_deploy"]
+[ext_resource type="Texture2D" uid="uid://nkctfvdw03it" path="res://art/bg/deploy_bg.png" id="2_garks"]
+[ext_resource type="Texture2D" uid="uid://c5cq03drkcrhl" path="res://art/ui/btn_start.png" id="5_tkada"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_c2swe"]
+font_size = 40
+font_color = Color(0.7077659, 0.69076943, 0.29804108, 1)
+outline_size = 6
+outline_color = Color(0.001147389, 0.047049634, 0.13458309, 1)
+shadow_size = 4
+shadow_color = Color(0, 0, 0, 0.6117647)
+
+[sub_resource type="LabelSettings" id="LabelSettings_sksk0"]
+font_size = 26
+font_color = Color(0.22352941, 0.22745098, 0.13333334, 1)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_tysqb"]
+texture = ExtResource("5_tkada")
+
+[sub_resource type="LabelSettings" id="LabelSettings_0r32l"]
+font_size = 28
+font_color = Color(1, 0.95686275, 0.78431374, 1)
+outline_size = 3
+outline_color = Color(0.22745098, 0.16470589, 0.0627451, 1)
+shadow_color = Color(0, 0, 0, 0.59607846)
+shadow_offset = Vector2(1, 2)
+
+[node name="DeployScene" type="Control" unique_id=469804149]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_deploy")
+
+[node name="Background" type="TextureRect" parent="." unique_id=1433039126]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_garks")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="RootBox" type="VBoxContainer" parent="." unique_id=973153283]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 2.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 10
+
+[node name="TitleLabel" type="Label" parent="RootBox" unique_id=1263189947]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "第 1 关"
+label_settings = SubResource("LabelSettings_c2swe")
+horizontal_alignment = 1
+
+[node name="InfoLabel" type="Label" parent="RootBox" unique_id=184126222]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "选择单位后点击底部两行布阵"
+label_settings = SubResource("LabelSettings_sksk0")
+horizontal_alignment = 1
+
+[node name="BoardGrid" type="GridContainer" parent="RootBox" unique_id=664312133]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 3
+theme_override_constants/h_separation = 3
+theme_override_constants/v_separation = 3
+columns = 6
+
+[node name="RosterBox" type="HBoxContainer" parent="RootBox" unique_id=1129413422]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="ButtonBox" type="HBoxContainer" parent="RootBox" unique_id=1510479741]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="HomeButton" type="Button" parent="RootBox/ButtonBox" unique_id=2019244878]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(220, 90)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+focus_mode = 0
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxTexture_tysqb")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_tysqb")
+theme_override_styles/hover = SubResource("StyleBoxTexture_tysqb")
+theme_override_styles/disabled = SubResource("StyleBoxTexture_tysqb")
+theme_override_styles/focus = SubResource("StyleBoxTexture_tysqb")
+
+[node name="Label" type="Label" parent="RootBox/ButtonBox/HomeButton" unique_id=16168584]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "回首页"
+label_settings = SubResource("LabelSettings_0r32l")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Spacer" type="Control" parent="RootBox/ButtonBox" unique_id=1267449729]
+custom_minimum_size = Vector2(40, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="StartBattleButton" type="Button" parent="RootBox/ButtonBox" unique_id=31602529]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(220, 90)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+focus_mode = 0
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxTexture_tysqb")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_tysqb")
+theme_override_styles/hover = SubResource("StyleBoxTexture_tysqb")
+theme_override_styles/disabled = SubResource("StyleBoxTexture_tysqb")
+theme_override_styles/focus = SubResource("StyleBoxTexture_tysqb")
+
+[node name="Label" type="Label" parent="RootBox/ButtonBox/StartBattleButton" unique_id=1972727961]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "开始战斗"
+label_settings = SubResource("LabelSettings_0r32l")
+horizontal_alignment = 1
+vertical_alignment = 1

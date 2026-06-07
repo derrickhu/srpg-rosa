@@ -1,0 +1,23 @@
+A pure visual-only character concept sheet for a bright cute casual mobile SRPG.
+
+Create a 3 columns x 2 rows grid, 6 cells total. Each cell contains exactly one independent chibi fantasy character on a solid light gray background (#DDDDDD). The image must contain only character drawings.
+
+ABSOLUTE BAN: no text, no words, no letters, no numbers, no captions, no labels, no title, no UI, no empty label strip under characters, no typography anywhere.
+
+GLOBAL STYLE:
+- Cute chibi / SD mobile RPG characters.
+- Thick clean dark outlines, rounded toy-like shapes, simple readable silhouettes.
+- Bright saturated colors with soft one-step cel shading.
+- Slight top-down RPG map angle, suitable for unit sprites.
+- No shadows, no ground ellipse, no background effects.
+- Keep details simple; no realism, no gritty style, no pixel art.
+
+CELL DESIGNS, row-major order:
+1. Cute siege engineer with compact portable ballista, orange hair, green-brown outfit, cheerful technician look.
+2. Blue-black hooded dagger assassin, small curved dagger, stealthy but cute, simple cloak silhouette.
+3. Bright thunder spellcaster, blue robe with yellow lightning accents, small staff, energetic expression.
+4. Wild goggle engineer with oversized compact crossbow device, orange hair, tool backpack, quirky silhouette.
+5. Purple masked shadow striker, twin daggers, dark violet outfit, readable rounded hood, not scary.
+6. Spiky yellow-haired lightning mage, navy robe, white-yellow bolt staff, confident stance.
+
+Every character must be a different person with a distinct silhouette and palette, while sharing the same cute casual game art style.

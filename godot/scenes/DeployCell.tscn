@@ -1,0 +1,71 @@
+[gd_scene format=3 uid="uid://bdeploycell01"]
+
+[ext_resource type="Script" uid="uid://12tm2aitsb30" path="res://scripts/ui/DeployCell.gd" id="1_cell"]
+[ext_resource type="Texture2D" uid="uid://betbi3756qh6x" path="res://art/terrain/plain.png" id="2_plain"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_click"]
+
+[node name="DeployCell" type="Control" unique_id=1475322725]
+custom_minimum_size = Vector2(72, 72)
+layout_mode = 3
+anchors_preset = 0
+size_flags_horizontal = 4
+size_flags_vertical = 4
+script = ExtResource("1_cell")
+
+[node name="TerrainImage" type="TextureRect" parent="." unique_id=501052654]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2_plain")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="DeployHighlight" type="ColorRect" parent="." unique_id=557433834]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.45, 0.92, 0.38, 0.32)
+
+[node name="UnitLabel" type="Label" parent="." unique_id=1292502434]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_outline_color = Color(0.08, 0.1, 0.06, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 18
+text = "剑士"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ClickArea" type="Button" parent="." unique_id=957212144]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+focus_mode = 0
+theme_override_styles/normal = SubResource("StyleBoxEmpty_click")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_click")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_click")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_click")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_click")
+flat = true

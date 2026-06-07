@@ -1,0 +1,23 @@
+Top-down bird's eye view of a forest clearing for a mobile game battlefield background.
+
+Composition (portrait orientation, 3:4 aspect ratio):
+- The entire image is viewed from DIRECTLY ABOVE, looking straight down. NO sky, NO horizon, NO perspective vanishing point.
+- CENTER: A large open grass field area (about 60% of the image), bright warm green color, with subtle grass texture variations. This is where the game grid will overlay.
+- EDGES (all four sides): Dense deciduous trees and bushes viewed from above, forming a natural border around the clearing. Trees should have round, lush canopies in various shades of green (lime, emerald, olive). Some trees slightly overlap into the grass area for a natural look.
+- CORNERS: Slightly denser tree clusters.
+- Scattered small details near the tree edges: tiny wildflowers (yellow, white), small rocks, fallen leaves. Keep these at the very periphery, NOT in the central grass area.
+
+Art style:
+- Simplified cartoon style with clean shapes and bright, comfortable colors
+- Soft shading, no harsh shadows
+- Color palette: warm greens (#7EC87E to #5A8A3A), with pops of yellow-green and olive
+- The grass in the center should be a consistent bright green that will blend with game terrain tiles
+- Trees should look like round puffy canopies from above
+- Overall feel: cheerful, inviting, like a peaceful forest glade
+
+Technical requirements:
+- NO TEXT, no labels, no captions, no writing anywhere in the image
+- NO grid lines, NO UI elements
+- The central grass area should be clean and uncluttered (game tiles will cover it)
+- Seamless transition from grass to tree edges (no hard borders)
+- High detail at edges, minimal detail in center

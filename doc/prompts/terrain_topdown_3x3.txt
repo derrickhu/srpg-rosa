@@ -1,0 +1,26 @@
+A single image containing a **3 columns x 3 rows grid** (9 cells total) of top-down terrain tiles for a tactical RPG game.
+
+**Art style**: Simplified cartoon, clean bold outlines (2-3px black stroke), flat color fills with subtle cel-shading, bright saturated palette, warm and inviting colors similar to casual mobile games. Each tile must be clearly readable when displayed at 48px. NOT pixel art, NOT realistic, NOT isometric — pure **top-down / bird's-eye view**.
+
+**Layout**: Perfect 3x3 grid on a **transparent or matching green background** (NOT white). Each cell is a **perfect square** terrain tile viewed from directly above. **NO** grid lines, **NO** borders, **NO** gaps between cells — tiles should fill their cells edge-to-edge with NO white space or separation. The tiles should tile seamlessly.
+
+**NO TEXT**, no labels, no captions, no numbers, no writing anywhere in the image.
+
+Per-cell contents (row-major, left-to-right, top-to-bottom):
+
+Row 1:
+(1) **Grass Plain** — bright green grass with subtle blade texture, cheerful meadow feel, light yellow-green highlights. The grass fills the entire square.
+(2) **Highland** — elevated tan/brown rocky plateau with grass tufts on edges, visible height difference. Fills the entire square.
+(3) **Forest** — lush round-crown tree canopy viewed from above, dark green with lighter center highlights. Tree fills the square, no visible ground underneath.
+
+Row 2:
+(4) **River** — clear blue flowing water with white ripple lines, gentle current. Water fills the entire square.
+(5) **Swamp** — murky dark green-brown wetland with small bubbles and reed tufts, slightly glossy. Fills the entire square.
+(6) **Stone Wall** — grey stone brick pattern viewed from above, mortar lines visible, solid and impassable feel. Fills the entire square.
+
+Row 3:
+(7) **Abyss** — dark purple-black void with faint crackling energy lines at edges, ominous depth. Fills the entire square.
+(8) **Grass Plain variant** — same bright green grass as cell 1 but with small yellow wildflowers scattered.
+(9) **Highland variant** — same as cell 2 but with a different rock pattern.
+
+CRITICAL: Every tile must be a **perfect square** with NO white borders or margins. Tiles fill their cells completely edge-to-edge. The overall image must be **square** (1:1 aspect ratio). One unified art style across all 9 cells.

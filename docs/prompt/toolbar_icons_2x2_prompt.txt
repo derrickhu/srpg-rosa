@@ -1,0 +1,11 @@
+A 2x2 grid of 4 game UI button icons on a plain light gray background. Each cell contains one distinct icon centered, with generous padding around it. Simplified cartoon style with bold black outlines, bright saturated colors, and soft shading — matching a casual mobile SRPG game with chibi characters.
+
+Top-left cell: A DEPLOY icon — a short cartoon sword with a brown leather grip pointing diagonally upward, with a small golden shield behind it. Bright steel blade with a subtle gleam. Represents "deploy units".
+
+Top-right cell: A TERRAIN icon — a small rocky mountain peak / hilltop with green grass patches on top and brown earth layers visible on the side. A tiny flag on the summit. Represents "place terrain".
+
+Bottom-left cell: A POTION icon — a round-bottomed glass flask filled with glowing red healing liquid, with a cork stopper on top. A small "+" or sparkle near the bottle. Represents "use potion".
+
+Bottom-right cell: An ESSENCE icon — a brilliant faceted gemstone (like a diamond or crystal) glowing with a teal/cyan aura, with small sparkle particles around it. Represents "stat boost essence".
+
+Each icon should be roughly the same visual size within its cell. Clean, simple, instantly recognizable silhouettes. NO TEXT, no labels, no captions, no letters, no numbers, no writing anywhere in the image.

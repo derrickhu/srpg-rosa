@@ -1,0 +1,42 @@
+A visual-only character concept sheet for advanced professions in a bright cute casual mobile SRPG.
+
+Create a 6 columns x 2 rows grid, 12 cells total. Each column is one advanced profession, and each row is a different independent character style for that profession. These are different people, not palette swaps.
+
+No text in the image. Do not write profession names, labels, captions, letters, numbers, UI, or frame marks.
+
+GLOBAL STYLE:
+- Cute chibi / SD fantasy characters, bright mobile RPG look.
+- Thick dark outlines, rounded toy-like shapes, simple readable silhouettes.
+- Bright saturated colors with soft one-step cel shading.
+- Keep details simple; no realism, no dark gritty style, no pixel art, no complex texture.
+- Slight top-down RPG map angle, suitable for small unit sprites.
+- Each cell has one character centered on solid light gray background (#DDDDDD).
+- No shadows, no ground ellipse, no magical background effects.
+- Each character fills about 75-80% of its cell height.
+
+COLUMN ORDER:
+Column 1: Dual Blade Swordsman, fast melee attacker with two small blades.
+Column 2: Sniper, long-range archer with larger bow or compact crossbow-like bow.
+Column 3: Dragon Rider, cute flying charge unit on a tiny dragon mount.
+Column 4: Iron Wall, ultra-heavy defender with huge shield and heavy armor.
+Column 5: Ice Mage, control mage with ice staff and cold color palette.
+Column 6: Poisoner, damage-over-time alchemist/rogue with vial or short staff.
+
+ROW STYLE THEMES:
+Row 1: clean heroic versions with clear profession identity and bright approachable colors.
+Row 2: more eccentric mascot/fantasy versions with stronger silhouettes and unusual palettes.
+
+PROFESSION VISUAL RULES:
+- Dual Blade Swordsman: two small blades visible; agile stance; no big shield.
+- Sniper: ranged weapon clearly visible; focused pose; slim readable silhouette.
+- Dragon Rider: mount and rider both visible but simple; no complex wings covering the rider.
+- Iron Wall: biggest shield and sturdiest body in the sheet; strong defensive shape.
+- Ice Mage: icy blue/white/lavender cues; staff or wand; no large spell effects.
+- Poisoner: green/purple vial cues; sneaky alchemist silhouette; no gore or scary realism.
+
+IMPORTANT:
+- Every cell must be a unique independent character.
+- Do not use the same palette as the current shield-guard set for every design.
+- Keep a unified cute casual game style while making each profession visually distinct.
+
+ABSOLUTE TEXT BAN: NO TEXT, NO WORDS, NO LETTERS, NO NUMBERS, NO CAPTIONS, NO LABELS, NO WRITING ANYWHERE.

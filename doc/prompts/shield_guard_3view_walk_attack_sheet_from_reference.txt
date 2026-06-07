@@ -1,0 +1,56 @@
+A single sprite animation sheet for one cute casual mobile SRPG character.
+
+Use the provided reference image as the exact character design source. Recreate the SAME character from the reference: same costume theme, same color palette, same helmet/hood shape, same shield shape, same small weapon, same face style, same outline thickness, same proportions. Do not redesign the character. Do not change the character into a different person.
+
+OUTPUT LAYOUT:
+- Create a clean 6 columns x 3 rows grid, 18 cells total.
+- Each cell is an equal square animation frame.
+- Row 1: FRONT view sequence, character faces DOWN toward the viewer / bottom of the sprite sheet.
+- Row 2: BACK view sequence, character faces UP away from the viewer / top of the sprite sheet. Face is not visible.
+- Row 3: SIDE view sequence, character faces SCREEN-RIGHT. Only one side direction is needed; it will be flipped in-game for the opposite side.
+- No grid lines, no borders, no labels, no captions, no frame numbers.
+
+FRAME SEQUENCE PER ROW:
+- Column 1: walking contact pose, leading foot forward.
+- Column 2: walking passing pose, feet closer, slight body bob.
+- Column 3: walking opposite contact pose, other foot forward.
+- Column 4: attack anticipation, character plants feet and starts raising weapon.
+- Column 5: attack strike, weapon fully raised or swung forward, shield still visible.
+- Column 6: attack recovery, weapon returns toward guard pose, ready to loop back.
+
+ANIMATION AND ALIGNMENT RULES:
+- The 6 frames in each row must form a readable continuous sequence from walking into weapon attack.
+- Keep the character's body center at the same X/Y position inside every cell.
+- Keep the feet / ground contact point anchored at the same relative position inside every cell.
+- Keep the character scale identical in every frame.
+- Use only small controlled motion: feet, arms, shield angle, weapon angle, and slight body bob.
+- Do not move the character around the cell. Do not zoom in or out. Do not crop any weapon, shield, ears, helmet, or feet.
+- Do not make attack frames huge or off-center.
+- The shield must stay on the character's left arm in every frame and every direction.
+- The weapon must stay visually consistent with the reference in every frame.
+
+STYLE:
+- Bright cute casual mobile RPG style matching the reference.
+- Chibi / SD proportions: large head, small body, short limbs.
+- Thick clean dark outline, simple rounded shapes.
+- Bright saturated colors, soft one-step cel shading for simple volume.
+- Readable at 48-64px tall.
+- Slight top-down RPG map view, not side-scroller and not isometric diamond view.
+- Show a little top of helmet/hood, shoulders, shield top edge, and feet placement.
+- Keep details simple; avoid tiny patterns, noisy textures, complex armor joints, or thin lines.
+
+BACKGROUND AND CUTOUT:
+- Every cell has a solid uniform light gray background (#DDDDDD).
+- NO shadows, NO cast shadows, NO ground ellipse, NO glow, NO texture behind the character.
+- Leave clear margin around the character in every cell for slicing.
+- Characters should fill about 70-78% of cell height.
+
+ABSOLUTE TEXT BAN:
+- NO TEXT.
+- NO WORDS.
+- NO LETTERS.
+- NO NUMBERS.
+- NO CAPTIONS.
+- NO LABELS.
+- NO UI.
+- NO WRITING ANYWHERE IN THE IMAGE.

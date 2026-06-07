@@ -1,0 +1,43 @@
+A visual-only character concept sheet for a bright cute casual mobile SRPG.
+
+Create a 6 columns x 3 rows grid, 18 cells total. Each column is one profession, and each row is a different independent character style for that profession. These are different people, not the same person changing clothes.
+
+No text in the image. Do not write profession names, labels, captions, letters, numbers, UI, or frame marks.
+
+GLOBAL STYLE:
+- Cute chibi / SD fantasy characters for a casual mobile RPG.
+- Bright cheerful palette, thick dark outline, rounded shapes, soft one-step cel shading.
+- Simple readable silhouettes, no tiny details, no noisy texture, no realism, no pixel art.
+- Slight top-down RPG map character angle; show a little top of head/helmet, shoulders, weapon top edge, and feet.
+- Each cell has one character centered on solid light gray background (#DDDDDD).
+- No shadows, no ground ellipse, no effects behind character.
+- Each character fills about 75-80% of its cell height.
+
+COLUMN ORDER:
+Column 1: Swordsman, melee sword unit.
+Column 2: Archer, ranged bow unit.
+Column 3: Cavalry, cute mounted charge unit.
+Column 4: Shield Guard, defensive shield unit.
+Column 5: Mage, magical ranged unit.
+Column 6: Priest, healer support unit.
+
+ROW STYLE THEMES:
+Row 1: bright starter-adventurer designs, friendly heroic silhouettes, warm accessible colors.
+Row 2: nature / animal / mascot-inspired designs, playful distinct silhouettes, fresh greens, tans, coral, aqua, or cream colors.
+Row 3: magical / elite / chapter-reward designs, more special color palettes such as lavender, turquoise, gold, white, red, or navy, but still simple.
+
+PROFESSION VISUAL RULES:
+- Swordsman: small sword must be visible; agile close-combat stance; no shield dominance.
+- Archer: bow must be visible and readable; quiver or arrow cue; slim silhouette.
+- Cavalry: rider on a small cute mount or pony; compact enough to fit cell; lance or small spear cue.
+- Shield Guard: shield must be dominant; small weapon; sturdy body.
+- Mage: staff or wand must be visible; robe or hat silhouette; magical but no big effects.
+- Priest: healing staff, holy symbol, soft robe; gentle support silhouette; no attack-heavy pose.
+
+IMPORTANT:
+- Every cell must be a unique independent character design.
+- Do not reuse the same palette across all professions.
+- Keep the overall art direction consistent with bright cute mobile RPG screenshots.
+- Designs should be suitable for later expansion into animation frames.
+
+ABSOLUTE TEXT BAN: NO TEXT, NO WORDS, NO LETTERS, NO NUMBERS, NO CAPTIONS, NO LABELS, NO WRITING ANYWHERE.

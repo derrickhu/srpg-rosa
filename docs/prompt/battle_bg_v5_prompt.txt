@@ -1,0 +1,24 @@
+A portrait-orientation (9:16 aspect ratio) game background for a casual cartoon SRPG mobile game. View is a gentle 3/4 top-down perspective looking at a grassy battlefield clearing.
+
+COMPOSITION (top to bottom):
+- TOP 20%: A row of cartoon trees forming a tree line / forest edge. Mix of round-canopy deciduous trees (bright green, yellow-green) and triangular conifers (teal, dark green). Trees have thick bold black outlines, simplified cartoon style. Small flowers, mushrooms, and bushes scattered at the base of the trees.
+- REMAINING 80%: A large open grass field. This is the main battle area.
+
+GRASS DETAIL (very important):
+- The grass must NOT be a flat solid color. It should have visible TEXTURE and DEPTH.
+- Show individual grass tufts, small clumps, and subtle variations in green shades (light yellow-green highlights, medium green base, darker green shadows).
+- Gentle light and shadow patches across the field to give it a 3D feel — lighter areas where sunlight hits, slightly darker patches for subtle depth.
+- Small scattered details: tiny pebbles, clover patches, or dandelion dots to break up the monotony.
+- The grass should look lush, vibrant, and alive — not flat or washed out.
+- Overall color palette: warm bright lime-green to yellow-green, matching a cheerful cartoon game aesthetic.
+
+STYLE:
+- Thick bold black outlines on trees and major elements.
+- Simplified cartoon / cel-shaded style, bright saturated colors.
+- NO characters, NO UI elements, NO text, NO grid lines.
+- The left and right edges should be clean grass (NO trees or decorations on the sides) — the grid will extend to full screen width.
+- The bottom edge should also be clean grass (NO paths, NO decorations at the bottom).
+
+The image should tile/blend seamlessly where the game grid sits on top of it. Light source from upper-left.
+
+NO TEXT, no labels, no captions, no writing anywhere in the image.

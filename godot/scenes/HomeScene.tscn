@@ -1,0 +1,57 @@
+[gd_scene format=3 uid="uid://ocpurqa5wqdi"]
+
+[ext_resource type="Script" uid="uid://c22i5lwbse5ro" path="res://scripts/scenes/HomeScene.gd" id="1_home"]
+[ext_resource type="Texture2D" uid="uid://nkctfvdw03it" path="res://art/bg/deploy_bg.png" id="2_ukex0"]
+
+[node name="HomeScene" type="Control" unique_id=375161456]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_home")
+
+[node name="Background" type="TextureRect" parent="." unique_id=786710920]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_ukex0")
+
+[node name="CenterBox" type="VBoxContainer" parent="." unique_id=1343982041]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -220.0
+offset_top = -160.0
+offset_right = 220.0
+offset_bottom = 160.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 24
+alignment = 1
+
+[node name="TitleLabel" type="Label" parent="CenterBox" unique_id=191666851]
+layout_mode = 2
+theme_override_font_sizes/font_size = 44
+text = "无尽纹章"
+horizontal_alignment = 1
+
+[node name="SubtitleLabel" type="Label" parent="CenterBox" unique_id=1340346633]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Godot 迁移 MVP"
+horizontal_alignment = 1
+
+[node name="StartButton" type="Button" parent="CenterBox" unique_id=2015105276]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "开始 Demo"

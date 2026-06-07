@@ -1,0 +1,32 @@
+A pure visual-only character concept sheet for a bright cute casual mobile SRPG.
+
+Create a 3 columns x 2 rows grid, 6 cells total. Each cell contains exactly one independent tiny top-down profession character on a solid light gray background (#DDDDDD).
+
+ABSOLUTE TEXT BAN: no text, no words, no letters, no numbers, no captions, no labels, no title, no UI, no typography anywhere.
+
+CRITICAL PROPORTION RULES:
+- Super-deformed mascot map-unit proportions.
+- Total character height is only about 1 to 1.5 head-heights tall.
+- Very large round head, tiny compact body, tiny feet, tiny arms.
+- Do NOT draw tall anime proportions. These are tiny cute map units.
+
+CRITICAL CAMERA RULES:
+- Clear top-down / slightly tilted bird's-eye RPG map view.
+- Show the top surface of head, helmet, hood, mount back, shoulders, shield, staff, weapon, and feet placement.
+- NOT front portrait, NOT side-scroller, NOT isometric diamond.
+
+GLOBAL STYLE:
+- Bright cute mobile RPG style, thick dark outlines, rounded toy-like shapes.
+- Bright saturated colors with one simple shadow color.
+- No cast shadows, no ground ellipses, no background effects.
+- Keep details very simple and readable.
+
+CELL DESIGNS, row-major order:
+1. Tiny fast raider riding a small brown wolf, green headband, short spear.
+2. Tiny holy shield healer, blonde hair, white-gold armor, small staff, sun shield.
+3. Tiny young bone mage, dark robe, tiny skull staff, cute spooky but harmless.
+4. Tiny orange tribal rider on fluffy white wolf, fur hood, small axe.
+5. Tiny green-gold holy guardian, heart-shaped shield, small mace, teal and coral accents.
+6. Tiny purple witchy summoner, wide hat, tiny skull charm, bone wand.
+
+Every character must be a different independent person with distinct silhouette and palette.

@@ -1,0 +1,23 @@
+Design a premium Chinese mobile game title logo for「无尽纹章」(Endless Emblem) — NOT plain typography. The logo must fuse illustrated art and Chinese characters into ONE cohesive emblem, like top-tier casual RPG loading screens (e.g. mascot inside a shield crest behind bold 3D title text).
+
+**Composition (horizontal banner, centered)**:
+- Four Chinese characters 无尽纹章 are LARGE, bold, and perfectly legible — the hero text layer.
+- Behind/around the text: a fantasy crest emblem — golden shield or circular medallion with ornate filigree, subtle blue energy burst or lightning aura spikes (stylized, not noisy).
+- Integrated motifs woven into letter gaps and edges: crossed sword hilts, small shield badge, vine/scroll flourishes, gem accents — decorations support the text, never obscure it.
+- Optional: a small cute fantasy mascot silhouette (generic bear/warrior hero, NOT copyrighted) peeking from the crest center, very subtle if used.
+
+**Typography style**:
+- Thick cartoon-game 3D lettering: warm gold-to-amber vertical gradient fill, dark brown stroke, cream/white outer outline for sticker pop.
+- Slight bevel depth and soft drop shadow.
+- Characters feel locked together as one logo unit (slight overlap OK).
+
+**Art direction**:
+- Bright 2D cartoon fantasy SRPG — polished commercial game branding.
+- Warm gold, amber, cream, deep brown; accent teal/cyan energy glow optional.
+- Hand-crafted logo design quality, NOT a poster scene — no characters running, no landscape background.
+
+**Background**: solid flat light gray #e8e8e8 only (for easy cutout later). No gradients on background, no scenery.
+
+**Reference**: Upgrade the attached reference logo — keep the same game name 无尽纹章 and gold medieval fantasy tone, but make it MORE designed: stronger crest, richer integration of weapons/icons into the title, more "loading screen logo" impact like mascot+shield+electric aura behind stylized text.
+
+**CRITICAL**: All four characters 无尽纹章 must render correctly in simplified Chinese, sharp and readable. Art + text fusion is mandatory — reject plain flat text-only designs.

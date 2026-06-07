@@ -1,0 +1,59 @@
+A single image sprite sheet for a top-down / slightly tilted bird's-eye view tactical RPG character.
+
+Create a perfect 4 columns x 4 rows grid, 16 cells total. Each cell is a perfect square with the same size. The entire sheet shows ONE SAME CHARACTER only: a chibi / SD fantasy shield guard infantry unit. Keep the character identity, costume, colors, face, armor, shield, sword, proportions, outline thickness, and scale perfectly consistent across all 16 frames.
+
+ART STYLE:
+- Simplified cartoon chibi / SD game sprite, NOT pixel art, NOT realistic.
+- Large head about 1/3 of body height, short sturdy body, stubby limbs.
+- Thick clean black outlines, about 3-4px stroke, readable at small mobile-game size.
+- Flat bright colors with minimal cel-shading, crisp silhouette, simple shapes.
+- Casual SRPG mobile game style, cute but battle-ready.
+- Character should be clearly recognizable when displayed at only 48px tall.
+
+CHARACTER DESIGN:
+- Shield Guard / basic infantry tank unit.
+- Short brown hair visible under a simple steel helmet.
+- Silver-gray plate armor with warm brown leather straps and small blue cloth accents.
+- Large rounded tower shield on the character's left arm, blue-gray face with silver rim.
+- Short sword in the right hand.
+- Stocky, protective stance, heroic but cute expression.
+- No cape, no huge weapon, no excessive tiny details.
+
+PERSPECTIVE AND CAMERA:
+- STRAIGHT top-down / slightly tilted bird's-eye view suitable for a 2D tactical RPG map.
+- NOT side-scroller, NOT front portrait, NOT isometric diamond view.
+- The ground plane is horizontal relative to the image frame.
+- The character is viewed from above enough that helmet top, shoulders, shield top edge, and feet placement are visible.
+- Every frame uses the same camera distance and the same top-down tilt.
+
+STRICT ROW DIRECTION RULES:
+- Row 1 contains ONLY front-facing frames. The character faces DOWN toward the viewer / bottom of the sprite sheet. The full face is visible. Do not turn sideways in this row.
+- Row 2 contains ONLY back-facing frames. The character faces UP away from the viewer / top of the sprite sheet. The face is NOT visible; show the back of helmet, back armor, back straps, and back of shield. Do not show the face in this row.
+- Row 3 contains ONLY LEFT-facing side-view frames. The character's nose, chest, shield, sword, and feet all point clearly toward SCREEN-LEFT. The face is seen in left profile. Do not make any frame front-facing or right-facing in this row.
+- Row 4 contains ONLY RIGHT-facing side-view frames. The character's nose, chest, shield, sword, and feet all point clearly toward SCREEN-RIGHT. The face is seen in right profile. Do not make any frame front-facing or left-facing in this row.
+- Row 3 and Row 4 should be logical mirrored walking directions of the same character while preserving the same equipment design.
+
+COLUMN WALK CYCLE RULES:
+- Column 1: contact pose, leading foot forward.
+- Column 2: passing pose, feet closer together, slight body bob.
+- Column 3: opposite contact pose, the other foot forward.
+- Column 4: passing pose, feet closer together, opposite arm and shield swing.
+- Each row must form a coherent 4-frame looping walk cycle.
+- Keep head and body scale stable across frames.
+- Only small natural changes in leg positions, shield angle, sword arm, and body bob.
+- No attack pose, no running pose, no jumping, no idle-only duplicates.
+
+BACKGROUND AND SLICING:
+- Each cell has ONE character centered on a solid uniform light gray background (#DDDDDD).
+- Character fills about 75-80% of cell height, leaving margin for slicing.
+- No shadows that connect across cells.
+- No grid lines, no borders, no white gaps, no decorative background.
+- Every cell has the same character size and same centered placement.
+
+CRITICAL CONSISTENCY RULES:
+- This is a sprite sheet of the SAME character, not 16 different characters.
+- Same armor, same shield, same sword, same color palette in every cell.
+- Do not change hairstyle, helmet, shield shape, body type, or costume between cells.
+- Do not create extra characters, weapons, labels, UI, arrows, or direction markers.
+
+NO TEXT, no labels, no captions, no writing, no letters, no numbers anywhere in the image.

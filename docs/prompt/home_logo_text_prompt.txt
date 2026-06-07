@@ -1,0 +1,14 @@
+A stylized Chinese game title logo showing the four characters「无尽纹章」(meaning "Endless Emblem").
+
+**Design requirements**:
+- The four Chinese characters 无尽纹章 are the PRIMARY element — they must be large, clear, and readable.
+- Each character should have a fantasy/medieval RPG flair: slightly angular strokes with decorative serifs or flourishes at stroke endings, giving a heroic calligraphic feel.
+- Character fill: warm metallic gold gradient (bright gold at top, deeper amber at bottom).
+- Bold dark outline around each stroke (dark brown, 2-3px).
+- Subtle outer glow or drop shadow behind the text for depth.
+- Small decorative accents are welcome: a tiny sword, shield, or vine/scroll motif integrated around or between the characters — but these decorations must NOT overpower the text. The text is the star.
+- The overall composition should be horizontally laid out (all 4 characters in a row), suitable as a game title banner.
+- Centered on a solid light gray (#e8e8e8) background.
+- Style should match a bright 2D cartoon fantasy game — bold outlines, warm colors, hand-drawn feel.
+
+**CRITICAL**: The four characters 无尽纹章 must be perfectly rendered, legible, and the dominant visual element. Decorative graphics are secondary accents only.

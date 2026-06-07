@@ -1,0 +1,42 @@
+[gd_scene format=3 uid="uid://dml858b2v2v85"]
+
+[ext_resource type="Script" uid="uid://c0vutme4acam0" path="res://scripts/scenes/BattlePlaybackScene.gd" id="1_battle"]
+[ext_resource type="Texture2D" uid="uid://nkctfvdw03it" path="res://art/bg/deploy_bg.png" id="2_2bupr"]
+
+[node name="BattlePlaybackScene" type="Control" unique_id=1951619711]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_battle")
+
+[node name="Background" type="TextureRect" parent="." unique_id=889488119]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_2bupr")
+
+[node name="StatusLabel" type="Label" parent="." unique_id=2088058887]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 24.0
+offset_bottom = 72.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 26
+text = "战斗准备"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BoardLayer" type="Node2D" parent="." unique_id=777652490]
+unique_name_in_owner = true
+
+[node name="FxLayer" type="CanvasLayer" parent="."]
+unique_name_in_owner = true
+layer = 2

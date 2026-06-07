@@ -1,0 +1,19 @@
+A single image containing a **2 columns x 2 rows grid** (4 cells total) of chibi/SD fantasy warrior characters for a tactical RPG game.
+
+**Art style**: Simplified cartoon chibi — large head (about 1/3 of body height), stubby limbs, clean bold outlines (3-4px black stroke for visibility at small sizes), flat bright color fills with minimal cel-shading. Each character must be **clearly recognizable and sharp when displayed at only 48px tall** — avoid fine details that would blur at small sizes. NOT pixel art, NOT realistic. Characters have a neutral/warm color palette so they can be tinted in-game.
+
+**Layout**: Perfect 2x2 grid, each cell is a **perfect square**. Each cell has ONE character on a **solid uniform light grey (#DDDDDD) background**. Characters are **large within their cell** (filling about 80% of the cell height), centered, facing slightly right, in idle standing pose. **NO** grid lines between cells, **NO** white gaps.
+
+**NO TEXT**, no labels, no captions, no writing anywhere in the image.
+
+Per-cell contents (row-major, left-to-right, top-to-bottom):
+
+(1) **Swordsman** — chibi warrior holding a straight sword in right hand, small round shield on left arm, light brown leather armor with silver chest plate, short brown hair. Simple bold shapes, exaggerated proportions for readability.
+
+(2) **Archer** — chibi ranger holding a wooden bow with arrow nocked, green hooded cloak, quiver on back. Lighter build than swordsman. Green and brown color scheme.
+
+(3) **Cavalry** — chibi knight riding a small cute horse/pony, holding a lance/spear upright, heavier silver armor with blue accents. Horse is brown with simple saddle. Compact composition fitting the square cell.
+
+(4) **Shield Guard** — chibi tank holding a large tower shield (covers most of body front), short sword at hip, heavy silver plate armor, stocky build. The large shield is the dominant visual feature.
+
+All 4 characters must share the same art style, line weight, and color saturation. Draw with THICK outlines (3-4px) so they remain crisp at small display sizes. One unified look.

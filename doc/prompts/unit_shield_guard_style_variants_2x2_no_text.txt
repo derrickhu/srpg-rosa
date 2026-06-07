@@ -1,0 +1,34 @@
+A visual-only 2 columns x 2 rows character concept sheet for a cute casual mobile SRPG.
+
+Draw four DISTINCT chibi shield-guard characters. Each cell contains only one character on a plain light gray background (#DDDDDD). No text or symbols outside the character art.
+
+Style:
+- Bright cute mobile RPG style, like cheerful casual fantasy game characters.
+- Chibi / SD proportions: large head, small body, short limbs.
+- Thick dark outline, simple rounded shapes, clean silhouette.
+- Bright saturated colors, soft one-step cel shading for volume.
+- Very readable at small size, not detailed, not realistic, not pixel art.
+- Slight top-down RPG map view: show a little helmet top, shoulders, shield top edge, and feet.
+
+Layout:
+- Perfect 2x2 grid, four square cells.
+- No grid lines, no borders, no captions, no labels.
+- Characters centered and filling about 75-80% of each cell.
+
+Four character designs:
+
+Top-left: a cheerful royal starter shield guard. Gold, ivory white, and sky blue palette. Rounded crown-like helmet crest, light gold armor, small blue gem, rounded kite shield with a very simple sun shape. Heroic and cute.
+
+Top-right: a forest acorn guard. Leaf green, tan, chestnut brown, and cream palette. Acorn-cap or leafy hood silhouette, simple leather armor, rounded wooden shield with one leaf mark. Friendly and lively.
+
+Bottom-left: an ocean crystal defender. Turquoise, aqua blue, pearl white, and coral orange palette. Smooth shell-like helmet, blue armor panels, rounded shell shield with one wave stripe. Fresh and magical.
+
+Bottom-right: a candy red brave warrior. Candy red, orange, cream, and dark brown palette. Rounded red helmet with tiny horn-like side caps, short orange shoulder cloth, chunky round shield with cream rim. Energetic and bold.
+
+Important:
+- The four characters must have clearly different silhouettes, helmet shapes, shield shapes, and color palettes.
+- All four must share the same rendering style and line thickness.
+- Keep weapons small and simple. Do not hide the shield.
+- Do not add decorations, UI, arrows, letters, numbers, captions, labels, words, names, or any writing.
+
+ABSOLUTE TEXT BAN: NO TEXT, NO LETTERS, NO NUMBERS, NO CAPTIONS, NO LABELS, NO WRITING ANYWHERE.

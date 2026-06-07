@@ -1,0 +1,26 @@
+{
+  "name": "wujin-wenzhang",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "无尽纹章 - 微信小游戏（Pixi + TypeScript + Vite）",
+  "scripts": {
+    "build": "vite build",
+    "build:godot": "bash scripts/build-wechat-godot.sh",
+    "dev": "vite build --watch",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@pixi/core": "7.3.2",
+    "@pixi/settings": "7.3.2",
+    "@pixi/unsafe-eval": "7.3.2",
+    "pixi.js": "7.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.3",
+    "vite": "^6.2.0",
+    "vitest": "^4.1.4"
+  }
+}

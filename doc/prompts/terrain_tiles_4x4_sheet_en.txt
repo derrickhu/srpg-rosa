@@ -1,0 +1,15 @@
+A **reference image is attached** (4×4 isometric terrain sheet). Use it as the **strict visual template** for:
+
+- **Projection:** Classic **isometric 3D blocks** — each cell is a **cube-like volume**: the **top face is a rhombus (diamond)**, and **two side faces** are visible; side edges follow a consistent ~30° feel from horizontal, same as the reference — **NOT** cabinet/oblique with a square top parallel to the frame, **NOT** bird’s-eye with no depth.
+- **Layout:** Perfect **4×4 grid** on the picture plane, **even spacing**, same cell scale and alignment as the reference; faint **grey grid lines** between cells on a flat **turquoise / teal** floor (like the reference).
+- **Art:** **Thick bold black outlines**, simplified stylized materials, **cel-style** shading, **light from upper-left** (match reference), saturated colors — **no photorealism, no pixel art.**
+- **Output:** One new full-bleed image, same sheet structure. **No** arrows, **no** text, **no** UI, **no** watermarks.
+
+Per-cell materials (row-major, left-to-right, top-to-bottom) — keep the **same isometric block shape** as the reference for every cell; only the surface theme changes:
+
+Row1: (1) bright grass + light grey stone base, (2) dark forest grass + dark grey base, (3) cracked tan dry earth, (4) grey cobble / rounded pebbles.
+Row2: (5) shallow teal pool in stone rim, (6) deep blue water with ripple pattern, (7) grey jagged rock peak with green moss, (8) white snow over brown dirt.
+Row3: (9) golden sand with wind ripples, (10) dark volcanic rock with orange lava cracks, (11) wooden planks / deck segment, (12) grey stone bricks with moss in cracks.
+Row4: (13) golden wheat field, (14) muddy swamp with reeds, (15) glowing purple magical / slime block with sparkles, (16) black bumpy coal or gravel.
+
+Every tile must sit in a **clear cell** for later slicing into 16 sprites. **One unified look** matching the attached reference.

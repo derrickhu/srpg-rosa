@@ -1,0 +1,13 @@
+A single UI button asset for a casual 2D cartoon mobile game.
+
+**Art style**: Flat 2D cartoon style with bold dark outlines, soft color fills, and minimal shading — matching a bright, hand-drawn storybook game aesthetic. NOT 3D, NOT realistic, NOT skeuomorphic. Think simple shapes with clean bold outlines like a children's book illustration.
+
+**The button**:
+- Wide rounded-rectangle / pill shape, landscape orientation (about 3:1 width-to-height ratio).
+- Flat warm green fill (#5aaa3a or similar bright spring green), with a very subtle lighter stripe near the top for a gentle highlight — but still flat/2D, not glossy or 3D.
+- Bold dark outline (2-3px, dark brown or black) all around the shape.
+- Optionally a very thin inner line (slightly lighter green) following the shape for a subtle double-border effect.
+- The button is COMPLETELY BLANK inside — absolutely NO text, NO icons, NO symbols, NO arrows, NO play icon, nothing inside. Just a clean empty colored shape.
+- Centered on a solid light gray (#e8e8e8) background.
+
+This is a template button — text will be added programmatically later, so it MUST be empty.

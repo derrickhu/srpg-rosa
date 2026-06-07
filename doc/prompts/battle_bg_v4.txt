@@ -1,0 +1,23 @@
+A vibrant, stylized mobile game battlefield background in 3/4 top-down perspective, PORTRAIT orientation (9:16 ratio).
+
+COLOR PALETTE (CRITICAL - must be bright and saturated, NOT dull):
+- Grass: Bright vivid lime green (#8CD460, #A0E060), cheerful and fresh
+- Conifer trees: Rich teal/cyan green (#2A9A6A, #3BB880) with darker outlines - distinctive pointed triangle shapes
+- Deciduous trees: Bright warm green (#60B840) with round fluffy canopies
+- Tree trunks: Warm brown (#8B6040)
+- Overall: HIGH saturation, bright and cheerful, like a colorful storybook illustration
+
+LAYOUT:
+- TOP 25-30%: A row of stylized conifer trees (pointed triangle shapes like in casual mobile games) and some round deciduous trees. Trees are SMALL to MEDIUM sized, neatly arranged, with visible trunks. The tree line should feel designed and intentional, not random. Mix teal-green conifers with a few warm-green round trees for variety.
+- LEFT and RIGHT edges (upper 60%): Narrow border of smaller trees and leafy bushes. Trees should peek in from the sides, framing the clearing elegantly.
+- CENTER: Large bright grass clearing (60%+ of image area). Clean, vibrant lime green with subtle grass texture marks. MUST be empty and uncluttered.
+- BOTTOM 35%: NO trees. Just clean bright grass, perhaps transitioning to a slightly different shade. A subtle dirt path edge or gentle grass variation is OK. This area must be completely clear for game UI.
+
+DESIGN QUALITY:
+- Each tree should have CHARACTER - pointed conifers with layered branches, round trees with textured canopy bumps
+- Add small charming details ONLY at tree edges: tiny flowers (pink, yellow, white dots), small mushrooms, little rocks
+- Trees should cast small soft shadows on the grass
+- The grass should have cheerful little marks - small "V" grass tufts, tiny clovers
+- Overall feel: polished, charming, like a well-designed indie mobile game
+
+DO NOT include: NO sky visible, NO TEXT, NO labels, NO grid lines, NO UI elements, NO characters, NO buildings, NO large objects in the center grass area.

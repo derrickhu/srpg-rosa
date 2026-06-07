@@ -1,0 +1,61 @@
+A single image sprite sheet for a top-down / slightly tilted bird's-eye view tactical RPG character.
+
+Create a perfect 4 columns x 4 rows grid, 16 cells total. Each cell is a perfect square with the same size. The entire sheet shows ONE SAME CHARACTER only: a chibi / SD fantasy shield guard infantry unit. Keep the character identity, costume, colors, face, armor, shield, sword, proportions, outline thickness, and scale perfectly consistent across all 16 frames.
+
+ART STYLE:
+- Simplified cartoon chibi / SD game sprite, NOT pixel art, NOT realistic.
+- Large head about 1/3 of body height, short sturdy body, stubby limbs.
+- Thick clean black outlines, about 3-4px stroke, readable at small mobile-game size.
+- Flat bright colors with minimal cel-shading, crisp silhouette, simple shapes.
+- Casual SRPG mobile game style, cute but battle-ready.
+- Character should be clearly recognizable when displayed at only 48px tall.
+
+CHARACTER DESIGN:
+- Shield Guard / basic infantry tank unit.
+- Short brown hair visible under a simple steel helmet.
+- Silver-gray plate armor with warm brown leather straps and small blue cloth accents.
+- Large rounded tower shield on the character's left arm, blue-gray face with silver rim.
+- Short sword in the right hand.
+- Stocky, protective stance, heroic but cute expression.
+- No cape, no huge weapon, no excessive tiny details.
+
+PERSPECTIVE AND CAMERA:
+- STRAIGHT top-down / slightly tilted bird's-eye view suitable for a 2D tactical RPG map.
+- NOT side-scroller, NOT front portrait, NOT isometric diamond view.
+- The ground plane is horizontal relative to the image frame.
+- The character is viewed from above enough that helmet top, shoulders, shield top edge, and feet placement are visible.
+- Each direction must clearly communicate facing direction through head, torso, shield, sword, and feet orientation.
+
+LAYOUT:
+- 4 columns x 4 rows, row-major order.
+- Row 1: FRONT-facing walk cycle, the character faces toward the camera / downward on screen.
+- Row 2: BACK-facing walk cycle, the character faces away from the camera / upward on screen.
+- Row 3: LEFT-facing walk cycle, the character faces screen-left.
+- Row 4: RIGHT-facing walk cycle, the character faces screen-right.
+- Column 1: left foot forward / contact pose.
+- Column 2: passing pose / body centered.
+- Column 3: right foot forward / opposite contact pose.
+- Column 4: passing pose / body centered, slight opposite arm and shield swing.
+
+ANIMATION REQUIREMENTS:
+- Each row must look like a coherent 4-frame looping walking animation.
+- Keep head and body scale stable across frames.
+- Only small natural changes in leg positions, shield angle, sword arm, and body bob.
+- No jumping, no attack pose, no running pose, no idle-only duplicates.
+- Feet should remain grounded and readable from the top-down view.
+- The shield should stay on the character's left arm for every facing direction.
+
+BACKGROUND AND SLICING:
+- Each cell has ONE character centered on a solid uniform light gray background (#DDDDDD).
+- Character fills about 75-80% of cell height, leaving margin for slicing.
+- No shadows that connect across cells.
+- No grid lines, no borders, no white gaps, no decorative background.
+- Every cell has the same camera distance and same character size.
+
+CRITICAL CONSISTENCY RULES:
+- This is a sprite sheet of the SAME character, not 16 different characters.
+- Same armor, same shield, same sword, same color palette in every cell.
+- Keep left and right side views as mirrored direction versions of the same character, but preserve equipment placement logically.
+- Do not change hairstyle, helmet, shield shape, body type, or costume between cells.
+
+NO TEXT, no labels, no captions, no writing, no letters, no numbers anywhere in the image.
