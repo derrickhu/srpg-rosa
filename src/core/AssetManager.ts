@@ -1,5 +1,7 @@
 import * as PIXI from 'pixi.js';
 
+import { AssetLoader } from './AssetLoader';
+
 /**
  * Centralised asset loader / cache.
  *
@@ -7,7 +9,8 @@ import * as PIXI from 'pixi.js';
  * bypassing PIXI.Assets which has URL resolution issues in the mini-game
  * environment (location.href is simulated as 'game.js').
  *
- * Paths are relative to the project root (same folder as game.js).
+ * Paths are logical game paths (e.g. images/terrain/plain.png).
+ * CDN 目录会先 resolveOrDownload，bundled 目录直接走本地包内路径。
  */
 
 export interface AssetBundleDef {
@@ -66,7 +69,8 @@ export const AssetManager = {
     if (loadedBundles.has(def.name)) return;
     const entries = Object.entries(def.assets);
     const loaded = await Promise.all(
-      entries.map(async ([key, src]) => {
+      entries.map(async ([key, logicalPath]) => {
+        const src = await AssetLoader.resolveOrDownload(logicalPath);
         const tex = await loadImageAsTexture(src);
         return [key, tex] as const;
       }),

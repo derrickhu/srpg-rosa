@@ -19,6 +19,8 @@ npm run build
 
 用微信开发者工具打开 **本仓库根目录**（含 `project.config.json`）。
 
+**GameKey / CDN / 经分** 见 [docs/cloudbase-wujin-wenzhang.md](docs/cloudbase-wujin-wenzhang.md)（`wujin_wenzhang` = 无尽纹章）。
+
 ## 目录结构
 
 ```
@@ -30,7 +32,11 @@ npm run build
 │   ├── game/MvpState.ts        // 局内状态机数据
 │   ├── view/                   // 布阵 / 结算 / 商店 UI
 │   ├── platform/wxPlatform.ts
+│   ├── config/gameKey.ts       // GAME_KEY = wujin_wenzhang
+│   ├── config/cdnConfig.ts     // CDN 目录与 CloudBase 域名
 │   └── config/constants.ts
+├── config/game.json            // GameKey + CDN 唯一配置源
+├── scripts/upload_cdn.js       // CDN 增量上传（对齐 xiao_chu）
 ├── minigame/
 │   ├── pixi-adapter/           // 微信 DOM/Canvas 适配（勿删）
 │   ├── weapp-adapter.js      // 兼容占位

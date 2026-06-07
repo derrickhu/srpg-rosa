@@ -1,0 +1,22 @@
+{
+  "gameKey": "wujin_wenzhang",
+  "displayName": "无尽纹章",
+  "cloudbaseEnv": "rosa-env-d7grf78r5dbd37323",
+  "cloudbaseBucket": "726f-rosa-env-d7grf78r5dbd37323-1414200063",
+  "cloudbasePublicBaseUrl": "https://726f-rosa-env-d7grf78r5dbd37323-1414200063.tcb.qcloud.la",
+  "cloudbaseApiBaseUrl": "https://rosa-env-d7grf78r5dbd37323.service.tcloudbase.com",
+  "cdnFilePrefix": "wujin_wenzhang/assets_cdn",
+  "cdnDirs": [
+    "images/terrain",
+    "images/units",
+    "images/fx",
+    "images/bg"
+  ],
+  "bundledDirs": [
+    "images/ui"
+  ],
+  "ignoreFiles": [
+    ".DS_Store",
+    "Thumbs.db"
+  ]
+}

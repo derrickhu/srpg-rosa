@@ -6,3 +6,9 @@ wechat-godot/engine/*.bin
 wechat-godot/engine/*.wasm*
 wechat-godot/engine/godot*
 wechat-godot/subpack1/
+
+# CDN 上传脚本临时文件与密钥
+scripts/.cdn_manifest.json
+scripts/.cdn_manifest.cloudbase.json
+scripts/cdn_manifest_for_upload.json
+scripts/.cdn_secret

@@ -8,6 +8,8 @@
     "build": "vite build",
     "build:godot": "bash scripts/build-wechat-godot.sh",
     "dev": "vite build --watch",
+    "upload:cdn": "node scripts/upload_cdn.js",
+    "upload:cdn:dry": "node scripts/upload_cdn.js --dry-run",
     "test": "vitest run",
     "test:watch": "vitest"
   },

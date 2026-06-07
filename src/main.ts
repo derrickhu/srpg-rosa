@@ -3,6 +3,8 @@
  */
 import '@/core/pixiUnsafeEvalPatch';
 import { createPixiHost } from '@/boot/createPixiApp';
+import { AssetLoader } from '@/core/AssetLoader';
+import { GAME_KEY, GAME_TITLE } from '@/config/gameKey';
 import { GameFlow } from '@/view/GameFlow';
 import '@/platform/wxPlatform';
 
@@ -37,7 +39,8 @@ function boot(): void {
     console.error('[main] 首次 render 失败:', e);
   }
 
-  console.log('[main] 无尽纹章 MVP 启动, screen:', host.screen.width, 'x', host.screen.height);
+  console.log(`[main] ${GAME_TITLE} (${GAME_KEY}) MVP 启动, screen:`, host.screen.width, 'x', host.screen.height);
+  void AssetLoader.prefetchManifest();
 }
 
 /** 微信首帧 canvas 尺寸偶发未就绪：双 rAF 再启动（huahua 类项目常用） */
