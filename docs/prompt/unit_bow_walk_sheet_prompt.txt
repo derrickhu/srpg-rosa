@@ -1,0 +1,47 @@
+# 单位 bow（弓兵职业） —— 四方向行走 sheet（generate2dsprite player_sheet, 4x4）
+#
+# 风格基准：godot/art/units/sword/ 现有单位（SD 卡通、粗黑描边、扁平上色 + 轻微 cel 阴影、
+# 3/4 俯视）。不要像素风。
+# 键色：#FF00FF —— 角色主色为绿/棕/皮革，与品红色相距远，不会被抠掉。
+# 下游：generate2dsprite.py process --target player --mode player_sheet --align feet
+#       --shared-scale --component-mode largest
+
+A 4x4 sprite sheet showing a full 4-direction walk cycle for a top-down tactics RPG unit.
+
+CHARACTER: a forest ranger. Chibi / super-deformed proportions with a large head and short
+body, roughly 2.5 heads tall. Hooded green cloak with a lighter green lining, brown leather
+armor and bracers, tan boots, a short recurve bow held in the screen-left hand, a quiver on
+the back. Warm brown hair, simple determined face with thick dark eyes.
+
+ART STYLE: hand-drawn cartoon game sprite, thick dark brown outlines, flat saturated fill
+colors with light cel shading, no texture noise, no gradients, no painterly rendering, no
+pixel art, no anti-aliased blur. Read cleanly at small size.
+
+CAMERA: 3/4 top-down view from slightly above, consistent in all 16 cells. You can see the
+top of the head, the shoulders, and the full body down to the boots.
+
+SHEET LAYOUT — rows are facing direction, columns are walk frames:
+  Row 1 (top):    facing DOWN, toward the camera, face fully visible
+  Row 2:          facing LEFT, left side profile
+  Row 3:          facing RIGHT, right side profile, mirrored from row 2
+  Row 4 (bottom): facing UP, away from the camera, back of the hood and quiver visible
+  Column 1: neutral standing pose, both feet together
+  Column 2: LEFT foot stepping forward, slight body bob down
+  Column 3: neutral standing pose, both feet together
+  Column 4: RIGHT foot stepping forward, slight body bob down
+
+ABSOLUTE RULES:
+1. EXACTLY 16 equal-size cells in a 4x4 grid. Every cell the same width and height.
+2. NO borders, NO dividing lines, NO frames between cells. Cells are separated only by the
+   flat background color.
+3. Background is 100% solid flat magenta #FF00FF everywhere, including between the cells.
+   No gradient, no vignette, no ground shadow, no drop shadow under the character.
+4. IDENTICAL SCALE in all 16 cells: same head-to-boot height, same shoulder width, same
+   camera distance. Do not zoom in or out between cells. Do not crop tighter in some cells.
+5. IDENTICAL character identity, costume, and palette in all 16 cells.
+6. Character is centered in its cell and fills about 65% of the cell height, leaving even
+   magenta margin on all four sides.
+7. Nothing crosses a cell edge — no hair, cloak, bow, quiver, arrow, boot, or hand may touch
+   or overlap a neighboring cell.
+8. Feet rest on the same horizontal baseline in every cell.
+9. NO text, NO labels, NO numbers, NO arrows, NO UI, NO watermark anywhere in the image.

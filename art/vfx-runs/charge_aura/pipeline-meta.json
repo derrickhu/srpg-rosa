@@ -1,0 +1,50 @@
+{
+  "source": "scripts/vfx-sheet.py",
+  "input": ".tmp-gen/charge_aura_raw.png",
+  "target": "vfx",
+  "mode": "vfx_sheet",
+  "rows": 2,
+  "cols": 3,
+  "cell_size": 256,
+  "threshold": 22,
+  "frame_labels": [
+    "charge_aura-1",
+    "charge_aura-2",
+    "charge_aura-3",
+    "charge_aura-4",
+    "charge_aura-5",
+    "charge_aura-6"
+  ],
+  "shared_crop_side": 341,
+  "crop_offsets": [
+    {
+      "x": 0,
+      "y": 81
+    },
+    {
+      "x": 0,
+      "y": 77
+    },
+    {
+      "x": 0,
+      "y": 75
+    },
+    {
+      "x": 0,
+      "y": 37
+    },
+    {
+      "x": 0,
+      "y": 38
+    },
+    {
+      "x": 0,
+      "y": 35
+    }
+  ],
+  "empty_frames": [],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}

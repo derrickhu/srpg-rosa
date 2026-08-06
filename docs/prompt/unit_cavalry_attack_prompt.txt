@@ -1,0 +1,66 @@
+# 骑兵 —— 骑枪突刺 2x2，每朝向一张（generate2dsprite --mode attack）
+#
+# 参考图：art/sprite-runs/cavalry/identity-ref-<朝向>.png（行走处理后的单帧）
+# 处理时 --scale-profile art/sprite-runs/cavalry/scale-profile.json
+#         --max-profile-scale-drift 0.6
+#
+# 注意：全力冲刺的马身体本来就压低，bodySpan 量到的身体会比站立矮一截，
+# attack_left 实测需要 ×1.414 的跨动作校正（sprite2anim 自动做，日志会打印）。
+# 系数偏大但结果验收正常（全表 CV 2.6%），因为参考帧是站姿、冲刺帧是伏低，语义上就该拉回去。
+#
+# attack_right 由 attack_left 镜像，不出图。下面 <朝向段落> 三选一。
+
+CRITICAL BACKGROUND REQUIREMENT: the background must be 100% solid flat MAGENTA, hex #FF00FF.
+NOT black, NOT white, NOT grey, NOT a gradient. Every pixel that is not the character or horse must
+be exactly magenta #FF00FF, including between the cells. It is a chroma key.
+
+The attached reference image contains ONE SINGLE frame. It defines only the CHARACTER IDENTITY and
+the ART STYLE, NOT the layout. Do NOT copy the reference's framing and do NOT produce a walk cycle
+— produce the 2x2 attack sheet described below.
+
+Match the reference exactly on: the same chibi lancer in warm golden-yellow armour riding a small
+chunky WHITE horse with a cream mane, same long lance with a broad silver head, same thick
+near-black outlines, same flat fills with light cel shading, same giant-head-tiny-body proportions
+for both rider and horse.
+
+A 2x2 sprite sheet: 4 frames of a LANCE CHARGE. <朝向段落>. The lance thrust is the whole point —
+it must be the thing that moves.
+
+  朝下：horse and rider FACING DOWN toward the camera the whole time, attacking toward the viewer.
+        You see the horse's face and the rider's face in every frame. The rider holds the lance out
+        to one side at a steep diagonal, tip angled down toward the viewer, so it stays clearly
+        visible instead of vanishing into foreshortening.
+  朝左：horse and rider seen in LEFT SIDE PROFILE, facing LEFT the whole time and attacking toward
+        the left. They stay in LEFT profile in all 4 frames — never turn them toward the camera,
+        never flip them to face right.
+  朝上：horse and rider seen FROM BEHIND, facing UP and AWAY from the camera the whole time. You see
+        the horse's rump and tail and the rider's back; their faces are never visible. The rider
+        holds the lance out to one side at a steep diagonal so it stays clearly visible.
+
+FRAME ORDER, left-to-right then top-to-bottom:
+  Frame 1 (top-left):     WIND-UP. The rider cocks the lance back and up, the horse gathering with
+                          its legs tucked.
+  Frame 2 (top-right):    CHARGE. The horse surges forward in a big stride, the lance levelling and
+                          driving forward.
+  Frame 3 (bottom-left):  IMPACT. Full extension — the lance is thrust as far forward as it goes,
+                          the horse at full stretch with forelegs far out and hind legs far back,
+                          rider leaning hard into it. Strongest, most extreme pose.
+  Frame 4 (bottom-right): RECOVERY. The lance is drawn back up to a raised diagonal carry, the horse
+                          settling back onto all four hooves.
+
+ABSOLUTE RULES:
+1. Background is 100% solid flat magenta #FF00FF everywhere including between cells. No gradient,
+   no vignette, no shadow.
+2. EXACTLY 4 equal-size cells in a 2x2 grid, every cell the same width and height.
+3. NO borders, NO dividing lines, NO gutters, NO frames between cells.
+4. IDENTICAL BODY SCALE and IDENTICAL camera distance in all 4 cells. Measure the unit from the top
+   of the rider's helmet down to the hooves, ignoring the lance: that height must be the same in all
+   4 cells. Do not zoom in on the action.
+5. THE UNIT (helmet down to hooves, lance excluded) FILLS ABOUT 55% OF THE CELL HEIGHT. Draw it
+   generously big in the cell — a tiny figure lost in a huge empty cell is WRONG. The lance extends
+   past that and may come fairly close to the cell edge.
+6. Nothing crosses a cell edge. The lance tip especially must stay clear of the edges.
+7. Hooves rest on the same horizontal baseline in every cell.
+8. Draw the RIDER AND HORSE ONLY. NO motion-blur streaks, NO impact flash, NO dust, NO sparks,
+   NO speed lines.
+9. NO text, no labels, no numbers, no arrows, no UI, no watermark.

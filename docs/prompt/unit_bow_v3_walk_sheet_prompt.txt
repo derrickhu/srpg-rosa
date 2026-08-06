@@ -1,0 +1,93 @@
+# 单位 bow v3（弓兵职业）—— 四方向行走 sheet（generate2dsprite player_sheet, 4x4）
+#
+# 定稿版，取代 v1 / v2。角色原型来自 units_lineup_v2 的 v4_2 第 2 位，生图时把该角色
+# 单抠出来当参考图传进去（.pilot/bow_v3/ref_archer.png），保证和 lineup 同一个人。
+#
+# 相对 v2 的关键修正（都来自实测，别改回去）：
+#   1. 删掉 "roughly 2.5 heads tall" —— 就是这句让 v1/v2 变成高瘦小人，宽高比只有 0.67，
+#      而现有剑士是 1.01。改成「头连头发占总高一半、身体近正方形」。
+#   2. 极简：全身 4-6 色，删掉箭袋、羽毛、腰带等碎件，五官只留眼睛眉毛。
+#      48px 下细节只会变噪点，并让角色显得更小更碎。
+#   3. 大弓保留为记忆点，且**允许高过头顶**——运行时按身体高度归一化（animAtlas 的
+#      bodySpan），道具不会把角色压小，也不会被裁。sheet 里仍要留在各自单元格内，
+#      那是切帧的需要，不是设计约束。
+# 键色：#FF00FF —— 角色主色为奶白/绿/棕，与品红色相距远
+# 下游：generate2dsprite.py process --target player --mode player_sheet --align feet
+#       --shared-scale --component-mode largest
+
+A 4x4 sprite sheet showing a full 4-direction walk cycle for a top-down tactics RPG unit.
+Keep the character in the reference image exactly: same face, same costume, same palette,
+same bow. Only the facing direction and the walk pose change between cells.
+
+CHARACTER: a cheerful young forest archer.
+- LEAF GREEN is his identity colour and covers most of his body, including a simple pointed
+  hood. A plain cream / off-white short cape is his one light area — it must read as
+  near-white (#F0F0E0 / #E0E0D0), not beige and not grey.
+- HIS PROP IS A BIG TALL BOW and it is his whole identity. Requirements, all mandatory:
+  * It is TALLER THAN HE IS. The upper tip rises clearly ABOVE THE TOP OF HIS HOOD and the
+    lower tip reaches down past his knees. Drawing the bow small is the main way to fail here.
+  * Held VERTICALLY at his side, close to the body, fully in view, never hidden behind him.
+  * Thick honey-wood limbs with a clear double curve, plus a STRAIGHT PALE BOWSTRING running
+    between the two tips, so the whole thing reads as an unmistakable D shape at tiny size.
+    Without the string it looks like a horn or a croissant, which is wrong.
+  * A bow that rises above his head is REQUIRED, not merely allowed. In game the character is
+    scaled by his body height only, so a tall bow costs him nothing.
+- Warm reddish-brown hair showing under the hood, warm tan boots.
+- No quiver, no arrows, no feathers, no belt, no pouch.
+
+PROPORTIONS — check against this, drawing him too tall is the most common failure:
+- Extreme super-deformed mascot. His HEAD INCLUDING HAIR AND HOOD is about HALF of his total
+  body height. Body, arms and legs together are the other half: short, stubby, chunky,
+  almost no neck.
+- His BODY (top of the head down to the boots, not counting the bow) fits in a roughly
+  SQUARE box — about as wide as it is tall. If he reads as a slim standing person, it is wrong.
+- This is NOT a 2-head or 2.5-head chibi. Think 1.5-head mascot: giant head, tiny body.
+
+SIMPLIFY — characterise him with a few bold strokes and colours, never by piling on detail.
+He displays about 48 pixels tall in game, where detail becomes noise:
+- Only 4 to 6 flat colours on the whole character.
+- NO belts, straps, buckles, pouches, rivets, seams, laces, stitching, patterns or trim.
+- Face is minimal: two simple dark eyes, two eyebrows, at most a tiny mouth line. No nose,
+  no ear detail, no blush.
+- Arms and legs are simple rounded stubs; hands are mitten shapes with no fingers.
+
+ART STYLE (project style bible — do not deviate):
+hand-drawn cartoon game sprite, thick near-black outlines (pure black or very dark warm
+brown — never a mid-tone or colorful outline), flat saturated fills with light cel shading
+(one highlight tone, one shadow tone), no gradients, no texture noise, no painterly
+rendering, no photographic detail.
+
+BRIGHTNESS: bright saturated palette with a genuine near-white highlight. Never uniformly
+dark or muted. Avoid grey, dusty, chalky or desaturated colours. Avoid olive-drab and khaki.
+
+CAMERA: 3/4 top-down view from slightly above, consistent in all 16 cells. You can see the
+top of the head, the shoulders, and the full body down to the boots.
+
+SHEET LAYOUT — rows are facing direction, columns are walk frames:
+  Row 1 (top):    facing DOWN, toward the camera, face fully visible
+  Row 2:          facing LEFT, left side profile
+  Row 3:          facing RIGHT, right side profile, mirrored from row 2
+  Row 4 (bottom): facing UP, away from the camera, back of the hood and cape visible.
+                  The tall bow must still be clearly visible at his side in this row —
+                  a back view that is just a green hood and a cream cape has no identity.
+  <<< 迈腿描述改为原样粘贴 _walk_motion_block.txt >>>
+  这里原本写的是 "slight body bob down"，是全表最差的一版：腿部剪影差异只有 2.8~11.9%，
+  弓手基本没在走。v4 换成强化块重出，并顺带补了他一直缺的攻击动作。
+
+ABSOLUTE RULES:
+1. EXACTLY 16 equal-size cells in a 4x4 grid. Every cell the same width and height.
+2. NO borders, NO dividing lines, NO frames between cells. Cells are separated only by the
+   flat background color.
+3. Background is 100% solid flat magenta #FF00FF everywhere, including between the cells.
+   No gradient, no vignette, no ground shadow, no drop shadow under the character.
+4. IDENTICAL SCALE in all 16 cells: same head-to-boot height, same shoulder width, same
+   camera distance. Do not zoom in or out between cells. Do not crop tighter in some cells.
+5. IDENTICAL character identity, costume, and palette in all 16 cells.
+6. His BODY (head to boots) fills about 45% of the cell height; the tall bow makes the whole
+   thing about 65%. Centered in its cell with even magenta margin on all four sides.
+   Do NOT satisfy this by shrinking the bow — shrink the character instead.
+7. Nothing crosses a cell edge — no hair, cape, bow, boot or hand may touch or overlap a
+   neighboring cell. The bow tips especially must stay well clear of the top and bottom
+   edges. If in doubt, draw the character smaller.
+8. Feet rest on the same horizontal baseline in every cell.
+9. NO text, NO labels, NO numbers, NO arrows, NO UI, NO watermark anywhere in the image.

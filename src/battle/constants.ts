@@ -2,11 +2,8 @@
 export const COUNTER_STRONG = 1.25;
 export const COUNTER_WEAK = 0.85;
 
-/** 高地对攻击方伤害加成 */
-export const HIGH_GROUND_ATK_MUL = 1.25;
-
-/** 防止死循环 */
-export const MAX_BATTLE_ROUNDS = 200;
+/** 回合上限：控制单场时长（超时判负），也防止死循环 */
+export const MAX_BATTLE_ROUNDS = 30;
 
 /** 玩家部署在战场最下两行（行号从 0 起，随关卡 `terrain` 高度变化） */
 export function playerDeployRowRange(gridHeight: number): readonly [number, number] {

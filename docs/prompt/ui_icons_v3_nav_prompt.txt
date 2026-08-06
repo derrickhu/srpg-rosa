@@ -1,0 +1,68 @@
+导航与节点图标 3x3（当前使用中）
+产出 → images/ui/tab_{shop,roster,adventure,inventory,challenge}.png
+       images/ui/icon_soul.png  images/ui/icon_lock.png
+       images/ui/node_supply.png  images/ui/node_boss.png
+生成器：Cursor 内置 GenerateImage，aspect_ratio 1:1
+
+切图（注意 --key-threshold，这张有紫色素材）：
+    python3 scripts/split-tile-sheet.py --input <sheet>.png --out-dir <tmp> --size 64 \
+        --names shop roster adventure inventory challenge soul lock supply boss
+    python3 scripts/despill-magenta.py <tmp> --min-spill 140
+
+为什么要 --min-spill 140：魂晶是紫水晶，紫和品红键色在色相上挨着。默认参数下
+despill 把「红蓝双高、绿偏低」一律当溢色压平，整块紫会变成白配深蓝。实测这张图里
+素材本身的品红度最高 133、键色底 237~245，取 140 卡在中间。换配色前先重新量一次。
+
+替换了什么：底栏五个 tab 的 emoji（🏪🛡⚔🎒👿）、节点条的 🛍👿、未解锁的 🔒、
+背包页魂晶卡片的 💎。魂晶此前**根本没有图标**，只有文字。
+
+关键约束（改 prompt 时别丢）：
+- 图标在游戏里只有 15~22px。所有「小部件」都会糊成一团，宁可少画。
+- 同一个图标既压在 #465470 深底栏上，也压在选中态 #EEC462 金色高亮上。
+  靠「亮填充 + 近黑粗描边」两头兼顾，所以**不能拿金色/浅黄当填充**，会在金底上消失。
+- 第 5 格恶魔头（副本 tab）和第 9 格兽颅（BOSS 节点）必须一眼分得开：
+  前者紫色、头顶双角、咧嘴笑；后者骨白、下方獠牙、空眼窝、不带角。
+
+---
+
+A 3-column x 3-row grid of 9 GAME UI ICONS for a cartoon fantasy tactics mobile game.
+
+CRITICAL BACKGROUND: the entire background, including all space between and around the icons, must be 100% solid flat MAGENTA, hex #FF00FF. It is a chroma key and will be deleted. No white, no grey, no gradient, no drop shadows onto the background.
+
+CRITICAL SIZE CONSTRAINT — the most important rule: these icons are displayed at only 15 to 22 pixels in the game. Every icon must be ONE bold, chunky, instantly readable silhouette that survives being shrunk to the size of a fingernail. Think of a chess piece, not an illustration. NO thin lines, NO small parts, NO fine detail, NO tiny highlights, NO text, NO numbers. If an element would be less than a tenth of the icon's width, delete it.
+
+CRITICAL — MUST READ ON TWO DIFFERENT BACKGROUNDS: some of these icons sit on a dark blue-grey bar (#465470), and the same icon also sits on a bright gold highlight (#EEC462) when its tab is selected. So every icon needs BOTH a THICK near-black outline (#1A1410) all the way around it AND a bright saturated fill inside. Do NOT fill any icon with gold or pale yellow — it would vanish on the gold background.
+
+STYLE — must match the game's characters, which are chunky cartoon figures with heavy black outlines and flat colours:
+- SOLID FILLED SILHOUETTES with a thick near-black outline. These are not line icons and not outline icons — the shape is filled in.
+- Flat saturated colour fills, at most 3 colours per icon plus the outline, plus one simple lighter shade for a single cel-shaded highlight.
+- Chunky, rounded, friendly shapes. Slightly exaggerated and toy-like.
+- No gradients, no glow, no bevel, no gloss, no photographic detail, no pixel art, no thin strokes.
+- Each icon drawn straight-on, facing the viewer, upright and centred.
+
+Per-cell contents, left-to-right then top-to-bottom:
+
+Cell 1 (SHOP) — a little market stall seen from the front: a wide striped awning in red and cream over a short brown wooden counter. Bold and symmetrical. No goods on the counter, no poles thinner than the outline.
+
+Cell 2 (ROSTER / CHARACTERS) — a knight's helmet seen from the front, steel blue (#4A7AB4) with a lighter blue top highlight and one wide dark visor slit across it. Rounded and helmet-shaped, no plume, no neck, no face.
+
+Cell 3 (ADVENTURE) — two swords crossed in an X. Steel grey blades with a lighter grey edge, chunky red-brown grips and simple crossguards. The blades must be WIDE and short, not thin and long.
+
+Cell 4 (INVENTORY) — a fat rounded backpack seen from the front, warm brown (#9A6A3A) with a lighter tan flap across the top and two short chunky straps. Squat and bulging.
+
+Cell 5 (CHALLENGE / DUNGEON) — a grinning purple demon head seen from the front, deep violet (#7A4AB4) with two big blunt horns curving up and out, two bright yellow eyes and a wide toothy grin. Cartoonish and mischievous, not scary. It must NOT look like a bare skull.
+
+Cell 6 (SOUL CRYSTAL) — a single large faceted crystal floating point-up, bright violet-purple (#9A5ADC) with a lighter lilac facet on one side and a deeper purple facet on the other. A clean geometric gem, chunky and wide, with no sparkles, no glow, no base, no setting.
+
+Cell 7 (LOCK) — a fat closed padlock, cool grey body (#8C8C94) with a lighter grey top edge, a thick U-shaped shackle on top and one dark keyhole in the middle. Very chunky, wider than it is tall in the body.
+
+Cell 8 (SUPPLY CRATE) — a wooden supply crate seen from the front, warm brown (#A87840) with a lighter tan plank across the middle forming a wide band, and darker brown corner braces. A simple sturdy box, no ropes, no lid handles.
+
+Cell 9 (BOSS) — a beast skull seen from the front, bone cream (#E8DCC0) with two big curved TUSKS jutting out and down from the lower sides, two dark empty eye sockets, and a small blunt snout. It must read as a monster trophy skull and must look clearly DIFFERENT from the purple demon head in cell 5 — no horns on top, no grin, no colour except bone and the dark sockets.
+
+LAYOUT RULES:
+1. EXACTLY 9 icons in a clean 3x3 arrangement.
+2. NO borders, NO dividing lines, NO frames, NO circles or badges behind the icons — they are separated only by magenta.
+3. Each icon fills about 70% of its cell, leaving a clear magenta margin on all four sides. Nothing touches or crosses into a neighbouring cell.
+4. All nine icons must feel like ONE set: same outline thickness, same level of simplification, same chunky proportions.
+5. NO text, no labels, no captions, no letters, no numbers, no watermark anywhere in the image.

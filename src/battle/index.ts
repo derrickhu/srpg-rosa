@@ -9,7 +9,7 @@ export type {
   UnitState,
   Vec2,
 } from './types';
-export { MAX_BATTLE_ROUNDS, playerDeployRowRange, COUNTER_STRONG, COUNTER_WEAK, HIGH_GROUND_ATK_MUL } from './constants';
+export { MAX_BATTLE_ROUNDS, playerDeployRowRange, COUNTER_STRONG, COUNTER_WEAK } from './constants';
 export { runBattle } from './engine';
 export { effectiveUnitDef } from './effectiveUnit';
 export type { SkillDamageContext } from './skillDamage';

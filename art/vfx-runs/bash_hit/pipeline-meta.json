@@ -1,0 +1,50 @@
+{
+  "source": "scripts/vfx-sheet.py",
+  "input": ".tmp-gen/bash_hit_raw.png",
+  "target": "vfx",
+  "mode": "vfx_sheet",
+  "rows": 2,
+  "cols": 3,
+  "cell_size": 256,
+  "threshold": 22,
+  "frame_labels": [
+    "bash_hit-1",
+    "bash_hit-2",
+    "bash_hit-3",
+    "bash_hit-4",
+    "bash_hit-5",
+    "bash_hit-6"
+  ],
+  "shared_crop_side": 306,
+  "crop_offsets": [
+    {
+      "x": 18,
+      "y": 141
+    },
+    {
+      "x": 17,
+      "y": 143
+    },
+    {
+      "x": 17,
+      "y": 143
+    },
+    {
+      "x": 25,
+      "y": 59
+    },
+    {
+      "x": 19,
+      "y": 61
+    },
+    {
+      "x": 34,
+      "y": 54
+    }
+  ],
+  "empty_frames": [],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}

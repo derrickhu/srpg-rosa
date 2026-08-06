@@ -1,0 +1,71 @@
+# 战斗背景 v6 —— 风格试点：明快配色 + 拉开明度层次
+#
+# 相对 v5 的关键改动，全部基于实测：
+#   v5 实测 亮部(L>80) 占比 0.0%、明度跨度 29.8、草地部分只有 2 个色相族，所以显得沉闷。
+#   v6 要求：整图明度跨度 >= 45，亮部集中在顶部树线与天空，
+#            主战场草地保持中调（不加大面积高光），亮度由单位身上的奶白区承担。
+#   注意：草地一旦也变亮，单位就会失去对比。这是刻意的分工，不要改。
+# 输出：375x667 (9:16)，拉伸铺满全屏，plain 格子不画贴图直接露出本图。
+
+A portrait-orientation (9:16 aspect ratio) game background for a bright, cheerful cartoon
+SRPG mobile game. View is a gentle 3/4 top-down perspective looking at a grassy battlefield
+clearing.
+
+CAMERA — READ THIS FIRST, IT OVERRIDES EVERYTHING ELSE:
+This is a pure TOP-DOWN view looking straight down at the ground from above, the way a
+tactics board game is seen. There is NO horizon, NO sky, NO clouds, NO distant mountains
+and NO vanishing point anywhere in the image. The top edge of the image is simply ground
+that is further away, not sky. Every single pixel is ground, grass, foliage or water seen
+from above. If any sky appears the image is wrong.
+
+COMPOSITION (top to bottom):
+- TOP 16%: a colourful cartoon tree line / forest edge seen FROM ABOVE — you look down onto
+  the tops of the canopies, you do not see trunks against a sky. Mix several clearly
+  different tree colours: bright lime-green round canopies, warm yellow-green ones, and a
+  few teal / blue-green conifers, so the strip reads as varied and cheerful rather than one
+  mass of green. Canopy tops are strongly SUNLIT, going almost cream (#F0F0E0) where the
+  light hits, deepening underneath. Thick bold near-black outlines. Along the base of the
+  trees, run a band of pale sandy cream soil (#E0E0D0 / #F0E0C0) with light stones and
+  scattered cream, pink and warm-gold flowers — this pale soil band is where the image gets
+  its brightness now that there is no sky.
+- REMAINING 84%: a large open grass field. This is the main battle area where units stand.
+
+GRASS FIELD (the most important part — read carefully):
+- The field must be BRIGHT, WARM and STRONGLY SATURATED: a sunny spring meadow in vivid
+  yellow-green / lime green. Anchor colours #B6D246, #A8D044, #8FC03C. This is a cheerful
+  casual game, not a moody one.
+- DO NOT darken the field. DO NOT desaturate it. DO NOT use deep forest green, olive,
+  khaki, sage or grey-green for the open field — those belong only to the tree line.
+- It must not be a flat single colour either. Get the variation from HUE SHIFTS inside that
+  bright band — some areas yellower, some areas a cooler leaf green — plus only gentle,
+  small steps in lightness. Variation must never come from making patches dark.
+- No large soft sun pool or bright oval in the middle of the field; keep the lightness even
+  across the play area so the tactics grid reads cleanly on top.
+- Scatter small low-contrast details to break monotony: grass tufts, clover patches, tiny
+  pebbles, a few dandelion dots. Keep them small and low-frequency — high-frequency speckle
+  fights with the unit outlines at small size.
+- Do not put big bright near-white highlights in the open field itself; the units standing on
+  it carry the near-white accents and must not have to compete. The field is vivid but even;
+  the sunlit canopy tops and the pale sandy soil band supply the near-white.
+
+COLOR:
+- Overall bright and saturated, cheerful casual-game palette.
+- Cream / near-white highlights (#F0F0E0, #E0E0D0) in the sky, cloud and sunlit canopy tops.
+- Warm gold (#F0C060) accents in the flowers.
+- Grass greens saturated and warm, not dusty.
+
+STYLE:
+- Thick bold near-black outlines on trees and major elements.
+- Simplified cartoon / cel-shaded, flat fills with one highlight and one shadow tone.
+- No gradients, no painterly rendering, no photographic texture.
+- Light source from upper-left.
+
+LAYOUT CONSTRAINTS:
+- NO sky, NO clouds, NO horizon line, NO mountains, NO buildings on a skyline.
+- NO characters, NO UI elements, NO grid lines.
+- The left and right edges must be clean grass (no trees or decorations on the sides) — the
+  game grid extends to full screen width.
+- The bottom edge must also be clean grass (no paths, no decorations at the bottom).
+- The image must read well when the game draws a tactics grid on top of the lower 73%.
+
+NO TEXT, no labels, no captions, no writing anywhere in the image.

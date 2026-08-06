@@ -1,0 +1,64 @@
+# 弓手 v4 —— 拉弓放箭 2x2，每朝向一张（generate2dsprite --mode attack）
+#
+# 参考图：art/sprite-runs/bow/identity-ref-<朝向>.png（v4 行走处理后的单帧）
+# 处理时 --scale-profile art/sprite-runs/bow/scale-profile.json
+#         --max-profile-scale-drift 0.6
+#
+# v3 之前弓手根本没有攻击动作，playAttack 会回退成站立——射手从不拉弓。这套补上。
+# attack_right 由 attack_left 镜像，不出图。下面 <朝向段落> 三选一。
+
+CRITICAL BACKGROUND REQUIREMENT, THIS OVERRIDES EVERYTHING ELSE: the background must be 100% solid
+flat MAGENTA, hex #FF00FF. NOT black, NOT white, NOT grey, NOT a gradient. Every pixel that is not
+the character must be exactly magenta #FF00FF, including between the cells. It is a chroma key.
+
+The attached reference image contains ONE SINGLE character frame. It defines only the CHARACTER
+IDENTITY and the ART STYLE, NOT the layout. Do NOT copy the reference's framing and do NOT produce
+a walk cycle — produce the 2x2 attack sheet described below.
+
+Match the reference exactly on: the same cheerful chibi forest archer, same leaf-green hood and
+tunic, same cream off-white cape, same warm reddish-brown hair, same big honey-wood bow with a pale
+bowstring, same thick near-black outlines, same flat fills with light cel shading, same
+giant-head-tiny-body proportions.
+
+A 2x2 sprite sheet: 4 frames of a BOW SHOT. <朝向段落>. The draw and release is the whole point —
+the bowstring and his arms must be the things that move, and the change between frames must be
+obvious in silhouette.
+
+  朝左：the character seen in LEFT SIDE PROFILE, facing LEFT the whole time and shooting toward the
+        left. He stays in LEFT profile in all 4 frames — never turn him toward the camera, never
+        flip him to face right.
+  朝下：the character FACING DOWN toward the camera the whole time, shooting toward the viewer. His
+        face stays visible in every frame. He holds the bow UPRIGHT in front of his chest, seen
+        flat-on from the front so its full D shape is visible, and draws the string toward himself.
+  朝上：the character seen FROM BEHIND, facing UP and AWAY from the camera the whole time, shooting
+        away from the viewer. His face is never visible. He holds the bow upright, seen flat-on
+        from behind so its full D shape reads.
+
+FRAME ORDER, left-to-right then top-to-bottom:
+  Frame 1 (top-left):     RAISE. He lifts the bow up in front of him, arm extended, string still
+                          relaxed and straight, one arrow nocked.
+  Frame 2 (top-right):    DRAW. He hauls the string far BACK past his cheek — the string bends into
+                          a deep sharp V and the bow limbs visibly flex. His rear elbow juts back
+                          behind his body. This is the most recognisable archery pose; make the V
+                          deep and unmistakable.
+  Frame 3 (bottom-left):  RELEASE. The string has snapped back to straight, his drawing hand flies
+                          open beside his cheek, his body recoils slightly, and a single arrow is
+                          leaving the bow, its tip clear of his front hand.
+  Frame 4 (bottom-right): RECOVERY. He lowers the bow back to a neutral carry at his side, string
+                          relaxed, body straightening.
+
+ABSOLUTE RULES:
+1. Background is 100% solid flat magenta #FF00FF everywhere including between cells. No gradient,
+   no vignette, no shadow.
+2. EXACTLY 4 equal-size cells in a 2x2 grid, every cell the same width and height.
+3. NO borders, NO dividing lines, NO gutters, NO frames between cells.
+4. IDENTICAL BODY SCALE and IDENTICAL camera distance in all 4 cells. Measure him from the top of
+   his hood to the soles of his boots, ignoring the bow: that height must be the same in all 4
+   cells. Do not zoom in on the action.
+5. HIS BODY (hood-top to boots, bow excluded) FILLS ABOUT 55% OF THE CELL HEIGHT. Draw him
+   generously big in the cell — a tiny figure lost in a huge empty cell is WRONG.
+6. Nothing crosses a cell edge. The bow tips and the flying arrow must stay clear of the edges.
+7. Feet rest on the same horizontal baseline in every cell.
+8. Draw the CHARACTER AND HIS ARROW ONLY. NO motion-blur streaks, NO speed lines, NO energy trail,
+   NO glow, NO impact flash, NO dust.
+9. NO text, no labels, no numbers, no UI pointers, no watermark.

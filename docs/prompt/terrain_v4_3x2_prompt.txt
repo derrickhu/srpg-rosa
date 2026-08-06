@@ -1,0 +1,51 @@
+// 地形 decal v4（现役）。切图：
+//   python3 scripts/split-tile-sheet.py --input <sheet>.png --out-dir images/terrain \
+//       --names high forest river swamp wall abyss --size 128
+//   python3 scripts/despill-magenta.py images/terrain
+//
+// 相对 v3 改了三件事：
+// 1. **去掉黑描边**。v3 写的是 thick bold black outlines，但风格圣经 §5 说得很明白：
+//    黑描边是角色的专利，图底分离靠的就是「地形不描边、角色描 30% 黑边」这个反差。
+//    地形也描黑边，棋盘上就分不出谁是棋子谁是地板。
+// 2. 键色从浅灰改成品红。城墙本身就是灰的，浅灰底会被抠像一起吃掉。
+// 3. 明度序写进 prompt 当硬约束。实测结果（中位明度）：
+//    高地 L65 > 河流 L54 > 城墙 L42 > 森林 L28 > 深渊 L26 > 沼泽 L21，
+//    可通行的亮、阻挡和惩罚的暗，玩家不看图例也能猜出哪里能走。
+
+A 3-column x 2-row grid (6 cells) of TERRAIN TILE sprites for a cartoon tactics game, drawn as flat decals that will be pasted on top of a separate bright yellow-green grass background.
+
+CRITICAL BACKGROUND REQUIREMENT: the background of the whole image, including all the space between and around the tiles, must be 100% solid flat MAGENTA, hex #FF00FF. Not white, not grey, not a gradient. It is a chroma key and will be deleted.
+
+CRITICAL — NO GRASS: these tiles sit on grass that is supplied separately underneath. Do NOT draw any grass, lawn, meadow or green ground under or around the tiles. Only draw the terrain feature itself, surrounded by magenta.
+
+CRITICAL — NO BLACK OUTLINES: unlike the characters in this game, terrain must NOT have thick black outlines. Use either no outline at all, or a soft outline in a darker shade of the tile's own colour. The characters own the heavy black linework; the ground must stay quiet so the characters pop against it.
+
+PERSPECTIVE: straight top-down / very slightly tilted bird's-eye. NOT isometric, NOT diamond-shaped. The bottom edge of each tile reads as horizontal. Each tile is roughly square with ORGANIC irregular edges — a patch of terrain seen from above, with soft rounded or rocky borders, never a perfect geometric square.
+
+FLATNESS: only the HIGH GROUND and WALL tiles have visible thickness. Every other tile is a flat surface patch with no cube shape and no side faces, like a sticker lying on the ground.
+
+Per-cell contents, left-to-right then top-to-bottom:
+
+Cell 1 (HIGH GROUND) — a raised plateau of warm sandy tan rock, seen from just above. The flat top is light warm sand (#D8B878) with a couple of soft cracks and two or three small pebbles. A short cliff edge in darker warm brown (#A07840) runs along its lower side to show it stands above the ground. Brighter than everything else in the sheet.
+
+Cell 2 (FOREST) — three chunky round tree canopies seen from directly above, clustered together. Deep rich green (#2E6B24) with a lighter green sunlit top on each canopy. A small dark shadow pool under the cluster. Clearly much DARKER than the tan plateau.
+
+Cell 3 (RIVER) — a patch of flowing water seen from above. Bright clean blue (#2A8CD2) with two or three soft white ripple strokes and a slightly deeper blue in the middle. Organic rounded edges like a section of stream. Perfectly flat.
+
+Cell 4 (SWAMP) — a flat patch of murky bog. Dark olive-brown water (#5A5A2E) with a muddy brown rim, two or three small bubbles and a single lily pad. Dull and dark — it must look unpleasant next to the clean blue river.
+
+Cell 5 (WALL) — a block of grey stone fortification seen from above. Cool grey blocks (#8C8C8C) with simple mortar lines and a row of square crenellations along the top edge. Slight thickness with a soft shadow on one side. Neutral grey, no colour cast.
+
+Cell 6 (ABYSS) — a hole torn in the ground. A ring of broken grey-brown rock at ground level surrounding a very dark purple-black void (#140322) in the centre. A few cracks radiating outward. It is a hole IN the ground, not a raised block. The darkest tile by far.
+
+LIGHTNESS ORDER, this is a gameplay signal and must be obeyed: the passable tiles (high ground, river) are LIGHT and inviting; the costly or blocking tiles (forest, swamp, wall, abyss) are progressively DARKER, with abyss nearly black. A player must be able to guess what is walkable from brightness alone.
+
+LOW FREQUENCY: each tile is displayed only about 40 pixels wide in game. Keep every shape big and soft. No fine texture, no dense speckling, no hatching, no tiny detail — it turns into noise at that size and fights the characters standing on it.
+
+STYLE: hand-drawn cartoon, flat saturated fills with simple cel shading, no gradients, no noise, no painterly brushwork, no photographic detail, no pixel art.
+
+LAYOUT RULES:
+1. EXACTLY 6 equal-size cells in a 3x2 grid.
+2. NO borders, NO dividing lines, NO frames between cells — separated only by magenta.
+3. Each tile occupies about 70% of its cell, leaving a clear magenta margin on all four sides. Nothing touches or crosses a cell edge.
+4. NO text, no labels, no captions, no letters, no numbers, no watermark anywhere.

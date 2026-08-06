@@ -1,25 +1,35 @@
 /**
- * Barrel re-export — all game-state logic is now split across:
- *   state/GameState.ts      – types, creation, basic accessors
- *   state/DeployManager.ts  – placement, terrain, build-battle-units
- *   state/ShopManager.ts    – shop roll / buy / skill-bind
- *   state/ProgressManager.ts – victory, stage advance, run reset
+ * Barrel re-export — 两层玩法状态拆分：
+ *   state/GameState.ts      – MetaState / RunState / 聚合类型与访问器
+ *   state/DeployManager.ts  – 部署、地形、构建战斗单位
+ *   state/ShopManager.ts    – 局内 roguelike 商店
+ *   state/ProgressManager.ts – 节点推进、通关结算、战利品、解锁
+ *   state/MetaManager.ts    – 局外养成（升级 / 学技能 / 装配 / meta 解锁）
  */
 
 export {
   type GamePhase,
   type ShopOffer,
-  type StatBonus,
+  type LootOption,
   type PlacementEntry,
   type TerrainOverlayCell,
+  type MetaState,
+  type RunState,
   type MvpGameState,
   type BuyShopContext,
-  ZERO_STAT,
-  addStatBonus,
+  META_VERSION,
   createInitialState,
-  getMercenary,
-  benchMercenaries,
+  createInitialMeta,
+  createRunState,
+  requireRun,
+  getCharacter,
+  partyCharacters,
+  benchCharacters,
+  currentDungeon,
+  currentNode,
   currentStage,
+  currentEnemyScale,
+  nodesUntilBoss,
   battleTerrain,
   shuffle,
   nextPid,
@@ -29,26 +39,51 @@ export {
 export {
   canPlaceAt,
   canPlaceTerrain,
+  terrainChargesTotal,
   placeTerrainCell,
-  placeMercenary,
+  placeCharacter,
   removePlacement,
-  attachStatPotionToPlacement,
-  attachPotionToPlacement,
   cycleSkillForRoster,
+  effectiveOwnedSkillIds,
+  activeSkillIdForRun,
+  tempSkillIdForRoster,
   buildBattleUnits,
   undoDeployForRetry,
   getMaxDeploy,
 } from './state/DeployManager';
 
 export {
-  rosterEligibleForSkillBind,
+  rosterEligibleForTempSkill,
   rollShop,
   buyShopOffer,
-  buyShopItem,
 } from './state/ShopManager';
 
 export {
+  NODE_FIRST_CLEAR_SOUL,
+  BOSS_FIRST_CLEAR_SOUL,
+  DUNGEON_REPEAT_SOUL,
+  startRun,
   applyVictory,
-  advanceStage,
-  resetRun,
+  canAutoBattle,
+  rollLoot,
+  claimLoot,
+  skipLoot,
+  advanceNode,
+  isRunComplete,
+  finishRunVictory,
+  dungeonClearSoul,
+  abandonRun,
+  applyDungeonClearUnlocks,
 } from './state/ProgressManager';
+
+export {
+  MAX_CHARACTER_LEVEL,
+  SKILL_LEARN_COST,
+  levelUpCharacter,
+  equipSkill,
+  unlockableSkillsFor,
+  learnSkill,
+  unlockCharacterWithMeta,
+  unlockDungeonWithMeta,
+  isDungeonUnlocked,
+} from './state/MetaManager';

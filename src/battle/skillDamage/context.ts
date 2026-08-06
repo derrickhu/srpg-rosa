@@ -1,4 +1,4 @@
-import type { UnitDef, UnitKind, UnitState } from '../types';
+import type { UnitArchetypeDef, UnitDef, UnitKind, UnitState } from '../types';
 import type { SkillSpec } from '@/data/skillCatalog';
 import type { TerrainGrid } from '../grid';
 

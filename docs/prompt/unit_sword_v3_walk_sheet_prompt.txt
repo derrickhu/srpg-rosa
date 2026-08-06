@@ -1,0 +1,98 @@
+# 单位 sword v3（剑士职业）—— 四方向行走 sheet（generate2dsprite player_sheet, 4x4）
+#
+# 取代 Godot 手搭的 sword 集合。角色原型来自 units_lineup_v2 的 v4_2 第 1 位，
+# 生图时把该角色单抠出来当参考图传进去（.pilot/sword_v3/ref_swordsman.png）。
+#
+# 沿用 bow v3 验证过的三条（别改回去）：
+#   1. 不写 "N heads tall"，改成「头连头发占总高一半、身体近正方形」
+#   2. 极简：全身 4-6 色，无腰带扣甲缝碎件，五官只有眼睛眉毛
+#   3. 记忆点用祈使句写死，并说明为什么允许超框——运行时按身体高度归一化
+#      （animAtlas 的 bodySpan），道具不会把角色压小也不会被裁
+#
+# bow v3 的教训：只说"道具可以很大"模型会缩小它，必须同时说清**什么形状特征让它可辨识**
+# （弓是弓弦，剑是宽刃 + 横向护手），并明令「要满足占比就缩小角色，不要缩小道具」。
+#
+# 键色：#FF00FF —— 角色主色为绯红/银白/棕，红与品红同处暖端但明度饱和度差得远，
+#        实测 v4_2 抠色干净；若出现红色被误抠再改绿底。
+# 下游：generate2dsprite.py process --target player --mode player_sheet --align feet
+#       --shared-scale --component-mode largest --write-scale-profile
+
+A 4x4 sprite sheet showing a full 4-direction walk cycle for a top-down tactics RPG unit.
+Keep the character in the reference image: same face, same crimson tunic, same silver-white
+breastplate, same brown hair, same palette. Only the facing direction, the walk pose and the
+sword (described below) change.
+
+HIS SWORD IS HIS WHOLE IDENTITY — in the reference image it is far too small. Fix that.
+All of the following are mandatory:
+- A HUGE TWO-HANDED GREATSWORD, LONGER THAN HE IS TALL. Carried resting on one shoulder at a
+  clear diagonal, so his outline reads as a bold slash across the cell.
+- The blade is BROAD and straight with a clean pointed tip, in bright polished silver-white,
+  and there is a clear STRAIGHT CROSSGUARD at right angles to the blade above his grip.
+  The broad blade plus the crossbar is what makes it read as a sword at tiny size — a thin
+  blade with no crossguard turns into an unreadable stick.
+- The blade tip rising well above his head is REQUIRED, not merely allowed. In game the
+  character is scaled by his body height only, so a huge sword costs him nothing.
+- Do not shrink the sword to fit the cell. Shrink the character instead.
+
+PROPORTIONS — check against this, drawing him too tall is the most common failure:
+- Extreme super-deformed mascot. His HEAD INCLUDING HAIR is about HALF of his body height.
+  Body, arms and legs together are the other half: short, stubby, chunky, almost no neck.
+- His BODY, from the top of his hair down to his boots and not counting the sword, fits in a
+  roughly SQUARE box — about as wide as it is tall.
+- This is NOT a 2-head or 2.5-head chibi. Think 1.5-head mascot: giant head, tiny body.
+
+CHARACTER: a young knight.
+- CRIMSON RED is his identity colour and covers most of his body.
+- A plain SILVER-WHITE breastplate is his one light area, reading as near-white (#F0F0E0).
+- Simple warm brown hair, warm tan boots.
+- No cape, no belt, no pouch, no shield, no shoulder studs.
+
+SIMPLIFY — characterise him with a few bold strokes and colours, never by piling on detail.
+He displays about 48 pixels tall in game, where detail becomes noise:
+- Only 4 to 6 flat colours on the whole character.
+- NO belts, straps, buckles, pouches, rivets, armour seams, laces, stitching or trim.
+- Face is minimal: two simple dark eyes, two eyebrows, at most a tiny mouth line. No nose,
+  no ear detail, no blush.
+- Arms and legs are simple rounded stubs; hands are mitten shapes with no fingers.
+
+ART STYLE (project style bible — do not deviate):
+hand-drawn cartoon game sprite, thick near-black outlines (pure black or very dark warm
+brown — never a mid-tone or colorful outline), flat saturated fills with light cel shading
+(one highlight tone, one shadow tone), no gradients, no texture noise, no painterly
+rendering, no photographic detail.
+
+BRIGHTNESS: bright saturated palette with a genuine near-white highlight. Never uniformly
+dark or muted. Avoid grey, dusty, chalky or desaturated colours.
+
+CAMERA: 3/4 top-down view from slightly above, consistent in all 16 cells. You can see the
+top of the head, the shoulders, and the full body down to the boots.
+
+SHEET LAYOUT — rows are facing direction, columns are walk frames:
+  Row 1 (top):    facing DOWN, toward the camera, face fully visible
+  Row 2:          facing LEFT, left side profile
+  Row 3:          facing RIGHT, right side profile, mirrored from row 2
+  Row 4 (bottom): facing UP, away from the camera, back of the head and armour visible.
+                  The huge sword must still be plainly visible over his shoulder in this row.
+  <<< 迈腿描述改为原样粘贴 _walk_motion_block.txt >>>
+  这里原本写的是 "slight body bob down"，实测朝下那行腿部剪影差异只有 6.2%（血牙"heavy"
+  写法是 23~52%），玩家看到的是一尊平移的雕像。v4 换成强化块后升到 15.4%/47.5%/20.3%。
+
+ABSOLUTE RULES:
+1. EXACTLY 16 equal-size cells in a 4x4 grid. Every cell the same width and height.
+2. NO borders, NO dividing lines, NO frames between cells. Cells are separated only by the
+   flat background color.
+3. Background is 100% solid flat magenta #FF00FF everywhere, including between the cells.
+   No gradient, no vignette, no ground shadow, no drop shadow under the character.
+4. IDENTICAL BODY SCALE in all 16 cells — this is the single most important consistency
+   rule. Measure him from the top of his hair to the soles of his boots, IGNORING the sword:
+   that height must be the same in all 16 cells. The sword's apparent length changes with the
+   pose and that is fine, but the body must never change size. Do not shrink the body in the
+   cells where the sword happens to take up more room — let the sword run closer to the cell
+   edge instead. Same camera distance in every cell; never zoom in or out between cells.
+5. IDENTICAL character identity, costume, and palette in all 16 cells.
+6. His BODY (hair-top to boots, sword excluded) fills about 45% of the cell height in EVERY
+   cell. That 45% is fixed; the sword extends past it by whatever the pose needs.
+   Centered with magenta margin on all four sides.
+7. Nothing crosses a cell edge. The blade tip especially must stay clear of the edges.
+8. Feet rest on the same horizontal baseline in every cell.
+9. NO text, NO labels, NO numbers, NO arrows, NO UI, NO watermark anywhere in the image.

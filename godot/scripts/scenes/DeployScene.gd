@@ -18,12 +18,16 @@ const DEPLOY_CELL_SCENE := preload("res://scenes/DeployCell.tscn")
 
 var selected_def_id: String = "sword"
 var cell_nodes: Dictionary = {}
+var title_bitmap: BitmapText
+var info_bitmap: BitmapText
 
 
 func _ready() -> void:
+	print("[boot] DeployScene ready")
 	_apply_safe_area()
+	_setup_bitmap_text()
 	var stage: Dictionary = GameState.get_stage()
-	title_label.text = stage["name"]
+	_set_title(stage["name"])
 	start_button.pressed.connect(_on_start_pressed)
 	home_button.pressed.connect(func() -> void:
 		home_requested.emit()
@@ -31,6 +35,24 @@ func _ready() -> void:
 	_build_roster()
 	_build_board()
 	_refresh()
+
+
+func _setup_bitmap_text() -> void:
+	title_bitmap = BitmapTextUtil.replace_label(title_label, "", 30, Color(0.7077659, 0.69076943, 0.29804108))
+	info_bitmap = BitmapTextUtil.replace_label(info_label, "", 18, Color(0.22352941, 0.22745098, 0.13333334))
+	BitmapTextUtil.overlay_button(home_button, "回首页", 28, Color(1.0, 0.95686275, 0.78431374))
+	BitmapTextUtil.overlay_button(start_button, "开始战斗", 28, Color(1.0, 0.95686275, 0.78431374))
+
+
+func _set_title(value: String) -> void:
+	if title_bitmap != null:
+		title_bitmap.text = value
+
+
+func _set_info(value: String) -> void:
+	if info_bitmap != null:
+		info_bitmap.text = value
+	info_label.text = ""
 
 
 func _notification(what: int) -> void:
@@ -53,10 +75,10 @@ func _build_roster() -> void:
 		child.queue_free()
 	for def_id in GameState.ROSTER:
 		var button: Button = Button.new()
-		button.text = GameState.unit_label(def_id)
 		button.custom_minimum_size = Vector2(120, 48)
 		button.pressed.connect(_on_roster_pressed.bind(def_id))
 		roster_box.add_child(button)
+		BitmapTextUtil.overlay_button(button, GameState.unit_label(def_id), 20, Color.WHITE)
 
 
 func _build_board() -> void:
@@ -118,11 +140,11 @@ func _refresh() -> void:
 			var deployable: bool = y >= rows.x and y <= rows.y
 			cell.apply_state(terrain_id, deployable, placement)
 
-	info_label.text = "已选择：%s  上阵：%d/%d" % [
+	_set_info("已选择：%s  上阵：%d/%d" % [
 		GameState.unit_label(selected_def_id),
 		GameState.placements.size(),
 		GameState.MAX_DEPLOY,
-	]
+	])
 
 
 func _apply_board_cell_size() -> void:
@@ -143,4 +165,4 @@ func _apply_board_cell_size() -> void:
 
 
 func _show_hint(message: String) -> void:
-	info_label.text = message
+	_set_info(message)

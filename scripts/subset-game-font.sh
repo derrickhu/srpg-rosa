@@ -3,15 +3,19 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-SRC="$ROOT/godot/art/fonts/SourceHanSansSC-Bold.otf"
 OUT="$ROOT/godot/art/fonts/SourceHanSansSC-Bold-subset.otf"
 CHARS_FILE="$(mktemp)"
 trap 'rm -f "$CHARS_FILE"' EXIT
 
+SRC="$ROOT/godot/art/fonts/SourceHanSansSC-Bold.otf"
 if [[ ! -f "$SRC" ]]; then
-  echo "缺少字体: $SRC"
+  SRC="$ROOT/godot/art/fonts/SourceHanSansSC-Medium.otf"
+fi
+if [[ ! -f "$SRC" ]]; then
+  echo "缺少字体源文件（Bold 或 Medium）: godot/art/fonts/"
   exit 1
 fi
+echo "字体源: $SRC"
 
 PYFT="$(command -v pyftsubset || true)"
 if [[ -z "$PYFT" ]]; then

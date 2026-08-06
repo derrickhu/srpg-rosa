@@ -1,0 +1,54 @@
+// UI 图标 v2（现役）。切图：
+//   python3 scripts/split-tile-sheet.py --input <sheet>.png --out-dir <tmp> --size 64 \
+//       --names gold essence hp deploy terrain potion_heal potion_draught potion_slow gear
+//   python3 scripts/despill-magenta.py <tmp>
+//   然后按 icon_<name>.png 拷进 images/ui/
+//
+// 三条要点：
+// 1. **一次出全套**。上一版图标是分几次生的，粗细和简化程度都对不齐，摆在一行里像凑的。
+// 2. 三个药瓶必须**只有液体颜色不同**，玩家才会把它们读成一组。键名对齐 POTION_DEFS 的
+//    id（heal / draught / slow），代码里直接拼 `icon_potion_${pid}`。
+// 3. 齿轮的轴孔是空的，切图脚本填洞只用于分块、不能拿去当 alpha，否则孔会被糊死。
+//
+// 已出但未装进游戏的：hp（红心）。目前没有界面要用它，按「不留死资源」的规矩没入库；
+// 要用时从这份 prompt 重出一次即可。
+
+A 3-column x 3-row grid of 9 GAME UI ICONS for a cartoon tactics mobile game.
+
+CRITICAL BACKGROUND: the entire background, including all space between and around the icons, must be 100% solid flat MAGENTA, hex #FF00FF. It is a chroma key and will be deleted. No white, no grey, no gradient, no drop shadows onto the background.
+
+CRITICAL SIZE CONSTRAINT — this is the single most important rule: each icon is displayed at only 22x22 pixels in the game. Every icon must be ONE bold, chunky, instantly readable silhouette that survives being shrunk to the size of a fingernail. Think of a chess piece, not an illustration. NO thin lines, NO small parts, NO fine detail, NO tiny highlights, NO text, NO numbers. If an element would be less than a tenth of the icon's width, delete it.
+
+STYLE — must match the game's characters, which are chunky cartoon figures with heavy black outlines and flat colours:
+- SOLID FILLED SILHOUETTES with a THICK near-black outline (#1A1410) around the outside of every icon. These are not line icons and not outline icons — the shape is filled in.
+- Flat saturated colour fills, at most 3 colours per icon plus the outline, plus one simple lighter shade for a single cel-shaded highlight.
+- Chunky, rounded, friendly shapes. Slightly exaggerated and toy-like.
+- No gradients, no glow, no bevel, no gloss, no photographic detail, no pixel art, no thin strokes.
+- Each icon is drawn straight-on, facing the viewer, upright and centred.
+
+Per-cell contents, left-to-right then top-to-bottom:
+
+Cell 1 (GOLD) — a single fat round gold coin seen face-on, warm gold (#EEC446) with a deeper amber rim, and one simple star or circle stamped in the centre. Unmistakably money.
+
+Cell 2 (ESSENCE) — a faceted crystal shard floating point-up, pale mint green (#C4E0D2) with a slightly deeper mint on one facet. Clean geometric gem shape, no sparkles, no glow.
+
+Cell 3 (HEALTH) — a fat rounded heart, strong red (#E05446) with a deeper red lower half. Very chunky and symmetrical.
+
+Cell 4 (DEPLOY) — a simple pennant banner on a short thick pole, planted in the ground. Banner in warm gold (#EEC462), pole in dark brown. It means "how many units you may place".
+
+Cell 5 (TERRAIN) — a single chunky terrain tile seen at a slight angle: a thick slab with a warm sandy tan top (#D8B878) and a darker brown side edge showing its thickness, with one small round green bush sitting on top. It means "a terrain piece you can place".
+
+Cell 6 (HEALING POTION) — a fat round-bellied flask with a short neck and a cork, filled with bright red liquid (#E05446). One straight diagonal white highlight streak on the glass. Chunky bottle shape.
+
+Cell 7 (STRENGTH POTION) — the SAME fat flask shape as cell 6 for consistency, but filled with bright orange liquid (#EE8A3C). Same cork, same single white highlight.
+
+Cell 8 (SLOW POTION) — the SAME fat flask shape again, filled with cool blue liquid (#3C8ADC). Same cork, same single white highlight. Cells 6, 7 and 8 must be identical in shape and differ ONLY in liquid colour, so the player reads them as a set.
+
+Cell 9 (SETTINGS) — a chunky six-tooth gear wheel with a big round hole in the middle. Cool blue-grey (#54708C) with a lighter grey top edge. The teeth must be short, wide and blunt so they do not disappear when shrunk.
+
+LAYOUT RULES:
+1. EXACTLY 9 icons in a clean 3x3 arrangement.
+2. NO borders, NO dividing lines, NO frames, NO circles or badges behind the icons — they are separated only by magenta.
+3. Each icon fills about 70% of its cell, leaving a clear magenta margin on all four sides. Nothing touches or crosses into a neighbouring cell.
+4. All nine icons must feel like ONE set: same outline thickness, same level of simplification, same chunky proportions.
+5. NO text, no labels, no captions, no letters, no numbers, no watermark anywhere in the image.

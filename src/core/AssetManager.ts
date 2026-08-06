@@ -9,9 +9,14 @@ import { AssetLoader } from './AssetLoader';
  * bypassing PIXI.Assets which has URL resolution issues in the mini-game
  * environment (location.href is simulated as 'game.js').
  *
- * Paths are logical game paths (e.g. images/terrain/plain.png).
+ * Paths are logical game paths (e.g. images/terrain/forest.png).
  * CDN 目录会先 resolveOrDownload，bundled 目录直接走本地包内路径。
  */
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+declare const wx: any;
+declare const GameGlobal: any;
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 export interface AssetBundleDef {
   name: string;

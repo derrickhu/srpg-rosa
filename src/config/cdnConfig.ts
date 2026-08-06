@@ -5,8 +5,8 @@ import { GAME_KEY } from './gameKey';
 /**
  * CloudBase COS CDN 配置（与 xiao_chu 同环境、按 GameKey 隔离远端目录）。
  *
- * 逻辑路径（代码里写的 `images/terrain/plain.png`）不变；
- * 远端对象路径为 `{cdnFilePrefix}/images/terrain/plain.png`。
+ * 逻辑路径（代码里写的 `images/terrain/forest.png`）不变；
+ * 远端对象路径为 `{cdnFilePrefix}/images/terrain/forest.png`。
  */
 export const cdnConfig = {
   gameKey: GAME_KEY,

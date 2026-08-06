@@ -40,13 +40,13 @@ alignment = 1
 [node name="TitleLabel" type="Label" parent="CenterBox" unique_id=191666851]
 layout_mode = 2
 theme_override_font_sizes/font_size = 44
-text = "无尽纹章"
+text = ""
 horizontal_alignment = 1
 
 [node name="SubtitleLabel" type="Label" parent="CenterBox" unique_id=1340346633]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "Godot 迁移 MVP"
+text = ""
 horizontal_alignment = 1
 
 [node name="StartButton" type="Button" parent="CenterBox" unique_id=2015105276]
@@ -54,4 +54,4 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "开始 Demo"
+text = ""

@@ -38,6 +38,7 @@ export function effectiveUnitDef(
     id: b.id,
     name: b.name,
     skill: sk,
+    tempSkill: u.tempSkill,
     maxHp: baseMaxHp,
     atk: Math.max(1, baseAtk + (u.bonusAtk ?? 0) + timedAtk - timedAtkDown),
     spd: Math.max(1, baseSpd + (u.bonusSpd ?? 0) + timedSpd - timedSpdDown),

@@ -1,5 +1,5 @@
 import type { SkillDamageSpec } from '@/data/skillCatalog';
-import { computeDamage, counterMultiplier, terrainAttackMul } from '../damage';
+import { computeDamage, counterMultiplier, terrainAttackMul, terrainDefenseMul } from '../damage';
 import type { UnitDef } from '../types';
 import type { SkillDamageContext } from './context';
 
@@ -7,9 +7,8 @@ function atkDefScaled(base: UnitDef, atk: number): UnitDef {
   return { ...base, atk };
 }
 
-function applyTempAtkMul(self: SkillDamageContext['self'], n: number): number {
-  const m = self.tempAtkMul ?? 1;
-  return Math.max(1, Math.floor(n * m));
+function clampDamage(n: number): number {
+  return Math.max(1, Math.floor(n));
 }
 
 /** `custom` 用：`registerSkillDamageCalculator(id, fn)` */
@@ -20,7 +19,7 @@ const customCalculators = new Map<
 
 /**
  * 注册自定义伤害公式（`damage: { kind: 'custom', id, params }`）。
- * `fn` 应返回 **尚未乘** `tempAtkMul` 的整数伤害（与内置 `scaledAtk` 一致，最后统一乘药剂倍率）。
+ * `fn` 返回整数伤害，最终统一钳到 ≥1。
  */
 export function registerSkillDamageCalculator(
   id: string,
@@ -37,7 +36,15 @@ function scaledStandard(ctx: SkillDamageContext, atkMul: number): number {
   if (atkMul <= 0) return 0;
   const atk = Math.max(1, Math.floor(ctx.casterDef.atk * atkMul));
   const sad = atkDefScaled(ctx.casterDef, atk);
-  return applyTempAtkMul(ctx.self, computeDamage(sad, ctx.targetDef, ctx.terrain, ctx.self.pos));
+  return clampDamage(computeDamage(sad, ctx.targetDef, ctx.terrain, ctx.self.pos, ctx.target.pos));
+}
+
+/**
+ * `applyTerrain` 同时管**两头**的地形：施法者站的格（攻击加成）和目标站的格（减伤）。
+ * 只吃一头会让「站进森林」对普攻有效、对技能无效，玩家学不会这条规则。
+ */
+function terrainMul(ctx: SkillDamageContext): number {
+  return terrainAttackMul(ctx.terrain, ctx.self.pos) * terrainDefenseMul(ctx.terrain, ctx.target.pos);
 }
 
 function flatDamage(
@@ -48,8 +55,8 @@ function flatDamage(
 ): number {
   let n = amount;
   if (applyCounter) n *= counterMultiplier(ctx.casterDef.id, ctx.targetDef.id);
-  if (applyTerrain) n *= terrainAttackMul(ctx.terrain, ctx.self.pos);
-  return applyTempAtkMul(ctx.self, Math.max(1, Math.floor(n)));
+  if (applyTerrain) n *= terrainMul(ctx);
+  return clampDamage(n);
 }
 
 function percentTargetMaxHp(
@@ -60,8 +67,8 @@ function percentTargetMaxHp(
 ): number {
   let n = ctx.targetDef.maxHp * ratio;
   if (applyCounter) n *= counterMultiplier(ctx.casterDef.id, ctx.targetDef.id);
-  if (applyTerrain) n *= terrainAttackMul(ctx.terrain, ctx.self.pos);
-  return applyTempAtkMul(ctx.self, Math.max(1, Math.floor(n)));
+  if (applyTerrain) n *= terrainMul(ctx);
+  return clampDamage(n);
 }
 
 /**
@@ -88,7 +95,7 @@ function dispatchDamage(d: SkillDamageSpec, ctx: SkillDamageContext): number {
       if (!fn) {
         throw new Error(`[skillDamage] unknown custom calculator id: "${d.id}" (skill ${ctx.spec.id})`);
       }
-      return applyTempAtkMul(ctx.self, fn(ctx, d.params));
+      return clampDamage(fn(ctx, d.params));
     }
   }
 }

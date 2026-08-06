@@ -1,0 +1,61 @@
+# 盾卫 —— 四方向行走 4x4（generate2dsprite --mode player_sheet）
+#
+# 参考图：.pilot/ref_shield.png（从 lineup_v4_2 抠出的单帧，只锁身份+风格）
+# 处理后 --write-scale-profile art/sprite-runs/shield/scale-profile.json，攻击 sheet 复用它。
+#
+# 风格段落取自 _style_block.txt，行走段落取自 _walk_motion_block.txt，改措辞前先读那两个文件。
+
+A 4x4 sprite sheet showing a full 4-direction walk cycle for a top-down tactics RPG unit. Keep
+the character in the reference image exactly: same stout chibi shield bearer, same steel-blue
+armour and blue hood, same cream off-white rectangular tower shield with a bold blue cross on it,
+same thick near-black outlines, same flat fills with light cel shading, same palette, same
+giant-head-tiny-body proportions. Only the facing direction and the walk pose change between cells.
+
+HIS TOWER SHIELD IS HIS WHOLE IDENTITY. It is a big rectangular slab, WIDER THAN HIS OWN BODY and
+nearly as tall as he is, cream off-white with one bold blue cross. He carries it on one arm out to
+his SIDE, held slightly forward — never flat across his front, because his legs must stay visible
+so the walk reads. In the back view the shield is still clearly visible past his silhouette.
+
+<<< 此处原样粘贴 _walk_motion_block.txt >>>
+
+IDENTICAL BODY SCALE in all 16 cells: measure him from the top of his head to the soles of his
+boots, ignoring the shield — that height must be the same in all 16 cells. Same camera distance
+in every cell.
+
+PROPORTIONS: extreme super-deformed mascot. His head including hood is about HALF of his body
+height; body, arms and legs together are the other half — short, stubby, chunky, almost no neck.
+His body, head-top to boots and not counting the shield, fits in a roughly SQUARE box. Not a
+2-head or 2.5-head chibi; think 1.5-head mascot.
+
+SIMPLIFY: only 4 to 6 flat colours. STEEL BLUE is his identity colour and covers most of his body;
+the cream shield face is his one light area, reading as near-white. No belts, straps, buckles,
+pouches, rivets, armour seams, laces, stitching or trim. Face is minimal: two simple dark eyes,
+two eyebrows, at most a tiny mouth line. Arms and legs are simple rounded stubs; hands are mitten
+shapes with no fingers. Nothing on the shield except the single blue cross.
+
+ART STYLE: hand-drawn cartoon game sprite, thick near-black outlines, flat saturated fills with
+light cel shading (one highlight tone, one shadow tone), no gradients, no texture noise, no
+painterly rendering. Bright saturated palette with a genuine near-white highlight.
+
+CAMERA: 3/4 top-down view from slightly above, consistent in all 16 cells.
+
+SHEET LAYOUT — rows are facing direction:
+  Row 1 (top):    facing DOWN toward the camera, face fully visible
+  Row 2:          facing LEFT, left side profile
+  Row 3:          facing RIGHT, right side profile, mirrored from row 2
+  Row 4 (bottom): facing UP away from the camera, back of the head and armour visible — the tower
+                  shield must still be plainly visible at his side
+
+ABSOLUTE RULES:
+1. EXACTLY 16 equal-size cells in a 4x4 grid, every cell the same width and height.
+2. NO borders, NO dividing lines, NO frames between cells — cells separated only by flat
+   background colour.
+3. Background is 100% solid flat pure magenta #FF00FF everywhere including between cells.
+   No gradient, no vignette, no shadow.
+4. IDENTICAL character identity, costume and palette in all 16 cells.
+5. His BODY (head-top to boots, shield excluded) fills about 45% of the cell height in EVERY cell.
+   The shield extends past that.
+6. Nothing crosses a cell edge.
+7. Feet rest on the same horizontal baseline in every cell — the body bobs down by squashing,
+   not by floating.
+8. NO text, NO labels, NO numbers, NO arrows, NO UI, NO watermark anywhere.

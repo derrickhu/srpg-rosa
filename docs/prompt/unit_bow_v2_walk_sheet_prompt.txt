@@ -1,0 +1,73 @@
+# 单位 bow v2（弓兵职业）—— 四方向行走 sheet（generate2dsprite player_sheet, 4x4）
+#
+# 风格试点：验证「我方人类提亮 + 强化记忆点」方向。风格段落取自 _style_block_v2.txt。
+# 相对 v1 的三处改动：
+#   1. 加奶白斗篷做亮区，解决 v1 中位明度只有 26、在草地上迷彩化的问题
+#   2. 绿色降为兜帽/护腕的职业标识色，不再是主导明度
+#   3. 记忆点：背后夸张的大羽箭扇（40px 下是可辨识的扇形剪影）
+# 键色：#FF00FF —— 角色主色为奶白/绿/棕，与品红色相距远
+# 下游：generate2dsprite.py process --target player --mode player_sheet --align feet
+#       --shared-scale --component-mode largest
+
+A 4x4 sprite sheet showing a full 4-direction walk cycle for a top-down tactics RPG unit.
+
+CHARACTER: a cheerful young forest archer. Chibi / super-deformed proportions with a large
+head and short body, roughly 2.5 heads tall.
+- SIGNATURE FEATURE (must be unmistakable at tiny size): an OVERSIZED recurve bow, about as
+  tall as the character from head to boot, in warm honey-wood with cream-wrapped grip and
+  pale bowstring. Held VERTICALLY alongside the body, close in, so it lengthens the
+  silhouette without widening it. The bow is the character's identity — make it big, make
+  its double-curve shape clearly readable, and never let it be hidden behind the body.
+- BRIGHT AREA (required): a cream / off-white short cape with a rounded collar over the
+  shoulders, roughly 12% of the body. This is the lightest thing on the character.
+- Leaf-green hood pushed back off the head, green bracers, warm tan boots and belt.
+- Warm reddish-brown hair, simple bright confident face with thick dark eyes.
+- A COMPACT quiver on the back with just three short feather tips peeking above the
+  shoulder. These feathers must be SMALLER THAN THE HEAD and must not spread sideways —
+  they are a small accent, not a fan, not wings, and never a headdress around the head.
+
+ART STYLE (project style bible — do not deviate):
+hand-drawn cartoon game sprite, chibi / super-deformed proportions with a large head
+and short limbs, thick near-black outlines (pure black or very dark warm brown — never
+a mid-tone or colorful outline), flat saturated fills with light cel shading (one
+highlight tone, one shadow tone), no gradients, no texture noise, no painterly
+rendering, no photographic detail, 3/4 top-down camera matching a tactics grid.
+
+BRIGHTNESS AND VALUE RANGE — this is what separates a cheerful palette from a muddy
+one, and it is the most common failure:
+- The palette must be BRIGHT and span a wide value range. Saturated mid-tones plus a
+  genuine near-white highlight.
+- The cream cape must read as near-white (#F0F0E0 / #E0E0D0), not beige and not grey.
+- Never render the character in uniformly dark or muted tones.
+- Avoid grey, avoid dusty, chalky or desaturated colors. Avoid olive-drab and khaki.
+- Warm gold accent: #F0C060.
+
+CAMERA: 3/4 top-down view from slightly above, consistent in all 16 cells. You can see the
+top of the head, the shoulders, and the full body down to the boots.
+
+SHEET LAYOUT — rows are facing direction, columns are walk frames:
+  Row 1 (top):    facing DOWN, toward the camera, face fully visible
+  Row 2:          facing LEFT, left side profile
+  Row 3:          facing RIGHT, right side profile, mirrored from row 2
+  Row 4 (bottom): facing UP, away from the camera, back of the cape and the feather fan visible
+  Column 1: neutral standing pose, both feet together
+  Column 2: LEFT foot stepping forward, slight body bob down
+  Column 3: neutral standing pose, both feet together
+  Column 4: RIGHT foot stepping forward, slight body bob down
+
+ABSOLUTE RULES:
+1. EXACTLY 16 equal-size cells in a 4x4 grid. Every cell the same width and height.
+2. NO borders, NO dividing lines, NO frames between cells. Cells are separated only by the
+   flat background color.
+3. Background is 100% solid flat magenta #FF00FF everywhere, including between the cells.
+   No gradient, no vignette, no ground shadow, no drop shadow under the character.
+4. IDENTICAL SCALE in all 16 cells: same head-to-boot height, same shoulder width, same
+   camera distance. Do not zoom in or out between cells. Do not crop tighter in some cells.
+5. IDENTICAL character identity, costume, and palette in all 16 cells.
+6. Character INCLUDING THE BOW is centered in its cell and fills about 55% of the cell
+   height, leaving generous even magenta margin on all four sides.
+7. Nothing crosses a cell edge — no hair, cape, bow, quiver, feather, boot, or hand may touch
+   or overlap a neighboring cell. The bow tips especially must stay well clear of the top and
+   bottom edges. If in doubt, draw the character smaller.
+8. Feet rest on the same horizontal baseline in every cell.
+9. NO text, NO labels, NO numbers, NO arrows, NO UI, NO watermark anywhere in the image.

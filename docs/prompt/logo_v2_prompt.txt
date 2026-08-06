@@ -1,0 +1,29 @@
+// 游戏 logo v2（现役，images/ui/logo_emblem.png，640x302）。
+//
+// 生图模型写汉字是出了名的不稳，这份 prompt 一次就把「无尽纹章」四个字写对了，
+// 关键在于：把四个字**单独列出来、逐字用空格隔开**，再明确禁止多写少写和混入假名。
+// 重出时如果字形出错，不要在后期修字——重跑，或者退回用字体渲染文字再和纹样合成。
+//
+// 风格上和旧版的区别：旧 logo 是金属高光 + 渐变 + 立体斜面，属于风格圣经 §9 的禁区，
+// 和游戏里平涂加粗描边的角色不是一个作品。新版改成两段平涂金 + 近黑粗描边 + 米白外圈，
+// 米白外圈是为了压住底下同明度的黄绿草地（金 L66 / 草 L56）。
+
+A game title logo for a cartoon fantasy tactics mobile game. The logo consists of exactly FOUR Chinese characters written horizontally in a single row, reading left to right:
+
+无 尽 纹 章
+
+These four characters, and nothing else, must appear. Write them accurately and legibly as proper Chinese characters with correct stroke structure. Do not invent extra strokes, do not add any other characters, do not add any Latin letters, numbers, or Japanese kana.
+
+TYPOGRAPHY: heavy, bold, chunky display lettering with wide strokes — the kind of thick brush-like title face used on casual mobile game splash screens. The four characters are evenly spaced, all the same size, sitting on one straight horizontal baseline.
+
+COLOUR AND FINISH:
+- The character faces are warm gold (#EEC462) with a slightly deeper amber (#D8A038) along the lower part of each stroke — a simple flat two-tone split, not a smooth gradient.
+- Every character has a THICK near-black outline (#1A1410) all the way around it, the same heavy linework the game's characters use.
+- Behind the black outline there is one additional clean cream-white (#FCFCF6) border, offset evenly on all sides, so the title stays readable on a green background.
+- Flat cel-shaded look. NO glossy highlights, NO shiny reflections, NO metallic sheen, NO smooth gradients, NO bevel, NO emboss, NO drop shadow, NO glow, NO sparkles, NO gemstones.
+
+DECORATION: a small pair of simple crossed swords may sit centred directly ABOVE the row of characters, drawn in the same flat style with the same thick black outline, in cool steel grey with gold hilts. Keep it small and simple. No banners, no ribbons, no wings, no laurels, no frames around the text.
+
+BACKGROUND: 100% solid flat MAGENTA (#FF00FF) everywhere around and between the letterforms. It is a chroma key and will be deleted. No shadow cast onto the background.
+
+COMPOSITION: the lettering is centred and fills most of the image width, with a clear even magenta margin around it. Wide horizontal banner composition.

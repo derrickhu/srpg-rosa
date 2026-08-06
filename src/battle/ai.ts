@@ -33,7 +33,14 @@ export function canAttackFrom(
   return d === 1;
 }
 
-function selectAttackTarget(
+/**
+ * 从 `fromPos` 出发要打谁；射程内无人返回 null。
+ *
+ * 导出是给引擎的「续打」用的：人工模式按下跳过时，单位可能已经由玩家走到某格了，
+ * 这时不能再用 `chooseTurnAction` 的结果——那个目标是配着它想去的**另一格**算出来的，
+ * 从玩家选的位置未必打得到，续打就会莫名少一刀。
+ */
+export function selectAttackTarget(
   atkDef: UnitDef,
   fromPos: Vec2,
   foes: UnitState[],
@@ -94,7 +101,7 @@ function evaluateCell(
   if (difficulty === 'hard') {
     const tSpec = getTerrainSpec(getTerrainAt(terrain, cell));
     score += tSpec.atkMul > 1 ? 5 : 0;
-    score += tSpec.evade > 0 ? 3 : 0;
+    score += tSpec.defMul < 1 ? 3 : 0;
     score -= tSpec.dotPerRound > 0 ? 4 : 0;
     if (t && t.hp <= dmg) score += 20;
   }
@@ -145,6 +152,7 @@ export function chooseTurnAction(
 
   const enemies = living(allUnits).filter((u) => u.faction !== self.faction);
   if (enemies.length === 0) return { moveTo: null, attackTarget: null };
+  // 打不到任何人时朝最近的敌人走
   const nearest = enemies.reduce((a, b) =>
     (manhattan(self.pos, a.pos) <= manhattan(self.pos, b.pos) ? a : b));
   let bestDist = Infinity;

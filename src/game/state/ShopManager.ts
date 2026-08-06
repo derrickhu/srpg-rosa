@@ -1,47 +1,40 @@
-import type { UnitKind } from '@/battle/types';
 import { POTION_DEFS } from '@/data/potionCatalog';
-import { STAT_POTION_DEFS } from '@/data/statPotionCatalog';
+import { terrainTicketName, type ShopPoolRow } from '@/data/dungeonCatalog';
+import { getSkillSpec } from '@/data/skillCatalog';
+import type { Character } from '@/game/characterTypes';
 import {
-  eligibleShopPoolRows,
-  getShopTerrainPack,
-  isPotionInShopPool,
-  isSkillBindInShopPool,
-  isStatPotionInShopPool,
-  isTerrainPackInShopPool,
-  potionShopPriceForStage,
-  skillBindShopPriceForStage,
-  statPotionShopPriceForStage,
-  terrainPackShopPriceForStage,
-} from '@/data/shopPoolCatalog';
-import { canProfessionEquipSkill, getSkillSpec } from '@/data/skillCatalog';
-import {
-  canRecruitTemplateNow,
-  getMercenaryTemplate,
-  shopRecruitableTemplates,
-} from '@/data/mercenaryCatalog';
-import { instantiateMercenaryTemplate } from '@/game/mercenaryFactory';
-import type { Mercenary } from '@/game/mercenaryTypes';
-import {
-  getMercenary,
+  currentDungeon,
+  getCharacter,
+  partyCharacters,
+  requireRun,
   shuffle,
   type BuyShopContext,
   type MvpGameState,
   type ShopOffer,
 } from './GameState';
 
-function shopOffersFromPoolRows(state: MvpGameState): ShopOffer[] {
+/** 当前副本的 roguelike 池（局内商店候选） */
+function dungeonPool(state: MvpGameState): ShopPoolRow[] {
+  return currentDungeon(state).roguelikePool;
+}
+
+function poolPriceFor(
+  state: MvpGameState,
+  match: (r: ShopPoolRow) => boolean,
+): number | undefined {
+  const row = dungeonPool(state).find(match);
+  return row ? row.price ?? undefined : undefined;
+}
+
+function offersFromPool(state: MvpGameState): ShopOffer[] {
   const out: ShopOffer[] = [];
-  const si = state.stageIndex;
-  for (const row of eligibleShopPoolRows(si)) {
+  for (const row of dungeonPool(state)) {
     switch (row.category) {
       case 'terrain': {
-        const pack = getShopTerrainPack(row.packId);
-        if (!pack) continue;
         out.push({
           type: 'terrain',
-          packId: row.packId,
-          charges: pack.charges,
-          name: pack.displayName,
+          terrainId: row.terrainId,
+          name: terrainTicketName(row.terrainId),
           price: row.price,
         });
         break;
@@ -49,42 +42,19 @@ function shopOffersFromPoolRows(state: MvpGameState): ShopOffer[] {
       case 'potion': {
         const d = POTION_DEFS[row.potionId];
         if (!d) continue;
-        out.push({
-          type: 'potion',
-          potionId: row.potionId,
-          name: d.name,
-          price: row.price,
-        });
+        out.push({ type: 'potion', potionId: row.potionId, name: d.name, price: row.price });
         break;
       }
-      case 'statPotion': {
-        const d = STAT_POTION_DEFS[row.statPotionId];
-        if (!d) continue;
-        out.push({
-          type: 'statPotion',
-          statPotionId: row.statPotionId,
-          name: d.name,
-          price: row.price,
-        });
-        break;
-      }
-      case 'skillBind': {
+      case 'tempSkill': {
         const spec = getSkillSpec(row.skillId);
         if (!spec) continue;
-        const rosterOk = state.roster.filter(
-          (m) => canProfessionEquipSkill(m.profession, row.skillId) && !m.ownedSkillIds.includes(row.skillId),
-        );
-        if (rosterOk.length === 0) continue;
-        if (spec.exclusiveProfession !== null) {
-          if (!rosterOk.some((m) => m.profession === spec.exclusiveProfession)) continue;
-        }
-        const price = row.price ?? spec.shopPrice ?? 7;
+        // 队里所有人都装满了同一个临时技能才下架；换人装是允许的（会顶掉原来那个）
+        if (rosterEligibleForTempSkill(state, row.skillId).length === 0) continue;
         out.push({
-          type: 'skillBind',
-          profession: spec.exclusiveProfession,
+          type: 'tempSkill',
           skillId: row.skillId,
           name: spec.name,
-          price,
+          price: row.price ?? spec.shopPrice ?? 7,
         });
         break;
       }
@@ -95,29 +65,25 @@ function shopOffersFromPoolRows(state: MvpGameState): ShopOffer[] {
   return out;
 }
 
-export function rosterEligibleForSkillBind(
-  state: MvpGameState,
-  offer: Extract<ShopOffer, { type: 'skillBind' }>,
-): Mercenary[] {
-  return state.roster.filter((m) => {
-    if (!canProfessionEquipSkill(m.profession, offer.skillId)) return false;
-    if (m.ownedSkillIds.includes(offer.skillId)) return false;
-    if (offer.profession !== null && m.profession !== offer.profession) return false;
-    return true;
-  });
+/**
+ * 临时技能能买给谁。
+ *
+ * **不挑职业**——这是临时槽和主槽最大的区别。主技能受职业限制是为了让四个职业
+ * 各有各的打法；临时技能是场景发的一次性惊喜，挑职业只会让它经常没人能装，
+ * 那这一格商品就等于没上架。唯一的排除条件是「他已经装着这一个了」。
+ */
+export function rosterEligibleForTempSkill(state: MvpGameState, skillId: string): Character[] {
+  const run = state.run;
+  return partyCharacters(state).filter((m) => run?.runTempSkill[m.rosterId] !== skillId);
 }
 
+/** 抽 3 件商品；只要池里有药剂就保底 1 件（Boss 前的补给点必须能买到续航） */
 export function rollShop(state: MvpGameState): ShopOffer[] {
-  const pool: ShopOffer[] = [];
-  const recruitable = shopRecruitableTemplates(state.stageIndex, state.roster);
-  const shuffledRec = shuffle([...recruitable]);
-  const recruitSlots = Math.min(4, shuffledRec.length);
-  for (let i = 0; i < recruitSlots; i++) {
-    const t = shuffledRec[i]!;
-    pool.push({ type: 'recruit', catalogId: t.catalogId, price: t.shopPrice });
-  }
-  pool.push(...shopOffersFromPoolRows(state));
-  return shuffle(pool).slice(0, 3);
+  const offers = shuffle(offersFromPool(state));
+  const potionIdx = offers.findIndex((o) => o.type === 'potion');
+  if (potionIdx < 0) return offers.slice(0, 3);
+  const [potion] = offers.splice(potionIdx, 1);
+  return shuffle([potion!, ...offers.slice(0, 2)]);
 }
 
 export function buyShopOffer(
@@ -125,65 +91,38 @@ export function buyShopOffer(
   offer: ShopOffer,
   ctx?: BuyShopContext,
 ): boolean {
-  if (state.gold < offer.price) return false;
+  const run = requireRun(state);
+  if (run.gold < offer.price) return false;
   switch (offer.type) {
-    case 'recruit': {
-      const tpl = getMercenaryTemplate(offer.catalogId);
-      if (!tpl || tpl.isStarter) return false;
-      if (!canRecruitTemplateNow(tpl, state.stageIndex, state.roster)) return false;
-      if (tpl.shopPrice !== offer.price) return false;
-      state.roster.push(instantiateMercenaryTemplate(tpl));
-      break;
-    }
-    case 'skillBind': {
-      const rid = ctx?.skillBindTargetRosterId;
+    case 'tempSkill': {
+      const rid = ctx?.tempSkillTargetRosterId;
       if (!rid) return false;
-      const m = getMercenary(state, rid);
-      if (!m) return false;
-      if (!isSkillBindInShopPool(offer.skillId, state.stageIndex)) return false;
-      if (skillBindShopPriceForStage(offer.skillId, state.stageIndex) !== offer.price) return false;
-      if (!getSkillSpec(offer.skillId)) return false;
-      if (!canProfessionEquipSkill(m.profession, offer.skillId)) return false;
-      if (offer.profession !== null && m.profession !== offer.profession) return false;
-      if (m.ownedSkillIds.includes(offer.skillId)) return false;
-      m.ownedSkillIds.push(offer.skillId);
-      m.activeSkillId = offer.skillId;
+      const m = getCharacter(state, rid);
+      if (!m || !run.partyRosterIds.includes(rid)) return false;
+      const price = poolPriceFor(state, (r) => r.category === 'tempSkill' && r.skillId === offer.skillId);
+      const spec = getSkillSpec(offer.skillId);
+      if (!spec) return false;
+      if ((price ?? spec.shopPrice ?? 7) !== offer.price) return false;
+      if (run.runTempSkill[rid] === offer.skillId) return false;
+      // 顶掉他原来的临时技能。这里不用像主槽那样担心「把优势换没了」：
+      // 词条挂在角色身上，换临时技能不动它。
+      run.runTempSkill[rid] = offer.skillId;
       break;
     }
     case 'terrain': {
-      const pack = getShopTerrainPack(offer.packId);
-      if (!pack || pack.charges !== offer.charges) return false;
-      if (!isTerrainPackInShopPool(offer.packId, state.stageIndex)) return false;
-      if (terrainPackShopPriceForStage(offer.packId, state.stageIndex) !== offer.price) return false;
-      state.terrainCharges += pack.charges;
+      if (poolPriceFor(state, (r) => r.category === 'terrain' && r.terrainId === offer.terrainId) !== offer.price) return false;
+      run.terrainCharges[offer.terrainId] = (run.terrainCharges[offer.terrainId] ?? 0) + 1;
       break;
     }
     case 'potion': {
       if (!POTION_DEFS[offer.potionId]) return false;
-      if (!isPotionInShopPool(offer.potionId, state.stageIndex)) return false;
-      if (potionShopPriceForStage(offer.potionId, state.stageIndex) !== offer.price) return false;
-      state.potions[offer.potionId] = (state.potions[offer.potionId] ?? 0) + 1;
-      break;
-    }
-    case 'statPotion': {
-      if (!STAT_POTION_DEFS[offer.statPotionId]) return false;
-      if (!isStatPotionInShopPool(offer.statPotionId, state.stageIndex)) return false;
-      if (statPotionShopPriceForStage(offer.statPotionId, state.stageIndex) !== offer.price) return false;
-      state.statPotions[offer.statPotionId] = (state.statPotions[offer.statPotionId] ?? 0) + 1;
+      if (poolPriceFor(state, (r) => r.category === 'potion' && r.potionId === offer.potionId) !== offer.price) return false;
+      run.potions[offer.potionId] = (run.potions[offer.potionId] ?? 0) + 1;
       break;
     }
     default:
       return false;
   }
-  state.gold -= offer.price;
+  run.gold -= offer.price;
   return true;
-}
-
-/** @deprecated 使用 buyShopOffer */
-export function buyShopItem(state: MvpGameState, kind: UnitKind, price: number): boolean {
-  const pool = shopRecruitableTemplates(state.stageIndex, state.roster).filter((t) => t.profession === kind);
-  if (pool.length === 0) return false;
-  const t = pool[Math.floor(Math.random() * pool.length)]!;
-  void price;
-  return buyShopOffer(state, { type: 'recruit', catalogId: t.catalogId, price: t.shopPrice });
 }

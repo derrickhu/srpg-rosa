@@ -1,0 +1,89 @@
+# 我方四职业角色原型 lineup —— 一张图出四个，保证风格与配色一次对齐
+#
+# 为什么放一张图：分四次生成必然 style 漂移。一次生成四个，模型内部会自动统一
+# 描边粗细、上色方式、头身比，这是最省事的一致性手段。
+# 确认原型后再逐个做四方向行走 sheet。
+#
+# v2 修正（实测得出）：
+#   现有剑士裁剪后 130x129，宽高比 1.01，几乎正方形；血牙酋长 0.98。
+#   而弓手 v1 是 0.67、第一版 lineup 是 0.54-0.68 —— 都太瘦，根因是 prompt 里
+#   写了 "2.5 heads tall"。本版改成「头连头发约占总高一半、整体近正方形」，
+#   并强制极简：全身 4-6 色、无腰带扣口袋甲缝、五官只有眼睛眉毛。
+#
+# 差异化设计（对应 美术风格圣经 §2.1 配色编码 / §4.1 避免"普通"）：
+#   剑士 绯红 H5   亮区=银白胸甲   剪影=肩扛巨剑的斜杠    记忆点=比人长的巨剑
+#   弓手 叶绿 H96  亮区=奶白斗篷   剪影=身侧竖立的长弓    记忆点=与身等高的大弓
+#   盾卫 钢蓝 H205 亮区=盾面白纹章 剪影=矩形塔盾          记忆点=比身体宽的塔盾
+#   骑兵 金橙 H38  亮区=白马       剪影=最宽最矮          记忆点=白马 + 长枪
+#   四者两两色相差 >= 33 度，且都避开草地 H71-81（弓手靠奶白斗篷的明度撑开）
+
+A character lineup sheet for a top-down tactics RPG: FOUR different hero units standing
+side by side in a single row, all facing the camera (front view), all the same size and
+standing on the same baseline.
+
+PROPORTIONS — check against this, drawing them too tall is the most common failure:
+- Extreme super-deformed mascot. The HEAD INCLUDING HAIR OR HELMET is about HALF of each
+  character's total height. Body, arms and legs together are the other half: short,
+  stubby, chunky.
+- Each character fits in a roughly SQUARE box — total width about 0.9 to 1.0 times total
+  height. If any of them looks like a slim standing person, it is wrong.
+- This is NOT a 2-head or 2.5-head chibi. Think 1.5-head mascot: giant head, tiny body.
+
+SIMPLIFY — characterise with a few bold strokes and colours, never by piling on detail.
+These are displayed about 48 pixels tall, where detail becomes noise and makes the
+character read smaller and busier:
+- Only 4 to 6 flat colours on each character. ONE of them dominates the body and is that
+  character's identity colour.
+- NO belts, straps, buckles, pouches, rivets, armour seams, laces, stitching, patterns,
+  engraving or trim. Delete every small accessory.
+- Face is minimal: two simple dark eyes, two eyebrows, at most a tiny mouth line. No nose,
+  no ear detail, no blush.
+- Arms and legs are simple rounded stubs; hands are mitten shapes, no fingers.
+- Each signature prop is ONE big clean simple silhouette with no ornament on it.
+- Each character must read as a handful of bold flat shapes, not as an illustration.
+
+FROM LEFT TO RIGHT — each described by its colour and its ONE prop, nothing more:
+
+1. SWORDSMAN — CRIMSON RED is his identity colour and covers most of his body. A plain
+   silver-white chest plate is his one light area. His prop: an OVERSIZED plain greatsword,
+   longer than he is tall, resting on one shoulder at a diagonal so the outline reads as a
+   bold slash. Simple brown hair. Nothing else.
+
+2. ARCHER — LEAF GREEN is his identity colour and covers most of his body, including a
+   simple pointed hood. A plain cream / off-white short cape is his one light area. His
+   prop: an OVERSIZED plain honey-wood recurve bow, about as tall as he is, held vertically
+   alongside the body. Nothing else — no quiver, no arrows, no feathers.
+
+3. SHIELD BEARER — STEEL BLUE is his identity colour and covers most of his body. His prop:
+   one huge plain rectangular TOWER SHIELD, wider than his body and nearly as tall, planted
+   in front of him so his outline reads as a solid rectangle. The shield face is plain
+   off-white with a single bold simple emblem shape — this is his light area. Nothing else.
+
+4. LANCER ON HORSEBACK — WARM GOLDEN ORANGE is his identity colour and covers most of the
+   rider. He sits on a plain WHITE horse, which is his light area. His prop: one long plain
+   lance held upright. Being mounted makes his outline the widest and lowest of the four —
+   clearly a different shape from the three foot soldiers. Nothing else.
+
+ART STYLE (project style bible — do not deviate):
+hand-drawn cartoon game sprite, thick near-black outlines (pure black or very dark warm
+brown — never a mid-tone or colorful outline), flat saturated fills with light cel shading
+(one highlight tone, one shadow tone), no gradients, no texture noise, no painterly
+rendering, no photographic detail, 3/4 top-down camera matching a tactics grid.
+
+BRIGHTNESS: the palette must be BRIGHT and saturated with a genuine near-white highlight
+on every character. Never uniformly dark or muted. Avoid grey, dusty, chalky or
+desaturated colours. Avoid olive-drab and khaki. Cream anchors #F0F0E0 / #E0E0D0.
+
+COLOR SEPARATION (hard requirement): the four heroes must be immediately distinguishable
+by colour alone. Crimson red / leaf green / steel blue / warm gold. Do not let any two of
+them drift toward the same hue, and do not use olive or khaki on any of them.
+
+ABSOLUTE RULES:
+1. Exactly FOUR characters in ONE horizontal row, evenly spaced, none overlapping.
+2. Background is 100% solid flat magenta #FF00FF everywhere, including between characters.
+   No gradient, no vignette, no ground shadow, no drop shadow under the characters.
+3. All four the same scale and the same camera distance. Feet (and hooves) on one shared
+   horizontal baseline.
+4. Each character including his prop must sit fully inside its own quarter of the image
+   with clear magenta margin all around. Nothing touches the image edge.
+5. NO text, NO labels, NO names, NO numbers, NO UI, NO watermark anywhere in the image.

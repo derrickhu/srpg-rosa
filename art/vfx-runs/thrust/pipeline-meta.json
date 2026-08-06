@@ -1,0 +1,50 @@
+{
+  "source": "scripts/vfx-sheet.py",
+  "input": ".tmp-gen/thrust_raw.png",
+  "target": "vfx",
+  "mode": "vfx_sheet",
+  "rows": 2,
+  "cols": 3,
+  "cell_size": 256,
+  "threshold": 22,
+  "frame_labels": [
+    "thrust-1",
+    "thrust-2",
+    "thrust-3",
+    "thrust-4",
+    "thrust-5",
+    "thrust-6"
+  ],
+  "shared_crop_side": 321,
+  "crop_offsets": [
+    {
+      "x": 8,
+      "y": 95
+    },
+    {
+      "x": 0,
+      "y": 95
+    },
+    {
+      "x": 20,
+      "y": 95
+    },
+    {
+      "x": 0,
+      "y": 63
+    },
+    {
+      "x": 0,
+      "y": 64
+    },
+    {
+      "x": 15,
+      "y": 72
+    }
+  ],
+  "empty_frames": [],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}

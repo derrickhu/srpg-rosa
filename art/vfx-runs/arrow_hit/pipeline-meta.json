@@ -1,0 +1,50 @@
+{
+  "source": "scripts/vfx-sheet.py",
+  "input": ".tmp-gen/arrow_hit_raw.png",
+  "target": "vfx",
+  "mode": "vfx_sheet",
+  "rows": 2,
+  "cols": 3,
+  "cell_size": 256,
+  "threshold": 22,
+  "frame_labels": [
+    "arrow_hit-1",
+    "arrow_hit-2",
+    "arrow_hit-3",
+    "arrow_hit-4",
+    "arrow_hit-5",
+    "arrow_hit-6"
+  ],
+  "shared_crop_side": 337,
+  "crop_offsets": [
+    {
+      "x": 0,
+      "y": 109
+    },
+    {
+      "x": 0,
+      "y": 110
+    },
+    {
+      "x": 0,
+      "y": 109
+    },
+    {
+      "x": 0,
+      "y": 46
+    },
+    {
+      "x": 0,
+      "y": 44
+    },
+    {
+      "x": 4,
+      "y": 43
+    }
+  ],
+  "empty_frames": [],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}

@@ -1,0 +1,45 @@
+ART STYLE (project style bible — do not deviate):
+hand-drawn cartoon game sprite, thick near-black outlines (pure black or very dark warm
+brown — never a mid-tone or colorful outline), flat saturated fills with light cel shading
+(one highlight tone, one shadow tone), no gradients, no texture noise, no painterly
+rendering, no photographic detail, 3/4 top-down camera matching a tactics grid.
+
+PROPORTIONS — check against this, drawing them too tall is the most common failure:
+- Extreme super-deformed mascot. The HEAD INCLUDING HAIR OR HELMET is about HALF the
+  character's total height. Body, arms and legs together are the other half: short,
+  stubby, chunky.
+- The whole character fits in a roughly SQUARE box — total width is about 0.9 to 1.0
+  times total height. If it looks like a slim standing person, it is wrong.
+- This is NOT a 2-head or 2.5-head chibi. Think 1.5-head mascot: giant head, tiny body.
+
+PROPS may extend beyond the body — an upright spear, a tall staff, horns or a plume are all
+fine and will not be cropped in game. The square-box rule above is measured on the BODY
+(top of the head down to the feet), not on the props. Props should still be big in MASS,
+not just long and thin, so they survive at small size.
+
+SIMPLIFY — characterise with a few bold strokes and colours, never by piling on detail.
+At the size this is displayed, detail becomes noise and makes the character read smaller:
+- Only 4 to 6 flat colours on the whole character. ONE of them dominates the body and is
+  that character's identity colour.
+- NO belts, straps, buckles, pouches, rivets, armour seams, laces, stitching, patterns,
+  engraving or trim. Delete every small accessory.
+- Face is minimal: two simple dark eyes, two eyebrows, at most a tiny mouth line. No nose,
+  no ear detail, no blush.
+- Arms and legs are simple rounded stubs; hands are mitten shapes, no fingers.
+- The signature prop is ONE big clean simple silhouette with no ornament on it.
+- The character must read as a handful of bold flat shapes, not as an illustration.
+
+BRIGHTNESS AND VALUE RANGE — this is what separates a cheerful palette from a muddy
+one, and it is the most common failure:
+- The palette must be BRIGHT and span a wide value range. Saturated mid-tones plus a
+  genuine near-white highlight.
+- Every character carries ONE clearly light area — cream, off-white or white (cloak,
+  collar, sash, plume, mount) — covering roughly 10-15% of the body. This is what the
+  eye locks onto at small size.
+- Never render a character in uniformly dark or muted tones.
+- Avoid grey, avoid dusty, chalky or desaturated colors. Avoid olive-drab and khaki.
+- Cream highlight anchors: #F0F0E0, #E0E0D0, #F0E0C0. Warm gold accent: #F0C060.
+
+The sprite must stay readable at 40 pixels tall: silhouette first, exaggerate the
+weapon and the one signature feature, drop everything that needs zoom to appreciate.
+NO TEXT, no labels, no captions, no watermark anywhere in the image.

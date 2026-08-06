@@ -1,0 +1,69 @@
+# 剑士 v3 —— 朝下（面向镜头）挥砍 4 帧（2x2，generate2dsprite --mode attack）
+#
+# 参考图：art/sprite-runs/sword/identity-ref-down.png —— 单帧，只锁身份+风格。
+#   不要传 4x4 的行走 sheet 当参考图：布局锚定会压过 2x2 指令，模型会直接复刻行走 sheet
+#   （血牙酋长踩过这个坑）。
+# 处理时用 --scale-profile art/sprite-runs/sword/scale-profile.json 复用行走 sheet 的缩放，
+# 否则播放时会在行走与攻击之间突然变大变小。
+#
+# 巨剑很长，挥砍时横扫会一路扫出格子。所以这里指定**沿自身中线的竖直劈砍**，
+# 和血牙的处理一样——不是为了迁就格子大小（那个约束已经废了），而是 2x2 切帧要求
+# 每帧留在自己格内，横扫会侵入相邻帧。
+
+CRITICAL BACKGROUND REQUIREMENT, THIS OVERRIDES EVERYTHING ELSE: the background of the
+image must be 100% solid flat MAGENTA, hex #FF00FF, bright pure pink-purple. NOT black. NOT
+white. NOT grey. NOT a gradient. Every single pixel that is not part of the character must be
+exactly magenta #FF00FF, including the areas between the cells. The background is a chroma
+key and a black background makes the whole image unusable.
+
+The attached reference image contains ONE SINGLE character frame. It defines only the
+CHARACTER IDENTITY and the ART STYLE. It does NOT define the layout of the image you must
+produce. Do NOT copy the reference's framing, and do NOT produce a walk cycle or a 4x4
+sheet — produce the 2x2 attack sheet described below.
+
+Match the reference exactly on: the same chibi knight, same crimson red body, same
+silver-white breastplate, same warm brown hair, same tan boots, same huge broad silver
+greatsword with a straight crossguard, same thick near-black outlines, same flat fills with
+light cel shading, same 3/4 top-down camera, same giant-head-tiny-body proportions.
+Only the pose changes.
+
+A 2x2 sprite sheet: 4 frames of a single two-handed greatsword ATTACK, the character FACING
+DOWN toward the camera the whole time. The swing is a COMPACT OVERHEAD CHOP straight down
+the character's own centerline, NOT a wide horizontal sweep.
+
+FRAME ORDER, reading left-to-right then top-to-bottom:
+  Frame 1 (top-left):     WIND-UP. Greatsword raised straight UP above the head, blade
+                          vertical and pointing at the sky, both hands on the grip, knees
+                          bent, torso coiled.
+  Frame 2 (top-right):    CHOP. Blade swung down to about chest height in front of the body,
+                          still steeply angled, torso leaning forward.
+  Frame 3 (bottom-left):  IMPACT. Blade driven DOWN in front of the feet, tip pointing at the
+                          ground, arms extended downward, torso lunged forward. Strongest,
+                          most extreme pose.
+  Frame 4 (bottom-right): RECOVERY. Blade lifted back to a neutral guard beside the body,
+                          angled up, torso straightening.
+
+ABSOLUTE RULES:
+1. Background is 100% solid flat magenta #FF00FF everywhere, including between the cells.
+   No gradient, no vignette, no ground shadow, no drop shadow, no black.
+2. EXACTLY 4 equal-size cells in a 2x2 grid. Every cell the same width and height.
+3. NO borders, NO dividing lines, NO gutters, NO frames between cells. Do not draw any line
+   where the cells meet. Cells are separated only by empty magenta background.
+4. IDENTICAL BODY SCALE and IDENTICAL camera distance in all 4 cells. Measure him from the
+   top of his hair to the soles of his boots, ignoring the sword: that height must be the
+   same in all 4 cells. Do not zoom in on the action.
+5. His BODY (hair-top to boots, sword excluded) fills only about 40% of the cell height,
+   centered in its cell, leaving a very wide empty magenta margin on all four sides.
+   Draw it small. A small character with a lot of empty margin is CORRECT.
+6. NOTHING may touch or cross a cell edge or the outer edge of the image — not the blade
+   tip, not the hair, not a boot. There must be clearly visible magenta between the blade
+   tip and every edge in all 4 frames. Keep the sword inside the character's own vertical
+   column — never let the blade reach out sideways past his shoulders. If a pose does not
+   fit, make the character smaller.
+7. Feet rest on the same horizontal baseline in every cell. The body may bob and lunge, but
+   do not let the character float or leave the ground.
+8. Draw the CHARACTER BODY ONLY. NO motion-blur streaks, NO slash arc, NO energy trail, NO
+   impact flash, NO dust, NO sparks, NO hit effect of any kind. The swing VFX is drawn
+   separately by the engine.
+9. NO text of any kind anywhere in the image. Do NOT write the frame names, do NOT caption
+   the cells, no labels, no numbers, no arrows, no UI, no watermark.

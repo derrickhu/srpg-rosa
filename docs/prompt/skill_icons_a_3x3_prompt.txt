@@ -1,0 +1,75 @@
+技能图标 A 组 3x3（职业主技能，当前使用中）
+产出 → images/ui/skill_{whirl,pierce,charge,bash,blade_rush,cleave,lance_thrust,trample,snap}.png
+生成器：Cursor 内置 GenerateImage，aspect_ratio 1:1
+
+切图：
+    python3 scripts/split-tile-sheet.py --input <sheet>.png --out-dir <tmp> --size 72 \
+        --names whirl pierce charge bash blade_rush cleave lance_thrust trample snap
+    python3 scripts/despill-magenta.py <tmp>
+
+用在哪：战后三选一大卡的**主视觉**（约 56px，卡面正中的圆底上）、
+背包页临时技能行（26px）。词条图标退居右下角小标签，所以这一组是玩家
+第一眼看到的东西——它要回答的是「这次强化的是谁的哪一招」里的**哪一招**。
+
+和词条图标（mod_*.png）的分工：
+    技能图标 = 这一招长什么样（武器 / 动作）
+    词条图标 = 加成的类型（伤害 / 冷却 / 中毒…）
+两组同时出现在一张卡上，所以**必须能区分**：技能图标以武器和动作为主体，
+词条图标以抽象符号为主体，不要都画成"一把剑"。
+
+九个技能的语义（改 prompt 前先看 src/data/skillCatalog.ts）：
+    whirl 旋风斩    剑士·邻格全体      pierce 穿透箭  弓手·直线穿透
+    charge 冲锋      骑兵·被动冲锋加成   bash 震击      盾卫·单体+嘲讽
+    blade_rush 破阵斩 剑士·高伤+削攻     cleave 重劈    剑士·单体收割
+    lance_thrust 长驱突刺 骑兵·2 格突刺  trample 铁蹄践踏 骑兵·邻格全体+减速
+    snap 速射        弓手·低冷却直线
+
+关键约束：
+- 同职业的技能最容易糊。剑士有三个（whirl / blade_rush / cleave）：
+  分别是**环形刀光**、**向前突刺的剑**、**向下劈的重剑**，动作方向彻底不同。
+- 骑兵三个（charge / lance_thrust / trample）：**马蹄冲刺线**、**长枪**、**蹄印**。
+- 弓手两个（pierce / snap）：前者是**穿过靶心的长箭**，后者是**三支短箭齐射**。
+
+---
+
+A 3-column x 3-row grid of 9 GAME UI ICONS representing combat SKILLS in a cartoon fantasy tactics mobile game.
+
+CRITICAL BACKGROUND: the entire background, including all space between and around the icons, must be 100% solid flat MAGENTA, hex #FF00FF. It is a chroma key and will be deleted. No white, no grey, no gradient, no drop shadows onto the background.
+
+CRITICAL SIZE CONSTRAINT — the most important rule: these icons are displayed at only 26 to 56 pixels in the game. Every icon must be ONE bold, chunky, instantly readable silhouette that survives being shrunk to the size of a fingernail. Think of a chess piece, not an illustration. NO thin lines, NO small parts, NO fine detail, NO tiny sparkles, NO text, NO numbers. If an element would be less than a tenth of the icon's width, delete it.
+
+CRITICAL — THESE SIT ON A CREAM WHITE CARD (#FCFCF6). Every icon needs a THICK near-black outline (#1A1410) all the way around it and a saturated fill inside, so it does not float on the pale card.
+
+STYLE — must match the game's characters, which are chunky cartoon figures with heavy black outlines and flat colours:
+- SOLID FILLED SILHOUETTES with a thick near-black outline. These are not line icons and not outline icons — the shape is filled in.
+- Flat saturated colour fills, at most 3 colours per icon plus the outline, plus one simple lighter shade for a single cel-shaded highlight.
+- Chunky, rounded, friendly shapes. Slightly exaggerated and toy-like.
+- No gradients, no glow, no bevel, no gloss, no photographic detail, no pixel art, no thin strokes.
+- Each icon drawn straight-on, upright and centred in its cell.
+
+Per-cell contents, left-to-right then top-to-bottom:
+
+Cell 1 (WHIRLWIND SLASH / sword, hits everything adjacent) — a closed CIRCULAR ring of slash light, like a fat crescent bent all the way round into a donut, bright golden yellow (#FCB40C) with a cream white inner edge, with one short broad steel sword blade standing upright in the very centre of the ring. The ring is thick and blocky.
+
+Cell 2 (PIERCING ARROW / bow, pierces in a straight line) — one long horizontal arrow pointing right, with a FAT triangular steel arrowhead, a chunky brown (#A87840) shaft and two big blocky feather fletchings at the back. Behind the arrowhead, one short thick cyan (#3CC8E4) speed streak. It must read as a single powerful arrow travelling far.
+
+Cell 3 (CHARGE / cavalry passive, damage after moving) — a bold single HORSESHOE shape, thick iron grey (#7A8CA0), tipped slightly forward, with two fat orange-red (#F08C2A) motion streaks trailing behind it to the left. It must read as "galloping momentum".
+
+Cell 4 (BASH / shield, single target plus taunt) — a chunky rounded kite shield, deep blue (#3C6AC8) with a cream white cross band and a fat golden stud in the middle, tilted and driving forward to the right, with one bold white impact burst of three thick spikes off its right edge.
+
+Cell 5 (BLADE RUSH / sword, high damage lunge that lowers enemy attack) — a broad short sword THRUSTING FORWARD to the right, seen almost point-on so the blade is a wide steel wedge, chunky dark red-brown grip at the lower left, and two fat cream white speed lines behind it. Straight forward motion, never a curve.
+
+Cell 6 (CLEAVE / sword, heavy downward chop) — a heavy broad-bladed sword swung DOWNWARD, blade pointing down-right, steel grey with a white-hot edge, with one thick golden yellow arc trail curving over the top of it from upper left. It must read as a heavy overhead chop.
+
+Cell 7 (LANCE THRUST / cavalry, reaches two tiles) — a long straight lance held diagonally, thick brown (#A87840) shaft with a fat conical steel head at the upper right and a chunky round hand guard near the middle. Simple, long and heavy.
+
+Cell 8 (TRAMPLE / cavalry, hits everything adjacent and slows) — two big bold HOOFPRINTS pressed into the ground, dark brown (#6A4A2A), one slightly in front of the other, with a fat cream white dust puff ring around them. It must read as "stomped ground", clearly different from the horseshoe in cell 3.
+
+Cell 9 (SNAP SHOT / bow, quick low-cooldown volley) — THREE short stubby arrows flying together to the right in a tight fan, all with fat triangular steel heads and short brown shafts, plus one bold cyan (#3CC8E4) speed streak under them. Clearly three small arrows, not one big one.
+
+LAYOUT RULES:
+1. EXACTLY 9 icons in a clean 3x3 arrangement.
+2. NO borders, NO dividing lines, NO frames, NO circles or badges behind the icons — they are separated only by magenta.
+3. Each icon fills about 70% of its cell, leaving a clear magenta margin on all four sides. Nothing touches or crosses into a neighbouring cell.
+4. All nine icons must feel like ONE set: same outline thickness, same level of simplification, same chunky proportions.
+5. NO text, no labels, no captions, no letters, no numbers, no watermark anywhere in the image.

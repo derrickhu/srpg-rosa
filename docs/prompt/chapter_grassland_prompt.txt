@@ -1,0 +1,48 @@
+第 1 章「草原战线」章节卡插图（当前使用中）
+产出 → images/bg/chapter_grassland.png（654x272，CDN 分发）
+生成器：Cursor 内置 GenerateImage，aspect_ratio 16:9（实际吐 3:2）
+
+后处理：
+    python3 -c "
+    from PIL import Image
+    src=Image.open('<母版>.png').convert('RGB')
+    W,H=src.size; h=round(W/(327/136))
+    src.crop((0,150,W,150+h)).resize((654,272),Image.LANCZOS).save('images/bg/chapter_grassland.png')"
+    pngquant --force --strip --quality=70-95 --speed 1 --output <同名> <同名>
+
+裁切位置 y0=150 是挑出来的：再往上会切掉敌营帐篷的下沿，再往下会削掉望楼的旗。
+换母版时重跑几个 y0 对比，别照抄这个数。
+
+为什么是 327:136：`AdventureView` 里插图占卡片上方 `ART_RATIO`(0.4) 的高度，
+卡片宽 `W-48`、高 `min(H*0.42, 340)`。这个比例接近 2.4:1，很扁。
+生图模型给不了这么扁的画幅，只能出宽画幅再裁——所以 prompt 里反复强调
+「重点全部放在中间横带」，上下留空是给裁刀的余量。
+
+这也是为什么插图不能画得更高：卡片一变高，插图区就变方，而素材是 2.4:1，
+cover 会从左右两边裁，望楼和敌营正好被切掉。要更高的卡片得重出更方的插图。
+
+例外说明：战斗背景（battle_bg）明令禁止出现天空，因为它要和俯视棋盘的机位对齐。
+章节卡插图是「海报」，不是棋盘，允许地平线和天空——这是有意为之，不是漏改。
+
+---
+
+A wide banner illustration for a chapter select card in a cartoon fantasy tactics mobile game. The chapter is called "Grassland Front" and its story is: a savage Blood-Fang tribe is invading the grassland, and new recruits face their first full trial here.
+
+COMPOSITION — this is a very wide letterbox banner and will be cropped top and bottom, so EVERY important element must sit inside the CENTRAL HORIZONTAL BAND of the image. Keep the top strip and the bottom strip nearly empty — just open sky above and plain grass below. Nothing important near the top or bottom edge.
+
+SCENE, left to right across the central band:
+- LEFT: a small friendly wooden palisade outpost — a stockade of upright log stakes with a simple watchtower, warm brown timber, a cream and blue pennant flying from the tower.
+- MIDDLE: open rolling grassland sweeping between the two sides, with a few scattered round bushes and one winding pale dirt path. This middle area stays fairly open and calm.
+- RIGHT: the invading Blood-Fang camp — two or three crude dark hide tents with jagged red war banners on bent poles, and a couple of skull totems on stakes. Menacing but cartoonish, never gory.
+- FAR BACKGROUND: soft rolling green hills, then a low warm haze. A calm sky above with two or three simple flat clouds.
+
+COLOUR — must match the game it belongs to:
+- The grass is BRIGHT, WARM, SUNNY YELLOW-GREEN. Anchor colours #B4D45A, #C2DE6E, #A8CC4E. Do not drift toward cool green, deep green, olive or khaki.
+- The friendly left side is warm and inviting; the enemy right side is darker and redder. This left-to-right shift from safe to dangerous is the whole point of the composition — make it obvious.
+- Sky is a soft warm blue, clearly lighter than the hills so the horizon reads cleanly.
+
+ART STYLE: hand-drawn cartoon, flat saturated fills with simple cel shading. Bold simple shapes. No gradients beyond a single flat sky wash, no texture noise, no painterly brushwork, no photographic detail, no pixel art. Soft rounded organic outlines in a darker shade of each object's own colour — no heavy black outlines anywhere.
+
+SIZE: this banner is displayed only about 330 pixels wide on a phone, so keep everything BIG and simple. No fine detail, no tiny objects, no crowds, no individual characters or soldiers — the scene is empty of people.
+
+NO text, NO letters, NO numbers, NO logos, NO UI elements, NO frame, NO border, NO watermark, NO vignette.

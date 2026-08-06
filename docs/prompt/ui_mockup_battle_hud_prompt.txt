@@ -1,0 +1,9 @@
+Mobile game UI mockup, portrait 9:16 phone screen, live battle HUD for a cute chibi tactics auto-battler on a grid board.
+
+Layout, top to bottom:
+- Top bar: round banner "第 3 回合" (round counter), small gold counter pill, small gear settings button top-right, and a speed toggle button "x2" plus a "跳过" (skip) pill button.
+- Middle (main area): a 5x6 tile battle grid seen from a slight top-down angle, tiles in grass green and dirt tones, some elevated stone "high ground" tiles, a couple of forest tiles with small trees. On the grid: 3 cute slime heroes (sword, bow, shield) fighting 4 dark goblin slimes; one hero mid-attack with a bright yellow slash VFX arc, damage number "-75" popping in bold comic font, HP bars above units (green for allies, red for enemies).
+- Bottom of grid: a small horizontal action-order queue strip with tiny unit portraits.
+- Bottom HUD panel: three large circular hero skill buttons with chibi hero portraits, each with a radial energy ring; first one FULLY CHARGED glowing gold with "释放!" label and a tap hand icon, others half-charged and dimmed. Next to them two smaller square item buttons: red potion "治疗药剂 x2" and blue potion "迟缓药剂 x1".
+
+Style: bright saturated cartoon casual game UI, thick rounded corners, juicy VFX, Chinese UI text, crisp readable labels. Flat 2D game UI mockup, full screen filled, no phone frame, no watermark.

@@ -1,0 +1,72 @@
+技能图标 B 组 3x3（通用技能 + 草原章临时技能，当前使用中）
+产出 → images/ui/skill_{hex_mark,hammer,shield_wall,war_shout,field_bless}.png
+       images/ui/skill_temp_gl_{snare,salve,swarm,horn}.png
+生成器：Cursor 内置 GenerateImage，aspect_ratio 1:1
+
+切图：
+    python3 scripts/split-tile-sheet.py --input <sheet>.png --out-dir <tmp> --size 72 \
+        --names hex_mark hammer shield_wall war_shout field_bless \
+                temp_gl_snare temp_gl_salve temp_gl_swarm temp_gl_horn
+    python3 scripts/despill-magenta.py <tmp>
+
+约束同 A 组（见 skill_icons_a_3x3_prompt.txt 开头那几段），这里只记差异：
+
+**后四格是草原战线的专属临时技能**，要和前五格的常规技能在观感上分得开：
+常规技能是**金属**（钢、铁、盾），临时技能是**自然物**（草、药、蜂、木）。
+玩家进到第二章会换成另一套自然物，这条色彩/材质分界是"场景专属"的视觉抓手，
+不要在临时技能里画金属武器。
+
+九个技能的语义（改 prompt 前先看 src/data/skillCatalog.ts）：
+    hex_mark 破甲咒   弓手·纯削攻       hammer 铁锤      盾卫·单体+嘲讽
+    shield_wall 盾墙震慑 盾卫·邻格削攻+嘲讽
+    war_shout 战吼     通用·邻格低伤      field_bless 战场祝福 通用·友方增攻增速
+    temp_gl_snare 野草缠足  2 格内减速     temp_gl_salve 草药敷治  邻格友方回血
+    temp_gl_swarm 惊扰蜂群  半径 1 中毒    temp_gl_horn 牧野号角   自身嘲讽+增攻
+
+关键约束：
+- hammer 和 shield_wall 都是盾卫的，别都画成盾：前者是**战锤**，后者是**并排的盾墙**。
+- war_shout 和 temp_gl_horn 都是"喊"：前者是**张嘴的声波**，后者是**弯曲的兽角号**。
+
+---
+
+A 3-column x 3-row grid of 9 GAME UI ICONS representing combat SKILLS in a cartoon fantasy tactics mobile game.
+
+CRITICAL BACKGROUND: the entire background, including all space between and around the icons, must be 100% solid flat MAGENTA, hex #FF00FF. It is a chroma key and will be deleted. No white, no grey, no gradient, no drop shadows onto the background.
+
+CRITICAL SIZE CONSTRAINT — the most important rule: these icons are displayed at only 26 to 56 pixels in the game. Every icon must be ONE bold, chunky, instantly readable silhouette that survives being shrunk to the size of a fingernail. Think of a chess piece, not an illustration. NO thin lines, NO small parts, NO fine detail, NO tiny sparkles, NO text, NO numbers. If an element would be less than a tenth of the icon's width, delete it.
+
+CRITICAL — THESE SIT ON A CREAM WHITE CARD (#FCFCF6). Every icon needs a THICK near-black outline (#1A1410) all the way around it and a saturated fill inside, so it does not float on the pale card.
+
+STYLE — must match the game's characters, which are chunky cartoon figures with heavy black outlines and flat colours:
+- SOLID FILLED SILHOUETTES with a thick near-black outline. These are not line icons and not outline icons — the shape is filled in.
+- Flat saturated colour fills, at most 3 colours per icon plus the outline, plus one simple lighter shade for a single cel-shaded highlight.
+- Chunky, rounded, friendly shapes. Slightly exaggerated and toy-like.
+- No gradients, no glow, no bevel, no gloss, no photographic detail, no pixel art, no thin strokes.
+- Each icon drawn straight-on, upright and centred in its cell.
+
+Per-cell contents, left-to-right then top-to-bottom:
+
+Cell 1 (HEX MARK / curse that lowers enemy attack) — a chunky round rune stone or medallion, deep violet-purple (#9A5ADC), with one bold jagged CRACK splitting it down the middle and a single fat cream white rune eye shape in the centre. It must read as "a curse mark", not as a weapon.
+
+Cell 2 (HAMMER / heavy single-target smash) — a big blocky WAR HAMMER with a huge rectangular iron head, cool blue-grey (#7A8CA0) with a lighter top face, and a short thick brown (#A87840) handle pointing down-left. The head must be enormous relative to the handle.
+
+Cell 3 (SHIELD WALL / two shields braced side by side, area taunt) — TWO chunky rounded shields overlapping side by side to form a wall, both deep blue (#3C6AC8) with cream white bands and golden studs, the front one slightly lower. It must read as "a wall of shields", clearly plural.
+
+Cell 4 (WAR SHOUT / a yell that damages everything adjacent) — a bold open SHOUTING MOUTH shape in profile pointing right, with three FAT curved sound-wave arcs expanding to the right of it, bright golden yellow (#FCB40C) arcs, thick and blocky, each arc bigger than the last. No face, just the shouting shape and the waves.
+
+Cell 5 (FIELD BLESS / buffs a nearby ally) — a chunky upright BANNER on a short thick pole, cream white cloth (#F4EEDC) with a bold golden yellow (#FCB40C) sun emblem in the middle, with two fat golden sparkle diamonds at its upper corners. Warm, uplifting, clearly supportive rather than offensive.
+
+Cell 6 (GRASS SNARE / grassland, tangles an enemy and slows it) — a thick knot of GRASS BLADES and vines coiling into a bold circular loop, bright grass green (#54C43C) with a deeper green (#2D7A4D) underside, with two fat blades whipping outward. Natural plant material only, no metal.
+
+Cell 7 (HERB SALVE / grassland, heals a nearby ally) — a squat round wooden bowl, warm brown (#A87840), heaped with bright green mashed herbs (#54C43C), with one bold cream white CROSS floating above the bowl. Chunky and rounded. No bottle, no glass.
+
+Cell 8 (STARTLED SWARM / grassland, poisons an area) — a fat round hive or nest shape in warm ochre (#D2A03C) at the bottom, with THREE big chunky bees flying above it, each bee a bold yellow-and-black striped oval with two small blocky wings. Clearly three bees, big and toy-like.
+
+Cell 9 (PASTURE HORN / grassland, self taunt and attack up) — a big curved animal HORN trumpet, warm cream bone colour (#F4EEDC) with a chunky brown (#A87840) leather band and mouthpiece, curving up to the right, with two fat golden yellow sound arcs coming out of the wide end. Made of bone and leather, never metal.
+
+LAYOUT RULES:
+1. EXACTLY 9 icons in a clean 3x3 arrangement.
+2. NO borders, NO dividing lines, NO frames, NO circles or badges behind the icons — they are separated only by magenta.
+3. Each icon fills about 70% of its cell, leaving a clear magenta margin on all four sides. Nothing touches or crosses into a neighbouring cell.
+4. All nine icons must feel like ONE set: same outline thickness, same level of simplification, same chunky proportions.
+5. NO text, no labels, no captions, no letters, no numbers, no watermark anywhere in the image.

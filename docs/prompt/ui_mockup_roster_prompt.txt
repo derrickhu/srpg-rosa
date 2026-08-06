@@ -1,0 +1,11 @@
+Mobile game UI mockup, portrait 9:16 phone screen, character roster page for a cute chibi fantasy auto-battler strategy game (round slime-like chibi heroes: swordsman, archer, shield guard, cavalry).
+
+Layout, top to bottom:
+- Top status bar: three pill resource counters (gold "1.2K", purple crystal "56", blue soul gem "128").
+- Section ribbon header "上阵角色".
+- A 4x2 grid of character cards, rounded rectangles with colored rarity borders (blue/purple/gold). Each card: cute chibi slime hero portrait (sword hero with red bandana, archer slime with bow, green shield slime with hammer, purple mage slime), name label on top ribbon like "雷恩" "希尔" "格隆" "岚骑", small level badge "Lv.5" bottom-left, and a small progress bar "2/2" bottom. First card is selected with bright cyan glowing border and a hand cursor tap icon.
+- Section ribbon header "收藏".
+- A 4x2 grid of locked character cards: dark desaturated cards with padlock icon and unlock condition text like "2-3解锁" "3-5解锁" "困难模式解锁".
+- Bottom navigation bar with 5 tabs: 商店, 角色 (ACTIVE highlighted yellow, raised), 冒险, 背包, 副本, with cute icons.
+
+Style: bright saturated cartoon casual game UI, purple/teal scheme, thick rounded corners, soft shadows, clean vector look, Chinese UI text, crisp readable labels. Flat 2D game UI mockup, full screen filled, no phone frame, no watermark.

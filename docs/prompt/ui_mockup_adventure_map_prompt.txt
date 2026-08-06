@@ -1,0 +1,12 @@
+Mobile game UI mockup, portrait 9:16 phone screen, for a cute chibi fantasy auto-battler strategy game called "无尽纹章" (slime-like round chibi knight/archer/shield heroes).
+
+Layout, top to bottom:
+- Top status bar: three pill-shaped resource counters (gold coin icon "1.2K", purple crystal icon "56", bone icon "3"), rounded capsule style on translucent dark pills.
+- Below on the right: small circular icon buttons (settings gear, feedback).
+- Center: a LARGE rounded-rectangle chapter card with thick colored border, showing a beautiful chapter scene illustration "幽影森林" (dark ghost forest at night with crescent moon, silhouetted pine trees, three cute slime heroes standing on a wooden platform reflected in a lake). Chapter title "幽影森林" on a ribbon banner above the card.
+- Below the card: a horizontal node progress track: small round stage nodes connected by a line, labeled "1-1" "1-2" "1-3" "1-4" "1-5", current node highlighted green and larger, boss node "1-5" has a red demon face icon, one node has a shop bag icon, a small "新" red badge on the next node.
+- Left side floating button "章节奖励" with a golden trophy icon; right side floating button "困难模式" with a dark skull icon.
+- Big yellow rounded "开始" button with cute slime icon at bottom center.
+- Bottom navigation bar with 5 tabs: 商店 (shop storefront icon), 角色 (chibi helmet icon), 冒险 (crossed swords icon, ACTIVE highlighted yellow and raised), 背包 (backpack icon), 副本 (demon door icon). Red notification dots on some tabs.
+
+Style: bright saturated cartoon casual game UI, purple/teal color scheme, thick rounded corners, soft drop shadows, clean vector look, Chinese UI text, crisp readable labels. Flat 2D game UI mockup, full screen filled, no phone frame, no watermark.

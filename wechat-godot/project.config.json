@@ -16,7 +16,18 @@
         "showShadowRootInWxmlPanel": false,
         "packNpmRelationList": [],
         "ignoreUploadUnusedFiles": true,
-        "swc": false
+        "swc": false,
+        "compileWorklet": false,
+        "uglifyFileName": false,
+        "uploadWithSourceMap": true,
+        "packNpmManually": false,
+        "minifyWXSS": true,
+        "minifyWXML": true,
+        "localPlugins": false,
+        "disableUseStrict": false,
+        "useCompilerPlugins": false,
+        "condition": false,
+        "disableSWC": true
     },
     "compileType": "game",
     "libVersion": "latest",
@@ -31,5 +42,6 @@
     },
     "appid": "wx66bc130bc0543621",
     "simulatorPluginLibVersion": {},
-    "projectname": "无尽纹章"
+    "projectname": "无尽纹章",
+    "isGameTourist": false
 }

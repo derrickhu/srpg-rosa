@@ -1,13 +1,14 @@
 import * as PIXI from 'pixi.js';
-import { getMercenaryTemplate } from '@/data/mercenaryCatalog';
 import { UNIT_DEFS } from '@/data/unitDefs';
+import { getSkillSpec } from '@/data/skillCatalog';
 import {
-  rosterEligibleForSkillBind,
+  nodesUntilBoss,
+  rosterEligibleForTempSkill,
   type BuyShopContext,
   type MvpGameState,
   type ShopOffer,
 } from '@/game/MvpState';
-import { createBackground } from '@/view/renderHelpers';
+import { createBackground, createUiIcon } from '@/view/renderHelpers';
 import { AssetManager } from '@/core/AssetManager';
 
 const CARD_RADIUS = 10;
@@ -26,50 +27,35 @@ const COLORS = {
   bodyText: 0x3a3a2a,
   mutedText: 0x888877,
   typeBadge: {
-    recruit: 0x4488cc,
-    skillBind: 0xaa66cc,
+    tempSkill: 0xaa66cc,
     terrain: 0x66aa55,
     potion: 0xdd7744,
-    statPotion: 0xcc4466,
   } as Record<string, number>,
 };
 
 function typeLabel(type: string): string {
   switch (type) {
-    case 'recruit': return '佣兵';
-    case 'skillBind': return '技能';
+    case 'tempSkill': return '技能';
     case 'terrain': return '地形';
     case 'potion': return '药剂';
-    case 'statPotion': return '精华';
     default: return '?';
   }
 }
 
 function offerName(o: ShopOffer): string {
   switch (o.type) {
-    case 'recruit': {
-      const tpl = getMercenaryTemplate(o.catalogId);
-      if (!tpl) return '未知佣兵';
-      return `${tpl.name} (${UNIT_DEFS[tpl.profession].name})`;
-    }
-    case 'skillBind': {
-      const prof = o.profession === null ? '通用' : UNIT_DEFS[o.profession].name;
-      return `${o.name} (${prof})`;
-    }
+    case 'tempSkill': return o.name;
     case 'terrain': return o.name;
     case 'potion': return o.name;
-    case 'statPotion': return o.name;
     default: return '?';
   }
 }
 
 function offerDesc(o: ShopOffer): string {
   switch (o.type) {
-    case 'recruit': return '加入你的队伍';
-    case 'skillBind': return '绑定到一名佣兵';
-    case 'terrain': return '可在部署时放置';
-    case 'potion': return '战斗中使用';
-    case 'statPotion': return '永久提升属性';
+    case 'tempSkill': return '本局多带一招，任何职业都能装';
+    case 'terrain': return '本局可在部署时放置';
+    case 'potion': return '战斗中使用（本局）';
     default: return '';
   }
 }
@@ -104,7 +90,7 @@ export function createShopView(
 
   // --- 金币（左上角，带遮罩底板和图标，与部署/战斗页面一致） ---
   const goldIconSize = 22;
-  const goldValueTx = new PIXI.Text(`${state.gold}`, { fill: 0xffffff, fontSize: 14, fontWeight: 'bold' });
+  const goldValueTx = new PIXI.Text(`${state.run!.gold}`, { fill: 0xffffff, fontSize: 14, fontWeight: 'bold' });
   const goldPadX = 6;
   const goldPadY = 4;
   const goldBgW = goldIconSize + 4 + goldValueTx.width + goldPadX * 2;
@@ -120,11 +106,8 @@ export function createShopView(
   goldBg.endFill();
   goldContainer.addChild(goldBg);
 
-  const goldTex = AssetManager.isBundleLoaded('ui') ? AssetManager.texture('ui', 'icon_gold') : null;
-  if (goldTex && goldTex !== PIXI.Texture.WHITE) {
-    const goldIcon = new PIXI.Sprite(goldTex);
-    goldIcon.width = goldIconSize;
-    goldIcon.height = goldIconSize;
+  const goldIcon = createUiIcon('icon_gold', goldIconSize);
+  if (goldIcon) {
     goldIcon.x = goldPadX;
     goldIcon.y = (goldBgH - goldIconSize) / 2;
     goldContainer.addChild(goldIcon);
@@ -154,7 +137,41 @@ export function createShopView(
   titleText.y = titleBg.y + titleLabelH / 2;
   root.addChild(titleText);
 
-  const headerH = titleBg.y + titleLabelH;
+  let headerH = titleBg.y + titleLabelH;
+
+  /**
+   * Boss 备药提醒。
+   *
+   * 第一章 Boss 裸打胜率 2.4%（`chapter1Sim`），带 2 治疗药 61%——这不是「惩罚」，是一道墙。
+   * 改成纯人工模式后一局要打几分钟，撞墙的代价从一分钟涨到几分钟，所以必须在**买得到药的时候**
+   * 说这句话：补给点就在 Boss 前一个节点，此刻钱还在、货还在。
+   * Boss 布阵页那句提醒只能拦住误触，拦不住"我不知道要买药"。
+   */
+  const untilBoss = nodesUntilBoss(state);
+  const potionsOwned = Object.values(state.run!.potions).reduce((a, b) => a + b, 0);
+  if (untilBoss !== null && untilBoss <= 1 && potionsOwned === 0) {
+    const warnW = W - PAD * 2;
+    const warnTx = new PIXI.Text('下一战是 Boss。没有药剂几乎打不过，建议至少备一瓶治疗药。', {
+      fill: 0xffe0b0, fontSize: 12, fontWeight: 'bold',
+      wordWrap: true, wordWrapWidth: warnW - 20,
+    });
+    const warnH = warnTx.height + 16;
+    const warnBg = new PIXI.Graphics();
+    warnBg.lineStyle(1, 0xdd7744, 0.9);
+    warnBg.beginFill(0x6a2a10, 0.75);
+    warnBg.drawRoundedRect(0, 0, warnW, warnH, 8);
+    warnBg.endFill();
+
+    const warn = new PIXI.Container();
+    warn.x = PAD;
+    warn.y = headerH + 10;
+    warn.addChild(warnBg);
+    warnTx.x = 10;
+    warnTx.y = 8;
+    warn.addChild(warnTx);
+    root.addChild(warn);
+    headerH = warn.y + warnH;
+  }
 
   const overlay = new PIXI.Container();
   overlay.visible = false;
@@ -165,7 +182,7 @@ export function createShopView(
     overlay.removeChildren();
   }
 
-  function openSkillBindPicker(offer: Extract<ShopOffer, { type: 'skillBind' }>): void {
+  function openTempSkillPicker(offer: Extract<ShopOffer, { type: 'tempSkill' }>): void {
     overlay.removeChildren();
     overlay.visible = true;
 
@@ -177,7 +194,7 @@ export function createShopView(
     dim.on('pointertap', (e) => { if (e.target === dim) closePicker(); });
     overlay.addChild(dim);
 
-    const mercs = rosterEligibleForSkillBind(state, offer);
+    const mercs = rosterEligibleForTempSkill(state, offer.skillId);
     const panelH = 80 + mercs.length * 50 + 50;
     const panelW = W - 40;
     const panel = new PIXI.Container();
@@ -218,9 +235,13 @@ export function createShopView(
       rg.endFill();
       row.addChild(rg);
 
-      const rlab = new PIXI.Text(`${m.name} · ${UNIT_DEFS[m.profession].name}`, {
-        fill: COLORS.bodyText, fontSize: 13,
-      });
+      // 已经带着别的临时技能时要写清楚会顶掉哪一招——买完才发现旧的没了是最糟的
+      const cur = state.run?.runTempSkill[m.rosterId];
+      const curName = cur ? getSkillSpec(cur)?.name : undefined;
+      const rlab = new PIXI.Text(
+        curName ? `${m.name} · 顶替「${curName}」` : `${m.name} · ${UNIT_DEFS[m.profession].name}`,
+        { fill: COLORS.bodyText, fontSize: 13 },
+      );
       rlab.x = 12;
       rlab.y = (rowH - rlab.height) / 2 + 2;
       row.addChild(rlab);
@@ -229,7 +250,7 @@ export function createShopView(
       row.cursor = 'pointer';
       row.hitArea = new PIXI.Rectangle(0, 0, rowW, rowH);
       row.on('pointertap', () => {
-        callbacks.onBuy(offer, { skillBindTargetRosterId: m.rosterId });
+        callbacks.onBuy(offer, { tempSkillTargetRosterId: m.rosterId });
         closePicker();
       });
       panel.addChild(row);
@@ -318,8 +339,8 @@ export function createShopView(
     hit.eventMode = 'static';
     hit.cursor = 'pointer';
     hit.on('pointertap', () => {
-      if (o.type === 'skillBind') {
-        openSkillBindPicker(o);
+      if (o.type === 'tempSkill') {
+        openTempSkillPicker(o);
         return;
       }
       callbacks.onBuy(o);
@@ -338,7 +359,7 @@ export function createShopView(
   skipBg.drawRoundedRect(0, 0, skipW, skipH, skipH / 2);
   skipBg.endFill();
 
-  const skipText = new PIXI.Text('不购买，下一关', {
+  const skipText = new PIXI.Text('离开补给点，继续前进', {
     fill: COLORS.mutedText, fontSize: 14,
   });
   skipText.anchor.set(0.5);

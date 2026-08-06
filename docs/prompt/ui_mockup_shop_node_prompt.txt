@@ -1,0 +1,9 @@
+Mobile game UI mockup, portrait 9:16 phone screen, in-run supply shop screen for a cute chibi fantasy roguelike auto-battler.
+
+Layout, top to bottom:
+- Top bar: run progress node strip (small round nodes "1-1"..."1-5" with current shop node highlighted showing a shop bag icon), and a gold coin counter pill "金币 340".
+- Ribbon banner title "补给商店" with a cute merchant slime wearing an apron peeking from behind the banner.
+- A 2x3 grid of item cards, rounded rectangles with colored headers, each card shows: item illustration, name, one-line effect, and a price tag with gold coin icon. Items: "治疗药剂" (red potion, 60金币), "迟缓药剂" (blue swirl potion, 80金币), "高地券" (stone platform tile icon, 100金币), "森林券" (tree tile icon, 100金币), "技能书·横扫" (glowing red skill book, 150金币), "技能书·战吼" (glowing orange skill book, 150金币). One card marked "已售罄" grayed out.
+- Bottom: big green rounded button "离开补给点，继续前进" with arrow icon.
+
+Style: bright saturated cartoon casual game UI, warm purple/pink shop palette, thick rounded corners, soft shadows, Chinese UI text, crisp readable labels. Flat 2D game UI mockup, full screen filled, no phone frame, no watermark.

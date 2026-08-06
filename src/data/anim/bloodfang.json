@@ -1,0 +1,616 @@
+{
+  "id": "bloodfang",
+  "source": "art/sprite-runs/bloodfang",
+  "blend": "normal",
+  "image": "images/anim/bloodfang.png",
+  "meta": {
+    "size": {
+      "w": 1024,
+      "h": 2048
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 197,
+    "baselineY": 236,
+    "ref": "bloodfang-walk/down-1.png"
+  },
+  "frames": {
+    "bloodfang-walk/down-1.png": {
+      "frame": {
+        "x": 485,
+        "y": 461,
+        "w": 207,
+        "h": 211
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 24,
+        "y": 26,
+        "w": 207,
+        "h": 211
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodfang-walk/down-2.png": {
+      "frame": {
+        "x": 346,
+        "y": 2,
+        "w": 216,
+        "h": 217
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 20,
+        "y": 20,
+        "w": 216,
+        "h": 217
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodfang-walk/down-4.png": {
+      "frame": {
+        "x": 564,
+        "y": 2,
+        "w": 177,
+        "h": 217
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 39,
+        "y": 20,
+        "w": 177,
+        "h": 217
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodfang-walk/left-1.png": {
+      "frame": {
+        "x": 743,
+        "y": 2,
+        "w": 155,
+        "h": 217
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 50,
+        "y": 20,
+        "w": 155,
+        "h": 217
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodfang-walk/left-2.png": {
+      "frame": {
+        "x": 159,
+        "y": 242,
+        "w": 126,
+        "h": 215
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 65,
+        "y": 22,
+        "w": 126,
+        "h": 215
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodfang-walk/left-4.png": {
+      "frame": {
+        "x": 415,
+        "y": 242,
+        "w": 175,
+        "h": 214
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 40,
+        "y": 23,
+        "w": 175,
+        "h": 214
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodfang-walk/left-1-mirror.png": {
+      "frame": {
+        "x": 2,
+        "y": 242,
+        "w": 155,
+        "h": 217
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 51,
+        "y": 20,
+        "w": 155,
+        "h": 217
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodfang-walk/left-2-mirror.png": {
+      "frame": {
+        "x": 287,
+        "y": 242,
+        "w": 126,
+        "h": 215
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 65,
+        "y": 22,
+        "w": 126,
+        "h": 215
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodfang-walk/left-4-mirror.png": {
+      "frame": {
+        "x": 592,
+        "y": 242,
+        "w": 175,
+        "h": 214
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 41,
+        "y": 23,
+        "w": 175,
+        "h": 214
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodfang-walk/up-1.png": {
+      "frame": {
+        "x": 348,
+        "y": 676,
+        "w": 181,
+        "h": 205
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 37,
+        "y": 32,
+        "w": 181,
+        "h": 205
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodfang-walk/up-2.png": {
+      "frame": {
+        "x": 769,
+        "y": 242,
+        "w": 179,
+        "h": 213
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 38,
+        "y": 24,
+        "w": 179,
+        "h": 213
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodfang-walk/up-4.png": {
+      "frame": {
+        "x": 2,
+        "y": 461,
+        "w": 201,
+        "h": 213
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 27,
+        "y": 24,
+        "w": 201,
+        "h": 213
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodfang-attack_down/attack-1.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 177,
+        "h": 238
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 39,
+        "y": 0,
+        "w": 177,
+        "h": 238
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodfang-attack_down/attack-2.png": {
+      "frame": {
+        "x": 694,
+        "y": 461,
+        "w": 181,
+        "h": 207
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 37,
+        "y": 30,
+        "w": 181,
+        "h": 207
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodfang-attack_down/attack-3.png": {
+      "frame": {
+        "x": 181,
+        "y": 2,
+        "w": 163,
+        "h": 219
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 46,
+        "y": 19,
+        "w": 163,
+        "h": 219
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodfang-attack_down/attack-4.png": {
+      "frame": {
+        "x": 531,
+        "y": 676,
+        "w": 200,
+        "h": 204
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 28,
+        "y": 34,
+        "w": 200,
+        "h": 204
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodfang-attack_left/attack-1.png": {
+      "frame": {
+        "x": 733,
+        "y": 676,
+        "w": 163,
+        "h": 200
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 46,
+        "y": 37,
+        "w": 163,
+        "h": 200
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodfang-attack_left/attack-2.png": {
+      "frame": {
+        "x": 2,
+        "y": 884,
+        "w": 169,
+        "h": 200
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 43,
+        "y": 37,
+        "w": 169,
+        "h": 200
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodfang-attack_left/attack-3.png": {
+      "frame": {
+        "x": 2,
+        "y": 676,
+        "w": 171,
+        "h": 206
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 42,
+        "y": 31,
+        "w": 171,
+        "h": 206
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodfang-attack_left/attack-4.png": {
+      "frame": {
+        "x": 205,
+        "y": 461,
+        "w": 138,
+        "h": 212
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 59,
+        "y": 25,
+        "w": 138,
+        "h": 212
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodfang-attack_left/attack-1-mirror.png": {
+      "frame": {
+        "x": 173,
+        "y": 884,
+        "w": 163,
+        "h": 200
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 47,
+        "y": 37,
+        "w": 163,
+        "h": 200
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodfang-attack_left/attack-2-mirror.png": {
+      "frame": {
+        "x": 338,
+        "y": 884,
+        "w": 169,
+        "h": 200
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 44,
+        "y": 37,
+        "w": 169,
+        "h": 200
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodfang-attack_left/attack-3-mirror.png": {
+      "frame": {
+        "x": 175,
+        "y": 676,
+        "w": 171,
+        "h": 206
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 43,
+        "y": 31,
+        "w": 171,
+        "h": 206
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodfang-attack_left/attack-4-mirror.png": {
+      "frame": {
+        "x": 345,
+        "y": 461,
+        "w": 138,
+        "h": 212
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 59,
+        "y": 25,
+        "w": 138,
+        "h": 212
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "walk_down": {
+      "loop": true,
+      "fps": 9,
+      "frames": [
+        "bloodfang-walk/down-1.png",
+        "bloodfang-walk/down-2.png",
+        "bloodfang-walk/down-1.png",
+        "bloodfang-walk/down-4.png"
+      ]
+    },
+    "walk_left": {
+      "loop": true,
+      "fps": 9,
+      "frames": [
+        "bloodfang-walk/left-1.png",
+        "bloodfang-walk/left-2.png",
+        "bloodfang-walk/left-1.png",
+        "bloodfang-walk/left-4.png"
+      ]
+    },
+    "walk_right": {
+      "loop": true,
+      "fps": 9,
+      "frames": [
+        "bloodfang-walk/left-1-mirror.png",
+        "bloodfang-walk/left-2-mirror.png",
+        "bloodfang-walk/left-1-mirror.png",
+        "bloodfang-walk/left-4-mirror.png"
+      ]
+    },
+    "walk_up": {
+      "loop": true,
+      "fps": 9,
+      "frames": [
+        "bloodfang-walk/up-1.png",
+        "bloodfang-walk/up-2.png",
+        "bloodfang-walk/up-1.png",
+        "bloodfang-walk/up-4.png"
+      ]
+    },
+    "idle": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "bloodfang-walk/up-1.png"
+      ]
+    },
+    "default": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "bloodfang-walk/down-1.png"
+      ]
+    },
+    "idle_up": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "bloodfang-walk/up-1.png"
+      ]
+    },
+    "idle_down": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "bloodfang-walk/down-1.png"
+      ]
+    },
+    "idle_left": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "bloodfang-walk/left-1.png"
+      ]
+    },
+    "idle_right": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "bloodfang-walk/left-1-mirror.png"
+      ]
+    },
+    "attack_down": {
+      "loop": false,
+      "fps": 11,
+      "frames": [
+        "bloodfang-attack_down/attack-1.png",
+        "bloodfang-attack_down/attack-2.png",
+        "bloodfang-attack_down/attack-3.png",
+        "bloodfang-attack_down/attack-4.png"
+      ]
+    },
+    "attack_left": {
+      "loop": false,
+      "fps": 11,
+      "frames": [
+        "bloodfang-attack_left/attack-1.png",
+        "bloodfang-attack_left/attack-2.png",
+        "bloodfang-attack_left/attack-3.png",
+        "bloodfang-attack_left/attack-4.png"
+      ]
+    },
+    "attack_right": {
+      "loop": false,
+      "fps": 11,
+      "frames": [
+        "bloodfang-attack_left/attack-1-mirror.png",
+        "bloodfang-attack_left/attack-2-mirror.png",
+        "bloodfang-attack_left/attack-3-mirror.png",
+        "bloodfang-attack_left/attack-4-mirror.png"
+      ]
+    }
+  }
+}

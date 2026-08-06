@@ -32,6 +32,7 @@ export interface UnitBaseBlock {
  */
 export type TimedBattleEffect =
   | { kind: 'taunt'; roundsLeft: number }
+  | { kind: 'poison'; dmgPerRound: number; roundsLeft: number }
   | { kind: 'atkBonus'; addAtk: number; roundsLeft: number }
   | { kind: 'atkDown'; subAtk: number; roundsLeft: number }
   | { kind: 'spdDown'; subSpd: number; roundsLeft: number }
@@ -65,6 +66,8 @@ export interface UnitDef {
   /** AI 索敌用：普攻 `strike.taunt` 或限时 `taunt` 效果，见 `effectiveUnitDef` */
   taunt: boolean;
   skill?: SkillDef;
+  /** 第二技能槽，见 `UnitState.tempSkill` */
+  tempSkill?: SkillDef;
 }
 
 export interface UnitState {
@@ -73,14 +76,27 @@ export interface UnitState {
   faction: Faction;
   hp: number;
   pos: Vec2;
-  /** 技能剩余冷却，0 表示可用 */
+  /** 主技能剩余冷却，0 表示可用 */
   skillCd: number;
   /** 本回合是否已沿路径移动过（骑兵普攻加成） */
   movedInTurn: boolean;
-  /** 本场覆盖兵种表上的技能（商店解锁 + 布阵配置） */
+  /** 本场覆盖兵种表上的主技能（布阵配置） */
   battleSkill?: SkillDef;
-  /** 药剂等一次性加成：造成伤害乘数 */
-  tempAtkMul?: number;
+  /**
+   * 临时技能（第二槽，局内商店购买）。和主技能**共用**每回合一次的施放额度，
+   * 所以它加的是「多一个选项」而不是「多一次出手」——后者会直接改变行动经济，
+   * 整条难度曲线都要重调。
+   */
+  tempSkill?: SkillDef;
+  /** 临时技能剩余冷却；两槽冷却各自独立计时 */
+  tempSkillCd?: number;
+  /**
+   * 本场生效的技能词条 id（战前由 `run.skillMods` 烘焙进来，见 `unitSkillSpec`）。
+   *
+   * 存在单位上而不是让引擎去读 run 状态：引擎不认识 run，敌方单位也能挂词条（Boss 强化），
+   * 且模拟器可以直接构造带词条的单位跑数值。
+   */
+  skillMods?: string[];
   /** 精华等：仅加成「基础」atk/spd/move（部署累计） */
   bonusAtk?: number;
   bonusSpd?: number;
@@ -88,6 +104,13 @@ export interface UnitState {
   /** 佣兵系统：稳定 id / 显示名 */
   rosterId?: string;
   displayName?: string;
+  /** Boss：战场放大体型 + 头顶显示专名 */
+  boss?: boolean;
+  /**
+   * 覆盖动画集 id（缺省用 defId）。Boss/精英复用职业 defId 拿数值与克制关系，
+   * 但要走自己的美术，见 src/view/animSets.ts。
+   */
+  animSet?: string;
   /** 覆盖兵种基础面板 */
   mercMaxHp?: number;
   mercAtk?: number;
@@ -107,10 +130,23 @@ export interface CellTerrain {
   terrain: TerrainId;
 }
 
-export type SkillHit = { target: string; damage: number; hpLeft: number };
+export type SkillHit = {
+  target: string;
+  damage: number;
+  hpLeft: number;
+  /** 该目标所站地形对这一下的影响，如「森林 -25%」；无影响时缺省。逐目标记录，AoE 里每格可能不同 */
+  defTerrainNote?: string;
+};
 
 export type BattleEvent =
   | { type: 'round'; round: number }
+  /**
+   * 某个单位的回合开始。人工模式下视图靠它切到「等玩家下指令」，并高亮行动者。
+   *
+   * 敌方回合也发。回放层原来是从 `moveRange` 反推当前行动者的，但不移动的单位不发
+   * 那个事件，于是「现在轮到谁」这件事时有时无——行动顺序条要靠它，缺一次就会指错人。
+   */
+  | { type: 'turnStart'; uid: string; faction: Faction }
   /** 移动前：本回合单位可达格（与 AI 相同 BFS 规则） */
   | { type: 'moveRange'; uid: string; cells: Vec2[] }
   | { type: 'moveStep'; uid: string; from: Vec2; to: Vec2 }
@@ -123,6 +159,8 @@ export type BattleEvent =
       /** 施放前展示的技能作用/瞄准范围（格子坐标） */
       rangeCells: Vec2[];
       hits: SkillHit[];
+      /** 施法者所站地形对伤害的影响，如「高地 +25%」；无影响时缺省 */
+      atkTerrainNote?: string;
     }
   | {
       type: 'attack';
@@ -132,8 +170,32 @@ export type BattleEvent =
       hpLeft: number;
       /** 回放/UI 用，如「普攻」；缺省仍可按普攻处理 */
       attackLabel?: string;
+      /**
+       * 这一下吃到了冲锋的移动加成（骑兵被动）。回放层据此加播速度光环。
+       *
+       * 为什么走事件而不是回放时读 `movedInTurn`：自动模式下 `runToEnd` 会把整场跑完
+       * 再逐条播，那时候单位状态早就不是这一击发生时的状态了。
+       */
+      charged?: boolean;
+      /**
+       * 地形归因文案，由引擎从 `terrainSpec` 现算（见 `damage.terrainAttackNote`）。
+       * 回放层只负责把它飘出来，不要在视图里另写一份百分比，否则调地形数值时两边会飘。
+       */
+      atkTerrainNote?: string;
+      defTerrainNote?: string;
     }
   | { type: 'death'; uid: string }
+  /**
+   * 轮首持续伤害（中毒 / 沼泽等）。
+   *
+   * 以前这类扣血只改 `hp` 不发事件，表现是血条无缘无故短一截，玩家对不上原因。
+   * 「淬毒」词条要是也这样，就完全看不出选它有什么用。
+   */
+  | { type: 'dot'; uid: string; damage: number; hpLeft: number; source: 'poison' | 'terrain' }
+  /** 治疗（药剂、吸血等）：单个目标回复 */
+  | { type: 'heal'; target: string; amount: number; hpLeft: number }
+  /** 玩家在战斗中使用药剂（回放显示用） */
+  | { type: 'potion'; potionId: string; name: string }
   | { type: 'end'; winner: Faction };
 
 export interface BattleReport {

@@ -1,6 +1,8 @@
 import * as PIXI from 'pixi.js';
 import { createBackground } from '@/view/renderHelpers';
 import { AssetManager } from '@/core/AssetManager';
+import { makeButton } from '@/ui/Button';
+import { C } from '@/view/mvpTheme';
 
 export interface HomeScreen {
   screenWidth: number;
@@ -32,11 +34,11 @@ export function createHomeView(
     root.addChild(logo);
   } else {
     const fallbackTitle = new PIXI.Text('无尽纹章', {
-      fill: 0xfff8e7,
+      fill: C.primary,
       fontSize: 32,
       fontWeight: 'bold',
-      stroke: 0x6b4c2a,
-      strokeThickness: 3,
+      stroke: C.ink,
+      strokeThickness: 4,
     });
     fallbackTitle.anchor.set(0.5);
     fallbackTitle.x = W / 2;
@@ -44,76 +46,22 @@ export function createHomeView(
     root.addChild(fallbackTitle);
   }
 
-  // --- 开始按钮（图片 + 文字叠加） ---
-  const btnTex = AssetManager.isBundleLoaded('ui') ? AssetManager.texture('ui', 'btn_start') : null;
-  const btnMaxW = Math.min(220, W * 0.55);
-  const btnContainer = new PIXI.Container();
-
-  if (btnTex && btnTex !== PIXI.Texture.WHITE) {
-    const btnSprite = new PIXI.Sprite(btnTex);
-    const aspect = btnTex.width / btnTex.height;
-    btnSprite.width = btnMaxW;
-    btnSprite.height = btnMaxW / aspect;
-    btnSprite.anchor.set(0.5);
-    btnContainer.addChild(btnSprite);
-
-    const btnLabel = new PIXI.Text('开始游戏', {
-      fill: 0xffffff,
-      fontSize: 20,
-      fontWeight: 'bold',
-      stroke: 0x2a6a1a,
-      strokeThickness: 3,
-      dropShadow: true,
-      dropShadowColor: 0x1a4a0a,
-      dropShadowDistance: 1,
-      dropShadowAlpha: 0.5,
-    });
-    btnLabel.anchor.set(0.5);
-    btnLabel.y = -2;
-    btnContainer.addChild(btnLabel);
-
-    btnContainer.hitArea = new PIXI.Rectangle(
-      -btnMaxW / 2, -btnMaxW / aspect / 2,
-      btnMaxW, btnMaxW / aspect,
-    );
-  } else {
-    const fallbackBg = new PIXI.Graphics();
-    fallbackBg.lineStyle(2, 0x3a7a2a, 1);
-    fallbackBg.beginFill(0x5aaa3a, 0.92);
-    fallbackBg.drawRoundedRect(-btnMaxW / 2, -24, btnMaxW, 48, 24);
-    fallbackBg.endFill();
-    btnContainer.addChild(fallbackBg);
-
-    const btnLabel = new PIXI.Text('开始游戏', {
-      fill: 0xffffff,
-      fontSize: 18,
-      fontWeight: 'bold',
-    });
-    btnLabel.anchor.set(0.5);
-    btnContainer.addChild(btnLabel);
-
-    btnContainer.hitArea = new PIXI.Rectangle(-btnMaxW / 2, -24, btnMaxW, 48);
-  }
-
-  btnContainer.x = W / 2;
-  btnContainer.y = H * 0.58;
-  btnContainer.eventMode = 'static';
-  btnContainer.cursor = 'pointer';
-  btnContainer.on('pointertap', () => callbacks.onStart());
-
-  const origScaleX = btnContainer.scale.x;
-  const origScaleY = btnContainer.scale.y;
-  btnContainer.on('pointerdown', () => {
-    btnContainer.scale.set(origScaleX * 0.94, origScaleY * 0.94);
+  // --- 开始按钮 ---
+  // 以前这里贴的是 btn_start.png，一颗带高光渐变的绿药丸——高光渐变正是风格圣经 §9 的禁区，
+  // 而且文字本来就是叠在图上画的，那张图只贡献了一个圆角矩形。改用 primary 档按钮：
+  // 首页只有这一个行动，正好是「一屏一个金色 CTA」的规矩。
+  const btnW = Math.min(220, W * 0.55);
+  const btnH = 52;
+  const btn = makeButton('开始游戏', () => callbacks.onStart(), {
+    variant: 'primary',
+    width: btnW,
+    height: btnH,
+    fontSize: 20,
+    radius: 16,
   });
-  btnContainer.on('pointerup', () => {
-    btnContainer.scale.set(origScaleX, origScaleY);
-  });
-  btnContainer.on('pointerupoutside', () => {
-    btnContainer.scale.set(origScaleX, origScaleY);
-  });
-
-  root.addChild(btnContainer);
+  btn.x = (W - btnW) / 2;
+  btn.y = H * 0.58 - btnH / 2;
+  root.addChild(btn);
 
   return root;
 }

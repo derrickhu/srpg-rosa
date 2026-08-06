@@ -1,0 +1,706 @@
+{
+  "id": "sword",
+  "source": "art/sprite-runs/sword",
+  "blend": "normal",
+  "image": "images/anim/sword.png",
+  "meta": {
+    "size": {
+      "w": 1024,
+      "h": 1024
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 153,
+    "baselineY": 236,
+    "ref": "sword-walk/down-1.png"
+  },
+  "frames": {
+    "sword-walk/down-1.png": {
+      "frame": {
+        "x": 84,
+        "y": 2,
+        "w": 181,
+        "h": 217
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 37,
+        "y": 20,
+        "w": 181,
+        "h": 217
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "sword-walk/down-2.png": {
+      "frame": {
+        "x": 2,
+        "y": 449,
+        "w": 186,
+        "h": 201
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 35,
+        "y": 36,
+        "w": 186,
+        "h": 201
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "sword-walk/down-4.png": {
+      "frame": {
+        "x": 190,
+        "y": 449,
+        "w": 187,
+        "h": 201
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 34,
+        "y": 36,
+        "w": 187,
+        "h": 201
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "sword-walk/left-1.png": {
+      "frame": {
+        "x": 847,
+        "y": 2,
+        "w": 158,
+        "h": 206
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 49,
+        "y": 31,
+        "w": 158,
+        "h": 206
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "sword-walk/left-2.png": {
+      "frame": {
+        "x": 267,
+        "y": 2,
+        "w": 143,
+        "h": 207
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 56,
+        "y": 30,
+        "w": 143,
+        "h": 207
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "sword-walk/left-4.png": {
+      "frame": {
+        "x": 412,
+        "y": 2,
+        "w": 143,
+        "h": 207
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 56,
+        "y": 30,
+        "w": 143,
+        "h": 207
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "sword-walk/left-1-mirror.png": {
+      "frame": {
+        "x": 2,
+        "y": 241,
+        "w": 158,
+        "h": 206
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 49,
+        "y": 31,
+        "w": 158,
+        "h": 206
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "sword-walk/left-2-mirror.png": {
+      "frame": {
+        "x": 557,
+        "y": 2,
+        "w": 143,
+        "h": 207
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 57,
+        "y": 30,
+        "w": 143,
+        "h": 207
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "sword-walk/left-4-mirror.png": {
+      "frame": {
+        "x": 702,
+        "y": 2,
+        "w": 143,
+        "h": 207
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 57,
+        "y": 30,
+        "w": 143,
+        "h": 207
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "sword-walk/up-1.png": {
+      "frame": {
+        "x": 506,
+        "y": 241,
+        "w": 154,
+        "h": 203
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 51,
+        "y": 34,
+        "w": 154,
+        "h": 203
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "sword-walk/up-2.png": {
+      "frame": {
+        "x": 662,
+        "y": 241,
+        "w": 155,
+        "h": 203
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 50,
+        "y": 34,
+        "w": 155,
+        "h": 203
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "sword-walk/up-4.png": {
+      "frame": {
+        "x": 819,
+        "y": 241,
+        "w": 156,
+        "h": 203
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 50,
+        "y": 34,
+        "w": 156,
+        "h": 203
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "sword-attack_down/attack-1.png": {
+      "frame": {
+        "x": 162,
+        "y": 241,
+        "w": 76,
+        "h": 205
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 90,
+        "y": 32,
+        "w": 76,
+        "h": 205
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "sword-attack_down/attack-2.png": {
+      "frame": {
+        "x": 939,
+        "y": 449,
+        "w": 75,
+        "h": 154
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 90,
+        "y": 83,
+        "w": 75,
+        "h": 154
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "sword-attack_down/attack-3.png": {
+      "frame": {
+        "x": 863,
+        "y": 449,
+        "w": 74,
+        "h": 155
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 91,
+        "y": 82,
+        "w": 74,
+        "h": 155
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "sword-attack_down/attack-4.png": {
+      "frame": {
+        "x": 874,
+        "y": 652,
+        "w": 100,
+        "h": 126
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 78,
+        "y": 111,
+        "w": 100,
+        "h": 126
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "sword-attack_left/attack-1.png": {
+      "frame": {
+        "x": 240,
+        "y": 241,
+        "w": 131,
+        "h": 205
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 62,
+        "y": 32,
+        "w": 131,
+        "h": 205
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "sword-attack_left/attack-2.png": {
+      "frame": {
+        "x": 120,
+        "y": 652,
+        "w": 182,
+        "h": 151
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 37,
+        "y": 86,
+        "w": 182,
+        "h": 151
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "sword-attack_left/attack-3.png": {
+      "frame": {
+        "x": 488,
+        "y": 652,
+        "w": 191,
+        "h": 146
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 33,
+        "y": 91,
+        "w": 191,
+        "h": 146
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "sword-attack_left/attack-4.png": {
+      "frame": {
+        "x": 379,
+        "y": 449,
+        "w": 139,
+        "h": 191
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 58,
+        "y": 46,
+        "w": 139,
+        "h": 191
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "sword-attack_left/attack-1-mirror.png": {
+      "frame": {
+        "x": 373,
+        "y": 241,
+        "w": 131,
+        "h": 205
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 63,
+        "y": 32,
+        "w": 131,
+        "h": 205
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "sword-attack_left/attack-2-mirror.png": {
+      "frame": {
+        "x": 304,
+        "y": 652,
+        "w": 182,
+        "h": 151
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 37,
+        "y": 86,
+        "w": 182,
+        "h": 151
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "sword-attack_left/attack-3-mirror.png": {
+      "frame": {
+        "x": 681,
+        "y": 652,
+        "w": 191,
+        "h": 146
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 32,
+        "y": 91,
+        "w": 191,
+        "h": 146
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "sword-attack_left/attack-4-mirror.png": {
+      "frame": {
+        "x": 520,
+        "y": 449,
+        "w": 139,
+        "h": 191
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 59,
+        "y": 46,
+        "w": 139,
+        "h": 191
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "sword-attack_up/attack-1.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 80,
+        "h": 237
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 88,
+        "y": 0,
+        "w": 80,
+        "h": 237
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "sword-attack_up/attack-2.png": {
+      "frame": {
+        "x": 2,
+        "y": 652,
+        "w": 116,
+        "h": 153
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 70,
+        "y": 84,
+        "w": 116,
+        "h": 153
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "sword-attack_up/attack-3.png": {
+      "frame": {
+        "x": 784,
+        "y": 449,
+        "w": 77,
+        "h": 175
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 89,
+        "y": 62,
+        "w": 77,
+        "h": 175
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "sword-attack_up/attack-4.png": {
+      "frame": {
+        "x": 661,
+        "y": 449,
+        "w": 121,
+        "h": 180
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 67,
+        "y": 57,
+        "w": 121,
+        "h": 180
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "walk_down": {
+      "loop": true,
+      "fps": 10,
+      "frames": [
+        "sword-walk/down-1.png",
+        "sword-walk/down-2.png",
+        "sword-walk/down-1.png",
+        "sword-walk/down-4.png"
+      ]
+    },
+    "walk_left": {
+      "loop": true,
+      "fps": 10,
+      "frames": [
+        "sword-walk/left-1.png",
+        "sword-walk/left-2.png",
+        "sword-walk/left-1.png",
+        "sword-walk/left-4.png"
+      ]
+    },
+    "walk_right": {
+      "loop": true,
+      "fps": 10,
+      "frames": [
+        "sword-walk/left-1-mirror.png",
+        "sword-walk/left-2-mirror.png",
+        "sword-walk/left-1-mirror.png",
+        "sword-walk/left-4-mirror.png"
+      ]
+    },
+    "walk_up": {
+      "loop": true,
+      "fps": 10,
+      "frames": [
+        "sword-walk/up-1.png",
+        "sword-walk/up-2.png",
+        "sword-walk/up-1.png",
+        "sword-walk/up-4.png"
+      ]
+    },
+    "idle": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "sword-walk/up-1.png"
+      ]
+    },
+    "default": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "sword-walk/down-1.png"
+      ]
+    },
+    "idle_up": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "sword-walk/up-1.png"
+      ]
+    },
+    "idle_down": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "sword-walk/down-1.png"
+      ]
+    },
+    "idle_left": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "sword-walk/left-1.png"
+      ]
+    },
+    "idle_right": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "sword-walk/left-1-mirror.png"
+      ]
+    },
+    "attack_down": {
+      "loop": false,
+      "fps": 12,
+      "frames": [
+        "sword-attack_down/attack-1.png",
+        "sword-attack_down/attack-2.png",
+        "sword-attack_down/attack-3.png",
+        "sword-attack_down/attack-4.png"
+      ]
+    },
+    "attack_left": {
+      "loop": false,
+      "fps": 12,
+      "frames": [
+        "sword-attack_left/attack-1.png",
+        "sword-attack_left/attack-2.png",
+        "sword-attack_left/attack-3.png",
+        "sword-attack_left/attack-4.png"
+      ]
+    },
+    "attack_right": {
+      "loop": false,
+      "fps": 12,
+      "frames": [
+        "sword-attack_left/attack-1-mirror.png",
+        "sword-attack_left/attack-2-mirror.png",
+        "sword-attack_left/attack-3-mirror.png",
+        "sword-attack_left/attack-4-mirror.png"
+      ]
+    },
+    "attack_up": {
+      "loop": false,
+      "fps": 12,
+      "frames": [
+        "sword-attack_up/attack-1.png",
+        "sword-attack_up/attack-2.png",
+        "sword-attack_up/attack-3.png",
+        "sword-attack_up/attack-4.png"
+      ]
+    }
+  }
+}

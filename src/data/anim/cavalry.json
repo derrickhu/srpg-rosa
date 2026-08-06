@@ -1,0 +1,706 @@
+{
+  "id": "cavalry",
+  "source": "art/sprite-runs/cavalry",
+  "blend": "normal",
+  "image": "images/anim/cavalry.png",
+  "meta": {
+    "size": {
+      "w": 2048,
+      "h": 1024
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 200,
+    "baselineY": 237,
+    "ref": "cavalry-walk/down-1.png"
+  },
+  "frames": {
+    "cavalry-walk/down-1.png": {
+      "frame": {
+        "x": 173,
+        "y": 2,
+        "w": 190,
+        "h": 203
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 33,
+        "y": 34,
+        "w": 190,
+        "h": 203
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "cavalry-walk/down-2.png": {
+      "frame": {
+        "x": 715,
+        "y": 212,
+        "w": 192,
+        "h": 192
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 32,
+        "y": 45,
+        "w": 192,
+        "h": 192
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "cavalry-walk/down-4.png": {
+      "frame": {
+        "x": 909,
+        "y": 212,
+        "w": 201,
+        "h": 191
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 27,
+        "y": 46,
+        "w": 201,
+        "h": 191
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "cavalry-walk/left-1.png": {
+      "frame": {
+        "x": 1672,
+        "y": 212,
+        "w": 202,
+        "h": 189
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 27,
+        "y": 48,
+        "w": 202,
+        "h": 189
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "cavalry-walk/left-2.png": {
+      "frame": {
+        "x": 2,
+        "y": 408,
+        "w": 208,
+        "h": 189
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 24,
+        "y": 48,
+        "w": 208,
+        "h": 189
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "cavalry-walk/left-4.png": {
+      "frame": {
+        "x": 212,
+        "y": 408,
+        "w": 196,
+        "h": 189
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 30,
+        "y": 48,
+        "w": 196,
+        "h": 189
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "cavalry-walk/left-1-mirror.png": {
+      "frame": {
+        "x": 410,
+        "y": 408,
+        "w": 202,
+        "h": 189
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 27,
+        "y": 48,
+        "w": 202,
+        "h": 189
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "cavalry-walk/left-2-mirror.png": {
+      "frame": {
+        "x": 614,
+        "y": 408,
+        "w": 208,
+        "h": 189
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 24,
+        "y": 48,
+        "w": 208,
+        "h": 189
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "cavalry-walk/left-4-mirror.png": {
+      "frame": {
+        "x": 824,
+        "y": 408,
+        "w": 196,
+        "h": 189
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 30,
+        "y": 48,
+        "w": 196,
+        "h": 189
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "cavalry-walk/up-1.png": {
+      "frame": {
+        "x": 505,
+        "y": 2,
+        "w": 178,
+        "h": 200
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 39,
+        "y": 37,
+        "w": 178,
+        "h": 200
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "cavalry-walk/up-2.png": {
+      "frame": {
+        "x": 1500,
+        "y": 2,
+        "w": 193,
+        "h": 194
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 31,
+        "y": 43,
+        "w": 193,
+        "h": 194
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "cavalry-walk/up-4.png": {
+      "frame": {
+        "x": 518,
+        "y": 212,
+        "w": 195,
+        "h": 193
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 30,
+        "y": 44,
+        "w": 195,
+        "h": 193
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "cavalry-attack_down/attack-1.png": {
+      "frame": {
+        "x": 1112,
+        "y": 212,
+        "w": 158,
+        "h": 191
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 49,
+        "y": 46,
+        "w": 158,
+        "h": 191
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "cavalry-attack_down/attack-2.png": {
+      "frame": {
+        "x": 365,
+        "y": 2,
+        "w": 138,
+        "h": 203
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 59,
+        "y": 34,
+        "w": 138,
+        "h": 203
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "cavalry-attack_down/attack-3.png": {
+      "frame": {
+        "x": 1695,
+        "y": 2,
+        "w": 140,
+        "h": 194
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 58,
+        "y": 43,
+        "w": 140,
+        "h": 194
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "cavalry-attack_down/attack-4.png": {
+      "frame": {
+        "x": 1265,
+        "y": 408,
+        "w": 153,
+        "h": 186
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 51,
+        "y": 51,
+        "w": 153,
+        "h": 186
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "cavalry-attack_left/attack-1.png": {
+      "frame": {
+        "x": 1074,
+        "y": 2,
+        "w": 211,
+        "h": 195
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 22,
+        "y": 43,
+        "w": 211,
+        "h": 195
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "cavalry-attack_left/attack-2.png": {
+      "frame": {
+        "x": 2,
+        "y": 212,
+        "w": 256,
+        "h": 194
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 45,
+        "w": 256,
+        "h": 194
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "cavalry-attack_left/attack-3.png": {
+      "frame": {
+        "x": 1420,
+        "y": 408,
+        "w": 256,
+        "h": 174
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 64,
+        "w": 256,
+        "h": 174
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "cavalry-attack_left/attack-4.png": {
+      "frame": {
+        "x": 1272,
+        "y": 212,
+        "w": 198,
+        "h": 191
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 29,
+        "y": 46,
+        "w": 198,
+        "h": 191
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "cavalry-attack_left/attack-1-mirror.png": {
+      "frame": {
+        "x": 1287,
+        "y": 2,
+        "w": 211,
+        "h": 195
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 23,
+        "y": 43,
+        "w": 211,
+        "h": 195
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "cavalry-attack_left/attack-2-mirror.png": {
+      "frame": {
+        "x": 260,
+        "y": 212,
+        "w": 256,
+        "h": 194
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 45,
+        "w": 256,
+        "h": 194
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "cavalry-attack_left/attack-3-mirror.png": {
+      "frame": {
+        "x": 1678,
+        "y": 408,
+        "w": 256,
+        "h": 174
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 64,
+        "w": 256,
+        "h": 174
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "cavalry-attack_left/attack-4-mirror.png": {
+      "frame": {
+        "x": 1472,
+        "y": 212,
+        "w": 198,
+        "h": 191
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 29,
+        "y": 46,
+        "w": 198,
+        "h": 191
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "cavalry-attack_up/attack-1.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 169,
+        "h": 208
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 43,
+        "y": 29,
+        "w": 169,
+        "h": 208
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "cavalry-attack_up/attack-2.png": {
+      "frame": {
+        "x": 858,
+        "y": 2,
+        "w": 214,
+        "h": 196
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 21,
+        "y": 42,
+        "w": 214,
+        "h": 196
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "cavalry-attack_up/attack-3.png": {
+      "frame": {
+        "x": 1022,
+        "y": 408,
+        "w": 241,
+        "h": 188
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 7,
+        "y": 50,
+        "w": 241,
+        "h": 188
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "cavalry-attack_up/attack-4.png": {
+      "frame": {
+        "x": 685,
+        "y": 2,
+        "w": 171,
+        "h": 199
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 42,
+        "y": 38,
+        "w": 171,
+        "h": 199
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "walk_down": {
+      "loop": true,
+      "fps": 11,
+      "frames": [
+        "cavalry-walk/down-1.png",
+        "cavalry-walk/down-2.png",
+        "cavalry-walk/down-1.png",
+        "cavalry-walk/down-4.png"
+      ]
+    },
+    "walk_left": {
+      "loop": true,
+      "fps": 11,
+      "frames": [
+        "cavalry-walk/left-1.png",
+        "cavalry-walk/left-2.png",
+        "cavalry-walk/left-1.png",
+        "cavalry-walk/left-4.png"
+      ]
+    },
+    "walk_right": {
+      "loop": true,
+      "fps": 11,
+      "frames": [
+        "cavalry-walk/left-1-mirror.png",
+        "cavalry-walk/left-2-mirror.png",
+        "cavalry-walk/left-1-mirror.png",
+        "cavalry-walk/left-4-mirror.png"
+      ]
+    },
+    "walk_up": {
+      "loop": true,
+      "fps": 11,
+      "frames": [
+        "cavalry-walk/up-1.png",
+        "cavalry-walk/up-2.png",
+        "cavalry-walk/up-1.png",
+        "cavalry-walk/up-4.png"
+      ]
+    },
+    "idle": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "cavalry-walk/up-1.png"
+      ]
+    },
+    "default": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "cavalry-walk/down-1.png"
+      ]
+    },
+    "idle_up": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "cavalry-walk/up-1.png"
+      ]
+    },
+    "idle_down": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "cavalry-walk/down-1.png"
+      ]
+    },
+    "idle_left": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "cavalry-walk/left-1.png"
+      ]
+    },
+    "idle_right": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "cavalry-walk/left-1-mirror.png"
+      ]
+    },
+    "attack_down": {
+      "loop": false,
+      "fps": 12,
+      "frames": [
+        "cavalry-attack_down/attack-1.png",
+        "cavalry-attack_down/attack-2.png",
+        "cavalry-attack_down/attack-3.png",
+        "cavalry-attack_down/attack-4.png"
+      ]
+    },
+    "attack_left": {
+      "loop": false,
+      "fps": 12,
+      "frames": [
+        "cavalry-attack_left/attack-1.png",
+        "cavalry-attack_left/attack-2.png",
+        "cavalry-attack_left/attack-3.png",
+        "cavalry-attack_left/attack-4.png"
+      ]
+    },
+    "attack_right": {
+      "loop": false,
+      "fps": 12,
+      "frames": [
+        "cavalry-attack_left/attack-1-mirror.png",
+        "cavalry-attack_left/attack-2-mirror.png",
+        "cavalry-attack_left/attack-3-mirror.png",
+        "cavalry-attack_left/attack-4-mirror.png"
+      ]
+    },
+    "attack_up": {
+      "loop": false,
+      "fps": 12,
+      "frames": [
+        "cavalry-attack_up/attack-1.png",
+        "cavalry-attack_up/attack-2.png",
+        "cavalry-attack_up/attack-3.png",
+        "cavalry-attack_up/attack-4.png"
+      ]
+    }
+  }
+}

@@ -1,3 +1,4 @@
+class_name UnitHpOverlay
 extends Node2D
 
 var unit_token: UnitToken
@@ -22,8 +23,6 @@ func _draw() -> void:
 	draw_rect(bar_rect, Color(0.95, 0.9, 0.7, 0.9), false, 1.5)
 
 	var hp_text: String = str(unit_token.current_hp)
-	if not unit_token.uses_sprite:
-		hp_text = "%s %d" % [GameState.unit_label(unit_token.def_id), unit_token.current_hp]
 
 	var font: Font = ThemeDB.fallback_font
 	if font == null:

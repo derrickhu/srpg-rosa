@@ -1,0 +1,73 @@
+技能词条图标 3x3（当前使用中）
+产出 → images/ui/mod_{sharpen,quick,rout,hobble,venom,siphon,fury,wide,overwhelm}.png
+生成器：Cursor 内置 GenerateImage，aspect_ratio 1:1
+
+切图（overwhelm 那格要单独处理，见下）：
+    python3 scripts/split-tile-sheet.py --input <sheet>.png --out-dir <tmp> --size 64 \
+        --names sharpen quick rout hobble venom siphon fury wide overwhelm
+    python3 scripts/despill-magenta.py <tmp>
+    # overwhelm 是紫色星爆，紫和品红键色在色相上挨着，默认参数会把整块紫当溢色压掉
+    # （实测 73% 可见像素被"校正"）。素材自身最高品红度 144，取 150 卡在它和键色之间。
+    python3 scripts/despill-magenta.py <只放 overwhelm 的目录> --min-spill 150
+
+用在哪：战斗胜利后的三选一强化大卡（约 44px）、背包页词条列表（26px）。
+和导航图标不同，这批**只压在米白卡面 #FCFCF6 上**，不会出现在金色高亮上，
+所以允许用暖黄和金色做填充；但描边仍然必须是近黑粗描边，不然在米白上会飘。
+
+九个词条的语义（改 prompt 前先看 src/data/skillModCatalog.ts，两边必须对得上）：
+    sharpen 锋锐   伤害提升          quick 迅捷   冷却缩短
+    rout 挫锐      命中降敌攻击      hobble 迟滞  命中降敌速度
+    venom 淬毒     命中附带中毒      siphon 汲取  伤害转化为治疗
+    fury 战意      施放后自身增攻    wide 横扫    作用范围扩大
+    overwhelm 势不可挡  范围与伤害同时提升（史诗档，要明显比其余八个更"大"）
+
+关键约束（改 prompt 时别丢）：
+- 九个必须一眼两两分得开。最容易糊的是 rout（降攻）和 hobble（降速）：
+  前者是**断裂的剑**，后者是**脚镣铁链**，形状彻底不同，不要都画成向下箭头。
+- 同理 venom（毒）和 siphon（吸血）都是液滴，靠颜色和容器分：毒是绿色带泡的瓶子，
+  吸血是红色液滴汇入心形。
+- 玩家要在 0.5 秒内从三张卡里挑一张，图标是第一眼看到的东西，比文字先到。
+
+---
+
+A 3-column x 3-row grid of 9 GAME UI ICONS representing combat skill upgrades in a cartoon fantasy tactics mobile game.
+
+CRITICAL BACKGROUND: the entire background, including all space between and around the icons, must be 100% solid flat MAGENTA, hex #FF00FF. It is a chroma key and will be deleted. No white, no grey, no gradient, no drop shadows onto the background.
+
+CRITICAL SIZE CONSTRAINT — the most important rule: these icons are displayed at only 26 to 44 pixels in the game. Every icon must be ONE bold, chunky, instantly readable silhouette that survives being shrunk to the size of a fingernail. Think of a chess piece, not an illustration. NO thin lines, NO small parts, NO fine detail, NO tiny sparkles, NO text, NO numbers. If an element would be less than a tenth of the icon's width, delete it.
+
+CRITICAL — THESE SIT ON A CREAM WHITE CARD (#FCFCF6). Every icon needs a THICK near-black outline (#1A1410) all the way around it and a saturated fill inside, so it does not float on the pale card.
+
+STYLE — must match the game's characters, which are chunky cartoon figures with heavy black outlines and flat colours:
+- SOLID FILLED SILHOUETTES with a thick near-black outline. These are not line icons and not outline icons — the shape is filled in.
+- Flat saturated colour fills, at most 3 colours per icon plus the outline, plus one simple lighter shade for a single cel-shaded highlight.
+- Chunky, rounded, friendly shapes. Slightly exaggerated and toy-like.
+- No gradients, no glow, no bevel, no gloss, no photographic detail, no pixel art, no thin strokes.
+- Each icon drawn straight-on, facing the viewer, upright and centred.
+
+Per-cell contents, left-to-right then top-to-bottom:
+
+Cell 1 (SHARPEN / more damage) — a broad short sword blade pointing straight up, steel grey (#B4BCC8) with a bright white-hot cutting edge down one side and a chunky dark red-brown grip at the bottom. One single fat four-pointed glint sitting on the edge. Wide blade, never a thin needle.
+
+Cell 2 (QUICK / shorter cooldown) — a fat round hourglass in a chunky wooden frame, warm brown (#A87840) frame with bright cyan (#3CC8E4) sand inside, and one bold cyan lightning bolt striking across the middle of it. The bolt must be thick and blocky.
+
+Cell 3 (ROUT / enemy attack down) — a BROKEN sword: a wide steel blade snapped in two across the middle with a jagged break, the top half tilted and falling away, chunky dark grip at the bottom. Steel grey blade with a dull orange-red (#D2543C) crack glow along the break. It must read as "a weapon destroyed", not as an arrow.
+
+Cell 4 (HOBBLE / enemy speed down) — a heavy iron ankle shackle: one thick closed metal cuff ring, cool blue-grey (#7A8CA0) with a lighter top edge, and two or three FAT chain links hanging from it. Big blocky links only, never a thin chain. It must read as "shackled / slowed", not as a bracelet.
+
+Cell 5 (VENOM / poison on hit) — a squat round potion bottle with a short neck and a dark cork, filled with bright toxic green (#54C43C) liquid, with two big round bubbles inside it and one fat green drop falling from the lip. Chunky and bulbous.
+
+Cell 6 (SIPHON / lifesteal) — a bold rounded red heart (#E05446) with two fat crimson droplets curving into it from the upper left, as if being drawn in. The heart is the dominant shape and fills most of the icon; the droplets are large and blobby.
+
+Cell 7 (FURY / self attack up) — a clenched fist seen from the knuckles, warm skin tone (#EEC49A) with a chunky brown wrist wrap, wreathed in one bold orange-red flame (#F08C2A) rising behind and above it. Simple blocky flame with two or three big tongues, no wispy tips.
+
+Cell 8 (WIDE / bigger area) — a single wide sweeping crescent arc, like a horizontal slash trail, bright golden yellow (#FCB40C) with a lighter cream inner edge, curving from lower left to lower right with the bulge at the top. Thick in the middle and tapering only slightly at the ends. Nothing else in the cell.
+
+Cell 9 (OVERWHELM / epic, area and damage together) — a big bold explosive starburst with six or eight FAT triangular points, deep violet-purple (#9A5ADC) with a bright golden yellow (#FCB40C) core in the centre. This one must look clearly more powerful and visually heavier than the other eight — the largest and boldest shape of the set.
+
+LAYOUT RULES:
+1. EXACTLY 9 icons in a clean 3x3 arrangement.
+2. NO borders, NO dividing lines, NO frames, NO circles or badges behind the icons — they are separated only by magenta.
+3. Each icon fills about 70% of its cell, leaving a clear magenta margin on all four sides. Nothing touches or crosses into a neighbouring cell.
+4. All nine icons must feel like ONE set: same outline thickness, same level of simplification, same chunky proportions.
+5. NO text, no labels, no captions, no letters, no numbers, no watermark anywhere in the image.

@@ -1,0 +1,10 @@
+Mobile game UI mockup, portrait 9:16 phone screen, post-battle victory reward pick-one-of-three screen for a cute chibi fantasy roguelike auto-battler.
+
+Layout, top to bottom:
+- Dimmed battle board in the background (blurred grid with cute slime units).
+- Big golden banner "胜利!" with laurel wreath and confetti burst at top.
+- Reward summary row: "+80 金币" with coin icon, "+5 魂晶" with blue soul gem icon.
+- Center: ribbon label "选择一件战利品", then THREE large vertical reward cards side by side, glowing edges, slightly fanned: card 1 "力量精华" with a red essence orb icon and text "攻击 +1 (本次冒险)", card 2 "敏捷精华" with a green essence orb and "速度 +1 (本次冒险)", card 3 "远行精华" with a blue essence orb and "移动 +1 (本次冒险)". Middle card is highlighted larger with a tap hand cursor icon.
+- Bottom: smaller gray text button "跳过" and a big yellow rounded button "确认选择".
+
+Style: bright saturated cartoon casual game UI, celebratory gold/purple palette, thick rounded corners, glow and sparkle effects, Chinese UI text, crisp readable labels. Flat 2D game UI mockup, full screen filled, no phone frame, no watermark.

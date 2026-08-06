@@ -1,0 +1,14 @@
+WALK MOTION — the walk must be readable from the SILHOUETTE ALONE at 44 pixels tall.
+Columns 1 and 3 must look obviously different from columns 2 and 4 even with all interior
+detail removed. Understating this is the single most common failure:
+  Column 1: neutral. Both feet together directly under the body, legs straight, body at its
+            FULL standing height.
+  Column 2: LEFT foot planted far FORWARD, right foot trailing far BEHIND, with a clearly
+            VISIBLE GAP between the two feet — the stride is wide, not a shuffle. The whole
+            body drops noticeably, squashing down about one tenth of its height. Arms swing
+            opposite to the legs.
+  Column 3: neutral again, identical to column 1.
+  Column 4: mirror of column 2 — RIGHT foot far forward, left foot trailing behind, same
+            heavy body drop, arms swung the other way.
+Exaggerate far past realism. A subtle, realistic walk reads as a statue sliding across the
+board. If in doubt, make the stride wider and the body drop deeper.

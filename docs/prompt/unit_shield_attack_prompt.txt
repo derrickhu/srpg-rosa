@@ -1,0 +1,60 @@
+# 盾卫 —— 盾击 2x2，每朝向一张（generate2dsprite --mode attack）
+#
+# 参考图：art/sprite-runs/shield/identity-ref-<朝向>.png（行走处理后的单帧）
+#   不要传 4x4 行走 sheet 当参考图：布局锚定会压过 2x2 指令。
+# 处理时 --scale-profile art/sprite-runs/shield/scale-profile.json
+#         --max-profile-scale-drift 0.6（跨动作体型由 sprite2anim 的 bodyScaleByRun 兜底）
+#
+# attack_right 由 attack_left 镜像，不出图。下面 <朝向段落> 三选一。
+
+CRITICAL BACKGROUND REQUIREMENT, THIS OVERRIDES EVERYTHING ELSE: the background must be 100% solid
+flat MAGENTA, hex #FF00FF. NOT black, NOT white, NOT grey, NOT a gradient. Every pixel that is not
+the character must be exactly magenta #FF00FF, including between the cells. It is a chroma key.
+
+The attached reference image contains ONE SINGLE character frame. It defines only the CHARACTER
+IDENTITY and the ART STYLE, NOT the layout. Do NOT copy the reference's framing and do NOT produce
+a walk cycle — produce the 2x2 attack sheet described below.
+
+Match the reference exactly on: the same stout chibi shield bearer, same steel-blue armour and blue
+hood, same cream off-white rectangular tower shield with a bold blue cross, same thick near-black
+outlines, same flat fills with light cel shading, same giant-head-tiny-body proportions.
+
+A 2x2 sprite sheet: 4 frames of a SHIELD BASH attack. <朝向段落>. He rams forward with the tower
+shield — this is his signature move, so the shield must be the thing that moves, and the change
+between frames must be obvious in silhouette.
+
+  朝下：the character FACING DOWN toward the camera the whole time
+  朝左：the character seen in LEFT SIDE PROFILE, facing LEFT the whole time and ramming toward the
+        left. He stays in LEFT profile in all 4 frames — never turn him toward the camera, never
+        flip him to face right.
+  朝上：the character seen FROM BEHIND, facing UP and AWAY from the camera the whole time, ramming
+        away from the viewer. His face is never visible. Keep at least part of the cream shield
+        face visible past his silhouette in every frame so the unit stays recognisable.
+
+FRAME ORDER, left-to-right then top-to-bottom:
+  Frame 1 (top-left):     WIND-UP. He pulls the shield back tight against his shoulder, knees bent,
+                          body coiled.
+  Frame 2 (top-right):    DRIVE. He lunges forward and thrusts the shield out ahead of him, leading
+                          foot stepping forward.
+  Frame 3 (bottom-left):  IMPACT. Full extension — the shield is rammed as far forward as it goes,
+                          arm straight, leading foot planted wide, body lunged behind it. Strongest,
+                          most extreme pose. He STAYS UPRIGHT — do not bend him double, do not hide
+                          his head.
+  Frame 4 (bottom-right): RECOVERY. He pulls the shield back to a neutral guard at his side, body
+                          straightening.
+
+ABSOLUTE RULES:
+1. Background is 100% solid flat magenta #FF00FF everywhere including between cells. No gradient,
+   no vignette, no shadow.
+2. EXACTLY 4 equal-size cells in a 2x2 grid, every cell the same width and height.
+3. NO borders, NO dividing lines, NO gutters, NO frames between cells.
+4. IDENTICAL BODY SCALE and IDENTICAL camera distance in all 4 cells. Measure him from the top of
+   his head to the soles of his boots, ignoring the shield: that height must be the same in all 4
+   cells. Do not zoom in on the action.
+5. HIS BODY (head-top to boots, shield excluded) FILLS ABOUT 55% OF THE CELL HEIGHT. Draw him
+   generously big in the cell — a tiny figure lost in a huge empty cell is WRONG.
+6. Nothing crosses a cell edge.
+7. Feet rest on the same horizontal baseline in every cell.
+8. Draw the CHARACTER BODY ONLY. NO motion-blur streaks, NO impact flash, NO dust, NO sparks,
+   NO shockwave, NO speed lines.
+9. NO text, no labels, no numbers, no arrows, no UI, no watermark.

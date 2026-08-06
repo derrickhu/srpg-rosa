@@ -7,8 +7,20 @@ signal cell_pressed
 @onready var unit_label: Label = %UnitLabel
 @onready var click_area: Button = %ClickArea
 
+var unit_bitmap: BitmapText
+
 
 func _ready() -> void:
+	unit_label.text = ""
+	unit_label.visible = false
+	unit_bitmap = BitmapText.new()
+	unit_bitmap.set_anchors_preset(Control.PRESET_FULL_RECT)
+	unit_bitmap.font_size = 18
+	unit_bitmap.font_color = Color.WHITE
+	unit_bitmap.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	unit_bitmap.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	add_child(unit_bitmap)
+	move_child(unit_bitmap, unit_label.get_index() + 1)
 	click_area.pressed.connect(func() -> void:
 		cell_pressed.emit()
 	)
@@ -26,12 +38,14 @@ func apply_state(terrain_id: String, deployable: bool, placement: Dictionary) ->
 		terrain_image.texture = GameState.terrain_texture(terrain_id)
 
 	var has_unit: bool = not placement.is_empty()
-	unit_label.visible = has_unit
+	if unit_bitmap != null:
+		unit_bitmap.visible = has_unit
 	if has_unit:
-		unit_label.text = GameState.unit_label(placement["def_id"])
-		unit_label.add_theme_color_override("font_color", GameState.unit_color(placement["def_id"]))
+		unit_bitmap.text = GameState.unit_label(placement["def_id"])
+		unit_bitmap.font_color = GameState.unit_color(placement["def_id"])
 	else:
-		unit_label.text = ""
+		if unit_bitmap != null:
+			unit_bitmap.text = ""
 
 	deploy_highlight.visible = deployable and not has_unit
 	click_area.disabled = not deployable and not has_unit

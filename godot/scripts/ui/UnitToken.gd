@@ -49,10 +49,9 @@ func _build_visual(unit: Dictionary) -> void:
 		uses_sprite = false
 		_add_fallback_body(unit)
 
-	hp_overlay = Node2D.new()
+	hp_overlay = UnitHpOverlay.new()
 	hp_overlay.z_index = 20
-	hp_overlay.set_script(preload("res://scripts/ui/UnitHpOverlay.gd"))
-	hp_overlay.unit_token = self
+	(hp_overlay as UnitHpOverlay).unit_token = self
 	add_child(hp_overlay)
 
 

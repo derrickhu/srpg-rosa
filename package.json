@@ -6,10 +6,13 @@
   "description": "无尽纹章 - 微信小游戏（Pixi + TypeScript + Vite）",
   "scripts": {
     "build": "vite build",
+    "anim:build": "node scripts/tres2pixi.mjs",
+    "anim:build:sprite": "node scripts/sprite2anim.mjs && node scripts/anim2token.mjs",
+    "anim:tokens": "node scripts/anim2token.mjs",
     "build:godot": "bash scripts/build-wechat-godot.sh",
     "dev": "vite build --watch",
-    "upload:cdn": "node scripts/upload_cdn.js",
-    "upload:cdn:dry": "node scripts/upload_cdn.js --dry-run",
+    "upload:cdn": "node scripts/upload_cdn.cjs",
+    "upload:cdn:dry": "node scripts/upload_cdn.cjs --dry-run",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -21,6 +24,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "pngjs": "^7.0.0",
     "typescript": "^5.7.3",
     "vite": "^6.2.0",
     "vitest": "^4.1.4"

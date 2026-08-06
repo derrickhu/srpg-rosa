@@ -7,7 +7,9 @@ export type AdScenario =
   | 'shopRefresh'
   | 'freeUnit'
   | 'doubleStar'
-  | 'dailyFreeRoll';
+  | 'dailyFreeRoll'
+  /** 未通过的关卡换一次自动战斗 */
+  | 'autoBattle';
 
 const SCENARIO_AD_UNIT: Record<AdScenario, string> = {
   revive: AdConfigKeys.rewardRevive,
@@ -15,6 +17,7 @@ const SCENARIO_AD_UNIT: Record<AdScenario, string> = {
   freeUnit: AdConfigKeys.rewardShopRefresh,
   doubleStar: AdConfigKeys.rewardRevive,
   dailyFreeRoll: AdConfigKeys.rewardShopRefresh,
+  autoBattle: AdConfigKeys.rewardRevive,
 };
 
 let rewardedCache: Map<string, any> = new Map();

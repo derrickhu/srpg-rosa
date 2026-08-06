@@ -1,0 +1,73 @@
+# 骑兵 —— 四方向行走 4x4（generate2dsprite --mode player_sheet）
+#
+# 参考图：.pilot/ref_cavalry.png（从 lineup_v4_2 抠出的单帧，只锁身份+风格）
+# 处理后 --write-scale-profile art/sprite-runs/cavalry/scale-profile.json，攻击 sheet 复用它。
+#
+# 骑乘单位是唯一「宽大于高」的兵种，这个剪影差异本身就是它的识别点，不要往人形去纠。
+# 风格段落取自 _style_block.txt，行走段落改写自 _walk_motion_block.txt（人腿→马的步态）。
+
+A 4x4 sprite sheet showing a full 4-direction walk cycle for a MOUNTED top-down tactics RPG unit.
+Keep the character in the reference image exactly: same chibi lancer in warm golden-yellow armour
+riding a small chunky WHITE horse with a cream mane, same thick near-black outlines, same flat
+fills with light cel shading, same palette, same giant-head-tiny-body proportions for both rider
+and horse. Only the facing direction and the walk pose change between cells.
+
+HIS IDENTITY IS THE WHITE HORSE PLUS A LONG LANCE. The horse is small, chunky and cartoonish with
+a big head and stubby legs, pure white with a cream mane — it is the light area of the unit and
+must read as near-white. The rider holds a LONG LANCE with a broad silver head, carried at a clear
+diagonal so it juts well past the horse's outline; the lance tip may rise above the rider's head.
+Because he is mounted, his silhouette is the WIDEST and LOWEST of all the units — clearly a
+different shape from a foot soldier.
+
+WALK MOTION — the horse's gait must be readable from the SILHOUETTE ALONE at 44 pixels tall.
+Columns 1 and 3 must look obviously different from columns 2 and 4 even with all interior detail
+removed:
+  Column 1: neutral. All four hooves gathered under the horse, legs straight, the whole unit at its
+            FULL standing height.
+  Column 2: the horse's near FORELEG reaches far FORWARD and its far HIND LEG stretches far BACK,
+            with a clearly VISIBLE GAP between them — a wide, obvious stride, not a shuffle. The
+            horse's body dips noticeably and the rider bounces down with it.
+  Column 3: neutral again, identical to column 1.
+  Column 4: the opposite legs swap — the other foreleg far forward, the other hind leg far back,
+            same heavy dip.
+Exaggerate far past realism. A subtle, realistic gait reads as a statue sliding across the board.
+
+IDENTICAL BODY SCALE in all 16 cells: measure the unit from the top of the rider's helmet down to
+the horse's hooves, ignoring the lance — that height must be the same in all 16 cells. Same camera
+distance in every cell.
+
+PROPORTIONS: extreme super-deformed mascot for both rider and horse. The rider's head including
+helmet is about HALF of the rider's own height. The horse is stubby and barrel-shaped with short
+thick legs, not a slender realistic horse. The whole unit is wider than it is tall.
+
+SIMPLIFY: only 4 to 6 flat colours in total. WARM GOLDEN YELLOW is the rider's identity colour; the
+white horse is the light area. No belts, straps, buckles, reins detail, saddle stitching, rivets,
+armour seams or trim. Face is minimal: two simple dark eyes, two eyebrows, at most a tiny mouth
+line. Arms and legs are simple rounded stubs; hands are mitten shapes with no fingers.
+
+ART STYLE: hand-drawn cartoon game sprite, thick near-black outlines, flat saturated fills with
+light cel shading (one highlight tone, one shadow tone), no gradients, no texture noise, no
+painterly rendering. Bright saturated palette with a genuine near-white highlight.
+
+CAMERA: 3/4 top-down view from slightly above, consistent in all 16 cells.
+
+SHEET LAYOUT — rows are facing direction:
+  Row 1 (top):    facing DOWN toward the camera — you see the horse's face and the rider's face
+  Row 2:          facing LEFT, full left side profile of horse and rider
+  Row 3:          facing RIGHT, full right side profile, mirrored from row 2
+  Row 4 (bottom): facing UP away from the camera — you see the horse's rump and tail and the
+                  rider's back. The lance must still be plainly visible.
+
+ABSOLUTE RULES:
+1. EXACTLY 16 equal-size cells in a 4x4 grid, every cell the same width and height.
+2. NO borders, NO dividing lines, NO frames between cells — cells separated only by flat
+   background colour.
+3. Background is 100% solid flat pure magenta #FF00FF everywhere including between cells.
+   No gradient, no vignette, no shadow.
+4. IDENTICAL identity, costume and palette in all 16 cells.
+5. The UNIT (rider's helmet down to the hooves, lance excluded) fills about 45% of the cell height
+   in EVERY cell. The lance extends past that.
+6. Nothing crosses a cell edge. The lance tip especially must stay clear of the edges.
+7. Hooves rest on the same horizontal baseline in every cell — the body dips by squashing, not by
+   floating.
+8. NO text, NO labels, NO numbers, NO arrows, NO UI, NO watermark anywhere.

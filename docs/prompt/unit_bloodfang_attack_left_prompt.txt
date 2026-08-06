@@ -1,0 +1,68 @@
+# 血牙酋长 —— 朝左（左侧面）挥砍 4 帧（2x2 自定义网格，label-prefix atk）
+#
+# attack_right 由本组帧水平镜像得到（sprite2anim 的 mirror），不单独生图。
+# 参考图：art/sprite-runs/bloodfang/identity-ref-left.png —— 从行走 sheet 第 2 行裁的朝左单帧。
+#   用朝下的 identity-ref.png 会让模型在孤立 2x2 里漂回正面：参考图对朝向的控制力远强于文字。
+#   注意不要传 4x4 的 raw-sheet.png 当参考图：布局锚定会压过 2x2 指令，模型会直接复刻行走 sheet。
+# 处理时用 --scale-profile art/sprite-runs/bloodfang/scale-profile.json 复用行走 sheet 的缩放。
+# 配色禁止粉/品红/紫罗兰/紫色，见 unit_bloodfang_walk_sheet_prompt.txt 说明。
+
+CRITICAL BACKGROUND REQUIREMENT, THIS OVERRIDES EVERYTHING ELSE: the background of the
+image must be 100% solid flat MAGENTA, hex #FF00FF, bright pure pink-purple. NOT black. NOT
+white. NOT grey. NOT a gradient. Every single pixel that is not part of the character must be
+exactly magenta #FF00FF, including the areas between the cells. The background is a chroma
+key and a black background makes the whole image unusable.
+
+The attached reference image contains ONE SINGLE character frame, shown FACING LEFT in side
+profile. It defines the CHARACTER IDENTITY, the ART STYLE, and the FACING DIRECTION. It does
+NOT define the layout of the image you must produce. Do NOT copy the reference's framing, and
+do NOT produce a walk cycle or a 4x4 sheet — produce the 2x2 attack sheet described below.
+
+KEEP THE FACING FROM THE REFERENCE: in every one of the 4 frames the character must be seen
+from the SIDE, facing LEFT, exactly like the reference. You should see one ear, one eye in
+profile, the nose pointing left, and the shoulders in profile. Do NOT rotate the character to
+face the camera. A front-facing character is WRONG.
+
+Match the reference exactly on: the same orc warlord, same horned iron helmet, same
+ash-grey green skin, same tusks, same red-brown fur and leather, same round wooden shield,
+same big notched iron cleaver with blood on the blade, same thick dark outlines, same flat
+fills with light cel shading, same 3/4 top-down camera. Only the pose changes.
+
+A 2x2 sprite sheet: 4 frames of a single heavy cleaver ATTACK, the character FACING LEFT in
+side profile the whole time. The swing is a COMPACT OVERHEAD CHOP that comes straight down,
+NOT a wide horizontal sweep out to the side.
+
+FRAME ORDER, reading left-to-right then top-to-bottom:
+  Frame 1 (top-left):     WIND-UP. Cleaver held straight UP above the head, blade vertical and
+                          pointing at the sky, elbows bent, knees bent, torso coiled back.
+  Frame 2 (top-right):    CHOP. Cleaver swung forward and down to about chest height, blade
+                          steeply angled down-left, torso leaning left.
+  Frame 3 (bottom-left):  IMPACT. Cleaver driven DOWN just in front of the leading foot, blade
+                          pointing at the ground, arms extended downward, torso lunged left,
+                          jaw open in a roar. Strongest, most extreme pose.
+  Frame 4 (bottom-right): RECOVERY. Cleaver lifted back to a neutral guard beside the body,
+                          blade angled up, torso straightening.
+
+ABSOLUTE RULES:
+1. Background is 100% solid flat magenta #FF00FF everywhere, including between the cells.
+   No gradient, no vignette, no ground shadow, no drop shadow, no black.
+2. EXACTLY 4 equal-size cells in a 2x2 grid. Every cell the same width and height.
+3. NO borders, NO dividing lines, NO gutters, NO frames between cells. Do not draw any line
+   where the cells meet. Cells are separated only by empty magenta background.
+4. IDENTICAL SCALE and IDENTICAL camera distance in all 4 cells. Same head size, same
+   shoulder width. Do not zoom in on the action.
+5. The character fills only about 45% of the cell height, centered in its cell, leaving a
+   very wide empty magenta margin on all four sides. Draw it small. A small character with
+   a lot of empty margin is CORRECT; a large character that fills the cell is WRONG.
+6. NOTHING may touch or cross a cell edge or the outer edge of the image. Not a horn, not
+   the cleaver tip, not the shield, not fur, not a boot. There must be clearly visible
+   magenta between the cleaver tip and every edge in all 4 frames. Keep the cleaver inside
+   the character's own vertical column — never let the blade reach out sideways past the
+   shoulders. If a pose does not fit, make the character smaller.
+7. Feet rest on the same horizontal baseline in every cell. The body may bob and lunge, but
+   do not let the character float or leave the ground.
+8. Draw the CHARACTER BODY ONLY. NO motion-blur streaks, NO slash arc, NO energy trail, NO
+   impact flash, NO dust, NO sparks, NO blood spray, NO blood droplets in the air, NO hit
+   effect of any kind. The swing VFX is drawn separately by the engine.
+9. NO text of any kind anywhere in the image. Do NOT write the frame names, do NOT caption
+   the cells, no labels, no numbers, no arrows, no UI, no watermark.

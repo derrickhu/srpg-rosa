@@ -14,6 +14,7 @@ var unit_state_by_uid: Dictionary = {}
 var cell_size: float = 72.0
 var board_origin: Vector2 = Vector2.ZERO
 var is_started: bool = false
+var status_bitmap: BitmapText
 
 const SIDE_PADDING := 18.0
 const TOP_RESERVED := 92.0
@@ -31,6 +32,8 @@ func setup(next_report: Dictionary, next_units: Array[Dictionary], next_terrain:
 
 
 func _ready() -> void:
+	print("[boot] BattlePlaybackScene ready")
+	status_bitmap = BitmapTextUtil.replace_label(status_label, "战斗准备", 26, Color.WHITE)
 	if not report.is_empty():
 		_build_and_start()
 
@@ -47,11 +50,20 @@ func _build_and_start() -> void:
 
 
 func _apply_safe_area() -> void:
-	if status_label == null:
+	if status_label == null and status_bitmap == null:
 		return
 	var inset_top: float = SafeAreaInsets.top()
 	status_label.offset_top = inset_top + 24.0
 	status_label.offset_bottom = inset_top + 72.0
+	if status_bitmap != null:
+		status_bitmap.offset_top = inset_top + 24.0
+		status_bitmap.offset_bottom = inset_top + 72.0
+
+
+func _set_status(value: String) -> void:
+	if status_bitmap != null:
+		status_bitmap.text = value
+	status_label.text = ""
 
 
 func _calculate_board_layout() -> void:
@@ -142,7 +154,7 @@ func _play_report() -> void:
 	for event in report["events"]:
 		match event["type"]:
 			"round":
-				status_label.text = "第 %d 回合" % event["round"]
+				_set_status("第 %d 回合" % event["round"])
 				await get_tree().create_timer(0.35).timeout
 			"moveRange":
 				await get_tree().create_timer(0.08).timeout
@@ -154,7 +166,7 @@ func _play_report() -> void:
 				await _play_death(event)
 			"end":
 				var winner: String = event["winner"]
-				status_label.text = "战斗结束：%s胜利" % ("玩家" if winner == "player" else "敌人")
+				_set_status("战斗结束：%s胜利" % ("玩家" if winner == "player" else "敌人"))
 				await get_tree().create_timer(0.8).timeout
 				playback_finished.emit(winner, int(report["rounds"]))
 				return
@@ -180,11 +192,11 @@ func _play_move_step(event: Dictionary) -> void:
 func _play_attack(event: Dictionary) -> void:
 	var attacker_uid: String = event["attacker"]
 	var target_uid: String = event["target"]
-	status_label.text = "%s 对 %s 造成 %d 伤害" % [
+	_set_status("%s 对 %s 造成 %d 伤害" % [
 		_display_name(attacker_uid),
 		_display_name(target_uid),
 		event["damage"],
-	]
+	])
 	var hit_applied: bool = false
 	if token_by_uid.has(attacker_uid) and unit_state_by_uid.has(attacker_uid) and unit_state_by_uid.has(target_uid):
 		var attacker: UnitToken = token_by_uid[attacker_uid]
@@ -226,7 +238,7 @@ func _play_death(event: Dictionary) -> void:
 	var uid: String = event["uid"]
 	if not token_by_uid.has(uid):
 		return
-	status_label.text = "%s 被击败" % _display_name(uid)
+	_set_status("%s 被击败" % _display_name(uid))
 	var token: Node2D = token_by_uid[uid]
 	var tween: Tween = create_tween()
 	tween.tween_property(token, "modulate:a", 0.0, 0.2)

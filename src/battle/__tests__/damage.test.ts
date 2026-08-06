@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { counterMultiplier, computeDamage, terrainAttackMul, terrainDefenseMul } from '../damage';
+import {
+  counterMultiplier,
+  computeDamage,
+  terrainAttackMul,
+  terrainAttackNote,
+  terrainDefenseMul,
+  terrainDefenseNote,
+} from '../damage';
 import type { UnitDef } from '../types';
 
 function makeDef(id: string, atk: number, overrides?: Partial<UnitDef>): UnitDef {
@@ -51,13 +58,33 @@ describe('terrainAttackMul', () => {
 });
 
 describe('terrainDefenseMul', () => {
-  it('wall gives 0.5x damage received', () => {
-    const grid = [['wall' as const]];
-    expect(terrainDefenseMul(grid, { x: 0, y: 0 })).toBe(0.5);
+  it('forest gives 0.75x damage received', () => {
+    const grid = [['forest' as const]];
+    expect(terrainDefenseMul(grid, { x: 0, y: 0 })).toBe(0.75);
   });
   it('plain gives 1x', () => {
     const grid = [['plain' as const]];
     expect(terrainDefenseMul(grid, { x: 0, y: 0 })).toBe(1);
+  });
+  // 不可通行地形不该带减伤：没有单位能站上去，写了也只会误导读者以为地形已有防御维度
+  it('impassable terrain carries no defensive value', () => {
+    expect(terrainDefenseMul([['wall' as const]], { x: 0, y: 0 })).toBe(1);
+    expect(terrainDefenseMul([['abyss' as const]], { x: 0, y: 0 })).toBe(1);
+  });
+});
+
+describe('terrain notes', () => {
+  it('derives text from the spec so display cannot drift from the maths', () => {
+    expect(terrainAttackNote([['high' as const]], { x: 0, y: 0 })).toBe('高地 +25%');
+    expect(terrainAttackNote([['river' as const]], { x: 0, y: 0 })).toBe('河流 -20%');
+    expect(terrainDefenseNote([['forest' as const]], { x: 0, y: 0 })).toBe('森林 -25%');
+  });
+  it('returns null when the terrain changes nothing', () => {
+    expect(terrainAttackNote([['plain' as const]], { x: 0, y: 0 })).toBeNull();
+    expect(terrainDefenseNote([['plain' as const]], { x: 0, y: 0 })).toBeNull();
+    // 沼泽只掉血、不改伤害，所以攻防两条都不该出提示
+    expect(terrainAttackNote([['swamp' as const]], { x: 0, y: 0 })).toBeNull();
+    expect(terrainDefenseNote([['swamp' as const]], { x: 0, y: 0 })).toBeNull();
   });
 });
 
@@ -73,14 +100,21 @@ describe('computeDamage', () => {
     const atk = makeDef('sword', 0);
     const def = makeDef('sword', 100);
     const grid = [['plain' as const]];
-    const dmg = computeDamage(atk, def, grid, { x: 0, y: 0 });
+    const dmg = computeDamage(atk, def, grid, { x: 0, y: 0 }, { x: 0, y: 0 });
     expect(dmg).toBe(1);
   });
   it('applies defense terrain multiplier', () => {
     const atk = makeDef('sword', 20);
     const def = makeDef('sword', 10);
-    const grid = [['plain' as const, 'wall' as const]];
+    const grid = [['plain' as const, 'forest' as const]];
     const dmg = computeDamage(atk, def, grid, { x: 0, y: 0 }, { x: 1, y: 0 });
-    expect(dmg).toBe(Math.floor(20 * 1 * 1 * 0.5));
+    expect(dmg).toBe(Math.floor(20 * 1 * 1 * 0.75));
+  });
+  it('stacks attacker and target terrain', () => {
+    const atk = makeDef('shield', 20);
+    const def = makeDef('sword', 10);
+    const grid = [['high' as const, 'forest' as const]];
+    const dmg = computeDamage(atk, def, grid, { x: 0, y: 0 }, { x: 1, y: 0 });
+    expect(dmg).toBe(Math.floor(20 * 1.25 * 0.75));
   });
 });

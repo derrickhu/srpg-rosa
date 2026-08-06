@@ -1,34 +1,87 @@
 import * as PIXI from 'pixi.js';
 import { playerDeployRowRange } from '@/battle/constants';
 import { gridSize } from '@/battle/grid';
+import type { TerrainId } from '@/battle/types';
 import { UNIT_DEFS } from '@/data/unitDefs';
-import { POTION_DEFS } from '@/data/potionCatalog';
-import { STAT_POTION_DEFS } from '@/data/statPotionCatalog';
-import { skillDefForId, getSkillSpec } from '@/data/skillCatalog';
-import type { Mercenary } from '@/game/mercenaryTypes';
+import { skillDefForId } from '@/data/skillCatalog';
+import { PLACEABLE_TERRAIN_IDS, terrainTicketName } from '@/data/dungeonCatalog';
+import type { Character } from '@/game/characterTypes';
+import { characterEffectiveStats } from '@/game/characterFactory';
+import type { BattleMode } from '@/battle/engine';
+import { AdManager } from '@/platform/AdManager';
+import { enemySpawnToUnitState } from '@/game/state/DeployManager';
 import {
-  attachPotionToPlacement,
-  attachStatPotionToPlacement,
-  benchMercenaries,
+  activeSkillIdForRun,
+  benchCharacters,
+  canAutoBattle,
+  currentDungeon,
+  currentNode,
+  currentEnemyScale,
   currentStage,
   cycleSkillForRoster,
+  effectiveOwnedSkillIds,
   getMaxDeploy,
-  getMercenary,
-  placeMercenary,
+  getCharacter,
+  placeCharacter,
   placeTerrainCell,
   removePlacement,
+  terrainChargesTotal,
   type MvpGameState,
 } from '@/game/MvpState';
 import { C } from '@/view/mvpTheme';
 import { createUnitOverhead } from '@/view/unitOverhead';
-import { createTerrainCell, createUnitToken, createBackground } from '@/view/renderHelpers';
+import { battleUnitInfoModel, characterInfoModel } from '@/view/unitInfoModel';
+import { createUnitInfoOverlay, type UnitInfoModel } from '@/view/unitInfoPanel';
+import {
+  createTerrainBadge,
+  terrainBadge,
+  createTerrainCell,
+  createUnitToken,
+  createBackground,
+  createUiIcon,
+} from '@/view/renderHelpers';
+import { createNodeStrip } from '@/view/NodeStrip';
 import { AssetManager } from '@/core/AssetManager';
 import { makeButton } from '@/ui/Button';
+import { unitHeadLocalY } from '@/view/AnimatedUnit';
 
 export interface DeployLayoutScreen {
   screenWidth: number;
   screenHeight: number;
 }
+
+/**
+ * 棋盘上已部署单位右上角的「i」角标。
+ *
+ * 我方格的整格点击是「取消部署」，那是主操作，不能被查看信息抢走；
+ * 所以查看信息退到一个小角标上，和替补席卡片用的是同一个记号。
+ */
+function makeInfoBadge(cell: number, onTap: () => void): PIXI.Container {
+  const r = 7;
+  const c = new PIXI.Container();
+  c.x = cell / 2 - r - 1;
+  c.y = -cell / 2 + r + 1;
+  const g = new PIXI.Graphics();
+  g.beginFill(0x2a2118, 0.82);
+  g.drawCircle(0, 0, r);
+  g.endFill();
+  g.lineStyle(1, 0xf0e0c0, 0.85);
+  g.drawCircle(0, 0, r);
+  c.addChild(g);
+  const tx = new PIXI.Text('i', { fill: 0xf0e0c0, fontSize: 10, fontWeight: 'bold' });
+  tx.anchor.set(0.5);
+  c.addChild(tx);
+  c.eventMode = 'static';
+  c.cursor = 'pointer';
+  // 判定区比画出来的圆大一圈：格子只有 40px 上下，按视觉尺寸给判定必然点不中
+  c.hitArea = new PIXI.Rectangle(-r - 3, -r - 3, (r + 3) * 2, (r + 3) * 2);
+  c.on('pointertap', (e: PIXI.FederatedPointerEvent) => {
+    e.stopPropagation();
+    onTap();
+  });
+  return c;
+}
+
 
 /**
  * 部署页纵向分区（避免上挤下空）：
@@ -103,11 +156,18 @@ function computeDeployLayout(screen: DeployLayoutScreen, gridW: number, gridH: n
 }
 
 export interface DeployCallbacks {
-  onStartBattle: () => void;
+  onStartBattle: (mode: BattleMode) => void;
   onReset: () => void;
   onHome: () => void;
   /** 刷新部署界面（不重置状态） */
   onRefresh?: () => void;
+  /**
+   * 未通过的关卡想自动战斗时走广告。返回是否看完（看完才自动开打）。
+   * 由 GameFlow 实现，DeployView 不直接碰 AdManager。
+   */
+  onRequestAutoByAd?: () => Promise<boolean>;
+  /** 提示（走 GameFlow 的 toast，DeployView 不自己造弹窗） */
+  onWarn?: (msg: string) => void;
 }
 
 export function createDeployView(
@@ -115,6 +175,7 @@ export function createDeployView(
   callbacks: DeployCallbacks,
   screen: DeployLayoutScreen,
 ): PIXI.Container {
+  const run = state.run!;
   const st0 = currentStage(state);
   const { w: GW, h: GH } = gridSize(st0.terrain);
   const [depR0, depR1] = playerDeployRowRange(GH);
@@ -145,11 +206,15 @@ export function createDeployView(
   settingsBg.drawRoundedRect(0, 0, settingsBtnSize, settingsBtnSize, 8);
   settingsBg.endFill();
   settingsBtn.addChild(settingsBg);
-  const gear = new PIXI.Text('⚙', { fill: 0xffffff, fontSize: 20 });
-  gear.anchor.set(0.5);
-  gear.x = settingsBtnSize / 2;
-  gear.y = settingsBtnSize / 2;
-  settingsBtn.addChild(gear);
+  // 用图标而不是 ⚙ emoji：emoji 字形由系统字体决定，微信真机上各家画得都不一样，
+  // 有的机型甚至渲染成方框。
+  const gearSize = 22;
+  const gear = createUiIcon('icon_gear', gearSize);
+  if (gear) {
+    gear.x = (settingsBtnSize - gearSize) / 2;
+    gear.y = (settingsBtnSize - gearSize) / 2;
+    settingsBtn.addChild(gear);
+  }
   settingsBtn.x = 8;
   settingsBtn.y = 6;
   settingsBtn.eventMode = 'static';
@@ -160,7 +225,7 @@ export function createDeployView(
 
   // --- 金币（设置按钮下方，带遮罩底板和图标） ---
   const goldIconSize = 22;
-  const goldValueTx = new PIXI.Text(`${state.gold}`, { fill: 0xffffff, fontSize: 14, fontWeight: 'bold' });
+  const goldValueTx = new PIXI.Text(`${run.gold}`, { fill: 0xffffff, fontSize: 14, fontWeight: 'bold' });
   const goldPadX = 6;
   const goldPadY = 4;
   const goldBgW = goldIconSize + 4 + goldValueTx.width + goldPadX * 2;
@@ -176,11 +241,8 @@ export function createDeployView(
   goldBg.endFill();
   goldContainer.addChild(goldBg);
 
-  const goldTex = AssetManager.isBundleLoaded('ui') ? AssetManager.texture('ui', 'icon_gold') : null;
-  if (goldTex && goldTex !== PIXI.Texture.WHITE) {
-    const goldIcon = new PIXI.Sprite(goldTex);
-    goldIcon.width = goldIconSize;
-    goldIcon.height = goldIconSize;
+  const goldIcon = createUiIcon('icon_gold', goldIconSize);
+  if (goldIcon) {
     goldIcon.x = goldPadX;
     goldIcon.y = (goldBgH - goldIconSize) / 2;
     goldContainer.addChild(goldIcon);
@@ -190,8 +252,9 @@ export function createDeployView(
   goldContainer.addChild(goldValueTx);
   root.addChild(goldContainer);
 
-  // --- 关卡信息（与金币同一行，居中显示） ---
-  const stageText = `第 ${state.stageIndex + 1} 关`;
+  // --- 副本名（与金币同一行，居中显示）+ 节点进度链 ---
+  const dungeon0 = currentDungeon(state);
+  const stageText = dungeon0.name;
   const stageTx = new PIXI.Text(stageText, { fill: 0xffffff, fontSize: 14, fontWeight: 'bold' });
   stageTx.anchor.set(0.5, 0.5);
   const stagePadX = 16;
@@ -212,14 +275,14 @@ export function createDeployView(
   // --- 上阵人数提示（关卡名称下方，居中） ---
   const maxDeployCount = getMaxDeploy(state);
   const baseMaxDeploy = currentStage(state).maxDeploy ?? 3;
-  const deployedCount = state.placements.length;
+  const deployedCount = run.placements.length;
   const deployInfoTx = new PIXI.Text(`${deployedCount}/${maxDeployCount}`, { fill: 0xffffff, fontSize: 12, fontWeight: 'bold' });
   const deployInfoPadX = 8;
   const deployInfoPadY = 4;
 
   const adBtnW = 20;
   const adBtnGap = 6;
-  const hasAdSlot = state.adExtraSlot === 0;
+  const hasAdSlot = run.adExtraSlot === 0;
   const deployInfoContentW = 14 + deployInfoTx.width + (hasAdSlot ? adBtnGap + adBtnW : 0);
   const deployInfoW = deployInfoContentW + deployInfoPadX * 2;
   const deployInfoH = deployInfoTx.height + deployInfoPadY * 2;
@@ -260,13 +323,23 @@ export function createDeployView(
     adBtn.cursor = 'pointer';
     adBtn.on('pointertap', (e: PIXI.FederatedPointerEvent) => {
       e.stopPropagation();
-      state.adExtraSlot = 1;
+      run.adExtraSlot = 1;
       callbacks.onRefresh?.();
     });
     deployInfoContainer.addChild(adBtn);
   }
 
   root.addChild(deployInfoContainer);
+
+  // --- 节点进度链（代替「2/9」数字） ---
+  {
+    const stripW = Math.min(screen.screenWidth - 32, 360);
+    const strip = createNodeStrip(dungeon0, { currentIndex: run.nodeIndex, width: stripW });
+    strip.x = Math.floor((screen.screenWidth - stripW) / 2);
+    // 30 而不是 18：当前节点上方要留出「你在这」标记的高度，否则它会压到上面的信息条
+    strip.y = deployInfoContainer.y + deployInfoH + 30;
+    root.addChild(strip);
+  }
 
   // --- 设置面板 ---
   const settingsOverlay = new PIXI.Container();
@@ -314,16 +387,16 @@ export function createDeployView(
 
     const btnContinue = makeButton('继续游戏', () => {
       settingsOverlay.visible = false;
-    }, { width: btnW, height: 42, fillColor: 0x5a9e3a, fillAlpha: 0.9, borderColor: 0x4a8e2a, textColor: 0xffffff, fontSize: 15, radius: 8 });
+    }, { variant: 'primary', width: btnW, height: 42, fontSize: 15 });
     btnContinue.x = 16;
     btnContinue.y = by;
     panel.addChild(btnContinue);
     by += 52;
 
-    const btnRestart = makeButton('重新开局', () => {
+    const btnRestart = makeButton('放弃副本', () => {
       settingsOverlay.visible = false;
       callbacks.onReset();
-    }, { width: btnW, height: 42, fillColor: 0xcc8833, fillAlpha: 0.9, borderColor: 0xbb7722, textColor: 0xffffff, fontSize: 15, radius: 8 });
+    }, { variant: 'danger', width: btnW, height: 42, fontSize: 15 });
     btnRestart.x = 16;
     btnRestart.y = by;
     panel.addChild(btnRestart);
@@ -332,7 +405,7 @@ export function createDeployView(
     const btnHome = makeButton('回到首页', () => {
       settingsOverlay.visible = false;
       callbacks.onHome();
-    }, { width: btnW, height: 42, fillColor: 0x888888, fillAlpha: 0.85, borderColor: 0x777777, textColor: 0xffffff, fontSize: 15, radius: 8 });
+    }, { variant: 'ghost', width: btnW, height: 42, fontSize: 15 });
     btnHome.x = 16;
     btnHome.y = by;
     panel.addChild(btnHome);
@@ -342,26 +415,10 @@ export function createDeployView(
   buildSettingsPanel();
 
   let selectedRosterId: string | null = null;
-  type DeployTool = 'unit' | 'terrain' | 'potion' | 'essence';
+  type DeployTool = 'unit' | 'terrain';
   let deployTool: DeployTool = 'unit';
-  let potionPickId: string | null = null;
-  /** 精华子类：`STAT_POTION_DEFS` 的 id，选好后点已上场格 */
-  let essencePickId: string | null = null;
-
-  const STAT_POTION_IDS = Object.keys(STAT_POTION_DEFS) as (keyof typeof STAT_POTION_DEFS)[];
-  function essenceShortLabel(id: string): string {
-    if (id === 'perm_atk') return '力';
-    if (id === 'perm_spd') return '速';
-    if (id === 'perm_move') return '腿';
-    return STAT_POTION_DEFS[id]?.name.slice(0, 2) ?? id;
-  }
-  function essenceStockTotal(): number {
-    let s = 0;
-    for (const id of STAT_POTION_IDS) {
-      s += state.statPotions[id] ?? 0;
-    }
-    return s;
-  }
+  /** 地形子类：选好后点空格放置 */
+  let terrainPickId: TerrainId | null = null;
 
   const gridLayer = new PIXI.Container();
   root.addChild(gridLayer);
@@ -379,7 +436,7 @@ export function createDeployView(
   }
 
   let _deployCountUpdater: (() => void) | null = () => {
-    deployInfoTx.text = `${state.placements.length}/${maxDeployCount}`;
+    deployInfoTx.text = `${run.placements.length}/${maxDeployCount}`;
   };
 
   function redrawGrid(): void {
@@ -389,7 +446,7 @@ export function createDeployView(
       for (let x = 0; x < GW; x++) {
         const px = ORIGIN_X + x * CELL;
         const py = ORIGIN_Y + y * CELL;
-        const ov = state.terrainOverlay.find((o) => o.x === x && o.y === y);
+        const ov = run.terrainOverlay.find((o) => o.x === x && o.y === y);
         const ter = ov ? ov.terrain : st.terrain[y]![x]!;
         const tc = createTerrainCell(ter, CELL);
         tc.x = px;
@@ -401,6 +458,16 @@ export function createDeployView(
         tc.on('pointertap', () => onCellTap(x, y));
         gridLayer.addChild(tc);
 
+        // 地形效果角标。布阵是唯一能改变站位的时刻，效果必须在**这里**可读——
+        // 只在战斗里飘字等于告诉玩家「你刚才那步走错了」，太晚了。
+        const badge = createTerrainBadge(ter, CELL);
+        if (badge) {
+          badge.x += px;
+          badge.y += py;
+          if (!isDeployRow(y)) badge.alpha = 0.7;
+          gridLayer.addChild(badge);
+        }
+
         if (isDeployRow(y)) {
           const highlight = new PIXI.Graphics();
           highlight.lineStyle(1.5, 0x44bb44, 0.7);
@@ -410,62 +477,66 @@ export function createDeployView(
           gridLayer.addChild(highlight);
         }
 
-        // 药剂/精华模式下高亮已部署角色格子
-        const isItemMode = deployTool === 'potion' || deployTool === 'essence';
-        const placedHere = state.placements.find((p) => p.pos.x === x && p.pos.y === y);
-        if (isItemMode && placedHere) {
-          const glow = new PIXI.Graphics();
-          glow.lineStyle(2, 0xffaa33, 0.9);
-          glow.beginFill(0xffcc44, 0.2);
-          glow.drawRoundedRect(px + 1, py + 1, CELL - 4, CELL - 4, 3);
-          glow.endFill();
-          gridLayer.addChild(glow);
-        }
-
-        const placed = placedHere;
+        const placed = run.placements.find((p) => p.pos.x === x && p.pos.y === y);
         const enemy = st.enemies.find((e) => e.x === x && e.y === y);
         if (enemy) {
           const d = UNIT_DEFS[enemy.defId];
+          const scale = currentEnemyScale(state);
+          const baseHp = enemy.stats?.maxHp ?? d.base.maxHp;
+          const showHp = Math.round(baseHp * scale);
           const wrap = new PIXI.Container();
           wrap.x = px + (CELL - 2) / 2;
           wrap.y = py + (CELL - 2) / 2;
-          const token = createUnitToken(enemy.defId, 'enemy', CELL);
+          // 与战斗里同一条取用规则（BattlePlaybackView）：有专属外观就用它，
+          // 否则退回兵种贴图。不跟着 animSet 走的话，布阵预览是人形新兵、
+          // 一进战斗变成魔物，等于白给了一次布阵参考。
+          const artKey = enemy.animSet ?? enemy.defId;
+          const token = createUnitToken(artKey, 'enemy', CELL);
+          const bossScale = enemy.boss ? 1.3 : 1;
+          if (enemy.boss) token.scale.set(bossScale);
           wrap.addChild(token);
           const oh = createUnitOverhead({
-            maxHp: d.base.maxHp,
-            currentHp: d.base.maxHp,
-            professionName: d.name,
+            maxHp: showHp,
+            currentHp: showHp,
+            professionName: enemy.name ?? d.name,
             faction: 'enemy',
             cell: CELL,
           });
-          oh.root.y = -(CELL * 0.4) - 2;
+          oh.root.y = unitHeadLocalY(artKey, CELL) * bossScale - 4;
           wrap.addChild(oh.root);
+          // 敌人格没有别的操作，整格都可以点开信息（我方格的点击已经被「取消部署」占了，
+          // 那边只能挂一个小「i」角标）。开打前能读到敌人的攻/移/技能，
+          // 站位才是决策而不是猜。
+          wrap.eventMode = 'static';
+          wrap.cursor = 'pointer';
+          wrap.hitArea = new PIXI.Rectangle(-CELL / 2, -CELL / 2, CELL, CELL);
+          wrap.on('pointertap', () => showUnitInfo(
+            battleUnitInfoModel(enemySpawnToUnitState(enemy, scale), { showCooldown: false }),
+          ));
           gridLayer.addChild(wrap);
         } else if (placed) {
-          const m = getMercenary(state, placed.rosterId);
-          const sb = placed.statBonus;
-          const stMark =
-            sb && (sb.atk > 0 || sb.spd > 0 || sb.move > 0)
-              ? `+${sb.atk + sb.spd + sb.move}`
-              : '';
-          const pk = placed.potionId ? '药' : '';
+          const m = getCharacter(state, placed.rosterId);
           const wrap = new PIXI.Container();
           wrap.x = px + (CELL - 2) / 2;
           wrap.y = py + (CELL - 2) / 2;
           if (m) {
             const token = createUnitToken(m.profession, 'player', CELL);
             wrap.addChild(token);
+            const effHp = characterEffectiveStats(m).maxHp;
             const oh = createUnitOverhead({
-              maxHp: m.base.maxHp,
-              currentHp: m.base.maxHp,
+              maxHp: effHp,
+              currentHp: effHp,
               professionName: UNIT_DEFS[m.profession].name,
               faction: 'player',
               cell: CELL,
             });
-            oh.root.y = -(CELL * 0.4) - 2;
+            oh.root.y = unitHeadLocalY(m.profession, CELL) - 4;
             wrap.addChild(oh.root);
+            // 上了场的人会从替补席消失，替补席那个「i」也就跟着没了。
+            // 不补一个入口的话，恰恰是**已经决定要带上场**的角色反而查不了词条。
+            wrap.addChild(makeInfoBadge(CELL, () => showUnitInfo(characterInfoModel(state, m))));
           } else {
-            const t = new PIXI.Text(`?${pk}${stMark}`, { fill: 0x5566aa, fontSize: labelFs });
+            const t = new PIXI.Text('?', { fill: 0x5566aa, fontSize: labelFs });
             t.anchor.set(0.5, 1);
             wrap.addChild(t);
           }
@@ -489,36 +560,17 @@ export function createDeployView(
 
   function onCellTap(x: number, y: number): void {
     const pos = { x, y };
-    if (deployTool === 'terrain') {
-      if (placeTerrainCell(state, pos, 'high')) {
+    if (deployTool === 'terrain' && terrainPickId) {
+      if (placeTerrainCell(state, pos, terrainPickId)) {
         deployTool = 'unit';
+        terrainPickId = null;
         redrawToolbar();
         redrawGrid();
         redrawHand();
       }
       return;
     }
-    if (deployTool === 'potion' && potionPickId) {
-      if (attachPotionToPlacement(state, pos, potionPickId)) {
-        deployTool = 'unit';
-        potionPickId = null;
-        redrawToolbar();
-        redrawGrid();
-        redrawHand();
-      }
-      return;
-    }
-    if (deployTool === 'essence' && essencePickId) {
-      if (attachStatPotionToPlacement(state, pos, essencePickId)) {
-        deployTool = 'unit';
-        essencePickId = null;
-        redrawToolbar();
-        redrawGrid();
-        redrawHand();
-      }
-      return;
-    }
-    const placed = state.placements.find((p) => p.pos.x === x && p.pos.y === y);
+    const placed = run.placements.find((p) => p.pos.x === x && p.pos.y === y);
     if (placed) {
       removePlacement(state, pos);
       redrawGrid();
@@ -526,7 +578,7 @@ export function createDeployView(
       redrawToolbar();
       return;
     }
-    if (selectedRosterId && placeMercenary(state, selectedRosterId, pos)) {
+    if (selectedRosterId && placeCharacter(state, selectedRosterId, pos)) {
       redrawGrid();
       redrawHand();
       return;
@@ -545,17 +597,14 @@ export function createDeployView(
     c.addChild(g);
 
     let textOffsetX = 6;
-    if (iconKey && AssetManager.isBundleLoaded('ui')) {
-      const tex = AssetManager.texture('ui', iconKey);
-      if (tex && tex !== PIXI.Texture.WHITE) {
-        const iconSize = chipH - 6;
-        const sprite = new PIXI.Sprite(tex);
-        sprite.width = iconSize;
-        sprite.height = iconSize;
-        sprite.x = 4;
-        sprite.y = 3;
-        if (!enabled) sprite.alpha = 0.4;
-        c.addChild(sprite);
+    if (iconKey) {
+      const iconSize = chipH - 6;
+      const icon = createUiIcon(iconKey, iconSize);
+      if (icon) {
+        icon.x = 4;
+        icon.y = 3;
+        if (!enabled) icon.alpha = 0.4;
+        c.addChild(icon);
         textOffsetX = iconSize + 8;
       }
     }
@@ -581,8 +630,7 @@ export function createDeployView(
       deployTool === 'unit',
       () => {
         deployTool = 'unit';
-        potionPickId = null;
-        essencePickId = null;
+        terrainPickId = null;
         redrawToolbar();
         redrawHand();
       },
@@ -591,76 +639,38 @@ export function createDeployView(
     );
     tUnit.x = tx;
     tx += 82;
-    const tc = state.terrainCharges;
+    const terTotal = terrainChargesTotal(run);
     const tTer = makeToolChip(
-      `地形×${tc}`,
+      `地形×${terTotal}`,
       deployTool === 'terrain',
       () => {
+        if (terTotal <= 0) return;
         deployTool = 'terrain';
-        potionPickId = null;
-        essencePickId = null;
         selectedRosterId = null;
+        const inStock = PLACEABLE_TERRAIN_IDS.filter((id) => (run.terrainCharges[id] ?? 0) > 0);
+        terrainPickId = inStock.length === 1 ? inStock[0]! : null;
         redrawToolbar();
         redrawHand();
       },
-      tc > 0,
+      terTotal > 0,
       'icon_terrain',
     );
     tTer.x = tx;
-    tx += 82;
-    const pd = state.potions['draught'] ?? 0;
-    const tPot = makeToolChip(
-      `药剂×${pd}`,
-      deployTool === 'potion',
-      () => {
-        if (pd <= 0) return;
-        deployTool = 'potion';
-        potionPickId = 'draught';
-        essencePickId = null;
-        selectedRosterId = null;
-        redrawToolbar();
-        redrawHand();
-      },
-      pd > 0,
-      'icon_potion',
-    );
-    tPot.x = tx;
-    tx += 82;
-    const essTotal = essenceStockTotal();
-    const tEss = makeToolChip(
-      `精华×${essTotal}`,
-      deployTool === 'essence',
-      () => {
-        if (essTotal <= 0) return;
-        deployTool = 'essence';
-        potionPickId = null;
-        selectedRosterId = null;
-        const inStock = STAT_POTION_IDS.filter((id) => (state.statPotions[id] ?? 0) > 0);
-        essencePickId = inStock.length === 1 ? inStock[0]! : null;
-        redrawToolbar();
-        redrawHand();
-      },
-      essTotal > 0,
-      'icon_essence',
-    );
-    tEss.x = tx;
     row.addChild(tUnit);
     row.addChild(tTer);
-    row.addChild(tPot);
-    row.addChild(tEss);
     toolbarLayer.addChild(row);
 
     let sx = 0;
     const sy = 34;
-    if (deployTool === 'essence') {
-      for (const id of STAT_POTION_IDS) {
-        const cnt = state.statPotions[id] ?? 0;
+    if (deployTool === 'terrain') {
+      for (const id of PLACEABLE_TERRAIN_IDS) {
+        const cnt = run.terrainCharges[id] ?? 0;
         const chip = makeToolChip(
-          `${essenceShortLabel(id)}×${cnt}`,
-          essencePickId === id,
+          `${terrainTicketName(id).replace('券', '')}×${cnt}`,
+          terrainPickId === id,
           () => {
             if (cnt <= 0) return;
-            essencePickId = id;
+            terrainPickId = id;
             redrawToolbar();
           },
           cnt > 0,
@@ -670,24 +680,24 @@ export function createDeployView(
         sx += 82;
         toolbarLayer.addChild(chip);
       }
-      const essHint = new PIXI.Text('👆 点击地图上已部署的角色使用精华', { fill: 0xffdd88, fontSize: 10 });
-      essHint.x = 0;
-      essHint.y = sy + 32;
-      toolbarLayer.addChild(essHint);
-    } else if (deployTool === 'potion') {
-      const potHint = new PIXI.Text('👆 点击地图上已部署的角色使用药剂', { fill: 0xffdd88, fontSize: 10 });
-      potHint.x = 0;
-      potHint.y = sy;
-      toolbarLayer.addChild(potHint);
-    } else if (deployTool === 'terrain') {
-      const terHint = new PIXI.Text('👆 点击地图上任意空格放置高地', { fill: 0xffdd88, fontSize: 10 });
+      // 选中某种地形券后，提示语换成它到底干什么。
+      // 「河流券×2」这个名字本身讲不出任何效果，玩家买它只能靠猜。
+      const pickedBadge = terrainPickId ? terrainBadge(terrainPickId) : null;
+      const terHint = new PIXI.Text(
+        terrainPickId
+          ? `👆 点击地图上任意空格放置${
+            pickedBadge ? `（站上去：${pickedBadge.text}）` : '（不可通行，用来堵路）'
+          }`
+          : '先选择要放置的地形类型',
+        { fill: 0xffdd88, fontSize: 10 },
+      );
       terHint.x = 0;
-      terHint.y = sy;
+      terHint.y = sy + 32;
       toolbarLayer.addChild(terHint);
     } else if (selectedRosterId) {
-      const m = getMercenary(state, selectedRosterId);
-      if (m && m.ownedSkillIds.length > 1) {
-        const sid = m.activeSkillId;
+      const m = getCharacter(state, selectedRosterId);
+      if (m && effectiveOwnedSkillIds(state, m).length > 1) {
+        const sid = activeSkillIdForRun(state, m);
         const sn = skillDefForId(sid)?.name ?? sid;
         const chip = makeToolChip(
           `技能:${sn}`,
@@ -709,382 +719,34 @@ export function createDeployView(
   const detailOverlay = new PIXI.Container();
   detailOverlay.visible = false;
 
-  function showMercDetail(m: Mercenary): void {
-    detailOverlay.removeChildren();
+  /** 当前弹层的动画句柄，关闭时要停掉，否则范围格会一直在后台跳 */
+  let detailStop: (() => void) | null = null;
+
+  function hideUnitInfo(): void {
+    detailStop?.();
+    detailStop = null;
+    detailOverlay.removeChildren().forEach((c) => c.destroy({ children: true }));
+    detailOverlay.visible = false;
+  }
+
+  /** 弹出单位信息。我方角色、棋盘上的敌人预览走的是同一块面板 */
+  function showUnitInfo(model: UnitInfoModel): void {
+    hideUnitInfo();
+    const { view, stop } = createUnitInfoOverlay(
+      model, screen.screenWidth, screen.screenHeight, hideUnitInfo,
+    );
+    detailStop = stop;
+    detailOverlay.addChild(view);
     detailOverlay.visible = true;
+  }
 
-    const sw2 = screen.screenWidth;
-    const sh2 = screen.screenHeight;
-
-    const dim = new PIXI.Graphics();
-    dim.beginFill(0x000000, 0.5);
-    dim.drawRect(0, 0, sw2, sh2);
-    dim.endFill();
-    dim.eventMode = 'static';
-    dim.on('pointertap', () => { detailOverlay.visible = false; });
-    detailOverlay.addChild(dim);
-
-    const panelW = Math.min(300, sw2 - 32);
-    const panelX = Math.floor((sw2 - panelW) / 2);
-
-    const panel = new PIXI.Container();
-    panel.x = panelX;
-    panel.eventMode = 'static';
-
-    const profDef = UNIT_DEFS[m.profession];
-    const skillId = m.activeSkillId;
-    const skillSpec = getSkillSpec(skillId);
-    const skillDef = skillDefForId(skillId);
-
-    let cy = 16;
-    const lineH = 20;
-    const labelStyle = { fill: 0xaaa088, fontSize: 11 } as const;
-    const valueStyle = { fill: 0x3a3a2a, fontSize: 12, fontWeight: 'bold' as const };
-    const sectionStyle = { fill: 0x6b4c2a, fontSize: 13, fontWeight: 'bold' as const };
-
-    // 头像 + 名称 + 职业
-    const portrait = createUnitToken(m.profession, 'player', 48);
-    portrait.x = 30;
-    portrait.y = cy + 24;
-    panel.addChild(portrait);
-
-    const nameTx = new PIXI.Text(m.name, { fill: 0x3a3a2a, fontSize: 16, fontWeight: 'bold' });
-    nameTx.x = 62;
-    nameTx.y = cy + 6;
-    panel.addChild(nameTx);
-
-    const profTx = new PIXI.Text(profDef.name, { fill: 0x8a7a5a, fontSize: 12 });
-    profTx.x = 62;
-    profTx.y = cy + 28;
-    panel.addChild(profTx);
-
-    cy += 56;
-
-    // 分割线
-    const sep1 = new PIXI.Graphics();
-    sep1.lineStyle(1, 0xd0c8b8, 0.6);
-    sep1.moveTo(12, cy);
-    sep1.lineTo(panelW - 12, cy);
-    panel.addChild(sep1);
-    cy += 8;
-
-    // 基础属性
-    const secBase = new PIXI.Text('基础属性', sectionStyle);
-    secBase.x = 12;
-    secBase.y = cy;
-    panel.addChild(secBase);
-    cy += lineH + 2;
-
-    const stats = [
-      { label: '生命', value: `${m.base.maxHp}` },
-      { label: '攻击', value: `${m.base.atk}` },
-      { label: '速度', value: `${m.base.spd}` },
-      { label: '移动', value: `${m.base.move}` },
-    ];
-
-    const colW = Math.floor((panelW - 24) / 2);
-    for (let i = 0; i < stats.length; i++) {
-      const s = stats[i]!;
-      const col = i % 2;
-      const row = Math.floor(i / 2);
-      const sx = 16 + col * colW;
-      const sy = cy + row * lineH;
-
-      const lb = new PIXI.Text(s.label, labelStyle);
-      lb.x = sx;
-      lb.y = sy;
-      panel.addChild(lb);
-
-      const vl = new PIXI.Text(s.value, valueStyle);
-      vl.x = sx + 36;
-      vl.y = sy;
-      panel.addChild(vl);
-    }
-    cy += Math.ceil(stats.length / 2) * lineH + 8;
-
-    // 分割线
-    const sep2 = new PIXI.Graphics();
-    sep2.lineStyle(1, 0xd0c8b8, 0.6);
-    sep2.moveTo(12, cy);
-    sep2.lineTo(panelW - 12, cy);
-    panel.addChild(sep2);
-    cy += 8;
-
-    // 普攻属性
-    const secStrike = new PIXI.Text('普通攻击', sectionStyle);
-    secStrike.x = 12;
-    secStrike.y = cy;
-    panel.addChild(secStrike);
-    cy += lineH + 2;
-
-    const strikeInfo = [
-      { label: '射程', value: `${m.strike.range}` },
-      { label: '类型', value: m.strike.isRanged ? '远程' : '近战' },
-      { label: '嘲讽', value: m.strike.taunt ? '是' : '否' },
-    ];
-    for (let i = 0; i < strikeInfo.length; i++) {
-      const s = strikeInfo[i]!;
-      const col = i % 2;
-      const row = Math.floor(i / 2);
-      const sx = 16 + col * colW;
-      const sy = cy + row * lineH;
-
-      const lb = new PIXI.Text(s.label, labelStyle);
-      lb.x = sx;
-      lb.y = sy;
-      panel.addChild(lb);
-
-      const vl = new PIXI.Text(s.value, valueStyle);
-      vl.x = sx + 36;
-      vl.y = sy;
-      panel.addChild(vl);
-    }
-    cy += Math.ceil(strikeInfo.length / 2) * lineH + 8;
-
-    // 技能信息
-    if (skillDef && skillSpec) {
-      const sep3 = new PIXI.Graphics();
-      sep3.lineStyle(1, 0xd0c8b8, 0.6);
-      sep3.moveTo(12, cy);
-      sep3.lineTo(panelW - 12, cy);
-      panel.addChild(sep3);
-      cy += 8;
-
-      const secSkill = new PIXI.Text('装备技能', sectionStyle);
-      secSkill.x = 12;
-      secSkill.y = cy;
-      panel.addChild(secSkill);
-      cy += lineH + 2;
-
-      const skillName = new PIXI.Text(skillDef.name, { fill: 0xcc8833, fontSize: 13, fontWeight: 'bold' });
-      skillName.x = 16;
-      skillName.y = cy;
-      panel.addChild(skillName);
-
-      const cdTx = new PIXI.Text(`CD: ${skillSpec.cooldown}回合`, { fill: 0x888888, fontSize: 11 });
-      cdTx.x = 16 + skillName.width + 10;
-      cdTx.y = cy + 2;
-      panel.addChild(cdTx);
-      cy += lineH;
-
-      // 技能描述
-      const descParts: string[] = [];
-      const timingMap: Record<string, string> = { beforeMove: '移动前释放', afterMove: '移动后释放', passive: '被动技能' };
-      descParts.push(timingMap[skillSpec.timing] ?? skillSpec.timing);
-
-      if (skillSpec.damage.kind === 'scaledAtk') {
-        descParts.push(`伤害: 攻击力×${Math.round(skillSpec.damage.atkMul * 100)}%`);
-      }
-      if (skillSpec.passiveBasicAttackMulIfMoved) {
-        descParts.push(`移动后普攻伤害×${Math.round(skillSpec.passiveBasicAttackMulIfMoved * 100)}%`);
-      }
-      if (skillSpec.onCastSelfEffects) {
-        for (const e of skillSpec.onCastSelfEffects) {
-          if (e.kind === 'taunt') descParts.push(`自身嘲讽${e.rounds}回合`);
-        }
-      }
-      if (skillSpec.onCastFoeEffects) {
-        for (const e of skillSpec.onCastFoeEffects) {
-          if (e.kind === 'atkDown') descParts.push(`敌方攻击-${e.subAtk}，${e.rounds}回合`);
-        }
-      }
-      if (skillSpec.onCastAllyEffects) {
-        for (const e of skillSpec.onCastAllyEffects) {
-          if (e.kind === 'atkBonus') descParts.push(`友方攻击+${e.addAtk}，${e.rounds}回合`);
-          if (e.kind === 'spdBonus') descParts.push(`友方速度+${e.addSpd}，${e.rounds}回合`);
-        }
-      }
-
-      const descTx = new PIXI.Text(descParts.join('\n'), {
-        fill: 0x555544,
-        fontSize: 10,
-        wordWrap: true,
-        wordWrapWidth: panelW - 32,
-        lineHeight: 16,
-      });
-      descTx.x = 16;
-      descTx.y = cy;
-      panel.addChild(descTx);
-      cy += descTx.height + 8;
-
-      // --- 技能范围格子动态展示 ---
-      const shape = skillSpec.shape;
-      const cs = 12;
-      const gap = 1;
-      const st2 = cs + gap;
-
-      let gridR = 2;
-      let rangeDesc = '';
-      const isLine = shape.type === 'lineBestRayAllFoes';
-      if (shape.type === 'neighborAoE') {
-        gridR = shape.manhattan + 1;
-        rangeDesc = `周围${shape.manhattan}格范围\n命中所有敌人`;
-      } else if (shape.type === 'neighborPickLowest') {
-        gridR = shape.manhattan + 1;
-        rangeDesc = `周围${shape.manhattan}格范围\n选中血量最低的敌人`;
-      } else if (shape.type === 'neighborPickFoe') {
-        gridR = shape.manhattan + 1;
-        const pickLabel = shape.pick === 'lowestHp' ? '血量最低' : '血量最高';
-        rangeDesc = `周围${shape.manhattan}格范围\n选中${pickLabel}的敌人`;
-      } else if (shape.type === 'neighborPickAlly') {
-        gridR = shape.manhattan + 1;
-        const pickLabel = shape.pick === 'lowestHp' ? '血量最低' : '血量最高';
-        rangeDesc = `周围${shape.manhattan}格范围\n选中${pickLabel}的友方`;
-      } else if (isLine) {
-        gridR = 3;
-        rangeDesc = '上下左右四方向\n射线穿透所有敌人';
-      }
-      const gridD = gridR * 2 + 1;
-
-      type CellKind = 'empty' | 'center' | 'hit' | 'ray';
-      const cells: CellKind[][] = [];
-      for (let gy2 = 0; gy2 < gridD; gy2++) {
-        cells.push([]);
-        for (let gx2 = 0; gx2 < gridD; gx2++) cells[gy2]!.push('empty');
-      }
-      cells[gridR]![gridR] = 'center';
-
-      if (shape.type === 'neighborAoE' || shape.type === 'neighborPickLowest'
-          || shape.type === 'neighborPickFoe' || shape.type === 'neighborPickAlly') {
-        const md = shape.manhattan;
-        for (let dy = -md; dy <= md; dy++) {
-          for (let dx = -md; dx <= md; dx++) {
-            if (dx === 0 && dy === 0) continue;
-            if (Math.abs(dx) + Math.abs(dy) <= md)
-              cells[gridR + dy]![gridR + dx] = 'hit';
-          }
-        }
-      } else if (isLine) {
-        for (const [ddx, ddy] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) {
-          for (let s2 = 1; s2 <= gridR; s2++) {
-            const gx2 = gridR + ddx! * s2;
-            const gy2 = gridR + ddy! * s2;
-            if (gx2 >= 0 && gx2 < gridD && gy2 >= 0 && gy2 < gridD)
-              cells[gy2]![gx2] = 'ray';
-          }
-        }
-      }
-
-      const gridTotalW = gridD * st2 - gap;
-      const rangeRow = new PIXI.Container();
-      rangeRow.y = cy;
-
-      const gridContainer = new PIXI.Container();
-      const hitCells: PIXI.Graphics[] = [];
-      for (let gy2 = 0; gy2 < gridD; gy2++) {
-        for (let gx2 = 0; gx2 < gridD; gx2++) {
-          const kind = cells[gy2]![gx2]!;
-          const px2 = gx2 * st2;
-          const py2 = gy2 * st2;
-          const cell = new PIXI.Graphics();
-          if (kind === 'center') {
-            cell.beginFill(0x4488cc, 0.85);
-            cell.drawRoundedRect(px2, py2, cs, cs, 2);
-            cell.endFill();
-            gridContainer.addChild(cell);
-          } else if (kind === 'hit' || kind === 'ray') {
-            cell.beginFill(kind === 'ray' ? 0xdd6633 : 0xcc3333, 0.7);
-            cell.drawRoundedRect(px2, py2, cs, cs, 2);
-            cell.endFill();
-            gridContainer.addChild(cell);
-            hitCells.push(cell);
-          } else {
-            cell.lineStyle(1, 0xccccbb, 0.25);
-            cell.beginFill(0xeeeedd, 0.12);
-            cell.drawRoundedRect(px2, py2, cs, cs, 1);
-            cell.endFill();
-            gridContainer.addChild(cell);
-          }
-        }
-      }
-
-      // 射线技能在四个边缘画箭头，表示延伸
-      if (isLine) {
-        const arrowStyle = { fill: 0xdd6633, fontSize: 8 };
-        const arrowOffsets: [number, number, string][] = [
-          [gridR * st2 + cs / 2, -6, '▲'],
-          [gridR * st2 + cs / 2, gridD * st2 - gap + 1, '▼'],
-          [-6, gridR * st2 + cs / 2, '◀'],
-          [gridD * st2 - gap + 2, gridR * st2 + cs / 2, '▶'],
-        ];
-        for (const [ax, ay, ch] of arrowOffsets) {
-          const ar = new PIXI.Text(ch, arrowStyle);
-          ar.anchor.set(0.5);
-          ar.x = ax;
-          ar.y = ay;
-          gridContainer.addChild(ar);
-        }
-      }
-
-      gridContainer.x = 16;
-      rangeRow.addChild(gridContainer);
-
-      // 右侧文字说明
-      const rangeDescTx = new PIXI.Text(rangeDesc, {
-        fill: 0x6a6a5a, fontSize: 10, lineHeight: 15,
-        wordWrap: true, wordWrapWidth: panelW - gridTotalW - 48,
-      });
-      rangeDescTx.x = 16 + gridTotalW + 12;
-      rangeDescTx.y = Math.max(0, (gridTotalW - rangeDescTx.height) / 2);
-      rangeRow.addChild(rangeDescTx);
-
-      // 图例
-      const legendY = Math.max(0, (gridTotalW - rangeDescTx.height) / 2) + rangeDescTx.height + 6;
-      const legCenterDot = new PIXI.Graphics();
-      legCenterDot.beginFill(0x4488cc, 0.85);
-      legCenterDot.drawRoundedRect(0, 0, 8, 8, 2);
-      legCenterDot.endFill();
-      legCenterDot.x = rangeDescTx.x;
-      legCenterDot.y = legendY;
-      rangeRow.addChild(legCenterDot);
-      const legCenterTx = new PIXI.Text('自身', { fill: 0x888877, fontSize: 9 });
-      legCenterTx.x = rangeDescTx.x + 12;
-      legCenterTx.y = legendY - 1;
-      rangeRow.addChild(legCenterTx);
-
-      const legHitDot = new PIXI.Graphics();
-      legHitDot.beginFill(isLine ? 0xdd6633 : 0xcc3333, 0.7);
-      legHitDot.drawRoundedRect(0, 0, 8, 8, 2);
-      legHitDot.endFill();
-      legHitDot.x = legCenterTx.x + legCenterTx.width + 10;
-      legHitDot.y = legendY;
-      rangeRow.addChild(legHitDot);
-      const legHitTx = new PIXI.Text('范围', { fill: 0x888877, fontSize: 9 });
-      legHitTx.x = legHitDot.x + 12;
-      legHitTx.y = legendY - 1;
-      rangeRow.addChild(legHitTx);
-
-      panel.addChild(rangeRow);
-
-      // 脉冲动画
-      let pulsePhase = 0;
-      const pulseTicker = () => {
-        if (!detailOverlay.visible) return;
-        pulsePhase += 0.06;
-        const a = 0.45 + 0.35 * Math.sin(pulsePhase);
-        for (const c of hitCells) c.alpha = a;
-      };
-      PIXI.Ticker.shared.add(pulseTicker);
-
-      cy += Math.max(gridTotalW, legendY + 14) + 8;
-    }
-
-    cy += 12;
-
-    // 面板背景
-    const panelBg = new PIXI.Graphics();
-    panelBg.beginFill(0xfefef6, 0.97);
-    panelBg.drawRoundedRect(0, 0, panelW, cy, 14);
-    panelBg.endFill();
-    panel.addChildAt(panelBg, 0);
-
-    panel.y = Math.floor((sh2 - cy) / 2);
-    detailOverlay.addChild(panel);
+  function showMercDetail(m: Character): void {
+    showUnitInfo(characterInfoModel(state, m));
   }
 
   function redrawHand(): void {
     handLayer.removeChildren();
-    const bench = benchMercenaries(state);
+    const bench = benchCharacters(state);
     const sw = screen.screenWidth;
     const slotH = 80;
 
@@ -1095,7 +757,7 @@ export function createDeployView(
     handLayer.addChild(bgBar);
 
     if (bench.length === 0) {
-      const tx = new PIXI.Text('替补席无人（去商店招募）', { fill: 0xcccccc, fontSize: 11 });
+      const tx = new PIXI.Text('全部角色已上阵', { fill: 0xcccccc, fontSize: 11 });
       tx.anchor.set(0.5, 0.5);
       tx.x = sw / 2;
       tx.y = slotH / 2;
@@ -1143,8 +805,7 @@ export function createDeployView(
       c.on('pointertap', () => {
         selectedRosterId = m.rosterId;
         deployTool = 'unit';
-        potionPickId = null;
-        essencePickId = null;
+        terrainPickId = null;
         redrawToolbar();
         redrawHand();
       });
@@ -1182,26 +843,64 @@ export function createDeployView(
   redrawGrid();
   redrawHand();
 
+  // ---- 开打按钮：手动是主行动，自动是次行动 ----
+  // 自动只在这一关**打赢过**之后才是一个按钮（见 canAutoBattle）；没打过时退化成
+  // 一个写明代价的广告入口，看不了广告（非微信环境）就干脆不出现——
+  // 摆一个点不动的「自动」比没有更糟，玩家会一直找解锁条件在哪。
+  const autoUnlocked = canAutoBattle(state);
+  const adAvailable = !autoUnlocked && callbacks.onRequestAutoByAd !== undefined && AdManager.isAvailable;
+  const showAuto = autoUnlocked || adAvailable;
   const fh = 46;
-  const btnFight = new PIXI.Graphics();
-  btnFight.lineStyle(2, 0xcc8020, 1);
-  btnFight.beginFill(C.accent, 0.9);
-  btnFight.drawRoundedRect(0, 0, fightW, fh, 10);
-  btnFight.endFill();
-  const ft = new PIXI.Text('开始战斗', { fill: 0xffffff, fontSize: 15, fontWeight: 'bold' });
-  ft.anchor.set(0.5);
-  ft.x = fightW / 2;
-  ft.y = fh / 2;
-  const fightC = new PIXI.Container();
+  const gapBtn = 8;
+  const manualW = showAuto ? Math.floor(fightW * 0.6) : fightW;
+
+  /**
+   * Boss 空手上阵要二次确认。
+   *
+   * 模拟里 Boss 裸打胜率 2.3%——这基本是必输。改成纯人工之后，一局 Boss 要打 2~3 分钟，
+   * 发现「原来我该在商店买药」的代价从一分钟涨到三分钟，而这个信息在开打前是完全可得的。
+   * 不改数值：AI 的 2.3% 是下限而非玩家的真实水平，人工模式下会走位、会集火，
+   * 现在按 AI 胜率去削 Boss，等玩家真的上手就削过头了。缺的只是一句话，不是数字。
+   */
+  const bossNodeNow = currentNode(state).kind === 'boss';
+  const potionCount = Object.values(run.potions).reduce((a, b) => a + b, 0);
+  const needsPotionWarning = bossNodeNow && potionCount === 0;
+  let warned = false;
+
+  const fightC = makeButton(needsPotionWarning ? '开始战斗（无药剂）' : '开始战斗', () => {
+    if (needsPotionWarning && !warned) {
+      warned = true;
+      callbacks.onWarn?.('Boss 战没带药剂，胜算极低。再点一次仍要开打');
+      return;
+    }
+    callbacks.onStartBattle('manual');
+  }, {
+    variant: 'primary',
+    width: manualW,
+    height: fh,
+    fontSize: needsPotionWarning ? 13 : 15,
+    radius: 10,
+  });
   fightC.x = fightX;
   fightC.y = fightY;
-  fightC.addChild(btnFight);
-  fightC.addChild(ft);
-  fightC.eventMode = 'static';
-  fightC.cursor = 'pointer';
-  fightC.hitArea = new PIXI.Rectangle(0, 0, fightW, fh);
-  fightC.on('pointertap', () => callbacks.onStartBattle());
   root.addChild(fightC);
+
+  if (showAuto) {
+    const autoW = fightW - manualW - gapBtn;
+    const label = autoUnlocked ? '自动战斗' : '广告自动';
+    const autoBtn = makeButton(label, () => {
+      if (autoUnlocked) {
+        callbacks.onStartBattle('auto');
+        return;
+      }
+      void callbacks.onRequestAutoByAd?.().then((ok) => {
+        if (ok) callbacks.onStartBattle('auto');
+      });
+    }, { variant: 'secondary', width: autoW, height: fh, fontSize: 13, radius: 10 });
+    autoBtn.x = fightX + manualW + gapBtn;
+    autoBtn.y = fightY;
+    root.addChild(autoBtn);
+  }
 
   root.addChild(settingsOverlay);
   root.addChild(detailOverlay);

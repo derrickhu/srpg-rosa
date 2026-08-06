@@ -4,7 +4,9 @@
 
 策划案：[docs/无尽纹章-战棋休闲IAA小游戏策划案.md](docs/无尽纹章-战棋休闲IAA小游戏策划案.md)
 
-MVP 与全案差异：[docs/MVP-DEVIATIONS.md](docs/MVP-DEVIATIONS.md)（当前工程已实现 **3 关布阵→自动战→商店** 闭环）
+当前系统设计：[docs/当前系统设计文档.md](docs/当前系统设计文档.md)（局外养成 + 局内肉鸽，Tab 大厅 / 章节地图 / 轻交互战斗）
+
+美术风格圣经：[docs/美术风格圣经.md](docs/美术风格圣经.md)（配色编码 / 剪影规则 / 风格禁区，所有生图 prompt 的唯一事实来源）
 
 Pixi 微信真机踩坑（自 huahua 同步）：[docs/PixiJS微信小游戏真机适配踩坑记录.md](docs/PixiJS微信小游戏真机适配踩坑记录.md)
 

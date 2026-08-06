@@ -1,0 +1,34 @@
+// 战斗背景 v9（现役）。母版 2:3，运行时按 cover 裁切，不再非等比拉伸。
+//
+// 两条来之不易的约束，改 prompt 时别丢：
+// 1. 俯视就要**整张都是地面**。v6 之前写"鸟瞰"，模型总要给一条天际线和几朵云，
+//    树也画成从侧面看的剪影，和棋盘的正俯视对不上。所以这里反复强调 NO sky。
+// 2. 草地必须是**暖黄绿**。弓手主色实测 H90 S86 L33，草地一旦飘向冷绿或深绿，
+//    绿弓手站上去就糊了。当前实测草地 H69 L56，与弓手色相差 21°、明度差 23，
+//    刚好过风格圣经 §2.1「色相差 ≥25° 或明度差 ≥20」这条线。
+
+A hand-drawn cartoon TOP-DOWN battlefield background for a portrait phone tactics game. This is the STAGE, not the subject — it must sit quietly behind the characters standing on it.
+
+CAMERA: strictly TOP-DOWN, looking straight at the ground from above. There is NO sky, NO horizon, NO clouds, NO distant mountains anywhere in this image. Trees are seen from ABOVE — you see round leafy canopies from the top, never trunks or silhouettes against a sky. The entire image is ground.
+
+LAYOUT, top to bottom:
+- A band of dense round tree canopies across the TOP of the image, about the top fifth.
+- A band of dense round tree canopies across the BOTTOM of the image, about the bottom fifth.
+- Narrower ragged strips of canopy down the LEFT and RIGHT edges.
+- The whole CENTRE — roughly 65% of the image height and the full width between the side strips — is OPEN, CLEAN, UNCLUTTERED GRASS. This is where the game board and the characters go. Keep it almost empty: no trees, no rocks, no paths, no ruins, no shadows, no big shapes in the centre.
+
+THE GRASS is the most important thing to get right:
+- BRIGHT, WARM, SUNNY YELLOW-GREEN. Anchor colours: #B4D45A, #C2DE6E, #A8CC4E. Think fresh spring meadow in full sunlight.
+- It must stay clearly WARMER and LIGHTER than a forest green. Do NOT drift toward deep green, blue-green, olive, khaki, grey-green or brown. A cool or dark green field is WRONG for this image.
+- Vary it with gentle HUE shifts between warmer and cooler yellow-green, never by darkening patches. No dark blotches, no heavy shadows, no vignette.
+- Scatter only very small, very sparse, LOW-CONTRAST decoration on the open grass: a few tiny grass tufts, a couple of tiny pale pebbles, one or two small clover sprigs. These must be barely-there texture, much fainter than anything else in the image. Nothing bigger than a thumbnail.
+
+THE TREE CANOPIES framing the edges:
+- Big round soft blobs seen from directly above, in richer deeper greens than the field so the frame reads as denser than the open middle. Use two or three green tones for variety plus a warm sunlit highlight on the upper side of each canopy.
+- Soft rounded organic outlines, thin darker green outline at most. No thick black outlines — the characters own the black outlines and the ground must not compete.
+
+ART STYLE: hand-drawn cartoon, flat saturated fills with simple cel shading, no gradients, no texture noise, no painterly brushwork, no photographic detail, no pixel art. Clean and cheerful.
+
+CRITICAL — LOW FREQUENCY: every element must be big and soft. This background is displayed behind a grid of 48-pixel squares with characters standing on it, so any fine detail turns into visual noise that fights the characters' outlines. When in doubt, make it simpler and emptier.
+
+NO text, NO labels, NO grid lines, NO UI, NO frame, NO border, NO watermark, NO characters, NO buildings.

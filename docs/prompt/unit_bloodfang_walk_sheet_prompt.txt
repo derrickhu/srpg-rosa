@@ -1,0 +1,58 @@
+# 第一章 Boss「血牙酋长」—— 四方向行走 sheet（generate2dsprite player_sheet, 4x4）
+#
+# 关卡：src/data/stagesMvp.ts 第 7 关「血牙酋长」，defId sword（近战），animSet bloodfang
+# 参考图：art/sprite-runs/bow/walk/raw-sheet.png —— 同时锁风格和 4x4 布局
+# 键色：#FF00FF。角色主色是血红、兽皮棕、骨白、暗铁灰，到品红的色距均 > 200，
+#       远超抠色阈值 100/150，安全。但必须在 prompt 里禁掉粉/品红/紫罗兰。
+# 体型：boss 在运行时还会 ×1.3（BattlePlaybackView `if (u.boss) body.scale.set(1.3)`），
+#       所以这里画正常单位的格内占比，靠轮廓厚重来体现压迫感，不要画满格。
+
+Use the attached image as the STYLE and LAYOUT reference: same hand-drawn cartoon game
+sprite look, same thick dark outlines, same flat saturated fills with light cel shading,
+same 3/4 top-down camera, same 4x4 grid arrangement, same magenta background. Only the
+character changes.
+
+A 4x4 sprite sheet showing a full 4-direction walk cycle for a top-down tactics RPG BOSS.
+
+CHARACTER: an orc warlord called the Bloodfang Chieftain. Chibi / super-deformed
+proportions with a large head and short body, but noticeably HEAVIER and BROADER than a
+normal unit — wide hunched shoulders, thick arms, barrel chest, heavy stance. Ash-grey
+green skin. Two large upward blood-stained tusks jutting from the lower jaw. Dark red war
+paint stripes across the face. A crude bone-and-fur pauldron on one shoulder, a fur kilt,
+iron-banded bracers, heavy boots. Carries a big crude notched iron cleaver in the
+screen-left hand, blade dark steel-grey. A necklace of small bones. Snarling aggressive
+expression with small angry eyes.
+
+PALETTE: ash-grey green skin, dark blood red war paint and blood stains, fur and leather in
+warm brown, bone in off-white, iron in dark steel grey. NO pink, NO magenta, NO violet, NO
+lavender, NO purple anywhere on the character — those colors would be destroyed by the
+background chroma key.
+
+CAMERA: 3/4 top-down view from slightly above, consistent in all 16 cells. You can see the
+top of the head, the shoulders, and the full body down to the boots.
+
+SHEET LAYOUT — rows are facing direction, columns are walk frames:
+  Row 1 (top):    facing DOWN, toward the camera, face and tusks fully visible
+  Row 2:          facing LEFT, left side profile
+  Row 3:          facing RIGHT, right side profile, mirrored from row 2
+  Row 4 (bottom): facing UP, away from the camera, back and pauldron visible
+  Column 1: neutral standing pose, both feet together, weight low
+  Column 2: LEFT foot stepping forward, heavy body bob down
+  Column 3: neutral standing pose, both feet together
+  Column 4: RIGHT foot stepping forward, heavy body bob down
+
+ABSOLUTE RULES:
+1. EXACTLY 16 equal-size cells in a 4x4 grid. Every cell the same width and height.
+2. NO borders, NO dividing lines, NO frames between cells. Cells are separated only by the
+   flat background color.
+3. Background is 100% solid flat magenta #FF00FF everywhere, including between the cells.
+   No gradient, no vignette, no ground shadow, no drop shadow under the character.
+4. IDENTICAL SCALE in all 16 cells: same head-to-boot height, same shoulder width, same
+   camera distance. Do not zoom in or out between cells. Do not crop tighter in some cells.
+5. IDENTICAL character identity, costume, and palette in all 16 cells.
+6. Character is centered in its cell and fills about 70% of the cell height, leaving even
+   magenta margin on all four sides.
+7. Nothing crosses a cell edge — no tusk, cleaver, fur, bone, or boot may touch or overlap
+   a neighboring cell.
+8. Feet rest on the same horizontal baseline in every cell.
+9. NO text, NO labels, NO numbers, NO arrows, NO UI, NO watermark anywhere in the image.

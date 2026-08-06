@@ -1,0 +1,48 @@
+[remap]
+
+importer="font_data_dynamic"
+type="FontFile"
+uid="uid://cobir1ngoa32v"
+path="res://.godot/imported/SourceHanSansSC-Bold-subset.otf-7dd84c061f0610350512424e2d725963.fontdata"
+
+[deps]
+
+source_file="res://art/fonts/SourceHanSansSC-Bold-subset.otf"
+dest_files=["res://.godot/imported/SourceHanSansSC-Bold-subset.otf-7dd84c061f0610350512424e2d725963.fontdata"]
+
+[params]
+
+Rendering=null
+antialiasing=1
+generate_mipmaps=false
+disable_embedded_bitmaps=false
+multichannel_signed_distance_field=false
+msdf_pixel_range=8
+msdf_size=48
+allow_system_fallback=false
+force_autohinter=false
+modulate_color_glyphs=false
+hinting=1
+subpixel_positioning=4
+keep_rounding_remainders=true
+oversampling=0.0
+Fallbacks=null
+fallbacks=[]
+Compress=null
+compress=false
+preload={
+"chars": " %/0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz·、。【】上两个人以伤位关再准击利剑动单卫只可合后和回在士备多失始害家对少尽已布底开弓成战手择接攻放敌数整斗无普最本束流点玩盾移程站章第算纹结置署胜能自至行被触试请调败跑迁返选通造部重阵页首！（），：；？",
+"cjk": false,
+"common": false,
+"cyrillic": false,
+"glyphs": [],
+"greek": false,
+"hangul": false,
+"icons": [],
+"kana": false,
+"latin": false,
+"latin_accents": false
+}
+language_support={}
+script_support={}
+opentype_features={}

@@ -10,7 +10,8 @@
     "images/terrain",
     "images/units",
     "images/fx",
-    "images/bg"
+    "images/bg",
+    "images/anim"
   ],
   "bundledDirs": [
     "images/ui"

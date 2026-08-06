@@ -1,52 +1,213 @@
 import { safeStorageGet, safeStorageSet } from '@/platform/wxPlatform';
-import type { MvpGameState } from '@/game/state/GameState';
-import { createInitialState } from '@/game/state/GameState';
+import type { MetaState, MvpGameState, RunState } from '@/game/state/GameState';
+import { createInitialMeta, createInitialState, META_VERSION } from '@/game/state/GameState';
+import { getDungeonDef } from '@/data/dungeonCatalog';
 
-const SAVE_KEY = 'srpg_save_v1';
+const META_KEY = 'srpg_meta_v3';
+// run v4：第一章扩为 7 关后关卡下标整体变更，v3 的局内进度直接作废（只损失一局）
+const RUN_KEY = 'srpg_run_v4';
+const LEGACY_META_KEY_V2 = 'srpg_meta_v2';
+const LEGACY_RUN_KEY_V2 = 'srpg_run_v2';
+const LEGACY_RUN_KEY_V3 = 'srpg_run_v3';
+const LEGACY_KEY_V1 = 'srpg_save_v1';
 
-export interface SavePayload {
-  version: 1;
-  state: MvpGameState;
+interface MetaPayload {
+  version: typeof META_VERSION;
+  meta: MetaState;
   savedAt: number;
 }
 
+interface RunPayload {
+  version: typeof META_VERSION;
+  run: RunState;
+  savedAt: number;
+}
+
+/**
+ * 补齐同一 version 内**新增的字段**，并丢掉已经废弃的。
+ *
+ * 纯字段增删不值得升 META_VERSION：升版会连带作废玩家的名册和魂晶（或者要写一份 meta 迁移），
+ * 而这里只是几个数字。
+ *
+ * `pendingSoul` 是上一版的「累计魂晶、通关兑现」，现在改成了按节点首通当场发放
+ * （见 `ProgressManager` 顶部）。老档里那个数直接丢弃：它记的是一笔**还没兑现**的账，
+ * 而新规则下这局沿途的首通魂晶已经发过了，再补一次等于双倍发放。
+ *
+ * `statPotions` / `offFieldStatByRosterId` 是已删除的精华系统的库存，同样丢弃——
+ * 精华的加成已经没有任何东西会去读了，留着只会让存档一直变大。
+ *
+ * `skillMods` **整个清空**而不是补默认值。老档里它按 skillId 记，新代码按 rosterId 读，
+ * 两边键空间不一样但类型完全相同（`Record<string, string[]>`），
+ * 直接读进来不会报错——会静默地把「旋风斩的 3 层锋锐」当成
+ * 「rosterId 恰好叫 whirl 的那个角色的 3 层锋锐」，也就是谁都拿不到。
+ * 这种错法比崩溃难查得多，宁可让读档的人少几条词条。
+ *
+ * `runSkillGrants` 是主槽技能书的库存，商店改发临时技能后没有代码再读它。
+ */
+function normalizeRun(run: RunState): RunState {
+  const {
+    pendingSoul: _soul,
+    statPotions: _potions,
+    offFieldStatByRosterId: _carry,
+    runSkillGrants: _grants,
+    ...rest
+  } = run as RunState & {
+    pendingSoul?: number;
+    statPotions?: Record<string, number>;
+    offFieldStatByRosterId?: Record<string, unknown>;
+    runSkillGrants?: Record<string, string[]>;
+  };
+  const knownRoster = new Set(rest.partyRosterIds ?? []);
+  const skillMods = Object.fromEntries(
+    Object.entries(rest.skillMods ?? {}).filter(([k]) => knownRoster.has(k)),
+  );
+  return {
+    ...rest,
+    lastVictory: rest.lastVictory ?? null,
+    skillMods,
+    runTempSkill: rest.runTempSkill ?? {},
+    // 老档的 placements 上挂着 statBonus，读进来会原样带着一个没人认识的字段。
+    placements: rest.placements.map((p) => ({ uid: p.uid, rosterId: p.rosterId, pos: p.pos })),
+  };
+}
+
+/**
+ * 同上，meta 侧的新增字段补默认值。
+ *
+ * `clearedNodesByDungeonId` 缺失时补空对象而不是「按 clearedDungeonIds 推算」：
+ * 老档里没有逐节点记录，猜出来的值可能给出玩家其实没打过的关的自动权限。
+ * 补空的代价只是老玩家要再打一次才拿到自动，而猜错的代价是他能跳过没学会的内容。
+ */
+function normalizeMeta(meta: MetaState): MetaState {
+  return { ...meta, clearedNodesByDungeonId: meta.clearedNodesByDungeonId ?? {} };
+}
+
+/** 进入副本后断点续局时，从节点类型推断稳妥的恢复阶段（不恢复战斗中/结算中） */
+function resumePhase(run: RunState): MvpGameState['phase'] {
+  const d = getDungeonDef(run.dungeonId);
+  const node = d?.nodes[run.nodeIndex];
+  return node?.kind === 'shop' ? 'shop' : 'deploy';
+}
+
+/**
+ * v2 → v3 迁移：
+ * - meta：名册结构不变，直接升 version（角色/魂晶/解锁全保留）。
+ * - run：v3 改了地形券/药剂/战利品结构，旧局内进度直接丢弃（只损失一局）。
+ * - v1 整包档：结构不兼容，清除。
+ */
+function migrateLegacyIfAny(): void {
+  const legacyV1 = safeStorageGet(LEGACY_KEY_V1);
+  if (legacyV1) safeStorageSet(LEGACY_KEY_V1, '');
+  const legacyRunV3 = safeStorageGet(LEGACY_RUN_KEY_V3);
+  if (legacyRunV3) safeStorageSet(LEGACY_RUN_KEY_V3, '');
+
+  if (safeStorageGet(META_KEY)) return;
+  const rawV2 = safeStorageGet(LEGACY_META_KEY_V2);
+  if (!rawV2) return;
+  try {
+    const payload = JSON.parse(rawV2) as { version?: number; meta?: MetaState };
+    if (payload.version === 2 && payload.meta && Array.isArray(payload.meta.roster)) {
+      const meta: MetaState = { ...payload.meta, version: META_VERSION };
+      SaveManager.saveMeta(meta);
+    }
+  } catch (e) {
+    console.warn('[SaveManager] v2 meta migrate failed:', e);
+  }
+  safeStorageSet(LEGACY_META_KEY_V2, '');
+  safeStorageSet(LEGACY_RUN_KEY_V2, '');
+}
+
 export const SaveManager = {
-  save(state: MvpGameState): boolean {
-    const payload: SavePayload = {
-      version: 1,
-      state,
-      savedAt: Date.now(),
-    };
+  saveMeta(meta: MetaState): boolean {
     try {
-      const json = JSON.stringify(payload);
-      safeStorageSet(SAVE_KEY, json);
+      const payload: MetaPayload = { version: META_VERSION, meta, savedAt: Date.now() };
+      safeStorageSet(META_KEY, JSON.stringify(payload));
       return true;
     } catch (e) {
-      console.warn('[SaveManager] save failed:', e);
+      console.warn('[SaveManager] saveMeta failed:', e);
       return false;
     }
   },
 
-  load(): MvpGameState | null {
+  saveRun(run: RunState | null): boolean {
     try {
-      const raw = safeStorageGet(SAVE_KEY);
-      if (!raw) return null;
-      const payload: SavePayload = JSON.parse(raw);
-      if (payload.version !== 1) return null;
-      if (!payload.state || typeof payload.state.stageIndex !== 'number') return null;
-      return payload.state;
+      if (!run) {
+        safeStorageSet(RUN_KEY, '');
+        return true;
+      }
+      const payload: RunPayload = { version: META_VERSION, run, savedAt: Date.now() };
+      safeStorageSet(RUN_KEY, JSON.stringify(payload));
+      return true;
     } catch (e) {
-      console.warn('[SaveManager] load failed:', e);
+      console.warn('[SaveManager] saveRun failed:', e);
+      return false;
+    }
+  },
+
+  /** 同时持久化 meta 与 run（run 为空则清除续局档） */
+  save(state: MvpGameState): boolean {
+    const a = SaveManager.saveMeta(state.meta);
+    const b = SaveManager.saveRun(state.run);
+    return a && b;
+  },
+
+  loadMeta(): MetaState | null {
+    try {
+      const raw = safeStorageGet(META_KEY);
+      if (!raw) return null;
+      const payload: MetaPayload = JSON.parse(raw);
+      if (payload.version !== META_VERSION || !payload.meta) return null;
+      if (!Array.isArray(payload.meta.roster)) return null;
+      return normalizeMeta(payload.meta);
+    } catch (e) {
+      console.warn('[SaveManager] loadMeta failed:', e);
       return null;
     }
   },
 
-  clear(): void {
-    safeStorageSet(SAVE_KEY, '');
+  loadRun(): RunState | null {
+    try {
+      const raw = safeStorageGet(RUN_KEY);
+      if (!raw) return null;
+      const payload: RunPayload = JSON.parse(raw);
+      if (payload.version !== META_VERSION || !payload.run) return null;
+      if (!getDungeonDef(payload.run.dungeonId)) return null;
+      return normalizeRun(payload.run);
+    } catch (e) {
+      console.warn('[SaveManager] loadRun failed:', e);
+      return null;
+    }
   },
 
-  /** Load saved state, falling back to a fresh initial state. */
+  load(): MvpGameState | null {
+    migrateLegacyIfAny();
+    const meta = SaveManager.loadMeta();
+    if (!meta) return null;
+    const run = SaveManager.loadRun();
+    return {
+      meta,
+      run,
+      phase: run ? resumePhase(run) : 'hub',
+      lastEventsLen: 0,
+    };
+  },
+
+  clearRun(): void {
+    safeStorageSet(RUN_KEY, '');
+  },
+
+  /** 整体重置：清除 meta 与 run */
+  clear(): void {
+    safeStorageSet(META_KEY, '');
+    safeStorageSet(RUN_KEY, '');
+  },
+
   loadOrCreate(): MvpGameState {
-    return SaveManager.load() ?? createInitialState();
+    const loaded = SaveManager.load();
+    if (loaded) return loaded;
+    const fresh = createInitialState();
+    // 确保新档落地（含初始 meta）
+    SaveManager.saveMeta(fresh.meta ?? createInitialMeta());
+    return fresh;
   },
 };

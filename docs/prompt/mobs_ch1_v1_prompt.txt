@@ -1,0 +1,89 @@
+# 第一章杂兵 —— 四只魔物一张 2x2（generate2dsprite --mode grid --rows 2 --cols 2）
+#
+# 为什么四只挤一张：一次出全套，描边粗细、简化程度、俯视角度天然一致；
+# 分四次生图必然漂移，而这四只是要并排站在同一块棋盘上的。
+#
+# 为什么只出一张静止姿势、不出行走/攻击/呼吸帧：
+#   - 一章杂兵不值得每只做四方向。剩下的靠代码——没有 walk_* 时 AnimatedUnit.playWalk
+#     退回 idle（棋子照样滑格移动），没有 attack_* 时退回代码突刺。
+#   - 呼吸也不出图。两张几乎一样的 AI 帧之间必然抖动，画出来的呼吸读成画面在沸腾；
+#     挤压拉伸是纯几何变换，交给 AnimatedUnit 做保证干净，还省掉每只三四帧图集。
+#
+# 配色约束（改之前先算一遍）：
+#   - 避开草地色相 H70 附近，也避开我方四职业的专属色（深红/叶绿/钢蓝/金黄）。
+#   - 菇伞必须是正红不能是洋红：品红抠色会把洋红一起吃掉。判据见
+#     docs/美术管线-AI-sprite.md「素材本身带紫时，两个阈值都要抬」。
+#   - 狼取近中性的炭灰，靠低饱和本身和钢蓝盾卫区分，不必再抢一个色相。
+#
+# 处理命令：
+#   python3 ~/.cursor/skills/generate2dsprite/scripts/generate2dsprite.py process \
+#     --input art/sprite-runs/mobs/raw-2x2.png --target creature --mode grid \
+#     --rows 2 --cols 2 --label-prefix mob --cell-size 256 \
+#     --output-dir art/sprite-runs/mobs/idle \
+#     --align feet --shared-scale --component-mode largest --strict-qc \
+#     --write-scale-profile art/sprite-runs/mobs/scale-profile.json
+#   python3 scripts/despill-magenta.py art/sprite-runs/mobs/idle
+#   node scripts/sprite2anim.mjs   # SETS 里 slime/sporecap/bloodwolf/rockshell 各取一帧
+#
+# mob-1 黏泥怪(sword) / mob-2 孢子菇(bow) / mob-3 血牙狼(cavalry) / mob-4 岩甲龟(shield)
+
+A 2-column x 2-row grid of 4 CARTOON MONSTER CHARACTERS for a tactics game, drawn as game sprites.
+
+CRITICAL BACKGROUND: the entire background, including all space between and around the four
+creatures, must be 100% solid flat MAGENTA, hex #FF00FF. It is a chroma key and will be deleted.
+No white, no grey, no gradient, no ground shadow, no drop shadow, no glow onto the background.
+The creatures must not touch each other or the edges of the image.
+
+CAMERA: a 3/4 top-down view, as if looking down at a tabletop board from above and slightly in
+front. Every creature faces the viewer, standing on flat invisible ground. All four must sit at the
+SAME eye level and be seen from the SAME angle.
+
+CRITICAL SIZE CONSTRAINT: these are displayed at only about 40 pixels tall in the game. Each
+creature must be ONE bold chunky readable silhouette. NO fine detail, NO small parts, NO texture,
+NO patterns, NO tiny highlights. If a feature would be smaller than a tenth of the creature's
+width, delete it. These are low-tier trash mobs and should look SIMPLER than a hero character —
+fewer shapes, fewer colours, one strong idea each.
+
+STYLE — must match the game's heroes:
+- Chunky, rounded, toy-like cartoon creatures. Slightly exaggerated, friendly-menacing, never gory
+  and never scary.
+- A THICK near-black outline (#1A1410) all the way around every creature and around its major
+  internal shapes.
+- FLAT saturated colour fills. At most 3 colours per creature plus the outline, plus one lighter
+  shade for a single simple cel-shaded highlight and one darker shade for a single shadow. No
+  gradients, no soft shading, no gloss, no texture noise, no painterly brushwork, no pixel art.
+- Big simple eyes. No noses, no ears, no fingers, no teeth smaller than the outline width.
+
+Per-cell contents:
+
+TOP-LEFT — SLIME. A fat rounded blob of jelly shaped like a wide teardrop or a squashed dome, wider
+than it is tall, sitting directly on the ground with no legs. Body is a bright TURQUOISE BLUE
+(#3ACCD8) with a lighter cyan top highlight. Two big simple round black eyes near the top. A small
+blunt wobble or drip at the base of the blob. Nothing else — no mouth, no arms, no items.
+
+TOP-RIGHT — MUSHROOM CREATURE. A big domed mushroom CAP that takes up the top two thirds of the
+creature, bright RED (#D03828) with three or four large round CREAM WHITE spots on it. Under the
+cap, a short fat cream-white stalk body with two stubby little feet and two big simple eyes peeking
+out from under the cap's shadow. The cap must be clearly WIDER than the body — the wide cap is the
+whole silhouette idea.
+
+BOTTOM-LEFT — WOLF. A four-legged wolf standing low and long, seen from the front three-quarter
+angle so all four legs and the body length are visible. Dark CHARCOAL GREY fur (#4A4450) with a
+paler grey chest and muzzle. A big blocky head with two pointed ears, two glowing yellow eyes, and
+two short white fangs showing at the mouth. A thick bushy tail sweeping out behind. Low, wide and
+predatory — the silhouette should be much WIDER than it is tall.
+
+BOTTOM-RIGHT — TORTOISE. A heavy armoured tortoise with an enormous domed SHELL covering almost the
+whole creature. Shell is warm EARTH BROWN (#A87840) with a lighter tan rim and a few big chunky
+plate divisions — no more than five plates, no fine mosaic. A small pale grey-green head pokes out
+at the front with two little eyes, and four stubby pale legs at the corners. The shell must
+dominate — it should read as a walking dome.
+
+LAYOUT RULES:
+1. EXACTLY 4 creatures in a clean 2x2 arrangement.
+2. NO borders, NO dividing lines, NO frames, NO circles or platforms under the creatures.
+3. Each creature fills about 70% of its cell with a clear magenta margin on all four sides. Nothing
+   crosses into a neighbouring cell.
+4. All four must feel like ONE set drawn by one artist: same outline thickness, same level of
+   simplification, same camera angle.
+5. NO text, no labels, no captions, no letters, no numbers, no watermark anywhere in the image.

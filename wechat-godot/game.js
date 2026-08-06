@@ -1,3 +1,4 @@
+console.log('[boot] root entry: bitmap-font untyped-main')
 import './weapp-adapter'
 import './godot-loader'
 function checkUpdate() {
