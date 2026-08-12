@@ -1,0 +1,56 @@
+局内补给商店场景道具（神秘商人 + 木摊）
+产出 → images/ui/shop_merchant.png、images/ui/shop_stall.png
+生成器：Cursor 内置 GenerateImage（可分两次出，保证各自构图）
+
+切图：
+    python3 scripts/split-tile-sheet.py --input <raw>.png --out-dir .tmp-gen/shop_scene \
+        --names shop_merchant --size 288 --grid 1x1 --min-area 200
+    # 或 stall：--names shop_stall --size 400
+    python3 scripts/despill-magenta.py .tmp-gen/shop_scene
+    # 再拷到 images/ui/
+
+用在哪：局内补给点 ShopView 场景层。商人站摊后，摊台摆 3 件货（货与价签由代码叠）。
+显示约：商人高 140–180px，摊宽约屏幕 85%。
+
+主色：商人斗篷深靛 `#3A4A6C`（与 UI panel 冷蓝灰同族，避开四职业色相）；
+货袋暖褐 `#8A5A30`；摊木 `#A87840` / 台布米白 `#FCFCF6` 或草绿条。
+记忆点：深兜帽遮脸 + 鼓鼓货袋（神秘商人）。
+
+约束：
+- 品红键色 #FF00FF 底，透明导出
+- 厚近黑描边 #1A1410，平涂，无渐变/发光/文字/价签/UI 框
+- 不要画摊上的商品（药/书/券）——运行时叠图标
+
+---
+
+ART STYLE (project style bible — do not deviate):
+hand-drawn cartoon game sprite, chibi / super-deformed proportions with a large head
+and short limbs, thick near-black outlines (pure black or very dark warm brown — never
+a mid-tone or colorful outline), flat saturated fills with light cel shading (one
+highlight tone, one shadow tone), no gradients, no texture noise, no painterly
+rendering, no photographic detail. Readable silhouette. NO TEXT, no labels, no captions,
+no watermark anywhere in the image.
+
+---
+
+### A) shop_merchant (GenerateImage aspect 3:4)
+
+ONE character sprite on solid flat MAGENTA #FF00FF background.
+Mysterious chibi merchant for a tactics roguelike supply stop:
+- Large hooded head, face hidden in deep hood shadow (tiny soft eye glints optional)
+- Short chibi body, deep indigo cloak #3A4A6C with one cel highlight
+- One fat bulging brown travel sack #8A5A30 slung at the side (THE signature feature)
+- Thick near-black outline #1A1410, flat fills, chunky toy-like
+- Standing 3/4 view facing slightly toward camera-right
+- Clear magenta margin; NO stall, NO goods, NO price tags, NO text, NO circular badge
+
+### B) shop_stall (GenerateImage aspect 16:9)
+
+ONE prop sprite on solid flat MAGENTA #FF00FF background.
+Low wooden merchant stall / roadside table for the same game:
+- Wide short counter, chunky planks #A87840, thick near-black outline
+- Simple cloth runner on top in cream #FCFCF6 with one thin green stripe
+- Empty tabletop — leave clear space for 3 items to be placed in code
+- Optional two short front legs; no shelves of goods, no bottles, no books
+- Flat cel shading, no gradients, no text, no price tags, no UI frames
+- Clear magenta margin all around

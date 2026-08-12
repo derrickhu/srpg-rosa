@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { UnitKind } from '@/battle/types';
 import { defaultSkillId } from '@/data/skillCatalog';
 import { UNIT_DEFS } from '@/data/unitDefs';
+import { ENEMY_SKILL_SKINS } from '@/data/enemySkillCatalog';
 import {
   ATTACK_VFX,
   CHARGE_VFX,
@@ -71,6 +72,17 @@ describe('特效登记表', () => {
     }
   });
 
+  it('实体道具特效的抠图都在 FX_BUNDLE 里', () => {
+    for (const [label, recipe] of allRecipes()) {
+      const sprite = recipe.propBurst?.sprite;
+      if (!sprite) continue;
+      expect(
+        FX_BUNDLE.assets[sprite],
+        `${label} 的道具 ${sprite} 没进 FX_BUNDLE`,
+      ).toBeDefined();
+    }
+  });
+
   it('四职业的普攻和默认技能都有专属配方', () => {
     for (const k of KINDS) {
       expect(ATTACK_VFX[k], `${k} 没有普攻特效`).toBeDefined();
@@ -125,5 +137,49 @@ describe('特效登记表', () => {
     const ids = recipeAnimSets(ATTACK_VFX.bow);
     expect(ids).toContain('arrow_hit');
     expect(ids).not.toContain('proj_arrow');
+  });
+
+  it('每个敌方技能皮肤的 vfxId 都有配方，且不与玩家默认技同图集（可区分）', () => {
+    for (const skin of Object.values(ENEMY_SKILL_SKINS)) {
+      const key = skin.vfxId ?? skin.implementsId;
+      const recipe = SKILL_VFX[key];
+      expect(recipe, `皮肤 ${skin.id} 的 vfxId=${key} 没有 SKILL_VFX 配方`).toBeDefined();
+      const sets = recipeAnimSets(recipe!);
+      expect(sets.length, `${skin.id} 配方没有动画集`).toBeGreaterThan(0);
+      for (const setId of sets) {
+        const m = getAnimManifest(setId);
+        expect(m, `${skin.id} 图集 ${setId} 未注册`).not.toBeNull();
+        expect(m!.blend).toBe('add');
+      }
+    }
+    // 血牙咆哮必须用专属图集，不能还躺在通用 roar 上
+    expect(SKILL_VFX.bloodfang_roar!.impact!.set).toBe('bloodfang_roar');
+    expect(SKILL_VFX.savage_roar!.impact!.set).toBe('roar');
+  });
+
+  it('第一章草原临时技能形态互异：缠足光环 / 敷治道具 / 蜂群弹道 / 号角道具', () => {
+    const snare = SKILL_VFX.temp_gl_snare!;
+    const salve = SKILL_VFX.temp_gl_salve!;
+    const swarm = SKILL_VFX.temp_gl_swarm!;
+    const horn = SKILL_VFX.temp_gl_horn!;
+
+    expect(snare.impact?.set).toBe('temp_gl_snare');
+    expect(snare.impact?.anchor).toBe('target');
+    expect(getAnimManifest('temp_gl_snare')?.blend).toBe('add');
+
+    expect(salve.propBurst?.sprite).toBe('prop_salve');
+    expect(salve.propBurst?.anchor).toBe('target');
+    expect(salve.travel).toBeUndefined();
+
+    expect(swarm.travel?.sprite).toBe('proj_bees');
+    expect(swarm.travelPerTarget).toBe(true);
+    expect(swarm.travel?.orbitLaps).toBeGreaterThanOrEqual(2);
+    expect(swarm.propBurst).toBeUndefined();
+
+    expect(horn.propBurst?.sprite).toBe('prop_horn');
+    expect(horn.propBurst?.anchor).toBe('caster');
+    expect(horn.propBurst?.blend).toBe('add');
+    expect(horn.propBurst?.yOffsetCells).toBeLessThan(0);
+    expect(horn.travel).toBeUndefined();
   });
 });

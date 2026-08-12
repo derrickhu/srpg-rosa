@@ -132,7 +132,12 @@ export function battleUnitInfoModel(u: UnitState, opts: BattleUnitInfoOptions): 
 
   if (ed.skill) {
     const s = mainSection(ed.skill.id, u.skillMods, cdNote(u.skillCd));
-    if (s) skills.push(s);
+    if (s) {
+      // 敌方技能皮肤覆写展示名/图标；结算仍认 ed.skill.id → SkillSpec
+      if (u.battleSkill?.name) s.name = u.battleSkill.name;
+      if (u.battleSkill?.iconKey) s.iconKey = u.battleSkill.iconKey;
+      skills.push(s);
+    }
   }
   if (u.tempSkill) {
     const s = tempSection(u.tempSkill.id, u.skillMods, cdNote(u.tempSkillCd ?? 0));

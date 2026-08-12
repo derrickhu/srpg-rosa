@@ -89,6 +89,34 @@ export interface TravelDef {
    * 普攻只有箭 + 火花，穿透多一条能量尾迹。
    */
   beamSet?: string;
+  /**
+   * 不随飞行方向旋转。蜂群云团这类「团状」弹体转了反而读不出朝向；
+   * 箭/矛必须转（尖端朝右画的）。
+   */
+  noRotate?: boolean;
+  /**
+   * 抵达目标后绕着飞几圈再淡出。邻格技能直线只有一格，蜂群不绕圈就看不清。
+   */
+  orbitLaps?: number;
+}
+
+/**
+ * 实体道具施放：透明底抠图放大消失（号角、药草十字）。
+ * 和黑底 additive 环光是两条路——道具靠剪影认物，环光靠发光认事件。
+ */
+export interface PropBurstDef {
+  /** FX_BUNDLE 抠图 / 黑底光效 key */
+  sprite: string;
+  anchor: VfxAnchor;
+  cells: number;
+  scaleFrom: number;
+  scaleTo: number;
+  durationMs: number;
+  sparks?: SparkSpec;
+  /** 黑底发光用 add；药草十字这类认物剪影用 normal */
+  blend?: 'add' | 'normal';
+  /** 相对锚点向上为负，号角挂头顶 */
+  yOffsetCells?: number;
 }
 
 /**
@@ -107,11 +135,18 @@ export interface VfxRecipe {
   cast?: FlashDef;
   travel?: TravelDef;
   impact?: FlashDef;
+  /** 实体道具放大消失（号角 / 药草） */
+  propBurst?: PropBurstDef;
   /**
    * 贯穿技能：飞行途经每个命中目标时都播一次 impact。
    * 默认只在终点播——普攻射一支箭只有一个落点。
    */
   impactPerHit?: boolean;
+  /**
+   * 对每个命中目标各飞一发弹体（蜂群）。
+   * 与 `impactPerHit`（一发贯穿多目标）互斥语义：这边是「分头扑」，那边是「一条线穿」。
+   */
+  travelPerTarget?: boolean;
 }
 
 /** @deprecated 旧名，等于 FlashDef。保留给还没迁完的调用点 */
@@ -277,7 +312,7 @@ export const SKILL_VFX: Record<string, VfxRecipe> = {
       sparks: skillSparks(SILVER),
     },
   },
-  // Boss · 狂暴战吼
+  // Boss · 底层狂暴战吼（未换皮时的结算 id 仍指向这里）
   savage_roar: {
     impact: {
       set: 'roar',
@@ -285,6 +320,64 @@ export const SKILL_VFX: Record<string, VfxRecipe> = {
       cells: 3,
       mode: 'burst',
       sparks: skillSparks([0xfff0d0, 0xff8a2a, 0xc21f1f]),
+    },
+  },
+  // 第一章 Boss 皮肤「血牙咆哮」：血红犬齿环，与通用橙金 roar 形态区分开
+  bloodfang_roar: {
+    impact: {
+      set: 'bloodfang_roar',
+      anchor: 'caster',
+      cells: 3,
+      mode: 'burst',
+      sparks: skillSparks([0xffe8e0, 0xff3a2a, 0x8b0000]),
+    },
+  },
+  // ── 草原战线临时技能：四种完全不同的「零件」语言，禁止再做成同质环光 ──
+  // 野草缠足：目标格藤蔓收束（additive 序列帧）
+  temp_gl_snare: {
+    impact: {
+      set: 'temp_gl_snare',
+      anchor: 'target',
+      cells: 1.6,
+      mode: 'burst',
+      sparks: skillSparks([0xe8ffe0, 0x5ecc3a, 0x1a6b18]),
+    },
+  },
+  // 草药敷治：药草十字道具在友军身上放大淡出
+  temp_gl_salve: {
+    propBurst: {
+      sprite: 'prop_salve',
+      anchor: 'target',
+      cells: 1.25,
+      scaleFrom: 0.65,
+      scaleTo: 1.45,
+      durationMs: 480,
+      sparks: hitSparks([0xf0fff4, 0x7effb0, 0x2a9b6a]),
+    },
+  },
+  // 惊扰蜂群：蜜蜂团弹体分头飞向每个敌人（对齐射手箭的 travel 语法）
+  temp_gl_swarm: {
+    travel: {
+      sprite: 'proj_bees',
+      cells: 1.35,
+      speedPxPerSec: 420,
+      trail: trailSparks([0xfff0c0, 0xffb020, 0xc45a00]),
+      orbitLaps: 3,
+    },
+    travelPerTarget: true,
+  },
+  // 牧野号角：头顶号角光效放大淡出（additive，不是写实道具）
+  temp_gl_horn: {
+    propBurst: {
+      sprite: 'prop_horn',
+      anchor: 'caster',
+      cells: 1.15,
+      scaleFrom: 0.55,
+      scaleTo: 1.7,
+      durationMs: 1100,
+      blend: 'add',
+      yOffsetCells: -0.85,
+      sparks: skillSparks([0xfff0c8, 0xffc040, 0xd47800]),
     },
   },
 };

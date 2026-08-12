@@ -8,6 +8,7 @@ import { UNIT_DEFS } from '@/data/unitDefs';
 import { STAGES_MVP, type StageDefMvp } from '@/data/stagesMvp';
 import { CHARACTER_DEFS, characterStatsAtLevel } from '@/data/characterCatalog';
 import { defaultSkillId, skillDefForId } from '@/data/skillCatalog';
+import { resolveEnemyBattleSkill } from '@/data/enemySkillCatalog';
 import { getTerrainSpec } from '@/data/terrainSpec';
 
 /**
@@ -88,7 +89,11 @@ function buildEnemies(stage: StageDefMvp, scale: number): UnitState[] {
       move: e.stats?.move ?? base.move,
     };
     const maxHp = Math.round(b.maxHp * scale);
-    const sk = e.skillId ? skillDefForId(e.skillId) : undefined;
+    // 与 DeployManager.enemySpawnToUnitState 同口径：只认显式 skillSkin/skillId
+    const battleSkill = resolveEnemyBattleSkill({
+      skillSkin: e.skillSkin,
+      skillId: e.skillId,
+    });
     return {
       uid: e.uid,
       defId: e.defId,
@@ -97,7 +102,7 @@ function buildEnemies(stage: StageDefMvp, scale: number): UnitState[] {
       pos: { x: e.x, y: e.y },
       skillCd: 0,
       movedInTurn: false,
-      battleSkill: sk ? { id: sk.id, name: sk.name, cooldown: sk.cooldown, kind: sk.kind } : undefined,
+      battleSkill,
       displayName: e.name,
       boss: e.boss,
       mercMaxHp: maxHp,
@@ -205,7 +210,8 @@ describe('第一章难度曲线回归', () => {
     );
     report('关7 Boss 裸打', naked, '<=50%');
     expect(naked.winRate, `Boss 裸打胜率 ${(naked.winRate * 100).toFixed(1)}%`).toBeLessThanOrEqual(0.5);
-    expect(naked.skillCasts['savage_roar'] ?? 0, 'Boss 应释放狂暴战吼').toBeGreaterThan(0);
+    // 结算 id 仍是底层 savage_roar；展示名「血牙咆哮」只影响飘字/面板
+    expect(naked.skillCasts['savage_roar'] ?? 0, 'Boss 应释放血牙咆哮').toBeGreaterThan(0);
 
     const prepared = simulate(
       { stageIdx: 6, deployIds: TRIO, level: 1, bonusAtkEach: 3, enemyScale: 1.1, healPotions: 2 },

@@ -1,0 +1,50 @@
+战斗操作条 · 普攻按钮图标
+产出 → images/ui/act_attack.png
+生成器：Cursor 内置 GenerateImage，aspect_ratio 1:1
+
+切图 / 去键色：
+    # 单图标：品红底 → 透明，长边约 64px，与 skill_*.png / act_*.png 同规范
+    python3 scripts/despill-magenta.py <raw.png>
+    # 再 trim + 落盘到 images/ui/act_attack.png
+
+用在哪：战斗人工回合操作条圆形按钮（约 22px，压在近黑圆底 `#14100c` 上）。
+和技能图标（skill_*.png）同一排出现，必须像同一套：厚墨描边 + 平涂实心剪影，
+**不能**在图里写「普」或任何文字——圣经 §9 禁区。
+
+语义：所有兵种共用的**普通攻击**（不是某一招技能）。
+记忆点只有一个——**短剑斜劈 + 一道斩击弧**，读成「打一下」。
+不要画交叉 X（太像取消）、不要写「普」、不要黑底方块。
+别画长箭 / 圆刀光 / 马蹄 / 盾牌（已被 pierce / whirl / trample / bash 占用）。
+与 skill_cleave 的区分：cleave 是重剑下劈 + 金黄弧；普攻是短刃斜劈 + 奶白弧，更轻、更简单。
+
+现役稿：act_attack_raw_v3 → 品红抠底 → images/ui/act_attack.png
+
+---
+
+ONE GAME UI ICON for a BASIC ATTACK button in a cartoon fantasy tactics mobile game.
+
+CRITICAL BACKGROUND: the entire background must be 100% solid flat MAGENTA, hex #FF00FF.
+It is a chroma key and will be deleted. No white, no grey, no black plate, no drop shadow onto the background.
+
+CRITICAL SIZE CONSTRAINT: displayed at only ~22 pixels on a dark circular button.
+ONE bold chunky silhouette. NO thin lines, NO small parts, NO fine detail, NO text, NO Chinese characters, NO letters, NO numbers, NO watermark, NO circular frame, NO square badge, NO UI border.
+
+CRITICAL — SITS ON A NEAR-BLACK CIRCLE (#14100c). Needs a THICK near-black outline (#1A1410)
+all the way around and a bright saturated fill inside so it reads on the dark plate.
+Do NOT fill the canvas with black — only the icon shape, magenta everywhere else.
+
+STYLE — match existing skill icons (skill_whirl / skill_pierce / skill_bash):
+- SOLID FILLED SILHOUETTE with thick near-black outline (#1A1410). Not a line icon.
+- Flat saturated fills, at most 3 colours plus outline, one simple cel highlight.
+- Chunky, rounded, toy-like. No gradients, no glow, no bevel, no gloss, no pixel art.
+
+CONTENT (BASIC ATTACK / generic strike):
+A short chunky steel-grey sword blade swinging diagonally down-right, broad blade,
+thick near-black outline, dark red-brown (#843C0C) grip at the upper-left.
+Behind the blade, one thick cream-white (#F5E8C8) crescent slash trail.
+Must read at nail size as "a basic hit".
+
+RULES:
+1. Icon fills ~70% of the square; clear magenta margin on all sides.
+2. No black square background. Magenta only outside the silhouette.
+3. NO TEXT anywhere.

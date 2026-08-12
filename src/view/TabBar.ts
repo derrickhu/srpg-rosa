@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import { makeText } from '@/theme/typography';
 import { C, shade } from '@/view/mvpTheme';
 import { createUiIcon } from '@/view/renderHelpers';
 
@@ -68,10 +69,9 @@ export function createTabBar(
       c.addChild(icon);
     }
 
-    const label = new PIXI.Text(t.label, {
+    const label = makeText(t.label, isActive ? 'uiStrong' : 'ui', {
       fill: isActive ? shade(C.primary, 0.32) : 0xa8b4c8,
       fontSize: 12,
-      fontWeight: isActive ? 'bold' : 'normal',
     });
     label.anchor.set(0.5, 0);
     label.x = slotW / 2;

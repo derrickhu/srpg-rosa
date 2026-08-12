@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import { makeText } from '@/theme/typography';
 import type { DungeonDef } from '@/data/dungeonCatalog';
 import { createUiIcon, drawCheck } from '@/view/renderHelpers';
 import { C } from '@/view/mvpTheme';
@@ -115,10 +116,9 @@ export function createNodeStrip(dungeon: DungeonDef, opts: NodeStripOptions): PI
     } else {
       // 序号画在圈里而不是圈下：战斗点没有图标，圈里空着会显得这一格是坏的，
       // 而序号飘在圈外又和补给/BOSS 的文字标签挤成一行分不清谁是谁。
-      const num = new PIXI.Text(`${battleNo}`, {
+      const num = makeText(`${battleNo}`, 'uiStrong', {
         fill: isCurrent ? C.ink : 0xffffff,
         fontSize: Math.round(r * 1.15),
-        fontWeight: 'bold',
       });
       num.anchor.set(0.5);
       c.addChild(num);
@@ -126,10 +126,9 @@ export function createNodeStrip(dungeon: DungeonDef, opts: NodeStripOptions): PI
 
     // 只有带图标的节点还需要文字标签；战斗点的序号已经在圈里了
     if (iconKey) {
-      const label = new PIXI.Text(node.kind === 'shop' ? '补给' : 'BOSS', {
+      const label = makeText(node.kind === 'shop' ? '补给' : 'BOSS', isCurrent ? 'uiStrong' : 'caption', {
         fill: isCurrent ? 0xffffff : 0xd8d0e8,
         fontSize: 10,
-        fontWeight: isCurrent ? 'bold' : 'normal',
       });
       label.anchor.set(0.5, 0);
       label.y = r + 4;

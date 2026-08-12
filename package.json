@@ -14,8 +14,10 @@
     "upload:cdn": "node scripts/upload_cdn.cjs",
     "upload:cdn:dry": "node scripts/upload_cdn.cjs --dry-run",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "font:subset": "python3 scripts/subset-pixi-fonts.py"
   },
+
   "dependencies": {
     "@pixi/core": "7.3.2",
     "@pixi/settings": "7.3.2",

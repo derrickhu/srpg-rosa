@@ -155,7 +155,7 @@ const SKILL_SLOTS: readonly SkillSlot[] = ['main', 'temp'];
 
 export interface PendingTurn {
   uid: string;
-  /** 还能移动（移动只有一次，且行动后不再允许） */
+  /** 还能移动（每回合一次；与技能/普攻顺序不限，和 AI `actTurn` 一致） */
   canMove: boolean;
   /**
    * 还能放技能（任一槽）。
@@ -198,8 +198,13 @@ export interface BattleSim {
   commandMove(uid: string, cell: Vec2): BattleStep;
   /** 撤销本回合的移动（仅在还没出手时可用） */
   commandUndoMove(uid: string): BattleStep;
-  /** 放技能；`targetUid` 见 `SkillAiming.candidates`，AoE 传 undefined */
-  commandSkill(uid: string, targetUid?: string, slot?: SkillSlot): BattleStep;
+  /**
+   * 放技能。
+   * - 单体点名：`targetUid` 见 `SkillAiming.candidates`
+   * - 直线/范围确认：`aimCell` 见 `SkillAiming.aimCells`
+   * - 无需瞄准：两者都可省略
+   */
+  commandSkill(uid: string, targetUid?: string, slot?: SkillSlot, aimCell?: Vec2): BattleStep;
   commandAttack(uid: string, targetUid: string): BattleStep;
   /** 结束该单位回合（待机） */
   commandWait(uid: string): BattleStep;
@@ -213,8 +218,16 @@ export interface BattleSim {
   /** 当前存活单位（实时状态，供 UI 读取血量/冷却） */
   getUnits(): UnitState[];
   getUnit(uid: string): UnitState | undefined;
-  /** 本回合剩余行动队列（uid，含当前行动者） */
+  /**
+   * 本回合还没动到的单位（uid）。
+   * 当前正在行动的人已被弹出，不在这里——UI 要自己把 current 拼到队首。
+   */
   roundOrder(): string[];
+  /**
+   * 出手顺序预览：当前行动者（可选）+ 本回合剩余 + 按速度预估的后续回合，
+   * 凑满 `limit` 个。顺序条要靠这条做跨回合规划，不能只看本回合尾巴。
+   */
+  upcomingOrder(limit: number, currentUid?: string | null): string[];
   getRound(): number;
   isDone(): boolean;
 }
@@ -485,9 +498,10 @@ export function createBattleSim(
     const castable = castableSlotsFor(u);
     return {
       uid: pendingTurn.uid,
-      // 出手之后不再允许移动。这条是为了保住「先走后打」的取舍：如果打完还能走，
-      // 玩家永远可以先原地开一枪再撤，站位就不是决策了。
-      canMove: !pendingTurn.moved && !acted,
+      // 移动与出手顺序不限：AI 是先技能再走位再普攻的（见 `actTurn`），
+      // 人工若「先放技能就锁死移动」，玩家永远学不会那套起手，也会白白丢掉走位。
+      // 撤招只在「走过且还没出手」时开放——出手后再撤等于改写已经结算的伤害。
+      canMove: !pendingTurn.moved,
       canSkill: castable.length > 0,
       castableSlots: castable,
       canAttack: !pendingTurn.attacked && attackTargetsFrom(u).length > 0,
@@ -518,7 +532,11 @@ export function createBattleSim(
     const w = checkWinner(units);
     if (w) return finish(w, events);
     const v = pendingView();
-    if (!v || (!v.canSkill && !v.canAttack)) pendingTurn = null;
+    // 还有移动/出手额度，或还能撤销走位时，都停下来等。
+    // 走完若立刻收尾，玩家来不及点撤销；先技能后走位也不能出手完就掐掉移动。
+    if (!v || (!v.canMove && !v.canSkill && !v.canAttack && !v.canUndoMove)) {
+      pendingTurn = null;
+    }
     allEvents.push(...events);
     return { events, done: false, winner: null };
   }
@@ -536,9 +554,8 @@ export function createBattleSim(
     const events = moveAlong(cur.u, cell);
     if (events.length === 0) return noop();
     cur.p.moved = true;
-    // 移动本身不会结束回合，也不会分出胜负，但要重算「还能做什么」
-    allEvents.push(...events);
-    return { events, done: false, winner: null };
+    // 走完若技能/普攻也没了，settle 会自动收尾；还有出手额度则继续等
+    return settleAfterAction(events);
   }
 
   function commandUndoMove(uid: string): BattleStep {
@@ -558,12 +575,17 @@ export function createBattleSim(
     return { events, done: false, winner: null };
   }
 
-  function commandSkill(uid: string, targetUid?: string, slot: SkillSlot = 'main'): BattleStep {
+  function commandSkill(
+    uid: string,
+    targetUid?: string,
+    slot: SkillSlot = 'main',
+    aimCell?: Vec2,
+  ): BattleStep {
     const cur = activePending(uid);
     if (!cur) return noop();
     const v = pendingView();
     if (!v?.castableSlots.includes(slot)) return noop();
-    const events = castSkillManual(cur.u, defs, units, terrain, targetUid, slot);
+    const events = castSkillManual(cur.u, defs, units, terrain, targetUid, slot, aimCell);
     if (events.length === 0) return noop();
     cur.p.usedSkill = true;
     return settleAfterAction(events);
@@ -613,6 +635,7 @@ export function createBattleSim(
         // +1：tick 在回合开始统一 -1，保证 buff 覆盖 N 个完整回合
         list.push({ kind: 'atkBonus', addAtk, roundsLeft: eff.rounds + 1 });
         u.timedBattleEffects = list;
+        events.push({ type: 'statusNote', target: u.uid, text: `攻+${addAtk}`, tone: 'buff' });
       }
     } else if (eff.kind === 'slowFoes') {
       for (const u of units) {
@@ -621,6 +644,12 @@ export function createBattleSim(
           (u.timedBattleEffects ?? []).filter((x) => x.kind !== 'spdDown');
         list.push({ kind: 'spdDown', subSpd: eff.subSpd, roundsLeft: eff.rounds + 1 });
         u.timedBattleEffects = list;
+        events.push({
+          type: 'statusNote',
+          target: u.uid,
+          text: `速-${eff.subSpd}`,
+          tone: 'debuff',
+        });
       }
     }
     allEvents.push(...events);
@@ -665,6 +694,28 @@ export function createBattleSim(
     getUnits: () => units,
     getUnit: (uid) => units.find((u) => u.uid === uid),
     roundOrder: () => [...order],
+    upcomingOrder: (limit, currentUid) => {
+      const alive = units.filter((u) => u.hp > 0);
+      const aliveIds = new Set(alive.map((u) => u.uid));
+      const out: string[] = [];
+      if (currentUid && aliveIds.has(currentUid)) out.push(currentUid);
+      for (const uid of order) {
+        if (out.length >= limit) break;
+        if (aliveIds.has(uid) && uid !== currentUid) out.push(uid);
+      }
+      // 本回合队列耗尽后，用当前速度序循环预估下一回合、下下回合……
+      while (out.length < limit && alive.length > 0) {
+        const next = bySpeedOrder(alive, defs).map((u) => u.uid);
+        let added = 0;
+        for (const uid of next) {
+          if (out.length >= limit) break;
+          out.push(uid);
+          added++;
+        }
+        if (added === 0) break;
+      }
+      return out;
+    },
     getRound: () => rounds,
     isDone: () => done,
   };

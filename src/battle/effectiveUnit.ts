@@ -9,17 +9,24 @@ import {
 } from './timedBattleEffects';
 
 /**
- * 合并兵种 `base`/`strike`、佣兵覆盖、精华对**基础**三维的加成；
- * 普攻射程/远程来自 `strike`（+ `merc*`）；
- * **嘲讽** = 普攻 `strike.taunt` **或** 限时 `taunt`；
- * **攻击/速度**：基础 + 精华 + 限时 buff − 限时 debuff。
+ * 合并兵种 `base`/`strike`、上场覆盖与限时 buff/debuff。
+ *
+ * **技能来源按阵营分叉**：
+ * - 我方：`battleSkill`，没有则回退 `defaultSkillId(defId)`（职业默认技）
+ * - 敌方：**只认显式 `battleSkill`**，没有就是纯普攻
+ *
+ * 敌方曾经也走 defaultSkillId，结果草原黏泥怪会放「旋风斩」、血牙狼自带冲锋被动——
+ * 魔物读起来像穿着玩家职业皮的假人，第一章小怪也因此偏强。现在小怪默认无技能，
+ * Boss / 高级怪通过关卡蓝图的 `skillSkin` 显式挂上（见 `enemySkillCatalog`）。
  */
 export function effectiveUnitDef(
   u: UnitState,
   defs: Record<UnitKind, UnitArchetypeDef>,
 ): UnitDef {
   const b = defs[u.defId];
-  const sk = u.battleSkill ?? skillDefForId(defaultSkillId(u.defId));
+  const sk = u.faction === 'enemy'
+    ? u.battleSkill
+    : (u.battleSkill ?? skillDefForId(defaultSkillId(u.defId)));
   const base = b.base;
   const strike = b.strike;
   const baseAtk = u.mercAtk ?? base.atk;

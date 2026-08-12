@@ -1,0 +1,67 @@
+{
+  "source": "scripts/vfx-sheet.py",
+  "input": ".tmp-gen/temp_gl_salve_raw.png",
+  "target": "vfx",
+  "mode": "vfx_sheet",
+  "rows": 3,
+  "cols": 3,
+  "cell_size": 256,
+  "threshold": 22,
+  "frame_labels": [
+    "temp_gl_salve-1",
+    "temp_gl_salve-2",
+    "temp_gl_salve-3",
+    "temp_gl_salve-4",
+    "temp_gl_salve-5",
+    "temp_gl_salve-6",
+    "temp_gl_salve-7",
+    "temp_gl_salve-8",
+    "temp_gl_salve-9"
+  ],
+  "shared_crop_side": 267,
+  "crop_offsets": [
+    {
+      "x": 38,
+      "y": 44
+    },
+    {
+      "x": 32,
+      "y": 44
+    },
+    {
+      "x": 30,
+      "y": 47
+    },
+    {
+      "x": 40,
+      "y": 39
+    },
+    {
+      "x": 36,
+      "y": 37
+    },
+    {
+      "x": 28,
+      "y": 36
+    },
+    {
+      "x": 31,
+      "y": 21
+    },
+    {
+      "x": 30,
+      "y": 12
+    },
+    {
+      "x": 20,
+      "y": 19
+    }
+  ],
+  "empty_frames": [
+    "temp_gl_salve-9"
+  ],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}

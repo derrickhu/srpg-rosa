@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import { makeText } from '@/theme/typography';
 import { C } from '@/view/mvpTheme';
 import { makeButton } from '@/ui/Button';
 import { createUiIcon } from '@/view/renderHelpers';
@@ -135,10 +136,9 @@ function createTitleBanner(cx: number, y: number, text: string, width: number): 
       h = sp.height;
     }
   }
-  const tx = new PIXI.Text(text, {
+  const tx = makeText(text, 'display', {
     fill: 0xfff4d8,
     fontSize: 30,
-    fontWeight: 'bold',
     stroke: 0x7a4a10,
     strokeThickness: 5,
   });
@@ -181,9 +181,8 @@ function createItemDetail(
   const headerH = 74;
   const bodyPad = 12;
 
-  const descTx = new PIXI.Text(entry.desc, {
+  const descTx = makeText(entry.desc, 'body', {
     fill: C.text,
-    fontSize: 12,
     wordWrap: true,
     wordWrapWidth: w - bodyPad * 4,
     lineHeight: 18,
@@ -207,8 +206,8 @@ function createItemDetail(
   header.endFill();
   card.addChild(header);
 
-  const nameTx = new PIXI.Text(entry.name, {
-    fill: C.textOnDark, fontSize: 15, fontWeight: 'bold',
+  const nameTx = makeText(entry.name, 'uiStrong', {
+    fill: C.textOnDark, fontSize: 15,
   });
   nameTx.x = 12;
   nameTx.y = 8;
@@ -220,13 +219,13 @@ function createItemDetail(
     icon.y = 30;
     card.addChild(icon);
   }
-  const qTx = new PIXI.Text(`品质：${entry.quality}`, {
-    fill: C.textOnDark, fontSize: 12, fontWeight: 'bold',
+  const qTx = makeText(`品质：${entry.quality}`, 'uiStrong', {
+    fill: C.textOnDark, fontSize: 12,
   });
   qTx.x = 62;
   qTx.y = 34;
   card.addChild(qTx);
-  const amtTx = new PIXI.Text(`本次获得：${entry.amount}`, { fill: 0xffe8c0, fontSize: 11 });
+  const amtTx = makeText(`本次获得：${entry.amount}`, 'caption', { fill: 0xffe8c0 });
   amtTx.x = 62;
   amtTx.y = 52;
   card.addChild(amtTx);
@@ -238,7 +237,7 @@ function createItemDetail(
     lb.drawRoundedRect(bodyPad, by, w - bodyPad * 2, 20, 5);
     lb.endFill();
     card.addChild(lb);
-    const t = new PIXI.Text(label, { fill: 0x3a5a78, fontSize: 11, fontWeight: 'bold' });
+    const t = makeText(label, 'caption', { fill: 0x3a5a78, fontWeight: 'bold' });
     t.x = bodyPad + 8;
     t.y = by + 4;
     card.addChild(t);
@@ -259,7 +258,7 @@ function createItemDetail(
       row.drawRoundedRect(bodyPad, by, w - bodyPad * 2, rowH, 6);
       row.endFill();
       card.addChild(row);
-      const t = new PIXI.Text(s, { fill: 0x4a3a12, fontSize: 12, fontWeight: 'bold' });
+      const t = makeText(s, 'uiStrong', { fill: 0x4a3a12, fontSize: 12 });
       t.x = bodyPad + 10;
       t.y = by + (rowH - 15) / 2;
       card.addChild(t);
@@ -269,8 +268,8 @@ function createItemDetail(
 
   layer.addChild(card);
 
-  const hint = new PIXI.Text('点击空白处关闭', {
-    fill: 0xd8d8c8, fontSize: 11,
+  const hint = makeText('点击空白处关闭', 'caption', {
+    fill: 0xd8d8c8,
   });
   hint.anchor.set(0.5, 0);
   hint.x = screenW / 2;
@@ -293,7 +292,7 @@ export function createRewardOverlay(opts: RewardOverlayOpts): PIXI.Container {
   root.addChild(banner);
 
   // 关卡名在横幅下方，不再挤进黄色面板——那块位置留给「胜利」
-  const sub = new PIXI.Text(opts.subtitle, { fill: 0xe8e8d8, fontSize: 12 });
+  const sub = makeText(opts.subtitle, 'body', { fill: 0xe8e8d8 });
   sub.anchor.set(0.5, 0);
   sub.x = cx;
   sub.y = bannerY + banner.height + 10;
@@ -339,8 +338,8 @@ export function createRewardOverlay(opts: RewardOverlayOpts): PIXI.Container {
       cell.addChild(icon);
     }
 
-    const amt = new PIXI.Text(`+${e.amount}`, {
-      fill: e.tint, fontSize: 14, fontWeight: 'bold',
+    const amt = makeText(`+${e.amount}`, 'uiStrong', {
+      fill: e.tint,
     });
     amt.anchor.set(0.5, 1);
     amt.x = cellSize / 2;
@@ -354,7 +353,7 @@ export function createRewardOverlay(opts: RewardOverlayOpts): PIXI.Container {
     root.addChild(cell);
   });
 
-  const tapHint = new PIXI.Text('点击奖励查看说明', { fill: 0xb8b8a8, fontSize: 10 });
+  const tapHint = makeText('点击奖励查看说明', 'caption', { fill: 0xb8b8a8, fontSize: 10 });
   tapHint.anchor.set(0.5, 0);
   tapHint.x = cx;
   tapHint.y = gridY + cellSize + 8;
@@ -392,7 +391,7 @@ function buildLootCard(card: LootCard, cardW: number, cardH: number): PIXI.Conta
   strip.drawRect(0, 11, cardW, 11);
   strip.endFill();
   cc.addChild(strip);
-  const rar = new PIXI.Text(RARITY_LABEL[card.rarity], {
+  const rar = makeText(RARITY_LABEL[card.rarity], 'caption', {
     fill: C.textOnDark, fontSize: 10, fontWeight: 'bold',
   });
   rar.anchor.set(0.5);
@@ -416,8 +415,8 @@ function buildLootCard(card: LootCard, cardW: number, cardH: number): PIXI.Conta
     y += bandH;
   }
 
-  const whoTx = new PIXI.Text(card.who, {
-    fill: C.text, fontSize: 12, fontWeight: 'bold',
+  const whoTx = makeText(card.who, 'uiStrong', {
+    fill: C.text, fontSize: 12,
   });
   whoTx.anchor.set(0.5, 0);
   whoTx.x = cardW / 2;
@@ -442,8 +441,8 @@ function buildLootCard(card: LootCard, cardW: number, cardH: number): PIXI.Conta
   }
   y = discCy + discR + 4;
 
-  const skillTx = new PIXI.Text(card.skillName, {
-    fill: 0x6a6a5a, fontSize: 11,
+  const skillTx = makeText(card.skillName, 'caption', {
+    fill: 0x6a6a5a,
   });
   skillTx.anchor.set(0.5, 0);
   skillTx.x = cardW / 2;
@@ -453,8 +452,8 @@ function buildLootCard(card: LootCard, cardW: number, cardH: number): PIXI.Conta
 
   // 词条名 + 类型小标签并排居中。标签是"这属于哪一类强化"的速记，
   // 不承担辨识主责，所以只有 16px，摆在名字左边而不是单独占一行。
-  const modTx = new PIXI.Text(card.modName, {
-    fill: accent, fontSize: 13, fontWeight: 'bold',
+  const modTx = makeText(card.modName, 'uiStrong', {
+    fill: accent, fontSize: 13,
   });
   // 卡宽是屏宽三等分，「势不可挡」这种四字词条加上标签就顶到边框了。
   // 挤不下时丢掉标签而不是缩字号：标签只是类型速记，名字才是玩家要读的。
@@ -473,7 +472,7 @@ function buildLootCard(card: LootCard, cardW: number, cardH: number): PIXI.Conta
   cc.addChild(modTx);
   y += modTx.height + 4;
 
-  const descTx = new PIXI.Text(card.desc, {
+  const descTx = makeText(card.desc, 'body', {
     fill: 0x5a6a3a, fontSize: 11,
     wordWrap: true, wordWrapWidth: cardW - 14, align: 'center', lineHeight: 15,
   });
@@ -489,8 +488,8 @@ function buildLootCard(card: LootCard, cardW: number, cardH: number): PIXI.Conta
   badge.drawCircle(cardW / 2, cardH, 13);
   badge.endFill();
   cc.addChild(badge);
-  const bt = new PIXI.Text(String(card.stacks), {
-    fill: accent, fontSize: 13, fontWeight: 'bold',
+  const bt = makeText(String(card.stacks), 'uiStrong', {
+    fill: accent, fontSize: 13,
   });
   bt.anchor.set(0.5);
   bt.x = cardW / 2;
@@ -507,8 +506,8 @@ export function createLootOverlay(opts: LootOverlayOpts): PIXI.Container {
   root.addChild(createScrim(W, H));
 
   const cx = W / 2;
-  const title = new PIXI.Text('请 选 择 强 化', {
-    fill: C.primary, fontSize: 19, fontWeight: 'bold',
+  const title = makeText('请 选 择 强 化', 'title', {
+    fill: C.primary, fontSize: 19,
     stroke: 0x2a2010, strokeThickness: 4,
   });
   title.anchor.set(0.5, 0);

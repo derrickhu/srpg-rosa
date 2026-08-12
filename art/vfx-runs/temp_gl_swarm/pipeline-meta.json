@@ -1,0 +1,65 @@
+{
+  "source": "scripts/vfx-sheet.py",
+  "input": ".tmp-gen/temp_gl_swarm_raw.png",
+  "target": "vfx",
+  "mode": "vfx_sheet",
+  "rows": 3,
+  "cols": 3,
+  "cell_size": 256,
+  "threshold": 22,
+  "frame_labels": [
+    "temp_gl_swarm-1",
+    "temp_gl_swarm-2",
+    "temp_gl_swarm-3",
+    "temp_gl_swarm-4",
+    "temp_gl_swarm-5",
+    "temp_gl_swarm-6",
+    "temp_gl_swarm-7",
+    "temp_gl_swarm-8",
+    "temp_gl_swarm-9"
+  ],
+  "shared_crop_side": 320,
+  "crop_offsets": [
+    {
+      "x": 14,
+      "y": 9
+    },
+    {
+      "x": 10,
+      "y": 6
+    },
+    {
+      "x": 10,
+      "y": 6
+    },
+    {
+      "x": 10,
+      "y": 2
+    },
+    {
+      "x": 10,
+      "y": 1
+    },
+    {
+      "x": 13,
+      "y": 0
+    },
+    {
+      "x": 16,
+      "y": 7
+    },
+    {
+      "x": 15,
+      "y": 0
+    },
+    {
+      "x": 15,
+      "y": 0
+    }
+  ],
+  "empty_frames": [],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}

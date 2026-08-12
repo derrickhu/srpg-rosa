@@ -1,0 +1,65 @@
+{
+  "source": "scripts/vfx-sheet.py",
+  "input": ".tmp-gen/temp_gl_snare_raw.png",
+  "target": "vfx",
+  "mode": "vfx_sheet",
+  "rows": 3,
+  "cols": 3,
+  "cell_size": 256,
+  "threshold": 22,
+  "frame_labels": [
+    "temp_gl_snare-1",
+    "temp_gl_snare-2",
+    "temp_gl_snare-3",
+    "temp_gl_snare-4",
+    "temp_gl_snare-5",
+    "temp_gl_snare-6",
+    "temp_gl_snare-7",
+    "temp_gl_snare-8",
+    "temp_gl_snare-9"
+  ],
+  "shared_crop_side": 302,
+  "crop_offsets": [
+    {
+      "x": 14,
+      "y": 27
+    },
+    {
+      "x": 19,
+      "y": 28
+    },
+    {
+      "x": 24,
+      "y": 31
+    },
+    {
+      "x": 15,
+      "y": 4
+    },
+    {
+      "x": 15,
+      "y": 10
+    },
+    {
+      "x": 15,
+      "y": 15
+    },
+    {
+      "x": 20,
+      "y": 0
+    },
+    {
+      "x": 24,
+      "y": 0
+    },
+    {
+      "x": 16,
+      "y": 2
+    }
+  ],
+  "empty_frames": [],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}

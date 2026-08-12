@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import { makeText } from '@/theme/typography';
 
 export interface UnitOverheadOptions {
   maxHp: number;
@@ -38,10 +39,9 @@ export function createUnitOverhead(opts: UnitOverheadOptions): UnitOverheadHandl
   const barH = Math.max(3, Math.floor(opts.cell * 0.09));
   const labelFs = Math.max(7, Math.min(10, Math.floor(opts.cell * 0.18)));
 
-  const label = new PIXI.Text(opts.professionName, {
+  const label = makeText(opts.professionName, 'combatLabel', {
     fill: 0xffffff,
     fontSize: labelFs,
-    fontWeight: 'bold',
   });
   label.anchor.set(0, 0.5);
 

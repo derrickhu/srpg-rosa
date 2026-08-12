@@ -4,6 +4,7 @@ import { gridSize, inBounds } from '@/battle/grid';
 import { enemyBaseStats } from '@/data/enemyCatalog';
 import type { StageEnemySpawn } from '@/data/stagesMvp';
 import { canProfessionEquipSkill, defaultSkillId, skillDefForId } from '@/data/skillCatalog';
+import { resolveEnemyBattleSkill } from '@/data/enemySkillCatalog';
 import { characterEffectiveStats } from '@/game/characterFactory';
 import type { Character } from '@/game/characterTypes';
 import {
@@ -158,7 +159,11 @@ export function cycleSkillForRoster(state: MvpGameState, rosterId: string): void
 export function enemySpawnToUnitState(e: StageEnemySpawn, scale: number): UnitState {
   const b = { ...enemyBaseStats(e.defId), ...e.stats };
   const maxHp = Math.round(b.maxHp * scale);
-  const bossSkill = e.skillId ? skillDefForId(e.skillId) : undefined;
+  // 敌方技能只来自蓝图显式配置；没有就是纯普攻。不再回退兵种默认技。
+  const battleSkill = resolveEnemyBattleSkill({
+    skillSkin: e.skillSkin,
+    skillId: e.skillId,
+  });
   return {
     uid: e.uid,
     defId: e.defId,
@@ -167,9 +172,7 @@ export function enemySpawnToUnitState(e: StageEnemySpawn, scale: number): UnitSt
     pos: { x: e.x, y: e.y },
     skillCd: 0,
     movedInTurn: false,
-    battleSkill: bossSkill
-      ? { id: bossSkill.id, name: bossSkill.name, cooldown: bossSkill.cooldown, kind: bossSkill.kind }
-      : undefined,
+    battleSkill,
     displayName: e.name,
     boss: e.boss,
     animSet: e.animSet,

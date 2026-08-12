@@ -14,7 +14,8 @@
     "images/anim"
   ],
   "bundledDirs": [
-    "images/ui"
+    "images/ui",
+    "fonts"
   ],
   "ignoreFiles": [
     ".DS_Store",

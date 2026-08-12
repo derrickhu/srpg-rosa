@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import { makeText } from '@/theme/typography';
 import { DUNGEON_DEFS, getDungeonDef, type DungeonDef } from '@/data/dungeonCatalog';
 import {
   dungeonClearSoul,
@@ -152,8 +153,8 @@ export function createAdventureView(
     c.addChild(border);
 
     // 章节标题绶带
-    const title = new PIXI.Text(`第 ${chapter + 1} 章 · ${d.name}`, {
-      fill: C.paper, fontSize: 19, fontWeight: 'bold',
+    const title = makeText(`第 ${chapter + 1} 章 · ${d.name}`, 'title', {
+      fill: C.paper, fontSize: 19,
     });
     title.anchor.set(0.5);
     const ribbonW = title.width + (cleared ? 76 : 48);
@@ -190,7 +191,7 @@ export function createAdventureView(
         token.y = cardY + cardH * 0.52;
         c.addChild(token);
       });
-      const desc = new PIXI.Text(d.desc, {
+      const desc = makeText(d.desc, 'body', {
         fill: C.paper, fontSize: 13,
         wordWrap: true, wordWrapWidth: cardW - 48, align: 'center',
       });
@@ -200,7 +201,7 @@ export function createAdventureView(
       c.addChild(desc);
 
       // 奖励行带上魂晶图标：顶栏 pill 和这里用同一个符号，玩家才能把图标和「魂晶」对上号
-      const reward = new PIXI.Text(`通关奖励 +${d.metaReward}`, { fill: C.soulText, fontSize: 12 });
+      const reward = makeText(`通关奖励 +${d.metaReward}`, 'body', { fill: C.soulText });
       const RI = 16;
       const rewardW = RI + 4 + reward.width;
       const rewardY = cardY + cardH * 0.66 + desc.height + 8;
@@ -228,7 +229,7 @@ export function createAdventureView(
       } else if (d.unlock.kind === 'meta') {
         condStr = `魂晶 ${d.unlock.cost} 解锁`;
       }
-      const cond = new PIXI.Text(condStr, { fill: 0xd8d0e8, fontSize: 14 });
+      const cond = makeText(condStr, 'ui', { fill: 0xd8d0e8 });
       cond.anchor.set(0.5);
       cond.x = W / 2;
       cond.y = cardY + cardH * 0.6;
@@ -323,9 +324,8 @@ export function createAdventureView(
     const note = freshNodes > 0
       ? `本章还有 ${freshNodes} 个节点未首通 · 通关再得魂晶 ${clearSoul}`
       : `已全部首通，重复通关仅得魂晶 ${clearSoul}`;
-    const noteTx = new PIXI.Text(note, {
+    const noteTx = makeText(note, 'caption', {
       fill: freshNodes > 0 ? 0xffe8a8 : 0xc8c8bb,
-      fontSize: 11,
       stroke: 0x000000,
       strokeThickness: 3,
     });

@@ -134,15 +134,34 @@ describe('纯人工回合', () => {
     expect(posOf(sim, 'p1')).toEqual(after);
   });
 
-  it('出手之后不能再移动，也不能再撤销', () => {
+  it('先出手后仍可移动；走过再出手则不能撤销', () => {
     const sim = setupAdjacent();
     stepUntilPending(sim);
     sim.commandAttack('p1', 'e1');
-    const p = sim.pending();
-    // 技能还在手上，回合不会自动结束
-    expect(p).not.toBeNull();
-    expect(p?.canMove).toBe(false);
-    expect(p?.canUndoMove).toBe(false);
+    const afterAtk = sim.pending();
+    // 技能还在手上，且还没走——应能继续移动（与 AI 先技能再走位一致）
+    expect(afterAtk).not.toBeNull();
+    expect(afterAtk?.canMove).toBe(true);
+    expect(afterAtk?.canUndoMove).toBe(false);
+
+    const dest = sim.legalMoveCells('p1')[0];
+    expect(dest).toBeTruthy();
+    sim.commandMove('p1', dest!);
+    // 出手在前、移动在后：撤销会改写已结算的站位关系，不允许
+    // （若技能/普攻也用尽，回合可能已收尾，此时同样不可撤销）
+    expect(sim.pending()?.canUndoMove ?? false).toBe(false);
+  });
+
+  it('先放技能再移动合法', () => {
+    const sim = setupAdjacent();
+    stepUntilPending(sim);
+    const skillEvents = sim.commandSkill('p1');
+    expect(skillEvents.events.some((e) => e.type === 'skillCast')).toBe(true);
+    expect(sim.pending()?.canMove).toBe(true);
+    const dest = sim.legalMoveCells('p1')[0];
+    expect(dest).toBeTruthy();
+    const moved = sim.commandMove('p1', dest!);
+    expect(moved.events.some((e) => e.type === 'moveStep')).toBe(true);
   });
 
   it('普攻只能打射程内的目标', () => {
@@ -165,11 +184,16 @@ describe('纯人工回合', () => {
     expect(atkEvents.events.some((e) => e.type === 'attack')).toBe(true);
   });
 
-  it('两个动作都用完后自动结束该单位回合', () => {
+  it('移动+技能+普攻都用完后自动结束该单位回合', () => {
     const sim = setupAdjacent();
     stepUntilPending(sim);
     sim.commandSkill('p1');
     if (!sim.isDone()) sim.commandAttack('p1', 'e1');
+    // 出手完若还没走，应留下移动额度，不能直接收尾
+    expect(sim.pending()?.canMove).toBe(true);
+    const dest = sim.legalMoveCells('p1')[0];
+    if (dest) sim.commandMove('p1', dest);
+    else sim.commandWait('p1');
     expect(sim.pending()).toBeNull();
   });
 
@@ -188,11 +212,12 @@ describe('纯人工回合', () => {
     expect(sim.commandSkill('p1').events).toEqual([]);
   });
 
-  it('AoE 技能不需要选目标，单体技能要', () => {
+  it('AoE 技能选范围格确认，不点名敌人', () => {
     const sim = setupAdjacent();
     stepUntilPending(sim);
-    // 旋风斩是 neighborAoE：打范围内全体，玩家没有目标可挑
+    // 旋风斩是 neighborAoE：打范围内全体，瞄准给的是格子不是敌人 uid
     expect(sim.skillAiming('p1')?.candidates).toEqual([]);
+    expect(sim.skillAiming('p1')?.aimCells.length).toBeGreaterThan(0);
     expect(sim.skillAiming('p1')?.autoTargets).toContain('e1');
   });
 
@@ -268,7 +293,9 @@ function playGreedy(sim: BattleSim, maxIters = 4000): number {
     if (!after) continue;
     if (after.canSkill) {
       const aim = sim.skillAiming(after.uid);
-      sim.commandSkill(after.uid, aim?.candidates[0]);
+      if (aim?.candidates[0]) sim.commandSkill(after.uid, aim.candidates[0]);
+      else if (aim?.aimCells[0]) sim.commandSkill(after.uid, undefined, 'main', aim.aimCells[0]);
+      else sim.commandSkill(after.uid);
       continue;
     }
     if (after.canAttack) {
@@ -342,5 +369,16 @@ describe('自动模式与跳过', () => {
     expect(starts.length).toBeGreaterThan(0);
     expect(starts.every((e) => e.type === 'turnStart' && ['player', 'enemy'].includes(e.faction)))
       .toBe(true);
+  });
+
+  it('upcomingOrder 跨回合补满，不在本回合末尾缩成一两格', () => {
+    const sim = setupFar();
+    stepUntilPending(sim);
+    const cur = sim.pending()!.uid;
+    const preview = sim.upcomingOrder(6, cur);
+    expect(preview[0]).toBe(cur);
+    expect(preview.length).toBe(6);
+    // 两人局里预览必然反复出现双方——说明已经滚到下一回合估序
+    expect(new Set(preview).size).toBe(2);
   });
 });

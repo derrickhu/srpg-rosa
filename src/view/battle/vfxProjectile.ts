@@ -29,6 +29,8 @@ export interface FlyOptions {
    * 贯穿技能靠它让沿线的目标**依次**中招，而不是一起结算——那样穿透就没了。
    */
   waypoints?: { atFraction: number; run: () => void }[];
+  /** 飞到目标点（绕圈开始）时触发；伤害数字挂这里，后面几圈只是让人看清蜜蜂 */
+  onArrive?: () => void;
 }
 
 function projectileSprite(def: TravelDef, sizePx: number): PIXI.Sprite | PIXI.AnimatedSprite | null {
@@ -56,8 +58,8 @@ function projectileSprite(def: TravelDef, sizePx: number): PIXI.Sprite | PIXI.An
 }
 
 /**
- * 从 `from` 飞到 `to`。返回的 promise 在抵达时 resolve，调用方据此把伤害数字、
- * 震屏、命中特效排到抵达之后——这一点是「射中了」和「同时发生」的全部区别。
+ * 从 `from` 飞到 `to`。有 `orbitLaps` 时抵达后再绕目标飞几圈。
+ * 返回的 promise 在整段播完时 resolve；`onArrive` 在刚到目标时触发（伤害挂这里）。
  */
 export function flyProjectile(
   layer: PIXI.Container,
@@ -69,22 +71,31 @@ export function flyProjectile(
 ): ProjectileHandle {
   const dist = Math.hypot(to.x - from.x, to.y - from.y);
   const speedScale = opts.speedScale ?? 1;
-  const durMs = Math.max(60, (dist / def.speedPxPerSec) * 1000) / speedScale;
+  const approachMs = Math.max(80, (dist / def.speedPxPerSec) * 1000) / speedScale;
+  const laps = def.orbitLaps ?? 0;
+  const radius = Math.max(sizePx * 0.42, 22);
+  const orbitMs = laps > 0 ? (Math.max(280, (2 * Math.PI * radius * laps) / Math.max(def.speedPxPerSec * 0.55, 80)) / speedScale) : 0;
+  const totalMs = approachMs + orbitMs;
   const waypoints = [...(opts.waypoints ?? [])].sort((a, b) => a.atFraction - b.atFraction);
 
   const sprite = projectileSprite(def, sizePx);
   if (!sprite) {
-    // 弹体素材缺失（图集/bundle 没就绪）时不要静默变成瞬间命中：仍然等同样的时间，
-    // 节奏保持一致，只是看不见箭
-    return { done: new Promise<void>((res) => setTimeout(res, durMs)) };
+    return {
+      done: new Promise<void>((res) => {
+        setTimeout(() => {
+          opts.onArrive?.();
+          res();
+        }, totalMs);
+      }),
+    };
   }
 
   const aim = Math.atan2(to.y - from.y, to.x - from.x);
-  sprite.rotation = aim;
+  const entryAngle = aim + Math.PI; // 从施法者方向入轨，圈才接得上直线
+  if (!def.noRotate) sprite.rotation = aim;
   sprite.position.set(from.x, from.y);
   layer.addChild(sprite);
 
-  // 拖尾光束：从起点拉到弹体当前位置，边飞边长
   let beam: PIXI.AnimatedSprite | null = null;
   if (def.beamSet) {
     const textures = getAnimTextures(def.beamSet, def.beamSet);
@@ -106,7 +117,24 @@ export function flyProjectile(
       let elapsed = 0;
       let sinceTrail = 0;
       let nextWp = 0;
+      let arrived = false;
       const nativeW = (beam?.textures[0] as PIXI.Texture | undefined)?.width ?? 1;
+
+      const finish = (): void => {
+        PIXI.Ticker.shared.remove(tick);
+        if (!arrived) {
+          arrived = true;
+          opts.onArrive?.();
+        }
+        for (; nextWp < waypoints.length; nextWp++) waypoints[nextWp]!.run();
+        layer.removeChild(sprite);
+        sprite.destroy();
+        if (beam && !beam.destroyed) {
+          layer.removeChild(beam);
+          beam.destroy();
+        }
+        resolve();
+      };
 
       const tick = (): void => {
         if (sprite.destroyed || layer.destroyed) {
@@ -115,15 +143,42 @@ export function flyProjectile(
           return;
         }
         elapsed += PIXI.Ticker.shared.deltaMS;
-        const k = Math.min(1, elapsed / durMs);
-        const x = from.x + (to.x - from.x) * k;
-        const y = from.y + (to.y - from.y) * k;
+        const inApproach = elapsed <= approachMs;
+        let x: number;
+        let y: number;
+        let heading = aim;
+
+        if (inApproach || laps <= 0) {
+          const k = Math.min(1, elapsed / approachMs);
+          const entryX = to.x + Math.cos(entryAngle) * radius;
+          const entryY = to.y + Math.sin(entryAngle) * radius;
+          const destX = laps > 0 ? entryX : to.x;
+          const destY = laps > 0 ? entryY : to.y;
+          x = from.x + (destX - from.x) * k;
+          y = from.y + (destY - from.y) * k;
+          heading = Math.atan2(destY - from.y, destX - from.x);
+          if (k >= 1 && !arrived) {
+            arrived = true;
+            opts.onArrive?.();
+          }
+        } else {
+          const t = Math.min(1, (elapsed - approachMs) / Math.max(orbitMs, 1));
+          const ang = entryAngle + t * laps * Math.PI * 2;
+          const rad = radius * (1 - 0.18 * t);
+          x = to.x + Math.cos(ang) * rad;
+          y = to.y + Math.sin(ang) * rad;
+          heading = ang + Math.PI / 2;
+          sprite.alpha = t < 0.72 ? 1 : 1 - (t - 0.72) / 0.28;
+        }
+
         sprite.position.set(x, y);
+        if (laps > 0 || !def.noRotate) sprite.rotation = heading;
         if (beam && !beam.destroyed) {
           beam.scale.set((Math.hypot(x - from.x, y - from.y) || 1) / nativeW, sizePx / nativeW);
         }
 
-        while (nextWp < waypoints.length && k >= waypoints[nextWp]!.atFraction) {
+        const pathK = Math.min(1, elapsed / Math.max(approachMs, 1));
+        while (nextWp < waypoints.length && pathK >= waypoints[nextWp]!.atFraction) {
           waypoints[nextWp]!.run();
           nextWp++;
         }
@@ -132,23 +187,11 @@ export function flyProjectile(
           sinceTrail += PIXI.Ticker.shared.deltaMS;
           if (sinceTrail >= TRAIL_EMIT_MS) {
             sinceTrail = 0;
-            emitSparks(layer, x, y, def.trail, aim + Math.PI);
+            emitSparks(layer, x, y, def.trail, heading + Math.PI);
           }
         }
 
-        if (k >= 1) {
-          PIXI.Ticker.shared.remove(tick);
-          // 剩下的 waypoint 一定要补掉，否则贴脸命中（durMs 只有一两帧）时
-          // 沿线的目标会一个都不结算
-          for (; nextWp < waypoints.length; nextWp++) waypoints[nextWp]!.run();
-          layer.removeChild(sprite);
-          sprite.destroy();
-          if (beam && !beam.destroyed) {
-            layer.removeChild(beam);
-            beam.destroy();
-          }
-          resolve();
-        }
+        if (elapsed >= totalMs) finish();
       };
       PIXI.Ticker.shared.add(tick);
     }),

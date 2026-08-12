@@ -138,20 +138,18 @@ const SETS = [
     downscale: 1,
     runs: [{ dir: 'mobs/idle', preset: 'single', label }],
   })),
-  // 狂暴战吼（savage_roar）冲击波：BattlePlaybackView 的 SKILL_FX_ANIM 按 skillId 取用
-  {
-    id: 'roar',
-    vfx: true,
-    blend: 'add',
-    downscale: 1,
-    runs: [{ dir: 'roar', preset: 'vfx', as: 'roar', frames: 9, fps: 20 }],
-  },
-  // 四职业普攻 + 默认技能特效，取用见 src/data/vfxCatalog.ts。
+  // 黑底 additive 技能/命中特效，取用见 src/data/vfxCatalog.ts。
   //
   // 帧数与 fps 是两档标准，理由在 docs/特效圣经.md：
   //   命中类 6 帧 @24fps = 250ms —— 跟着伤害数字出现，长了就拖节奏；
   //   技能类 9 帧 @20fps = 450ms —— 要读成一个独立事件，短了会被当成普攻。
+  //
+  // `roar`：底层 savage_roar 的通用橙金冲击波（保留给未换皮的结算 id）。
+  // `bloodfang_roar`：第一章 Boss 皮肤「血牙咆哮」——血红犬齿环，必须和 roar 形态可区分。
+  // `temp_gl_*`：第一章草原临时技能专属特效（缠足/敷治/蜂群/号角），形态互不撞车。
   ...[
+    { id: 'roar', frames: 9, fps: 20 },
+    { id: 'bloodfang_roar', frames: 9, fps: 20 },
     { id: 'whirl', frames: 9, fps: 20 },
     { id: 'quake', frames: 9, fps: 20 },
     { id: 'pierce', frames: 9, fps: 20 },
@@ -159,6 +157,10 @@ const SETS = [
     { id: 'thrust', frames: 6, fps: 24 },
     { id: 'bash_hit', frames: 6, fps: 24 },
     { id: 'charge_aura', frames: 6, fps: 24 },
+    { id: 'temp_gl_snare', frames: 9, fps: 20 },
+    { id: 'temp_gl_salve', frames: 9, fps: 20 },
+    { id: 'temp_gl_swarm', frames: 9, fps: 20 },
+    { id: 'temp_gl_horn', frames: 9, fps: 20 },
   ].map(({ id, frames, fps }) => ({
     id,
     vfx: true,

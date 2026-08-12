@@ -16,6 +16,16 @@ export interface SkillDef {
   /** 释放后冷却：每回合开始 -1，至 0 可再放 */
   cooldown: number;
   kind: SkillKind;
+  /**
+   * 展示用图标 key（敌方技能皮肤会覆写）。缺省按 `skill_${id}` 取。
+   * 结算不读这个字段——伤害形状只认 `id` → SkillSpec。
+   */
+  iconKey?: string;
+  /**
+   * `SKILL_VFX` 查找键（敌方技能皮肤会覆写）。缺省 = `id`。
+   * 同样只影响表现，不影响结算。
+   */
+  vfxId?: string;
 }
 
 /** 兵种 / 人物「基础」面板（精华等只应加成此项） */
@@ -194,6 +204,11 @@ export type BattleEvent =
   | { type: 'dot'; uid: string; damage: number; hpLeft: number; source: 'poison' | 'terrain' }
   /** 治疗（药剂、吸血等）：单个目标回复 */
   | { type: 'heal'; target: string; amount: number; hpLeft: number }
+  /**
+   * 限时增益/减益刚挂上时的飘字（药剂攻、迟缓等）。
+   * 只改 `timedBattleEffects` 不发事件的话，玩家会以为药没用。
+   */
+  | { type: 'statusNote'; target: string; text: string; tone: 'buff' | 'debuff' }
   /** 玩家在战斗中使用药剂（回放显示用） */
   | { type: 'potion'; potionId: string; name: string }
   | { type: 'end'; winner: Faction };

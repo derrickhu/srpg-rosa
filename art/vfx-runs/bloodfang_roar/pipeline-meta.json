@@ -1,0 +1,65 @@
+{
+  "source": "scripts/vfx-sheet.py",
+  "input": ".tmp-gen/bloodfang_roar_raw.png",
+  "target": "vfx",
+  "mode": "vfx_sheet",
+  "rows": 3,
+  "cols": 3,
+  "cell_size": 256,
+  "threshold": 22,
+  "frame_labels": [
+    "bloodfang_roar-1",
+    "bloodfang_roar-2",
+    "bloodfang_roar-3",
+    "bloodfang_roar-4",
+    "bloodfang_roar-5",
+    "bloodfang_roar-6",
+    "bloodfang_roar-7",
+    "bloodfang_roar-8",
+    "bloodfang_roar-9"
+  ],
+  "shared_crop_side": 341,
+  "crop_offsets": [
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "empty_frames": [],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}

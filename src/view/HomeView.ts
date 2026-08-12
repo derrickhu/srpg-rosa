@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import { makeText } from '@/theme/typography';
 import { createBackground } from '@/view/renderHelpers';
 import { AssetManager } from '@/core/AssetManager';
 import { makeButton } from '@/ui/Button';
@@ -33,10 +34,9 @@ export function createHomeView(
     logo.y = H * 0.33;
     root.addChild(logo);
   } else {
-    const fallbackTitle = new PIXI.Text('无尽纹章', {
+    const fallbackTitle = makeText('无尽纹章', 'display', {
       fill: C.primary,
       fontSize: 32,
-      fontWeight: 'bold',
       stroke: C.ink,
       strokeThickness: 4,
     });

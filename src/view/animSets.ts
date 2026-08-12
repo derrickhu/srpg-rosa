@@ -11,6 +11,7 @@ import sporecapManifest from '@/data/anim/sporecap.json';
 import bloodwolfManifest from '@/data/anim/bloodwolf.json';
 import rockshellManifest from '@/data/anim/rockshell.json';
 import roarManifest from '@/data/anim/roar.json';
+import bloodfangRoarManifest from '@/data/anim/bloodfang_roar.json';
 import whirlManifest from '@/data/anim/whirl.json';
 import quakeManifest from '@/data/anim/quake.json';
 import pierceManifest from '@/data/anim/pierce.json';
@@ -18,6 +19,10 @@ import arrowHitManifest from '@/data/anim/arrow_hit.json';
 import thrustManifest from '@/data/anim/thrust.json';
 import bashHitManifest from '@/data/anim/bash_hit.json';
 import chargeAuraManifest from '@/data/anim/charge_aura.json';
+import tempGlSnareManifest from '@/data/anim/temp_gl_snare.json';
+import tempGlSalveManifest from '@/data/anim/temp_gl_salve.json';
+import tempGlSwarmManifest from '@/data/anim/temp_gl_swarm.json';
+import tempGlHornManifest from '@/data/anim/temp_gl_horn.json';
 
 /**
  * 「图集 + 动画清单」，每个集合一张图集 PNG（images/anim/<id>.png）+ TexturePacker-Hash
@@ -91,10 +96,15 @@ const MANIFESTS: Record<string, AnimManifest> = {
   bloodwolf: bloodwolfManifest as AnimManifest,
   rockshell: rockshellManifest as AnimManifest,
   roar: roarManifest as AnimManifest,
+  bloodfang_roar: bloodfangRoarManifest as AnimManifest,
   // 四职业普攻 + 默认技能特效，全部黑底 additive。取用见 src/data/vfxCatalog.ts
   whirl: whirlManifest as AnimManifest,
   quake: quakeManifest as AnimManifest,
   pierce: pierceManifest as AnimManifest,
+  temp_gl_snare: tempGlSnareManifest as AnimManifest,
+  temp_gl_salve: tempGlSalveManifest as AnimManifest,
+  temp_gl_swarm: tempGlSwarmManifest as AnimManifest,
+  temp_gl_horn: tempGlHornManifest as AnimManifest,
   arrow_hit: arrowHitManifest as AnimManifest,
   thrust: thrustManifest as AnimManifest,
   bash_hit: bashHitManifest as AnimManifest,

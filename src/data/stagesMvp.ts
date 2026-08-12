@@ -21,7 +21,16 @@ export interface StageEnemySpawn {
   boss?: boolean;
   /** 数值覆盖 */
   stats?: StageEnemyStatOverride;
-  /** 敌方专属技能 id（缺省用兵种默认技能） */
+  /**
+   * 敌方技能皮肤 id（见 `enemySkillCatalog`）。
+   * 结算复用底层 SkillSpec，名字/图标/特效按怪种覆写。
+   * 与 `skillId` 二选一；都缺省 = **无技能，只普攻**（第一章小怪的常态）。
+   */
+  skillSkin?: string;
+  /**
+   * 直接挂底层 SkillSpec id（无皮肤时的临时写法）。
+   * 新内容优先用 `skillSkin`；这个字段留给还没做皮肤的过渡怪。
+   */
   skillId?: string;
   /** 专属动画集 id（缺省用 defId），见 src/view/animSets.ts */
   animSet?: string;
@@ -185,14 +194,22 @@ const s6: StageDefMvp = {
       // 沿用 Boss 的血牙兽人外观：他是酋长的部下，也让玩家提前认脸。
       // 杂兵是野生魔物、精英与 Boss 是血牙部族，这一层区分本身就是「这个不好惹」的信号。
       animSet: 'bloodfang',
-      stats: { maxHp: 170, atk: 21, spd: 6 },
+      // 第一章小怪/精英只普攻后，原先靠 whirl/charge/pierce 撑起的压力改由面板补回。
+      stats: { maxHp: 188, atk: 23, spd: 6 },
     },
-    rookie('bow', 2, 1),
-    rookie('cavalry', 7, 3),
+    {
+      ...rookie('bow', 2, 1),
+      stats: { maxHp: 55, atk: 20 },
+    },
+    {
+      ...rookie('cavalry', 7, 3),
+      // 失去冲锋被动（×1.35）后，用更高基础攻与血量保住侧袭威胁
+      stats: { maxHp: 85, atk: 20 },
+    },
   ],
 };
 
-/** 关 7：Boss 血牙酋长踞守祭坛高台（狂暴战吼 AoE+自强化），盾卫堵台下，弓手依墙 */
+/** 关 7：Boss 血牙酋长踞守祭坛高台（血牙咆哮 = savage_roar AoE+自强化），盾卫堵台下，弓手依墙 */
 const s7: StageDefMvp = {
   id: 7,
   name: '第 7 关 · 血牙酋长',
@@ -209,11 +226,18 @@ const s7: StageDefMvp = {
       name: '血牙酋长',
       boss: true,
       animSet: 'bloodfang',
-      stats: { maxHp: 260, atk: 20, spd: 6 },
-      skillId: 'savage_roar',
+      // 护卫去掉 bash/pierce 后 Boss 战变软；略抬本体与护卫面板，保住「备药仍有压力」
+      stats: { maxHp: 268, atk: 20, spd: 6 },
+      skillSkin: 'bloodfang_roar',
     },
-    rookie('shield', 4, 4),
-    rookie('bow', 2, 2),
+    {
+      ...rookie('shield', 4, 4),
+      stats: { maxHp: 128, atk: 10 },
+    },
+    {
+      ...rookie('bow', 2, 2),
+      stats: { maxHp: 52, atk: 19 },
+    },
   ],
   isBoss: true,
   maxDeploy: 4,

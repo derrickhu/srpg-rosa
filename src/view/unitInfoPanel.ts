@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import { makeText, textStyle } from '@/theme/typography';
 import type { SkillSpec } from '@/data/skillCatalog';
 import { describeSkillSpec } from '@/data/skillText';
 import { getSkillMod, type SkillModRarity } from '@/data/skillModCatalog';
@@ -53,9 +54,9 @@ export interface UnitInfoModel {
   statuses?: string[];
 }
 
-const LABEL_STYLE = { fill: 0xaaa088, fontSize: 11 } as const;
-const VALUE_STYLE = { fill: 0x3a3a2a, fontSize: 12, fontWeight: 'bold' as const };
-const SECTION_STYLE = { fill: 0x6b4c2a, fontSize: 13, fontWeight: 'bold' as const };
+const LABEL_STYLE = textStyle('caption', { fill: 0xaaa088 });
+const VALUE_STYLE = textStyle('uiStrong', { fill: 0x3a3a2a, fontSize: 12 });
+const SECTION_STYLE = textStyle('uiStrong', { fill: 0x6b4c2a, fontSize: 13 });
 const LINE_H = 20;
 
 /** 词条稀有度 → 米色面板上的字色（三选一卡是深底，那套色直接搬过来会发飘） */
@@ -84,7 +85,7 @@ function buildRunModList(
   for (const id of modIds) counted.set(id, (counted.get(id) ?? 0) + 1);
 
   const box = new PIXI.Container();
-  const title = new PIXI.Text('本局加成', { fill: 0x6b4c2a, fontSize: 10, fontWeight: 'bold' });
+  const title = makeText('本局加成', 'caption', { fill: 0x6b4c2a, fontSize: 10, fontWeight: 'bold' });
   box.addChild(title);
   let y = title.height + 4;
 
@@ -105,7 +106,7 @@ function buildRunModList(
     }
     const textX = icon ? 18 : 0;
 
-    const name = new PIXI.Text(n > 1 ? `${mod.name}×${n}` : mod.name, {
+    const name = makeText(n > 1 ? `${mod.name}×${n}` : mod.name, 'caption', {
       fill: live ? MOD_TEXT_COLOR[mod.rarity] : 0x8a8a7a,
       fontSize: 10,
       fontWeight: 'bold',
@@ -113,9 +114,8 @@ function buildRunModList(
     name.x = textX;
     row.addChild(name);
 
-    const desc = new PIXI.Text(live ? mod.describe(n) : '当前技能用不到，换回可用技能即恢复', {
+    const desc = makeText(live ? mod.describe(n) : '当前技能用不到，换回可用技能即恢复', 'micro', {
       fill: 0x7a7a6a,
-      fontSize: 9,
       lineHeight: 12,
       wordWrap: true,
       wordWrapWidth: Math.max(60, width - textX),
@@ -168,6 +168,9 @@ function buildRangeRow(
     gridR = shape.manhattan + 1;
     const pickLabel = shape.pick === 'lowestHp' ? '血量最低' : '血量最高';
     rangeDesc = `周围${shape.manhattan}格范围\n选中${pickLabel}的友方`;
+  } else if (shape.type === 'selfCast') {
+    gridR = 1;
+    rangeDesc = '对自己释放\n无需选择目标';
   } else if (isLine) {
     gridR = 3;
     rangeDesc = '上下左右四方向\n射线穿透所有敌人';
@@ -233,7 +236,7 @@ function buildRangeRow(
 
   // 射线技能在四个边缘画箭头，表示延伸
   if (isLine) {
-    const arrowStyle = { fill: 0xdd6633, fontSize: 8 };
+    const arrowStyle = textStyle('micro', { fill: 0xdd6633, fontSize: 8 });
     const arrowOffsets: [number, number, string][] = [
       [gridR * st2 + cs / 2, -6, '▲'],
       [gridR * st2 + cs / 2, gridD * st2 - gap + 1, '▼'],
@@ -265,7 +268,7 @@ function buildRangeRow(
   // 反过来把词条压到下面是不行的：右列只剩说明文字下面那几像素，
   // 一条「技能伤害提升 50%」就要折三行。
   const descBelow = modsBlock !== null;
-  const rangeDescTx = new PIXI.Text(descBelow ? rangeDesc.replace(/\n/g, ' · ') : rangeDesc, {
+  const rangeDescTx = makeText(descBelow ? rangeDesc.replace(/\n/g, ' · ') : rangeDesc, 'caption', {
     fill: 0x6a6a5a, fontSize: 10, lineHeight: 15,
     wordWrap: true, wordWrapWidth: descBelow ? panelW - 32 : colW,
   });
@@ -300,7 +303,7 @@ function buildRangeRow(
   legCenterDot.x = legendX;
   legCenterDot.y = legendY;
   row.addChild(legCenterDot);
-  const legCenterTx = new PIXI.Text('自身', { fill: 0x888877, fontSize: 9 });
+  const legCenterTx = makeText('自身', 'micro', { fill: 0x888877 });
   legCenterTx.x = legendX + 12;
   legCenterTx.y = legendY - 1;
   row.addChild(legCenterTx);
@@ -312,7 +315,7 @@ function buildRangeRow(
   legHitDot.x = legCenterTx.x + legCenterTx.width + 10;
   legHitDot.y = legendY;
   row.addChild(legHitDot);
-  const legHitTx = new PIXI.Text('范围', { fill: 0x888877, fontSize: 9 });
+  const legHitTx = makeText('范围', 'micro', { fill: 0x888877 });
   legHitTx.x = legHitDot.x + 12;
   legHitTx.y = legendY - 1;
   row.addChild(legHitTx);
@@ -379,12 +382,12 @@ export function createUnitInfoPanel(model: UnitInfoModel, panelW: number): UnitI
   portrait.y = cy + 24;
   panel.addChild(portrait);
 
-  const nameTx = new PIXI.Text(model.name, { fill: 0x3a3a2a, fontSize: 16, fontWeight: 'bold' });
+  const nameTx = makeText(model.name, 'title', { fill: 0x3a3a2a, fontSize: 16 });
   nameTx.x = 62;
   nameTx.y = cy + 6;
   panel.addChild(nameTx);
 
-  const subTx = new PIXI.Text(model.subtitle, { fill: 0x8a7a5a, fontSize: 12 });
+  const subTx = makeText(model.subtitle, 'body', { fill: 0x8a7a5a });
   subTx.x = 62;
   subTx.y = cy + 28;
   panel.addChild(subTx);
@@ -410,7 +413,7 @@ export function createUnitInfoPanel(model: UnitInfoModel, panelW: number): UnitI
     secSt.y = cy;
     panel.addChild(secSt);
     cy += LINE_H + 2;
-    const tx = new PIXI.Text(model.statuses.join('\n'), {
+    const tx = makeText(model.statuses.join('\n'), 'caption', {
       fill: 0x555544, fontSize: 10, lineHeight: 16,
       wordWrap: true, wordWrapWidth: panelW - 32,
     });
@@ -450,21 +453,21 @@ export function createUnitInfoPanel(model: UnitInfoModel, panelW: number): UnitI
     }
     const nameX = icon ? 42 : 16;
 
-    const skName = new PIXI.Text(sk.name, { fill: sk.nameColor, fontSize: 13, fontWeight: 'bold' });
+    const skName = makeText(sk.name, 'uiStrong', { fill: sk.nameColor, fontSize: 13 });
     skName.x = nameX;
     skName.y = cy;
     panel.addChild(skName);
 
     const cdText = `CD: ${sk.spec.cooldown}回合${sk.cooldownNote ?? ''}`;
-    const cdTx = new PIXI.Text(cdText, {
-      fill: sk.spec.cooldown < sk.baseSpec.cooldown ? 0x3a8a5a : 0x888888, fontSize: 11,
+    const cdTx = makeText(cdText, 'caption', {
+      fill: sk.spec.cooldown < sk.baseSpec.cooldown ? 0x3a8a5a : 0x888888,
     });
     cdTx.x = nameX + skName.width + 10;
     cdTx.y = cy + 2;
     panel.addChild(cdTx);
     cy += LINE_H;
 
-    const descTx = new PIXI.Text([...describeSkillSpec(sk.spec), ...(sk.extraDesc ?? [])].join('\n'), {
+    const descTx = makeText([...describeSkillSpec(sk.spec), ...(sk.extraDesc ?? [])].join('\n'), 'body', {
       fill: 0x555544, fontSize: 10, lineHeight: 16,
       wordWrap: true, wordWrapWidth: panelW - 32,
     });

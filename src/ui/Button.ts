@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import { textStyle } from '@/theme/typography';
 import { C, shade } from '@/view/mvpTheme';
 
 /**
@@ -98,7 +99,8 @@ export function makeButton(
   face.endFill();
   c.addChild(face);
 
-  const tx = new PIXI.Text(label, { fill: textColor, fontSize, fontWeight: 'bold' });
+  // 按钮文案用展示字体，和正文系统字拉开层级
+  const tx = new PIXI.Text(label, textStyle('title', { fill: textColor, fontSize }));
   tx.anchor.set(0.5);
   tx.x = w / 2;
   tx.y = (h - LIP) / 2;

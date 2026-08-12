@@ -27,11 +27,12 @@ export const UNIT_BUNDLE: AssetBundleDef = {
     bow: 'images/units/bow.png',
     cavalry: 'images/units/cavalry.png',
     shield: 'images/units/shield.png',
-    // 第一章杂兵的专属外观，key = spawn 的 animSet（见 src/data/stagesMvp.ts）
+    // 第一章杂兵 / 精英·Boss 专属外观，key = spawn 的 animSet（见 src/data/stagesMvp.ts）
     slime: 'images/units/slime.png',
     sporecap: 'images/units/sporecap.png',
     bloodwolf: 'images/units/bloodwolf.png',
     rockshell: 'images/units/rockshell.png',
+    bloodfang: 'images/units/bloodfang.png',
   },
 };
 
@@ -98,11 +99,17 @@ export const UI_BUNDLE: AssetBundleDef = {
     skill_temp_gl_salve: 'images/ui/skill_temp_gl_salve.png',
     skill_temp_gl_swarm: 'images/ui/skill_temp_gl_swarm.png',
     skill_temp_gl_horn: 'images/ui/skill_temp_gl_horn.png',
+    // 敌方技能皮肤图标（键名见 enemySkillCatalog.iconKey，不进玩家商店池）
+    skill_bloodfang_roar: 'images/ui/skill_bloodfang_roar.png',
     // 战斗操作条的动作图标。压在深色圆按钮上，所以这批是**浅色填充**，
     // 和压在米白卡上的那两批（mod_* / skill_*）配色相反，不要互相借用。
     act_wait: 'images/ui/act_wait.png',
     act_undo: 'images/ui/act_undo.png',
     act_cancel: 'images/ui/act_cancel.png',
+    act_attack: 'images/ui/act_attack.png',
+    // 局内补给点场景：神秘商人 + 木摊（ShopView）
+    shop_merchant: 'images/ui/shop_merchant.png',
+    shop_stall: 'images/ui/shop_stall.png',
   },
 };
 
@@ -113,9 +120,12 @@ export const FX_BUNDLE: AssetBundleDef = {
     arrow: 'images/fx/arrow.png',
     shield_bash: 'images/fx/shield_bash.png',
     whirlwind: 'images/fx/whirlwind.png',
-    // 飞行弹体：抠图 + 普通混合，靠剪影认是什么。发光拖尾/命中另走 additive
+    // 飞行弹体 / 实体道具：抠图 + 普通混合，靠剪影认是什么。发光拖尾/命中另走 additive
     proj_arrow: 'images/fx/proj_arrow.png',
     proj_spear: 'images/fx/proj_spear.png',
+    proj_bees: 'images/fx/proj_bees.png',
+    prop_horn: 'images/fx/prop_horn.png',
+    prop_salve: 'images/fx/prop_salve.png',
   },
 };
 
@@ -123,6 +133,8 @@ export const BG_BUNDLE: AssetBundleDef = {
   name: 'bg',
   assets: {
     battle_bg: 'images/bg/battle_bg.png',
+    // 补给点场景底：平视草地空地（商人正视，不能用俯视 battle_bg）
+    shop_bg: 'images/bg/shop_bg.png',
     // 章节卡插图，key 对应 DungeonDef.art
     chapter_grassland: 'images/bg/chapter_grassland.png',
   },

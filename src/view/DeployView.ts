@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import { makeText } from '@/theme/typography';
 import { playerDeployRowRange } from '@/battle/constants';
 import { gridSize } from '@/battle/grid';
 import type { TerrainId } from '@/battle/types';
@@ -68,7 +69,7 @@ function makeInfoBadge(cell: number, onTap: () => void): PIXI.Container {
   g.lineStyle(1, 0xf0e0c0, 0.85);
   g.drawCircle(0, 0, r);
   c.addChild(g);
-  const tx = new PIXI.Text('i', { fill: 0xf0e0c0, fontSize: 10, fontWeight: 'bold' });
+  const tx = makeText('i', 'caption', { fill: 0xf0e0c0, fontSize: 10, fontWeight: 'bold' });
   tx.anchor.set(0.5);
   c.addChild(tx);
   c.eventMode = 'static';
@@ -225,7 +226,7 @@ export function createDeployView(
 
   // --- 金币（设置按钮下方，带遮罩底板和图标） ---
   const goldIconSize = 22;
-  const goldValueTx = new PIXI.Text(`${run.gold}`, { fill: 0xffffff, fontSize: 14, fontWeight: 'bold' });
+  const goldValueTx = makeText(`${run.gold}`, 'uiStrong', { fill: 0xffffff });
   const goldPadX = 6;
   const goldPadY = 4;
   const goldBgW = goldIconSize + 4 + goldValueTx.width + goldPadX * 2;
@@ -255,7 +256,7 @@ export function createDeployView(
   // --- 副本名（与金币同一行，居中显示）+ 节点进度链 ---
   const dungeon0 = currentDungeon(state);
   const stageText = dungeon0.name;
-  const stageTx = new PIXI.Text(stageText, { fill: 0xffffff, fontSize: 14, fontWeight: 'bold' });
+  const stageTx = makeText(stageText, 'uiStrong', { fill: 0xffffff });
   stageTx.anchor.set(0.5, 0.5);
   const stagePadX = 16;
   const stagePadY = 6;
@@ -276,7 +277,7 @@ export function createDeployView(
   const maxDeployCount = getMaxDeploy(state);
   const baseMaxDeploy = currentStage(state).maxDeploy ?? 3;
   const deployedCount = run.placements.length;
-  const deployInfoTx = new PIXI.Text(`${deployedCount}/${maxDeployCount}`, { fill: 0xffffff, fontSize: 12, fontWeight: 'bold' });
+  const deployInfoTx = makeText(`${deployedCount}/${maxDeployCount}`, 'uiStrong', { fill: 0xffffff, fontSize: 12 });
   const deployInfoPadX = 8;
   const deployInfoPadY = 4;
 
@@ -296,7 +297,7 @@ export function createDeployView(
   deployInfoBg.endFill();
   deployInfoContainer.addChild(deployInfoBg);
 
-  const personIcon = new PIXI.Text('⚔', { fill: 0xffdd88, fontSize: 12 });
+  const personIcon = makeText('⚔', 'ui', { fill: 0xffdd88, fontSize: 12 });
   personIcon.x = deployInfoPadX;
   personIcon.y = (deployInfoH - personIcon.height) / 2;
   deployInfoContainer.addChild(personIcon);
@@ -312,7 +313,7 @@ export function createDeployView(
     adBtnBg.drawRoundedRect(0, 0, adBtnW, deployInfoH - deployInfoPadY, 4);
     adBtnBg.endFill();
     adBtn.addChild(adBtnBg);
-    const adTx = new PIXI.Text('+1', { fill: 0xffffff, fontSize: 10, fontWeight: 'bold' });
+    const adTx = makeText('+1', 'caption', { fill: 0xffffff, fontSize: 10, fontWeight: 'bold' });
     adTx.anchor.set(0.5);
     adTx.x = adBtnW / 2;
     adTx.y = (deployInfoH - deployInfoPadY) / 2;
@@ -376,7 +377,7 @@ export function createDeployView(
     bg.endFill();
     panel.addChild(bg);
 
-    const titleTx = new PIXI.Text('设置', { fill: 0x3a3a2a, fontSize: 18, fontWeight: 'bold' });
+    const titleTx = makeText('设置', 'title', { fill: 0x3a3a2a });
     titleTx.anchor.set(0.5, 0);
     titleTx.x = panelW / 2;
     titleTx.y = 16;
@@ -536,7 +537,7 @@ export function createDeployView(
             // 不补一个入口的话，恰恰是**已经决定要带上场**的角色反而查不了词条。
             wrap.addChild(makeInfoBadge(CELL, () => showUnitInfo(characterInfoModel(state, m))));
           } else {
-            const t = new PIXI.Text('?', { fill: 0x5566aa, fontSize: labelFs });
+            const t = makeText('?', 'micro', { fill: 0x5566aa, fontSize: labelFs });
             t.anchor.set(0.5, 1);
             wrap.addChild(t);
           }
@@ -609,7 +610,7 @@ export function createDeployView(
       }
     }
 
-    const t = new PIXI.Text(label, { fill: enabled ? C.text : C.muted, fontSize: 10 });
+    const t = makeText(label, 'caption', { fill: enabled ? C.text : C.muted, fontSize: 10 });
     t.x = textOffsetX;
     t.y = 7;
     c.addChild(t);
@@ -683,12 +684,13 @@ export function createDeployView(
       // 选中某种地形券后，提示语换成它到底干什么。
       // 「河流券×2」这个名字本身讲不出任何效果，玩家买它只能靠猜。
       const pickedBadge = terrainPickId ? terrainBadge(terrainPickId) : null;
-      const terHint = new PIXI.Text(
+      const terHint = makeText(
         terrainPickId
           ? `👆 点击地图上任意空格放置${
             pickedBadge ? `（站上去：${pickedBadge.text}）` : '（不可通行，用来堵路）'
           }`
           : '先选择要放置的地形类型',
+        'caption',
         { fill: 0xffdd88, fontSize: 10 },
       );
       terHint.x = 0;
@@ -757,7 +759,7 @@ export function createDeployView(
     handLayer.addChild(bgBar);
 
     if (bench.length === 0) {
-      const tx = new PIXI.Text('全部角色已上阵', { fill: 0xcccccc, fontSize: 11 });
+      const tx = makeText('全部角色已上阵', 'caption', { fill: 0xcccccc });
       tx.anchor.set(0.5, 0.5);
       tx.x = sw / 2;
       tx.y = slotH / 2;
@@ -789,7 +791,7 @@ export function createDeployView(
       token.y = slotH * 0.38;
       c.addChild(token);
 
-      const nameTx = new PIXI.Text(m.name, {
+      const nameTx = makeText(m.name, 'caption', {
         fill: 0xffffff,
         fontSize: 10,
         fontWeight: 'bold',
@@ -818,7 +820,7 @@ export function createDeployView(
       infoBg.drawCircle(infoSize / 2, infoSize / 2, infoSize / 2);
       infoBg.endFill();
       infoBtn.addChild(infoBg);
-      const infoTx = new PIXI.Text('i', { fill: 0xffffff, fontSize: 10, fontWeight: 'bold' });
+      const infoTx = makeText('i', 'caption', { fill: 0xffffff, fontSize: 10, fontWeight: 'bold' });
       infoTx.anchor.set(0.5);
       infoTx.x = infoSize / 2;
       infoTx.y = infoSize / 2;

@@ -46,6 +46,8 @@ import { createMetaShopView } from '@/view/MetaShopView';
 import { createChallengeView } from '@/view/ChallengeView';
 import { createTabBar, TAB_BAR_HEIGHT, type TabId } from '@/view/TabBar';
 import { C } from '@/view/mvpTheme';
+import { loadGameFonts } from '@/core/FontLoader';
+import { makeText } from '@/theme/typography';
 import { SceneManager } from '@/scene/SceneManager';
 import type { Scene } from '@/scene/Scene';
 import { makeButton } from '@/ui/Button';
@@ -127,7 +129,7 @@ export class GameFlow {
     bg.drawRect(0, 0, this.app.screen.width, this.app.screen.height);
     bg.endFill();
     c.addChild(bg);
-    const t = new PIXI.Text('加载中…', { fill: C.text, fontSize: 18 });
+    const t = makeText('加载中…', 'title', { fill: C.text });
     t.anchor.set(0.5);
     t.x = this.app.screen.width / 2;
     t.y = this.app.screen.height / 2;
@@ -136,7 +138,10 @@ export class GameFlow {
   }
 
   private async loadAssetsAndStart(): Promise<void> {
-    await Promise.all(ALL_BUNDLES.map((b) => AssetManager.loadBundle(b)));
+    await Promise.all([
+      loadGameFonts(),
+      ...ALL_BUNDLES.map((b) => AssetManager.loadBundle(b)),
+    ]);
     // 动画图集走 CDN、约 2MB，不能挡主页。resolveBattle 进战前会等本场要用的那几个。
     loadAnimSets();
     this.renderHome();
@@ -490,7 +495,7 @@ export class GameFlow {
     banner.endFill();
     c.addChild(banner);
 
-    const title = new PIXI.Text('失  败', { fill: 0xffffff, fontSize: 26, fontWeight: 'bold' });
+    const title = makeText('失  败', 'display', { fill: 0xffffff });
     title.anchor.set(0.5);
     title.x = mid;
     title.y = bannerY + bannerH / 2;
@@ -507,7 +512,7 @@ export class GameFlow {
     cardBg.y = cardY;
     c.addChild(cardBg);
 
-    const sub = new PIXI.Text('本节点可重新布阵再试', { fill: C.text, fontSize: 14 });
+    const sub = makeText('本节点可重新布阵再试', 'ui', { fill: C.text });
     sub.x = 36;
     sub.y = cardY + 22;
     c.addChild(sub);
@@ -578,7 +583,7 @@ export class GameFlow {
   private showToast(msg: string): void {
     const current = this.scenes.current;
     if (!current) return;
-    const t = new PIXI.Text(msg, { fill: 0xffcc66, fontSize: 14 });
+    const t = makeText(msg, 'ui', { fill: 0xffcc66 });
     t.x = 16;
     t.y = 24;
     current.root.addChild(t);

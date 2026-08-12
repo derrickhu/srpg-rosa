@@ -1,0 +1,65 @@
+{
+  "source": "scripts/vfx-sheet.py",
+  "input": ".tmp-gen/temp_gl_horn_raw.png",
+  "target": "vfx",
+  "mode": "vfx_sheet",
+  "rows": 3,
+  "cols": 3,
+  "cell_size": 256,
+  "threshold": 22,
+  "frame_labels": [
+    "temp_gl_horn-1",
+    "temp_gl_horn-2",
+    "temp_gl_horn-3",
+    "temp_gl_horn-4",
+    "temp_gl_horn-5",
+    "temp_gl_horn-6",
+    "temp_gl_horn-7",
+    "temp_gl_horn-8",
+    "temp_gl_horn-9"
+  ],
+  "shared_crop_side": 267,
+  "crop_offsets": [
+    {
+      "x": 39,
+      "y": 33
+    },
+    {
+      "x": 35,
+      "y": 33
+    },
+    {
+      "x": 28,
+      "y": 33
+    },
+    {
+      "x": 39,
+      "y": 35
+    },
+    {
+      "x": 33,
+      "y": 32
+    },
+    {
+      "x": 28,
+      "y": 30
+    },
+    {
+      "x": 33,
+      "y": 12
+    },
+    {
+      "x": 25,
+      "y": 8
+    },
+    {
+      "x": 22,
+      "y": 12
+    }
+  ],
+  "empty_frames": [],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}

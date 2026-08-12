@@ -1,6 +1,34 @@
 import type { SkillSpec } from './skillCatalog';
 
 /**
+ * 技能范围/选目标方式的一句话说明。
+ * 与单位信息面板格子图旁的文案同源口径，商店/背包只拿文字、不画格子。
+ */
+export function describeSkillShape(spec: SkillSpec): string {
+  const shape = spec.shape;
+  switch (shape.type) {
+    case 'neighborAoE':
+      return `周围 ${shape.manhattan} 格内所有敌人`;
+    case 'discAoE':
+      return `周围 ${shape.radius} 格全覆盖所有敌人`;
+    case 'neighborPickLowest':
+      return `周围 ${shape.manhattan} 格选血量最低的敌人`;
+    case 'neighborPickFoe': {
+      const pick = shape.pick === 'lowestHp' ? '血量最低' : '血量最高';
+      return `周围 ${shape.manhattan} 格选${pick}的敌人`;
+    }
+    case 'neighborPickAlly': {
+      const pick = shape.pick === 'lowestHp' ? '血量最低' : '血量最高';
+      return `周围 ${shape.manhattan} 格选${pick}的友方`;
+    }
+    case 'lineBestRayAllFoes':
+      return '四方向直线穿透所有敌人';
+    case 'selfCast':
+      return '对自己释放';
+  }
+}
+
+/**
  * 技能效果的中文说明行。
  *
  * 单独抽出来是因为这段以前内联在 `DeployView` 里，只覆盖了 `taunt` / `atkDown` /

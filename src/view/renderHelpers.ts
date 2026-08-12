@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import { makeText } from '@/theme/typography';
 import type { TerrainId } from '@/battle/types';
 import { AssetManager } from '@/core/AssetManager';
 import { getTerrainSpec, terrainColor } from '@/data/terrainSpec';
@@ -102,7 +103,7 @@ export function createTerrainBadge(terrainId: TerrainId, cellSize: number): PIXI
   if (!badge || cellSize < 36) return null;
 
   const c = new PIXI.Container();
-  const tx = new PIXI.Text(badge.text, {
+  const tx = makeText(badge.text, 'micro', {
     fill: badge.color,
     fontSize: Math.max(8, Math.floor(cellSize * 0.19)),
     fontWeight: 'bold',
@@ -183,7 +184,7 @@ export function createCurrencyPill(iconKey: string, text: string): PIXI.Containe
   const ICON = 20;
   const PAD = 8;
 
-  const label = new PIXI.Text(text, { fill: 0xffffff, fontSize: 14, fontWeight: 'bold' });
+  const label = makeText(text, 'uiStrong', { fill: 0xffffff });
   const icon = createUiIcon(iconKey, ICON);
   const iconW = icon ? ICON + 4 : 0;
   const w = PAD * 2 + iconW + label.width;
@@ -250,9 +251,8 @@ export function createUnitToken(
 }
 
 /**
- * Create a full-screen background.
- * Uses the battle_bg texture (top-down forest clearing) if available,
- * otherwise draws a green gradient fallback.
+ * 全屏背景。默认 `battle_bg`（俯视空草地）；补给点传 `shop_bg`（平视草地，
+ * 和正视商人机位对齐）。资源未加载时回退纯色草地。
  */
 export function createBackground(
   screenW: number,

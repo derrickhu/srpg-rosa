@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Godot → Pixi 动画预览</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { margin: 0; background: #1b2230; color: #e6e9ef; font: 14px/1.5 system-ui, sans-serif; }
+    header { padding: 12px 16px; background: #131a26; border-bottom: 1px solid #2a3548; }
+    header h1 { margin: 0; font-size: 16px; }
+    header small { color: #8b97ad; }
+    .wrap { display: flex; gap: 16px; padding: 16px; flex-wrap: wrap; }
+    .stage { background: #0f1520; border: 1px solid #2a3548; border-radius: 10px; }
+    .panel { min-width: 240px; }
+    .group { margin-bottom: 14px; }
+    .group h2 { font-size: 13px; margin: 0 0 6px; color: #9fb0cc; text-transform: uppercase; letter-spacing: .04em; }
+    button { margin: 0 6px 6px 0; padding: 6px 10px; background: #243149; color: #dfe6f2;
+      border: 1px solid #38496b; border-radius: 6px; cursor: pointer; }
+    button:hover { background: #2f4264; }
+    button.active { background: #3a6ea5; border-color: #5a8fd0; }
+    label { display: inline-flex; align-items: center; gap: 6px; margin-right: 12px; }
+    #status { color: #ffcc66; min-height: 18px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Godot SpriteFrames → Pixi 动画预览</h1>
+    <small>数据来自 <code>src/data/anim/*.json</code> + <code>images/anim/*</code>（与游戏同源）。fps→animationSpeed=fps/60。</small>
+  </header>
+  <div class="wrap">
+    <canvas class="stage" id="stage" width="480" height="480"></canvas>
+    <div class="panel">
+      <div id="status">加载中…</div>
+      <div class="group">
+        <h2>阵营</h2>
+        <label><input type="radio" name="faction" value="player" checked /> 玩家</label>
+        <label><input type="radio" name="faction" value="enemy" /> 敌人</label>
+      </div>
+      <div class="group">
+        <h2>单位动画 (sword)</h2>
+        <div id="swordBtns"></div>
+      </div>
+      <div class="group">
+        <h2>特效</h2>
+        <button id="playSlash">播放挥砍 slash</button>
+        <label style="display:block;margin-top:8px"><input type="checkbox" id="autoSlash" /> 每 1.5s 自动挥砍</label>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import * as PIXI from '/node_modules/pixi.js/dist/pixi.min.mjs';
+
+    const statusEl = document.getElementById('status');
+    const setStatus = (m) => { statusEl.textContent = m; };
+
+    async function loadManifest(id) {
+      const res = await fetch(`/src/data/anim/${id}.json`);
+      if (!res.ok) throw new Error(`清单加载失败 ${id}: ${res.status}`);
+      return res.json();
+    }
+
+    async function loadSheet(manifest) {
+      const tex = await PIXI.Assets.load(`/${manifest.image}`);
+      const sheet = new PIXI.Spritesheet(tex.baseTexture, {
+        frames: manifest.frames, meta: manifest.meta,
+      });
+      await sheet.parse();
+      return sheet;
+    }
+
+    function texturesFor(sheet, manifest, name) {
+      return manifest.animations[name].frames.map((k) => sheet.textures[k]);
+    }
+
+    const app = new PIXI.Application({ view: document.getElementById('stage'),
+      width: 480, height: 480, backgroundColor: 0x0f1520, antialias: true });
+
+    try {
+      setStatus('加载图集…');
+      const sword = await loadManifest('sword');
+      const slash = await loadManifest('slash');
+      const swordSheet = await loadSheet(sword);
+      const slashSheet = await loadSheet(slash);
+      setStatus(`就绪。图集 sword ${sword.meta.size.w}x${sword.meta.size.h} / slash ${slash.meta.size.w}x${slash.meta.size.h}。`);
+
+      // 棋盘格背景参考
+      const g = new PIXI.Graphics();
+      g.lineStyle(1, 0x2a3548, 1);
+      for (let i = 0; i <= 480; i += 60) { g.moveTo(i, 0); g.lineTo(i, 480); g.moveTo(0, i); g.lineTo(480, i); }
+      app.stage.addChild(g);
+
+      const idleName = sword.animations.idle ? 'idle' : 'default';
+      const unit = new PIXI.AnimatedSprite(texturesFor(swordSheet, sword, idleName));
+      unit.anchor.set(0.5);
+      const native = unit.textures[0].width || 512;
+      unit.scale.set((180) / native);
+      unit.position.set(240, 250);
+      app.stage.addChild(unit);
+
+      let currentName = idleName;
+      function playUnit(name) {
+        if (!sword.animations[name]) return;
+        currentName = name;
+        const clip = sword.animations[name];
+        unit.textures = texturesFor(swordSheet, sword, name);
+        unit.loop = clip.loop;
+        unit.animationSpeed = (clip.fps || 12) / 60;
+        unit.onComplete = clip.loop ? null : () => playUnit(idleName);
+        unit.gotoAndPlay(0);
+        for (const b of swordBtns.children) b.classList.toggle('active', b.dataset.anim === name);
+      }
+      unit.play();
+
+      // 阵营 tint
+      document.querySelectorAll('input[name=faction]').forEach((r) =>
+        r.addEventListener('change', () => { unit.tint = r.value === 'enemy' && r.checked ? 0xffaaaa : 0xffffff; }));
+
+      const swordBtns = document.getElementById('swordBtns');
+      for (const name of Object.keys(sword.animations)) {
+        const b = document.createElement('button');
+        b.textContent = name;
+        b.dataset.anim = name;
+        b.className = name === currentName ? 'active' : '';
+        b.onclick = () => playUnit(name);
+        swordBtns.appendChild(b);
+      }
+
+      function playSlash() {
+        const clip = slash.animations.slash;
+        const fx = new PIXI.AnimatedSprite(texturesFor(slashSheet, slash, 'slash'));
+        fx.anchor.set(0.5);
+        const n = fx.textures[0].width || 256;
+        fx.scale.set(160 / n);
+        fx.position.set(240, 230);
+        if (slash.blend === 'add') fx.blendMode = PIXI.BLEND_MODES.ADD;
+        fx.loop = false;
+        fx.animationSpeed = (clip.fps || 16) / 60;
+        fx.onComplete = () => { app.stage.removeChild(fx); fx.destroy(); };
+        app.stage.addChild(fx);
+        fx.gotoAndPlay(0);
+      }
+      document.getElementById('playSlash').onclick = playSlash;
+      let autoTimer = null;
+      document.getElementById('autoSlash').onchange = (e) => {
+        if (e.target.checked) autoTimer = setInterval(playSlash, 1500);
+        else { clearInterval(autoTimer); autoTimer = null; }
+      };
+    } catch (err) {
+      setStatus('出错: ' + (err?.message || err));
+      console.error(err);
+    }
+  </script>
+</body>
+</html>

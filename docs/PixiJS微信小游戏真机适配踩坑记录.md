@@ -573,3 +573,19 @@ console.log('platform:', info.platform, 'brand:', info.brand, 'model:', info.mod
 1. **adapter/index.js**：`Object.defineProperty` 安全 patch → 全局变量挂载 → 定时器 polyfill → canvas 只读保护 → 触摸事件桥接
 2. **pixiUnsafeEvalPatch.ts**：`settings.ADAPTER` 配置 → `ShaderSystem` unsafe-eval patch → `Texture.WHITE` fromBuffer 重建 → `BaseImageResource.upload` canvas buffer 覆盖
 3. **Game.ts**：`EventSystem.mapPositionToPoint` 坐标映射修复
+
+## 11. 上传/真机调试报 `Unknown Error Message [object Object]`
+
+开发者工具 **2.02** 系列常把真实失败掩成这句。本仓库曾经只 ignore 了 CDN 图目录，
+结果 `tools/`（~700MB）、`godot/`、`art/`、三份 `wechat-godot*` 都会打进包，上传必炸。
+
+**处理**：`project.config.json` → `packOptions.ignore` 排除所有非运行时目录；主包应只剩
+`game.js` / `minigame/` / `images/ui/` / `fonts/` / `audio/`，合计约 2MB（&lt; 4MB 上限）。
+改完后在开发者工具里重新编译再预览/上传。
+
+## 12. 自定义展示字体（得意黑）
+
+- 只给标题/按钮/技能气泡 load：`wx.loadFont('fonts/SmileySans-subset.ttf')`。正文系统字。
+- **不要用 CFF/OTF**；family 含空格时加双引号（加载器已处理）。
+- 规范：`docs/字体规范.md`。随主包 `fonts/`，勿放 CDN。
+- 控制台应见 `[FontLoader] showcase ready → ...`；没有则展示角色也在用系统字。

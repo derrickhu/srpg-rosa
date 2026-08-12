@@ -180,6 +180,56 @@ function unitSkillSpec(self: UnitState, skillId: string): SkillSpec | undefined 
   return effectiveSkillSpec(base, self.skillMods);
 }
 
+/**
+ * 飘字 / 瞄准预览上的技能名。
+ * 敌方皮肤把展示名写在 `battleSkill.name` 上，结算仍用 `spec.id`；
+ * 这里优先取皮肤名，否则 Boss 放技能时仍会飘出底层的「狂暴战吼」。
+ */
+function skillCastName(self: UnitState, spec: SkillSpec): string {
+  if (self.battleSkill?.id === spec.id && self.battleSkill.name) {
+    return self.battleSkill.name;
+  }
+  return spec.name;
+}
+
+/**
+ * 属性加减的飘字。治疗走 `heal` 事件、中毒走每回合 `dot`，这里只报攻/速/嘲讽。
+ * 漏了的话玩家只看见特效，会以为号角、祝福、削攻「没效果」。
+ */
+function pushAttrNotes(
+  events: BattleEvent[],
+  spec: SkillSpec,
+  who: { self?: UnitState; ally?: UnitState; foes?: readonly UnitState[] },
+): void {
+  if (who.self) {
+    for (const e of spec.onCastSelfEffects ?? []) {
+      if (e.kind === 'atkBonus') {
+        events.push({ type: 'statusNote', target: who.self.uid, text: `攻+${e.addAtk}`, tone: 'buff' });
+      } else if (e.kind === 'taunt') {
+        events.push({ type: 'statusNote', target: who.self.uid, text: '嘲讽', tone: 'buff' });
+      }
+    }
+  }
+  if (who.ally) {
+    for (const e of spec.onCastAllyEffects ?? []) {
+      if (e.kind === 'atkBonus') {
+        events.push({ type: 'statusNote', target: who.ally.uid, text: `攻+${e.addAtk}`, tone: 'buff' });
+      } else if (e.kind === 'spdBonus') {
+        events.push({ type: 'statusNote', target: who.ally.uid, text: `速+${e.addSpd}`, tone: 'buff' });
+      }
+    }
+  }
+  for (const t of who.foes ?? []) {
+    for (const e of spec.onCastFoeEffects ?? []) {
+      if (e.kind === 'atkDown') {
+        events.push({ type: 'statusNote', target: t.uid, text: `攻-${e.subAtk}`, tone: 'debuff' });
+      } else if (e.kind === 'spdDown') {
+        events.push({ type: 'statusNote', target: t.uid, text: `速-${e.subSpd}`, tone: 'debuff' });
+      }
+    }
+  }
+}
+
 function skillHitDamage(
   self: UnitState,
   def: UnitDef,
@@ -246,7 +296,10 @@ function castAreaAoE(
   if (foes.length === 0) return [];
   const hits: SkillHit[] = [];
   for (const t of foes) {
-    hits.push(resolveHit(self, def, spec, t, terrain, defs));
+    // 无伤 AoE（若还有）不要塞 damage:0 的 hit——回放会飘「0」
+    if (spec.damage.kind !== 'none') {
+      hits.push(resolveHit(self, def, spec, t, terrain, defs));
+    }
     applySkillCastFoeEffects(t, spec);
   }
   const events: BattleEvent[] = [
@@ -254,7 +307,7 @@ function castAreaAoE(
       type: 'skillCast',
       uid: self.uid,
       skillId: spec.id,
-      skillName: spec.name,
+      skillName: skillCastName(self, spec),
       kind: spec.displayKind,
       rangeCells:
         area.kind === 'ring'
@@ -264,9 +317,32 @@ function castAreaAoE(
       atkTerrainNote: terrainAttackNote(terrain, self.pos) ?? undefined,
     },
   ];
+  pushAttrNotes(events, spec, { self, foes });
   for (const t of foes) pushDeathIfNeeded(events, t);
   applySkillCastSelfEffects(self, spec);
   pushLifesteal(self, spec, hits, defs, events);
+  return events;
+}
+
+/** 只对自己放的号角 / 自 buff：无需目标，点技能即放 */
+function castSelfCast(
+  self: UnitState,
+  spec: SkillSpec,
+): BattleEvent[] {
+  if (self.hp <= 0) return [];
+  applySkillCastSelfEffects(self, spec);
+  const events: BattleEvent[] = [
+    {
+      type: 'skillCast',
+      uid: self.uid,
+      skillId: spec.id,
+      skillName: skillCastName(self, spec),
+      kind: spec.displayKind,
+      rangeCells: [{ ...self.pos }],
+      hits: [],
+    },
+  ];
+  pushAttrNotes(events, spec, { self });
   return events;
 }
 
@@ -312,7 +388,7 @@ function castNeighborPickLowest(
       type: 'skillCast',
       uid: self.uid,
       skillId: spec.id,
-      skillName: spec.name,
+      skillName: skillCastName(self, spec),
       kind: spec.displayKind,
       rangeCells: cellsAtManhattan(self.pos, dist, terrain),
       hits: [hit],
@@ -322,6 +398,7 @@ function castNeighborPickLowest(
   pushDeathIfNeeded(events, tgt);
   applySkillCastFoeEffects(tgt, spec);
   applySkillCastSelfEffects(self, spec);
+  pushAttrNotes(events, spec, { self, foes: [tgt] });
   pushLifesteal(self, spec, [hit], defs, events);
   return events;
 }
@@ -340,23 +417,28 @@ function castNeighborPickFoe(
   const foes = foesAtManhattan(self, units, dist);
   const tgt = resolveChoice(foes, chosenUid, () => pickFoeInRing(foes, pick));
   if (!tgt) return [];
-  const hit = resolveHit(self, def, spec, tgt, terrain, defs);
+  // 纯 debuff（破甲/缠足）：保留 hit 供回放对准目标，但不走扣血
+  const hits: SkillHit[] =
+    spec.damage.kind === 'none'
+      ? [{ target: tgt.uid, damage: 0, hpLeft: tgt.hp }]
+      : [resolveHit(self, def, spec, tgt, terrain, defs)];
   const events: BattleEvent[] = [
     {
       type: 'skillCast',
       uid: self.uid,
       skillId: spec.id,
-      skillName: spec.name,
+      skillName: skillCastName(self, spec),
       kind: spec.displayKind,
       rangeCells: cellsAtManhattan(self.pos, dist, terrain),
-      hits: [hit],
+      hits,
       atkTerrainNote: terrainAttackNote(terrain, self.pos) ?? undefined,
     },
   ];
   pushDeathIfNeeded(events, tgt);
   applySkillCastFoeEffects(tgt, spec);
   applySkillCastSelfEffects(self, spec);
-  pushLifesteal(self, spec, [hit], defs, events);
+  pushAttrNotes(events, spec, { self, foes: [tgt] });
+  pushLifesteal(self, spec, hits, defs, events);
   return events;
 }
 
@@ -391,15 +473,20 @@ function castNeighborPickAlly(
   const allies = alliesAtManhattanExcludingSelf(self, units, dist);
   const tgt = resolveChoice(allies, chosenUid, () => pickAllyInRing(allies, pick));
   if (!tgt) return [];
+  // 友方治疗/buff：不要 resolveHit，否则无伤也会被当成「打了友军 0 点」
+  const hits: SkillHit[] =
+    spec.damage.kind === 'none'
+      ? [{ target: tgt.uid, damage: 0, hpLeft: tgt.hp }]
+      : [resolveHit(self, def, spec, tgt, terrain, defs)];
   const events: BattleEvent[] = [
     {
       type: 'skillCast',
       uid: self.uid,
       skillId: spec.id,
-      skillName: spec.name,
+      skillName: skillCastName(self, spec),
       kind: spec.displayKind,
       rangeCells: cellsAtManhattan(self.pos, dist, terrain),
-      hits: [resolveHit(self, def, spec, tgt, terrain, defs)],
+      hits,
       atkTerrainNote: terrainAttackNote(terrain, self.pos) ?? undefined,
     },
   ];
@@ -407,16 +494,11 @@ function castNeighborPickAlly(
   applySkillCastAllyEffects(tgt, spec);
   pushAllyHeal(spec, tgt, defs, events);
   applySkillCastSelfEffects(self, spec);
+  pushAttrNotes(events, spec, { self, ally: tgt });
   return events;
 }
 
-/**
- * 玩家点了某个敌人时，取穿过它的那条直线。
- *
- * 直线技能的选择本质是「朝哪个方向射」，但让玩家点方向箭头等于多教一套控件。
- * 点敌人则复用了「点目标」这个唯一的交互动词——射线自然由它所在的方向决定，
- * 顺带把同一条线上的其他敌人也一起打到，玩家看一眼高亮就懂了。
- */
+/** 玩家点了某个敌人时，取穿过它的那条直线（兼容旧调用；瞄准优先走格子） */
 function rayPickThrough(
   self: UnitState,
   from: Vec2,
@@ -433,6 +515,25 @@ function rayPickThrough(
   return null;
 }
 
+/** 玩家点了射线上某一格：朝该方向贯穿，打中线上全部敌人 */
+function rayPickThroughCell(
+  self: UnitState,
+  from: Vec2,
+  cell: Vec2,
+  units: UnitState[],
+  terrain: TerrainGrid,
+): { targets: UnitState[]; rangeCells: Vec2[] } | null {
+  for (const d of RAY_DIRS) {
+    const cells = rayCellsFrom(from, d, terrain);
+    if (!cells.some((c) => c.x === cell.x && c.y === cell.y)) continue;
+    return {
+      targets: enemiesOnRay(self, from, d, units, terrain),
+      rangeCells: cells,
+    };
+  }
+  return null;
+}
+
 function castLineBestRay(
   self: UnitState,
   def: UnitDef,
@@ -441,8 +542,13 @@ function castLineBestRay(
   terrain: TerrainGrid,
   defs: Record<UnitKind, UnitArchetypeDef>,
   chosenUid?: string,
+  aimCell?: Vec2,
 ): BattleEvent[] {
-  const picked = chosenUid ? rayPickThrough(self, self.pos, chosenUid, units, terrain) : null;
+  const picked = aimCell
+    ? rayPickThroughCell(self, self.pos, aimCell, units, terrain)
+    : chosenUid
+      ? rayPickThrough(self, self.pos, chosenUid, units, terrain)
+      : null;
   const { targets: line, rangeCells } = picked ?? bestLinePick(self, self.pos, units, terrain);
   if (line.length === 0) return [];
   const hits: SkillHit[] = [];
@@ -457,7 +563,7 @@ function castLineBestRay(
       type: 'skillCast',
       uid: self.uid,
       skillId: spec.id,
-      skillName: spec.name,
+      skillName: skillCastName(self, spec),
       kind: spec.displayKind,
       rangeCells,
       hits,
@@ -469,6 +575,7 @@ function castLineBestRay(
     if (t) pushDeathIfNeeded(events, t);
   }
   applySkillCastSelfEffects(self, spec);
+  pushAttrNotes(events, spec, { self, foes: line });
   pushLifesteal(self, spec, hits, defs, events);
   return events;
 }
@@ -516,6 +623,8 @@ function runBeforeMoveShape(
         spec.shape.manhattan,
         spec.shape.pick,
       );
+    case 'selfCast':
+      return castSelfCast(self, spec);
     default:
       return [];
   }
@@ -622,16 +731,19 @@ export interface SkillAiming {
   skillId: string;
   skillName: string;
   kind: SkillSpec['displayKind'];
-  /** 瞄准范围高亮格 */
+  /** 瞄准范围高亮格（展示用，可大于可点格） */
   rangeCells: Vec2[];
   /**
-   * 需要玩家点选的目标 uid。
-   *
-   * **空数组表示不用选，直接放**——16 个技能里有 6 个是 AoE，它们打范围内全体，
-   * 唯一的决策是站位和时机。给这类技能强行加一步「点目标」是凭空的操作成本。
+   * 需要玩家点选的**单位** uid（单体点名技能）。
+   * 与 `aimCells` 互斥：直线/范围确认走格子，不走点敌人。
    */
   candidates: string[];
-  /** 无需选目标时会打到谁，用来在按钮上预告「命中 2 个」 */
+  /**
+   * 需要玩家点选的**格子**（选方向 / 确认范围）。
+   * 非空时进入瞄准态，点其中一格才施放；与 `candidates` 都空则点按钮直接放。
+   */
+  aimCells: Vec2[];
+  /** 无需点选时会打到谁，用来在按钮上预告「命中 2 个」 */
   autoTargets: string[];
 }
 
@@ -653,25 +765,36 @@ export function skillAiming(
   const spec = readySlotSpec(self, def, slot);
   if (!spec || spec.timing === 'passive') return null;
 
-  const base = { slot, skillId: spec.id, skillName: spec.name, kind: spec.displayKind };
+  const base = {
+    slot,
+    skillId: spec.id,
+    skillName: skillCastName(self, spec),
+    kind: spec.displayKind,
+    aimCells: [] as Vec2[],
+  };
   switch (spec.shape.type) {
     case 'neighborAoE': {
       const foes = foesAtManhattan(self, units, spec.shape.manhattan);
       if (foes.length === 0) return null;
+      const rangeCells = cellsAtManhattan(self.pos, spec.shape.manhattan, terrain);
+      // 自身 AoE：点范围内任意格确认释放（选的是范围，不是点某个敌人）
       return {
         ...base,
-        rangeCells: cellsAtManhattan(self.pos, spec.shape.manhattan, terrain),
+        rangeCells,
         candidates: [],
+        aimCells: rangeCells,
         autoTargets: foes.map((f) => f.uid),
       };
     }
     case 'discAoE': {
       const foes = foesWithinManhattan(self, units, spec.shape.radius);
       if (foes.length === 0) return null;
+      const rangeCells = cellsWithinManhattan(self.pos, spec.shape.radius, terrain);
       return {
         ...base,
-        rangeCells: cellsWithinManhattan(self.pos, spec.shape.radius, terrain),
+        rangeCells,
         candidates: [],
+        aimCells: rangeCells,
         autoTargets: foes.map((f) => f.uid),
       };
     }
@@ -697,18 +820,33 @@ export function skillAiming(
       };
     }
     case 'lineBestRayAllFoes': {
-      // 四条射线上的所有敌人都能点，点谁就朝那个方向射（见 rayPickThrough）
+      // 点射线上的格子选方向；该方向上所有敌人生效（不是点某个敌人打单体）
       const cells: Vec2[] = [];
-      const cands: string[] = [];
+      const hitUids: string[] = [];
       for (const d of RAY_DIRS) {
         const line = enemiesOnRay(self, self.pos, d, units, terrain);
         if (line.length === 0) continue;
         cells.push(...rayCellsFrom(self.pos, d, terrain));
-        cands.push(...line.map((t) => t.uid));
+        hitUids.push(...line.map((t) => t.uid));
       }
-      if (cands.length === 0) return null;
-      return { ...base, rangeCells: cells, candidates: cands, autoTargets: [] };
+      if (cells.length === 0) return null;
+      return {
+        ...base,
+        rangeCells: cells,
+        candidates: [],
+        aimCells: cells,
+        autoTargets: hitUids,
+      };
     }
+    case 'selfCast':
+      // 点技能即放，不进瞄准；高亮自身脚下示意「对自己」
+      return {
+        ...base,
+        rangeCells: [{ ...self.pos }],
+        candidates: [],
+        aimCells: [],
+        autoTargets: [self.uid],
+      };
   }
 }
 
@@ -726,11 +864,17 @@ export function castSkillManual(
   terrain: TerrainGrid,
   targetUid?: string,
   slot: SkillSlot = 'main',
+  aimCell?: Vec2,
 ): BattleEvent[] {
   const def = effectiveUnitDef(self, defs);
   const spec = readySlotSpec(self, def, slot);
   if (!spec || spec.timing === 'passive') return [];
-  return commitCast(self, slot, spec, castByShape(self, def, spec, units, terrain, defs, targetUid));
+  return commitCast(
+    self,
+    slot,
+    spec,
+    castByShape(self, def, spec, units, terrain, defs, targetUid, aimCell),
+  );
 }
 
 function castByShape(
@@ -741,6 +885,7 @@ function castByShape(
   terrain: TerrainGrid,
   defs: Record<UnitKind, UnitArchetypeDef>,
   targetUid?: string,
+  aimCell?: Vec2,
 ): BattleEvent[] {
   switch (spec.shape.type) {
     case 'neighborAoE':
@@ -766,6 +911,8 @@ function castByShape(
         self, def, spec, units, terrain, defs, spec.shape.manhattan, spec.shape.pick, targetUid,
       );
     case 'lineBestRayAllFoes':
-      return castLineBestRay(self, def, spec, units, terrain, defs, targetUid);
+      return castLineBestRay(self, def, spec, units, terrain, defs, targetUid, aimCell);
+    case 'selfCast':
+      return castSelfCast(self, spec);
   }
 }

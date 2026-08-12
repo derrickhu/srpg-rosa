@@ -25,7 +25,12 @@ export type SkillShape =
   /** 曼哈顿距离 = d 的环上选一个敌人（用于 debuff 等选目标） */
   | { type: 'neighborPickFoe'; manhattan: number; pick: 'lowestHp' | 'highestHp' }
   /** 曼哈顿距离 = d 的环上选一个友方（不含自身），用于 buff */
-  | { type: 'neighborPickAlly'; manhattan: number; pick: 'lowestHp' | 'highestHp' };
+  | { type: 'neighborPickAlly'; manhattan: number; pick: 'lowestHp' | 'highestHp' }
+  /**
+   * 只对自身生效（嘲讽 / 自 buff）。
+   * 不要拿 `neighborAoE` + `damage: none` 冒充——那会逼玩家点敌人，还飘出 0 伤害。
+   */
+  | { type: 'selfCast' };
 
 /**
  * 技能成功施放时对自身施加的限时效果（与是否造成伤害独立；无合法目标未施放时不触发）。
@@ -323,7 +328,8 @@ const SPECS: Record<string, SkillSpec> = {
     timing: 'beforeMove',
     displayKind: 'whirlwind',
     shape: { type: 'discAoE', radius: 1 },
-    damage: { kind: 'flat', amount: 3, applyCounter: false, applyTerrain: false },
+    // 即时伤要能看见飘字；主功能仍是随后两回合毒（每跳 3）
+    damage: { kind: 'flat', amount: 8, applyCounter: false, applyTerrain: false },
     shopPrice: 8,
     onCastFoeEffects: [{ kind: 'poison', dmgPerRound: 3, rounds: 2 }],
   },
@@ -334,7 +340,7 @@ const SPECS: Record<string, SkillSpec> = {
     exclusiveProfession: null,
     timing: 'beforeMove',
     displayKind: 'whirlwind',
-    shape: { type: 'neighborAoE', manhattan: 1 },
+    shape: { type: 'selfCast' },
     damage: { kind: 'none' },
     shopPrice: 7,
     onCastSelfEffects: [{ kind: 'taunt', rounds: 2 }, { kind: 'atkBonus', addAtk: 5, rounds: 2 }],
@@ -371,8 +377,8 @@ export function getSkillSpec(id: string): SkillSpec | undefined {
 /**
  * 玩家有可能带上场的全部技能。
  *
- * Boss 专属的 `savage_roar` 排除在外：它不进商店池也不在可学列表里，
- * 玩家永远看不到它的图标或说明，给它配这些是白做的。
+ * Boss 专属的 `savage_roar` 排除在外：它不进商店池也不在可学列表里。
+ * 玩家侧展示走敌方皮肤（第一章「血牙咆哮」），不要在这里加玩家可学图标。
  */
 export function allPlayerSkillSpecs(): SkillSpec[] {
   return Object.values(SPECS).filter((s) => s.id !== 'savage_roar');

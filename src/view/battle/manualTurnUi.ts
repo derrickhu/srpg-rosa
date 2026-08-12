@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import { makeText } from '@/theme/typography';
 import type { PendingTurn } from '@/battle/engine';
 import type { SkillSlot } from '@/battle/skills';
 import type { Vec2 } from '@/battle/types';
@@ -10,13 +11,15 @@ export type ManualInput =
   | { kind: 'cell'; cell: Vec2 }
   /** 进入 / 退出技能瞄准；`slot` 指向主槽还是临时槽 */
   | { kind: 'skill'; slot: SkillSlot }
+  /** 点普攻按钮：进瞄准，或唯一目标时直接出手 */
+  | { kind: 'attack' }
   | { kind: 'cancelAim' }
   | { kind: 'undo' }
   | { kind: 'wait' }
   /** 视图销毁，用来解开正在等输入的那个 await */
   | { kind: 'abort' };
 
-export type ManualPhase = 'act' | 'aim';
+export type ManualPhase = 'act' | 'aim' | 'attackAim';
 
 /**
  * 技能按钮的四种状态。**点不动的三种也要画出来**，而且要能点：
@@ -43,17 +46,32 @@ export interface SkillButtonSpec {
   cooldown: number;
 }
 
+/** 普攻按钮状态（和技能按钮同套视觉语义） */
+export type AttackButtonState = 'ready' | 'noTarget' | 'spent';
+
 export interface ManualUiState {
   pending: PendingTurn;
   phase: ManualPhase;
   /** 行动者脚下那格，画选中环 */
   activeCell: Vec2;
   moveCells: Vec2[];
+  /**
+   * `moveCells` 里敌方下一行动普攻能覆盖的危险落点。
+   * 用红高亮；其余移动格仍是青色。
+   */
+  dangerMoveCells: Vec2[];
   attackCells: Vec2[];
   /** 技能瞄准范围（phase = 'aim' 时才画） */
   skillRangeCells: Vec2[];
-  /** 需要点选的技能目标所在格 */
+  /** 需要点选的技能目标所在格（单体点名） */
   skillCandidateCells: Vec2[];
+  /** 需要点选的范围格（直线方向 / AoE 确认）；与候选单位互斥 */
+  skillAimCells: Vec2[];
+  /**
+   * 能威胁到 `activeCell` 的敌人脚下格；画贴地虚线敌人 → 行动者。
+   * 由回放层决定时机：仅「已移动、尚未出手」时非空。
+   */
+  threatFrom: Vec2[];
   /**
    * 每个技能槽一个按钮。空数组 = 这个单位一招都没有。
    *
@@ -61,6 +79,8 @@ export interface ManualUiState {
    * 「还有几回合能再放」，而这恰恰是决定这回合要不要保守走位的依据。
    */
   skillButtons: SkillButtonSpec[];
+  /** 普攻按钮：可打时点亮，逼玩家意识到还有一刀 */
+  attackButton: AttackButtonState;
 }
 
 export interface BoardGeometry {
@@ -80,6 +100,11 @@ export interface ManualTurnUiOptions {
   /** 高亮层：在棋子**之下**，否则色块会糊住角色 */
   highlightLayer: PIXI.Container;
   /**
+   * 威胁箭头层：应在棋子之上（如 fxLayer），读成空中连线。
+   * 不传则挂在 highlightLayer（会被棋子挡住一段）。
+   */
+  threatLayer?: PIXI.Container;
+  /**
    * 输入层：在棋子**之上**、HUD 之下。
    *
    * 所有棋盘点击都由这一层统一接（不给每个棋子挂监听）。棋子的 hitArea 比格子高
@@ -98,12 +123,18 @@ export interface ManualTurnUiOptions {
   onIdleTap?: (cell: Vec2) => void;
 }
 
-/** 可移动格 */
+/** 可移动格（安全） */
 const MOVE_COLOR = 0x52c4dc;
+/** 可移动但敌方下回合能打到 */
+const DANGER_MOVE_COLOR = 0xe8564a;
 /** 可攻击目标 */
 const ATTACK_COLOR = 0xe8564a;
 /** 技能范围 / 可选目标 */
 const SKILL_COLOR = 0xe8c866;
+/** 威胁贴地虚线：描边跟角色一样偏厚，暖珊瑚配草地 */
+const THREAT_OUTLINE = 0x3a1810;
+const THREAT_CORE = 0xff6a4a;
+const THREAT_CORE_HI = 0xffb08a;
 /** 操作条按钮直径 */
 const BAR_H = 46;
 /** 按钮里图标的边长 */
@@ -116,6 +147,10 @@ const MAIN_TONE = 0xf2b21c;
 const TEMP_TONE = 0x5ad07a;
 /** 待机 / 撤销 / 取消这类非技能动作 */
 const ACTION_TONE = 0xcfd6dd;
+/** 只能待机时：沙漏描边提亮，和「可放技能」同级注意力 */
+const WAIT_READY_TONE = 0xffd27a;
+/** 普攻按钮描边：偏红，和金技能 / 绿临时技分开 */
+const ATTACK_TONE = 0xe8564a;
 
 interface RoundIconButtonOpts {
   iconKey: string;
@@ -165,8 +200,8 @@ function createRoundIconButton(o: RoundIconButtonOpts): PIXI.Container {
     }
     node.addChild(icon);
   } else {
-    const tx = new PIXI.Text(o.fallback, {
-      fill: o.dim ? 0x8a8a8a : 0xfff4dd, fontSize: 12, fontWeight: 'bold',
+    const tx = makeText(o.fallback, 'uiStrong', {
+      fill: o.dim ? 0x8a8a8a : 0xfff4dd, fontSize: 12,
     });
     tx.anchor.set(0.5);
     tx.x = r;
@@ -188,8 +223,8 @@ function createRoundIconButton(o: RoundIconButtonOpts): PIXI.Container {
     node.addChild(badge);
 
     if (o.badge != null) {
-      const cd = new PIXI.Text(String(o.badge), {
-        fill: 0xffffff, fontSize: 13, fontWeight: 'bold',
+      const cd = makeText(String(o.badge), 'uiStrong', {
+        fill: 0xffffff, fontSize: 13,
       });
       cd.anchor.set(0.5);
       cd.x = bx;
@@ -232,9 +267,20 @@ export interface ManualTurnUi {
 
 export function createManualTurnUi(opts: ManualTurnUiOptions): ManualTurnUi {
   const { geo, hudLayer, highlightLayer, inputLayer } = opts;
+  const threatParent = opts.threatLayer ?? highlightLayer;
 
   const highlight = new PIXI.Graphics();
   highlightLayer.addChild(highlight);
+  /**
+   * 威胁箭头单独一层：格子高亮每次 `clear()`，箭头不能并进同一张 Graphics，
+   * 否则选技能/重绘移动格时会把连线一起擦掉再难管生命周期。
+   */
+  const threatArrows = new PIXI.Graphics();
+  // 挂在 fxLayer 时绝不能抢点击，否则盖住整条连线的区域都点不到棋盘
+  threatArrows.eventMode = 'none';
+  threatParent.addChild(threatArrows);
+  /** 当前要画的威胁连线；pulse 里按时间重绘做呼吸/流动 */
+  let threatLinks: { from: Vec2; to: Vec2; bow: number }[] = [];
   /** 行动者脚下的环，单独一层因为它要每帧呼吸 */
   const activeRing = new PIXI.Graphics();
   highlightLayer.addChild(activeRing);
@@ -242,9 +288,9 @@ export function createManualTurnUi(opts: ManualTurnUiOptions): ManualTurnUi {
   const bar = new PIXI.Container();
   hudLayer.addChild(bar);
 
-  const hint = new PIXI.Text('', {
-    fill: 0xffffff, fontSize: 11, fontWeight: 'bold',
-    stroke: 0x000000, strokeThickness: 3,
+  const hint = makeText('', 'combatLabel', {
+    fill: 0xfff4dd, fontSize: 13,
+    stroke: 0x000000, strokeThickness: 4,
   });
   hint.anchor.set(0.5, 1);
   hudLayer.addChild(hint);
@@ -265,8 +311,8 @@ export function createManualTurnUi(opts: ManualTurnUiOptions): ManualTurnUi {
    * 这条不能并进 `hint`：`hint` 是 `update()` 算出来的稳定态，而这里是一次点击的回执，
    * 点击又不产生输入（不会触发下一次 `update()`），只能自己活一会儿再淡出。
    */
-  const toast = new PIXI.Text('', {
-    fill: 0xffe9a8, fontSize: 12, fontWeight: 'bold',
+  const toast = makeText('', 'combatLabel', {
+    fill: 0xffe9a8, fontSize: 13,
     stroke: 0x000000, strokeThickness: 4,
   });
   toast.anchor.set(0.5, 1);
@@ -274,7 +320,7 @@ export function createManualTurnUi(opts: ManualTurnUiOptions): ManualTurnUi {
   hudLayer.addChild(toast);
   let toastUntil = 0;
 
-  /** 可释放技能按钮外面那圈呼吸光环，每帧改 alpha */
+  /** 可点击按钮外圈：鲜艳描边 + 旋转短弧，每帧重画 */
   const glow = new PIXI.Graphics();
   // 光环画在按钮**上面**（要盖住按钮边缘那圈），所以必须显式退出命中测试，
   // 否则它会把技能按钮的点击吃掉。
@@ -282,6 +328,13 @@ export function createManualTurnUi(opts: ManualTurnUiOptions): ManualTurnUi {
   hudLayer.addChild(glow);
   /** 本次布局里要发光的按钮圆心（HUD 局部坐标） */
   let glowSpots: Vec2[] = [];
+  /**
+   * 可点特效色：技能/普攻暖金；只能待机时用更抢眼的琥珀黄，
+   * 别和技能就绪抢同一套语义。
+   */
+  let glowTone: number = 0xffe08a;
+  /** 待机强制点亮时转得更快、颜色更冲 */
+  let glowUrgent = false;
 
   let resolver: ((i: ManualInput) => void) | null = null;
   let active: Vec2 | null = null;
@@ -309,6 +362,7 @@ export function createManualTurnUi(opts: ManualTurnUiOptions): ManualTurnUi {
     opts.app.ticker.remove(pulse);
     inputLayer.off('pointertap', onBoardTap);
     if (!highlight.destroyed) highlight.destroy();
+    if (!threatArrows.destroyed) threatArrows.destroy();
     if (!activeRing.destroyed) activeRing.destroy();
     if (!bar.destroyed) bar.destroy({ children: true });
     if (!budget.destroyed) budget.destroy({ children: true });
@@ -339,6 +393,43 @@ export function createManualTurnUi(opts: ManualTurnUiOptions): ManualTurnUi {
   };
   inputLayer.on('pointertap', onBoardTap);
 
+  /**
+   * 可点击环：实心鲜艳描边 + 外圈旋转短弧。
+   * 呼吸透明度不够显眼；旋转是「现在该点这个」的强信号。
+   */
+  function paintClickableRing(cx: number, cy: number, now: number, breathe: number): void {
+    const baseR = BAR_H / 2 + 3;
+    const core = glowUrgent ? 0xfff23a : glowTone;
+    const accent = glowUrgent ? 0xff6a18 : 0xffffff;
+    const spinMs = glowUrgent ? 900 : 1400;
+    const rot = ((now % spinMs) / spinMs) * Math.PI * 2;
+    const pulseW = 3.2 + 0.8 * breathe;
+
+    // 内圈：高饱和实线描边，始终很亮
+    glow.lineStyle(pulseW + 1.5, 0x2a1408, 0.55);
+    glow.drawCircle(cx, cy, baseR);
+    glow.lineStyle(pulseW, core, 0.95);
+    glow.drawCircle(cx, cy, baseR);
+
+    // 外圈：反向旋转的短弧（虚线感），读成「在转、可点」
+    // 每段 arc 前必须 moveTo：Pixi Graphics 会从当前笔尖连线到弧起点，
+    // 两个按钮同时点亮时就会在按钮之间拉出一条「莫名直线」。
+    const dashR = baseR + 5.5;
+    const slots = glowUrgent ? 10 : 8;
+    const dashSpan = (Math.PI * 2) / slots;
+    const dashLen = dashSpan * 0.42;
+    for (let i = 0; i < slots; i++) {
+      const a0 = -rot + i * dashSpan;
+      const a1 = a0 + dashLen;
+      glow.lineStyle(glowUrgent ? 3.4 : 2.8, accent, 0.9);
+      glow.moveTo(cx + Math.cos(a0) * dashR, cy + Math.sin(a0) * dashR);
+      glow.arc(cx, cy, dashR, a0, a1);
+    }
+    // 最外一圈淡色轨道，托住短弧，草地上也站得住
+    glow.lineStyle(1.5, core, 0.35 + 0.25 * breathe);
+    glow.drawCircle(cx, cy, dashR + 2.5);
+  }
+
   const pulse = (): void => {
     if (destroyed) return;
     // 场景是被 SceneManager 用 destroy({children:true}) 整棵拆掉的，这个模块拿不到通知。
@@ -349,6 +440,9 @@ export function createManualTurnUi(opts: ManualTurnUiOptions): ManualTurnUi {
       return;
     }
     const now = Date.now();
+    if (threatLinks.length > 0 && !threatArrows.destroyed) {
+      paintThreatArrows(now);
+    }
     const k = 0.6 + 0.4 * Math.sin(now / 260);
 
     if (toast.visible) {
@@ -360,10 +454,7 @@ export function createManualTurnUi(opts: ManualTurnUiOptions): ManualTurnUi {
     glow.clear();
     if (glow.visible) {
       for (const c of glowSpots) {
-        glow.lineStyle(3, 0xffe9a8, 0.22 + 0.5 * k);
-        glow.drawCircle(c.x, c.y, BAR_H / 2 + 2 + 1.5 * k);
-        glow.lineStyle(2, 0xffffff, 0.1 + 0.22 * k);
-        glow.drawCircle(c.x, c.y, BAR_H / 2 + 6 + 3 * k);
+        paintClickableRing(c.x, c.y, now, k);
       }
     }
 
@@ -385,6 +476,157 @@ export function createManualTurnUi(opts: ManualTurnUiOptions): ManualTurnUi {
     }
   }
 
+  function cellCenterPx(p: Vec2): { x: number; y: number } {
+    const r = cellRect(geo, p);
+    return { x: r.x + r.s / 2, y: r.y + r.s / 2 };
+  }
+
+  function setThreatArrows(fromCells: Vec2[], toCell: Vec2): void {
+    // 多条贴地虚线轻微左右错开，避免完全叠成一根
+    threatLinks = fromCells.map((from, i) => {
+      const sign = i % 2 === 0 ? 1 : -1;
+      const mag = 0.06 + 0.04 * Math.floor(i / 2);
+      return { from: { ...from }, to: { ...toCell }, bow: sign * mag };
+    });
+    paintThreatArrows(Date.now());
+  }
+
+  /** 一段圆角虚线胶囊：深描边 + 亮芯，跟角色厚描边同一套味道 */
+  function drawDashCapsule(
+    cx: number, cy: number, ux: number, uy: number,
+    length: number, halfW: number, fill: number, outline: number, alpha: number,
+  ): void {
+    const hx = ux * (length / 2);
+    const hy = uy * (length / 2);
+    const px = -uy * halfW;
+    const py = ux * halfW;
+    const corners = [
+      { x: cx - hx + px, y: cy - hy + py },
+      { x: cx + hx + px, y: cy + hy + py },
+      { x: cx + hx - px, y: cy + hy - py },
+      { x: cx - hx - px, y: cy - hy - py },
+    ];
+    const drawPoly = (pad: number, color: number, a: number): void => {
+      const ox = -uy * pad;
+      const oy = ux * pad;
+      const fx = ux * pad;
+      const fy = uy * pad;
+      const p = [
+        { x: corners[0]!.x - fx + ox, y: corners[0]!.y - fy + oy },
+        { x: corners[1]!.x + fx + ox, y: corners[1]!.y + fy + oy },
+        { x: corners[2]!.x + fx - ox, y: corners[2]!.y + fy - oy },
+        { x: corners[3]!.x - fx - ox, y: corners[3]!.y - fy - oy },
+      ];
+      threatArrows.beginFill(color, a);
+      threatArrows.lineStyle(0);
+      threatArrows.moveTo(p[0]!.x, p[0]!.y);
+      for (let i = 1; i < p.length; i++) threatArrows.lineTo(p[i]!.x, p[i]!.y);
+      threatArrows.lineTo(p[0]!.x, p[0]!.y);
+      threatArrows.endFill();
+    };
+    drawPoly(1.6, outline, alpha);
+    drawPoly(0, fill, alpha);
+  }
+
+  function fillArrowHead(
+    tipX: number, tipY: number, ux: number, uy: number,
+    len: number, half: number, fill: number, outline: number, alpha: number,
+  ): void {
+    const bx = tipX - ux * len;
+    const by = tipY - uy * len;
+    const px = -uy * half;
+    const py = ux * half;
+    const tip = { x: tipX, y: tipY };
+    const l = { x: bx + px, y: by + py };
+    const r = { x: bx - px, y: by - py };
+    // 外描边三角形稍放大一点
+    const grow = 2.2;
+    const ox = -ux * grow;
+    const oy = -uy * grow;
+    const opx = -uy * grow;
+    const opy = ux * grow;
+    threatArrows.beginFill(outline, alpha);
+    threatArrows.lineStyle(0);
+    threatArrows.moveTo(tip.x + ox, tip.y + oy);
+    threatArrows.lineTo(l.x - ox + opx, l.y - oy + opy);
+    threatArrows.lineTo(r.x - ox - opx, r.y - oy - opy);
+    threatArrows.lineTo(tip.x + ox, tip.y + oy);
+    threatArrows.endFill();
+    threatArrows.beginFill(fill, alpha);
+    threatArrows.moveTo(tip.x, tip.y);
+    threatArrows.lineTo(l.x, l.y);
+    threatArrows.lineTo(r.x, r.y);
+    threatArrows.lineTo(tip.x, tip.y);
+    threatArrows.endFill();
+    // 尖端一小块高光，避免整块珊瑚糊成贴纸
+    threatArrows.beginFill(THREAT_CORE_HI, alpha * 0.55);
+    threatArrows.moveTo(tip.x, tip.y);
+    threatArrows.lineTo(
+      tip.x - ux * len * 0.42 + px * 0.35,
+      tip.y - uy * len * 0.42 + py * 0.35,
+    );
+    threatArrows.lineTo(
+      tip.x - ux * len * 0.42 - px * 0.35,
+      tip.y - uy * len * 0.42 - py * 0.35,
+    );
+    threatArrows.lineTo(tip.x, tip.y);
+    threatArrows.endFill();
+  }
+
+  /** 贴地虚线威胁箭：粗、有描边、指向己方，跟草地卡通风搭 */
+  function paintThreatArrows(now: number): void {
+    threatArrows.clear();
+    if (threatLinks.length === 0) return;
+    const breathe = 0.78 + 0.22 * Math.sin(now / 380);
+    const flow = (now / 520) % 1;
+
+    for (const link of threatLinks) {
+      const from = cellCenterPx(link.from);
+      const to = cellCenterPx(link.to);
+      const dx = to.x - from.x;
+      const dy = to.y - from.y;
+      const len = Math.hypot(dx, dy);
+      if (len < 8) continue;
+
+      const ux = dx / len;
+      const uy = dy / len;
+      const px = -uy;
+      const py = ux;
+      const lateral = link.bow * geo.cell * 0.55;
+
+      const headLen = Math.max(10, geo.cell * 0.34);
+      const headHalf = headLen * 0.52;
+      const insetFrom = Math.min(geo.cell * 0.32, len * 0.2);
+      const insetTo = Math.min(geo.cell * 0.38 + headLen * 0.15, len * 0.28);
+      const x0 = from.x + ux * insetFrom + px * lateral;
+      const y0 = from.y + uy * insetFrom + py * lateral;
+      const x1 = to.x - ux * insetTo + px * lateral;
+      const y1 = to.y - uy * insetTo + py * lateral;
+      const shaft = Math.hypot(x1 - x0, y1 - y0);
+      if (shaft < 8) continue;
+
+      const sux = (x1 - x0) / shaft;
+      const suy = (y1 - y0) / shaft;
+      const dashLen = Math.max(9, geo.cell * 0.3);
+      const gapLen = Math.max(5, geo.cell * 0.16);
+      const pitch = dashLen + gapLen;
+      const halfW = Math.max(2.6, geo.cell * 0.085);
+      const alpha = 0.88 * breathe;
+
+      // 虚线从敌人走向己方，整体相位缓慢前移，读成「压力压过来」
+      for (let d = flow * pitch; d + dashLen * 0.35 < shaft - 2; d += pitch) {
+        const mid = d + dashLen / 2;
+        if (mid > shaft - 1) break;
+        drawDashCapsule(
+          x0 + sux * mid, y0 + suy * mid, sux, suy,
+          dashLen, halfW, THREAT_CORE, THREAT_OUTLINE, alpha,
+        );
+      }
+
+      fillArrowHead(x1, y1, sux, suy, headLen, headHalf, THREAT_CORE, THREAT_OUTLINE, alpha);
+    }
+  }
+
   /**
    * 只在**额度格说不清**的时候出文字。
    *
@@ -394,28 +636,33 @@ export function createManualTurnUi(opts: ManualTurnUiOptions): ManualTurnUi {
    */
   function hintText(s: ManualUiState): string {
     if (s.phase === 'aim') {
-      return s.skillCandidateCells.length > 0 ? '点高亮目标释放' : '点任意处确认释放';
+      if (s.skillCandidateCells.length > 0) return '点高亮目标释放';
+      if (s.skillAimCells.length > 0) return '点高亮范围确认方向';
+      return '点任意处确认释放';
+    }
+    if (s.phase === 'attackAim') {
+      return '点高亮敌人普攻';
     }
     const stuck = !s.pending.canMove && !s.pending.canSkill && !s.pending.canAttack;
     return stuck ? '无可用行动，点待机结束' : '';
   }
 
-  /** 三个额度格；返回整体宽度供居中 */
+  /** 额度格：移动 / 攻击（技能+普攻都算攻击侧） */
   function rebuildBudget(s: ManualUiState): number {
     budget.removeChildren().forEach((c) => c.destroy({ children: true }));
+    const attackOpen = s.pending.canSkill || s.pending.canAttack;
+    const attackDone = !attackOpen && (s.pending.didSkill || s.pending.didAttack);
     const slots: { label: string; done: boolean; open: boolean }[] = [
       { label: '移动', done: s.pending.didMove, open: s.pending.canMove },
-      { label: '技能', done: s.pending.didSkill, open: s.pending.canSkill },
-      { label: '普攻', done: s.pending.didAttack, open: s.pending.canAttack },
+      { label: '攻击', done: attackDone, open: attackOpen },
     ];
     const h = 15;
     const gap = 3;
     let x = 0;
     for (const sl of slots) {
-      const tx = new PIXI.Text(sl.label, {
+      const tx = makeText(sl.label, 'combatLabel', {
         fill: sl.done ? 0x9fe08a : (sl.open ? 0xfff0c0 : 0x9a9a9a),
         fontSize: 9,
-        fontWeight: 'bold',
       });
       tx.anchor.set(0.5);
       // 已用的额度画一个几何对勾，不写 `✓`：游戏字体是裁过的子集，缺这个字形，
@@ -501,7 +748,13 @@ export function createManualTurnUi(opts: ManualTurnUiOptions): ManualTurnUi {
 
     const btns: PIXI.Container[] = [];
     const glowIdx: number[] = [];
-    if (s.phase === 'aim') {
+    // 与 hint「无可用行动」同口径：移动/技能/普攻都没了，唯一该点的就是待机
+    const mustWait = s.phase === 'act'
+      && !s.pending.canMove && !s.pending.canSkill && !s.pending.canAttack;
+    glowUrgent = mustWait;
+    glowTone = mustWait ? 0xfff23a : 0xffe08a;
+
+    if (s.phase === 'aim' || s.phase === 'attackAim') {
       btns.push(createRoundIconButton({
         iconKey: 'act_cancel', fallback: '取消', tone: ACTION_TONE, dim: false,
         onTap: () => emit({ kind: 'cancelAim' }),
@@ -526,14 +779,32 @@ export function createManualTurnUi(opts: ManualTurnUiOptions): ManualTurnUi {
           },
         }));
       }
+      // 普攻固定占一格：可打时呼吸点亮，别再只靠棋盘红格暗示
+      if (s.attackButton === 'ready') glowIdx.push(btns.length);
+      btns.push(createRoundIconButton({
+        iconKey: 'act_attack',
+        fallback: '普攻',
+        tone: ATTACK_TONE,
+        dim: s.attackButton === 'spent',
+        check: s.attackButton === 'spent',
+        onTap: () => {
+          if (s.attackButton === 'ready') emit({ kind: 'attack' });
+          else if (s.attackButton === 'noTarget') showToast('普攻：范围内没有敌人');
+          else showToast('这回合已经普攻过了');
+        },
+      }));
       if (s.pending.canUndoMove) {
         btns.push(createRoundIconButton({
           iconKey: 'act_undo', fallback: '撤销', tone: ACTION_TONE, dim: false,
           onTap: () => emit({ kind: 'undo' }),
         }));
       }
+      if (mustWait) glowIdx.push(btns.length);
       btns.push(createRoundIconButton({
-        iconKey: 'act_wait', fallback: '待机', tone: ACTION_TONE, dim: false,
+        iconKey: 'act_wait',
+        fallback: '待机',
+        tone: mustWait ? WAIT_READY_TONE : ACTION_TONE,
+        dim: false,
         onTap: () => emit({ kind: 'wait' }),
       }));
     }
@@ -546,14 +817,27 @@ export function createManualTurnUi(opts: ManualTurnUiOptions): ManualTurnUi {
       if (destroyed) return;
       highlight.clear();
       if (s.phase === 'aim') {
-        drawCells(s.skillRangeCells, SKILL_COLOR, 0.2);
+        drawCells(s.skillRangeCells, SKILL_COLOR, 0.18);
+        // 可点的范围格比底亮一档；单体目标格同亮度
+        drawCells(s.skillAimCells, SKILL_COLOR, 0.4);
         drawCells(s.skillCandidateCells, SKILL_COLOR, 0.45);
-      } else {
-        if (s.pending.canMove) drawCells(s.moveCells, MOVE_COLOR, 0.22);
-        if (s.pending.canAttack) drawCells(s.attackCells, ATTACK_COLOR, 0.3);
+      } else if (s.phase === 'attackAim') {
+        drawCells(s.attackCells, ATTACK_COLOR, 0.45);
+      } else if (s.pending.canMove) {
+        const dangerKeys = new Set(s.dangerMoveCells.map((c) => `${c.x},${c.y}`));
+        const safe = s.moveCells.filter((c) => !dangerKeys.has(`${c.x},${c.y}`));
+        drawCells(safe, MOVE_COLOR, 0.22);
+        // fill 略低于普攻目标格，避免和「可点攻击的敌人脚下」糊成一块
+        drawCells(s.dangerMoveCells, DANGER_MOVE_COLOR, 0.2);
       }
+      // 行动态也淡淡标出可普攻敌人，和点亮的普攻按钮互相印证
+      if (s.phase === 'act' && s.pending.canAttack) {
+        drawCells(s.attackCells, ATTACK_COLOR, 0.22);
+      }
+      setThreatArrows(s.threatFrom, s.activeCell);
       active = s.activeCell;
       highlight.visible = true;
+      threatArrows.visible = true;
       bar.visible = true;
       budget.visible = true;
       glow.visible = true;
@@ -570,6 +854,8 @@ export function createManualTurnUi(opts: ManualTurnUiOptions): ManualTurnUi {
     hide(): void {
       if (destroyed) return;
       highlight.clear();
+      threatLinks = [];
+      threatArrows.clear();
       active = null;
       activeRing.clear();
       bar.visible = false;

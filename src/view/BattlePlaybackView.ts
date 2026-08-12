@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import { makeText } from '@/theme/typography';
 import type { PixiHost } from '@/boot/createPixiApp';
 import type { BattleEvent, Faction, SkillKind, UnitKind, UnitState, Vec2 } from '@/battle/types';
 import type { BattleSim } from '@/battle/engine';
@@ -16,10 +17,17 @@ import {
   recipeAnimSets,
   vfxSetsForKinds,
   type FlashDef,
+  type PropBurstDef,
   type VfxRecipe,
 } from '@/data/vfxCatalog';
 import { emitSparks } from '@/view/battle/vfxSparks';
 import { flyProjectile } from '@/view/battle/vfxProjectile';
+import {
+  spawnCombatFloat,
+  spawnRoundBanner,
+  spawnSkillNameTag,
+  type CombatFloatHost,
+} from '@/view/battle/combatFloatText';
 import { C } from '@/view/mvpTheme';
 import { createUnitOverhead, type UnitOverheadHandle } from '@/view/unitOverhead';
 import {
@@ -40,6 +48,7 @@ import {
 import { hasAnimSet } from '@/view/animSets';
 import {
   createManualTurnUi,
+  type AttackButtonState,
   type ManualPhase,
   type ManualTurnUi,
   type SkillButtonSpec,
@@ -47,6 +56,10 @@ import {
 } from '@/view/battle/manualTurnUi';
 import type { SkillSlot } from '@/battle/skills';
 import type { PendingTurn } from '@/battle/engine';
+import {
+  dangerMoveCellsForMover,
+  enemiesThreateningCell,
+} from '@/battle/threatMap';
 import { battleUnitInfoModel } from '@/view/unitInfoModel';
 import { createUnitInfoOverlay } from '@/view/unitInfoPanel';
 import type { SkillDef } from '@/battle/types';
@@ -107,10 +120,19 @@ export function animSetsForUnits(units: readonly UnitState[]): string[] {
   const ids = new Set<string>();
   for (const u of units) {
     ids.add(u.animSet ?? u.defId);
-    for (const id of vfxSetsForKinds([u.defId])) ids.add(id);
-    const skillId = u.battleSkill?.id;
-    const recipe = skillId ? SKILL_VFX[skillId] : undefined;
-    if (recipe) for (const id of recipeAnimSets(recipe)) ids.add(id);
+    // 普攻特效按兵种原型预取（近战斩/箭命中等）
+    for (const id of recipeAnimSets(ATTACK_VFX[u.defId] ?? ATTACK_VFX.sword)) ids.add(id);
+    if (u.faction === 'player') {
+      // 我方还要预取职业默认技能 + 冲锋光环
+      for (const id of vfxSetsForKinds([u.defId])) ids.add(id);
+    }
+    // 主槽 / 临时槽 / 敌方皮肤：按实际挂上的技能预取（漏掉临时技能会静默退回静态贴图）
+    for (const sk of [u.battleSkill, u.tempSkill]) {
+      if (!sk) continue;
+      const vfxKey = sk.vfxId ?? sk.id;
+      const recipe = SKILL_VFX[vfxKey] ?? SKILL_VFX[sk.id];
+      if (recipe) for (const id of recipeAnimSets(recipe)) ids.add(id);
+    }
   }
   return [...ids];
 }
@@ -204,7 +226,7 @@ export function createBattlePlaybackView(
   settingsBtn.hitArea = new PIXI.Rectangle(0, 0, settingsBtnSize, settingsBtnSize);
 
   // --- 顶部：回合数 ---
-  const roundTx = new PIXI.Text('准备战斗', { fill: 0xffffff, fontSize: 14, fontWeight: 'bold' });
+  const roundTx = makeText('准备战斗', 'combatLabel', { fill: 0xffffff });
   roundTx.anchor.set(0.5, 0.5);
   const roundBg = new PIXI.Graphics();
   const roundLabelW = 120;
@@ -225,8 +247,8 @@ export function createBattlePlaybackView(
 
   // 开场提示：集火交互（几秒后淡出）
   {
-    const hintTx = new PIXI.Text('👆 点击敌人集火 · 技能自动释放', {
-      fill: 0xffe08a, fontSize: 12, fontWeight: 'bold',
+    const hintTx = makeText('点击敌人集火 · 技能自动释放', 'combatLabel', {
+      fill: 0xffe08a, fontSize: 13,
       stroke: 0x000000, strokeThickness: 3,
     });
     hintTx.anchor.set(0.5, 0);
@@ -246,7 +268,7 @@ export function createBattlePlaybackView(
   // --- 金币（设置按钮下方） ---
   {
     const goldIconSize = 22;
-    const goldValueTx = new PIXI.Text(`${gameState.gold}`, { fill: 0xffffff, fontSize: 14, fontWeight: 'bold' });
+    const goldValueTx = makeText(`${gameState.gold}`, 'uiStrong', { fill: 0xffffff });
     const goldPadX = 6;
     const goldPadY = 4;
     const goldBgW = goldIconSize + 4 + goldValueTx.width + goldPadX * 2;
@@ -279,7 +301,7 @@ export function createBattlePlaybackView(
   const ctrlH = 30;
   const speedBtn = new PIXI.Container();
   const speedBg = new PIXI.Graphics();
-  const speedLbl = new PIXI.Text('x1', { fill: 0xffffff, fontSize: 14, fontWeight: 'bold' });
+  const speedLbl = makeText('x1', 'uiStrong', { fill: 0xffffff });
   speedLbl.anchor.set(0.5);
   speedLbl.x = speedBtnW / 2;
   speedLbl.y = ctrlH / 2;
@@ -313,7 +335,7 @@ export function createBattlePlaybackView(
   skipBg.drawRoundedRect(0, 0, skipBtnW, ctrlH, 10);
   skipBg.endFill();
   skipBtn.addChild(skipBg);
-  const skipLbl = new PIXI.Text('跳过', { fill: 0xffffff, fontSize: 13 });
+  const skipLbl = makeText('跳过', 'ui', { fill: 0xffffff, fontSize: 13 });
   skipLbl.anchor.set(0.5);
   skipLbl.x = skipBtnW / 2;
   skipLbl.y = ctrlH / 2;
@@ -391,7 +413,7 @@ export function createBattlePlaybackView(
     panelBg.endFill();
     panel.addChild(panelBg);
 
-    const titleTx = new PIXI.Text('设置', { fill: 0x3a3a2a, fontSize: 18, fontWeight: 'bold' });
+    const titleTx = makeText('设置', 'title', { fill: 0x3a3a2a });
     titleTx.anchor.set(0.5, 0);
     titleTx.x = panelW / 2;
     titleTx.y = 16;
@@ -452,9 +474,17 @@ export function createBattlePlaybackView(
   const posByUid = new Map<string, Vec2>();
   /** 普攻特效按兵种原型取（见 vfxCatalog.ATTACK_VFX），所以要记住谁是什么兵种 */
   const defIdByUid = new Map<string, UnitKind>();
+  /**
+   * 敌方技能皮肤：结算 id（如 savage_roar）→ 专属特效键（bloodfang_roar）。
+   * 键是 `${uid}:${skillId}`，不能按 uid 一把梭——否则放临时技能也会误播主技能特效。
+   */
+  const skillVfxOverride = new Map<string, string>();
   for (const u of initialUnits) {
     posByUid.set(u.uid, { ...u.pos });
     defIdByUid.set(u.uid, u.defId);
+    for (const sk of [u.battleSkill, u.tempSkill]) {
+      if (sk?.vfxId) skillVfxOverride.set(`${u.uid}:${sk.id}`, sk.vfxId);
+    }
   }
 
   /**
@@ -535,93 +565,42 @@ export function createBattlePlaybackView(
     rangeG.destroy();
   }
 
-  function floatText(x: number, y: number, msg: string, color: number, opts?: { large?: boolean }): void {
-    if (skipping) return;
-    const fs = opts?.large ? 20 : 16;
-    const t = new PIXI.Text(msg, {
-      fill: color,
-      fontSize: fs,
-      fontWeight: 'bold',
-      stroke: 0x000000,
-      strokeThickness: opts?.large ? 4 : 3,
-      dropShadow: true,
-      dropShadowColor: 0x000000,
-      dropShadowDistance: 1,
-      dropShadowAlpha: 0.5,
-    });
-    t.anchor.set(0.5);
-    t.x = x;
-    t.y = y - 10;
-    t.scale.set(opts?.large ? 1.3 : 1.1);
-    fxLayer.addChild(t);
-    void (async () => {
-      const startY = t.y;
-      const startScale = t.scale.x;
-      await awaitEase(dur(650), (k) => {
-        t.y = startY - 30 * k;
-        t.alpha = k < 0.7 ? 1 : 1 - (k - 0.7) / 0.3;
-        const pop = k < 0.15 ? 1 + 0.2 * (k / 0.15) : 1 + 0.2 * (1 - (k - 0.15) / 0.85);
-        t.scale.set(startScale * pop);
-      });
-      if (!t.destroyed) {
-        fxLayer.removeChild(t);
-        t.destroy();
-      }
-    })();
-  }
+  const floatHost = (): CombatFloatHost => ({
+    layer: fxLayer,
+    skipping: () => skipping,
+    dur,
+    awaitEase,
+  });
 
+  /** 伤害 / 治疗 / 用药 —— 样式见 combatFloatText */
+  function floatDamage(x: number, y: number, dmg: number): void {
+    spawnCombatFloat(floatHost(), x, y, `-${dmg}`, 'damage');
+  }
+  function floatHeal(x: number, y: number, amount: number): void {
+    spawnCombatFloat(floatHost(), x, y, `+${amount}`, 'heal');
+  }
+  function floatDot(x: number, y: number, dmg: number, source: 'poison' | 'terrain'): void {
+    spawnCombatFloat(floatHost(), x, y, source === 'poison' ? `毒-${dmg}` : `-${dmg}`, 'poison');
+  }
   /**
    * 目标所站地形对这一下的影响，飘在伤害数字**下方**。
-   *
-   * 地形之前「感觉没用」的主因是它从不出声：森林 -25% 只表现为一个玩家无从比较的数字，
-   * 而同一格上还叠着克制和技能倍率，玩家不可能反推出是地形在起作用。归因必须显式说出来。
-   *
-   * 位置压在伤害数字下面 18px 而不是同一点：两条飘字起点相同就会互相盖住。
-   * 颜色用青绿而不是红色——它讲的是「少挨了打」，和红色伤害数字反着读。
+   * 森林 -25% 必须显式说出来，否则只是一个玩家无从比较的数字。
    */
+  /** 目标侧承伤地形（森林 -25% 等） */
   function floatTerrainNote(x: number, y: number, note: string | undefined): void {
     if (!note) return;
-    floatText(x, y + 18, note, 0x7ee2c4);
+    spawnCombatFloat(floatHost(), x, y, note, 'terrain');
   }
-
+  /** 出手侧攻击地形（高地 +25%）：和技能名分开飘，不拼进同一串字 */
+  function floatAtkTerrain(x: number, y: number, note: string | undefined): void {
+    if (!note) return;
+    spawnCombatFloat(floatHost(), x, y, note, 'terrainBuff');
+  }
+  function floatUtility(x: number, y: number, msg: string): void {
+    spawnCombatFloat(floatHost(), x, y, msg, 'utility');
+  }
   function showSkillLabel(x: number, y: number, name: string): void {
-    if (skipping) return;
-    const c = new PIXI.Container();
-    const tx = new PIXI.Text(name, {
-      fill: 0xffffff, fontSize: 14, fontWeight: 'bold',
-      stroke: 0x6b3a0a, strokeThickness: 3,
-    });
-    tx.anchor.set(0.5);
-    const padX = 10;
-    const padY = 4;
-    const bg = new PIXI.Graphics();
-    bg.beginFill(0xcc8833, 0.85);
-    bg.drawRoundedRect(-tx.width / 2 - padX, -tx.height / 2 - padY, tx.width + padX * 2, tx.height + padY * 2, 6);
-    bg.endFill();
-    c.addChild(bg);
-    c.addChild(tx);
-    c.x = x;
-    c.y = y;
-    c.alpha = 0;
-    fxLayer.addChild(c);
-    void (async () => {
-      await awaitEase(dur(500), (k) => {
-        if (k < 0.15) {
-          c.alpha = k / 0.15;
-          c.scale.set(0.8 + 0.2 * (k / 0.15));
-        } else if (k < 0.7) {
-          c.alpha = 1;
-          c.scale.set(1);
-        } else {
-          c.alpha = 1 - (k - 0.7) / 0.3;
-          c.y = y - 12 * ((k - 0.7) / 0.3);
-        }
-      });
-      if (!c.destroyed) {
-        fxLayer.removeChild(c);
-        c.destroy({ children: true });
-      }
-    })();
+    spawnSkillNameTag(floatHost(), x, y, name);
   }
 
   function skillFxKey(kind: SkillKind): string | null {
@@ -713,13 +692,48 @@ export function createBattlePlaybackView(
     if (played <= 0) showFxSprite(at.x, at.y, 'slash', size);
   }
 
+  /** 实体道具 / 光效放大淡出（号角头顶光、药草十字） */
+  async function playPropBurst(
+    def: PropBurstDef,
+    from: { x: number; y: number },
+    to: { x: number; y: number } | undefined,
+  ): Promise<void> {
+    if (skipping) return;
+    const at = def.anchor === 'target' ? (to ?? from) : from;
+    const y = at.y + cell * (def.yOffsetCells ?? 0);
+    if (def.sparks) emitSparks(fxLayer, at.x, y, def.sparks, 0);
+    if (!AssetManager.isBundleLoaded('fx')) return;
+    const tex = AssetManager.texture('fx', def.sprite);
+    if (!tex || tex === PIXI.Texture.WHITE) return;
+    const sp = new PIXI.Sprite(tex);
+    sp.anchor.set(0.5);
+    if (def.blend === 'add') sp.blendMode = PIXI.BLEND_MODES.ADD;
+    const base = Math.max(cell * def.cells, 48);
+    const unit = base / Math.max(tex.width, tex.height);
+    sp.scale.set(unit * def.scaleFrom);
+    sp.position.set(at.x, y);
+    sp.alpha = 1;
+    fxLayer.addChild(sp);
+    await awaitEase(dur(def.durationMs), (k) => {
+      if (sp.destroyed) return;
+      const s = def.scaleFrom + (def.scaleTo - def.scaleFrom) * k;
+      sp.scale.set(unit * s);
+      sp.alpha = k < 0.72 ? 1 : 1 - (k - 0.72) / 0.28;
+    });
+    if (!sp.destroyed) {
+      fxLayer.removeChild(sp);
+      sp.destroy();
+    }
+  }
+
   /**
-   * 播一份特效配方：施放闪光 → 飞行弹体 → 命中闪光。
+   * 播一份特效配方：施放闪光 → 飞行弹体 → 命中闪光 / 道具放大。
    *
    * 有飞行段时会 **await 抵达**，调用方据此把伤害数字排到箭落到之后——
    * 这一点是「射中了」和「同时闪一下」的全部区别。
    *
    * `onPass` 给贯穿技能用：弹体飞过某个目标时触发一次（通常是飘伤害 + 命中闪光）。
+   * `onTargets` 给「分头扑」技能（蜂群）：每个目标各飞一发。
    */
   async function playRecipe(
     recipe: VfxRecipe,
@@ -727,10 +741,33 @@ export function createBattlePlaybackView(
     to: { x: number; y: number } | undefined,
     opts: {
       onPass?: { at: { x: number; y: number }; run: () => void }[];
+      onTargets?: { at: { x: number; y: number }; run: () => void }[];
     } = {},
   ): Promise<void> {
     if (skipping) return;
     if (recipe.cast) playFlash(recipe.cast, from, to);
+
+    if (recipe.propBurst) {
+      await playPropBurst(recipe.propBurst, from, to);
+    }
+
+    if (recipe.travel && recipe.travelPerTarget && (opts.onTargets?.length ?? 0) > 0) {
+      const size = Math.max(cell * recipe.travel.cells, 40);
+      await Promise.all(
+        (opts.onTargets ?? []).map(async (p, i) => {
+          if (i > 0) await awaitEase(dur(40 * i), () => {});
+          if (root.destroyed || skipping) return;
+          await flyProjectile(fxLayer, from, p.at, recipe.travel!, size, {
+            speedScale: speedMul,
+            onArrive: () => {
+              if (recipe.impact) playFlash(recipe.impact, from, p.at);
+              p.run();
+            },
+          }).done;
+        }),
+      );
+      return;
+    }
 
     if (recipe.travel && to) {
       const size = Math.max(cell * recipe.travel.cells, 40);
@@ -819,13 +856,13 @@ export function createBattlePlaybackView(
           c.addChild(icon);
         }
 
-        const nameLbl = new PIXI.Text(def.name, { fill: 0xffffff, fontSize: 9 });
+        const nameLbl = makeText(def.name, 'micro', { fill: 0xffffff });
         nameLbl.anchor.set(0.5, 0);
         nameLbl.y = btnR + 2;
         c.addChild(nameLbl);
 
-        const countLbl = new PIXI.Text(`×${gameState.potions[pid] ?? 0}`, {
-          fill: 0xffe08a, fontSize: 11, fontWeight: 'bold',
+        const countLbl = makeText(`×${gameState.potions[pid] ?? 0}`, 'caption', {
+          fill: 0xffe08a, fontWeight: 'bold',
         });
         countLbl.anchor.set(0.5, 1);
         countLbl.y = btnR - 2;
@@ -856,10 +893,10 @@ export function createBattlePlaybackView(
 
   // ============ 行动顺序条 ============
   /**
-   * 本回合还没动的单位，按速度排。
+   * 跨回合出手预览：当前 + 本回合剩余 + 按速度估的下一回合……
    *
-   * 战棋的每一步取舍都建立在「谁先动」上：该不该走进敌人射程，完全取决于下一个动的是
-   * 我的盾还是他的弓。这个信息以前只存在于引擎里（`bySpeedOrder`），玩家只能一轮轮猜。
+   * 只显示「本回合还没动的」时，回合末尾条子会缩成一两格，后面谁先动完全看不见，
+   * 走进射程的决策就只能猜。预估段略降透明度，和本回合剩余区分开。
    */
   const orderStrip = new PIXI.Container();
   hudLayer.addChild(orderStrip);
@@ -868,21 +905,26 @@ export function createBattlePlaybackView(
   const ORDER_CARD_H = 50;
   /** 顺序条整体高度，供人工操作条让位 */
   const ORDER_STRIP_H = ORDER_CARD_H + 8;
+  /** 一屏最多几格；含跨回合预估 */
+  const ORDER_SHOW = 8;
   orderStrip.y = potionTopY - ORDER_STRIP_H;
 
   function updateOrderStrip(currentUid: string | null): void {
     orderStrip.removeChildren().forEach((c) => c.destroy({ children: true }));
     if (skipping || completed) return;
-    const queue = currentUid ? [currentUid, ...sim.roundOrder()] : sim.roundOrder();
-    const shown = queue.slice(0, 7);
-    if (shown.length === 0) return;
+    const queue = sim.upcomingOrder(ORDER_SHOW, currentUid);
+    if (queue.length === 0) return;
+
+    // 本回合还剩几格（含当前）：之后的是下一回合预估
+    const thisRoundCount = (currentUid ? 1 : 0) + sim.roundOrder().filter((id) => id !== currentUid).length;
 
     const gap = 4;
     const cards: PIXI.Container[] = [];
-    for (const uid of shown) {
+    queue.forEach((uid, idx) => {
       const u = sim.getUnit(uid);
-      if (!u || u.hp <= 0) continue;
-      const isNow = uid === currentUid;
+      if (!u || u.hp <= 0) return;
+      const isNow = uid === currentUid && idx === 0;
+      const nextRound = idx >= thisRoundCount;
       const card = new PIXI.Container();
 
       // 当前行动者金底，其余按阵营深蓝 / 深红——要能一眼数出「接下来轮到几个敌人」
@@ -903,18 +945,27 @@ export function createBattlePlaybackView(
       // 名字优先用角色名（`displayName`），职业名只是兜底。
       // 一队里两个剑士时，「剑士 / 剑士」根本指不出是谁该动。
       const label = u.displayName ?? UNIT_DEFS[u.defId].name;
-      const tx = new PIXI.Text(label.slice(0, 4), {
+      const tx = makeText(label.slice(0, 4), 'combatLabel', {
         fill: isNow ? 0x2a2010 : 0xffffff,
         fontSize: 9,
-        fontWeight: 'bold',
       });
       tx.anchor.set(0.5, 1);
       tx.x = ORDER_CARD_W / 2;
       tx.y = ORDER_CARD_H - 2;
       card.addChild(tx);
 
+      // 跨回合预估略淡，并在回合分界加一条细缝
+      if (nextRound) card.alpha = 0.62;
+      if (nextRound && idx === thisRoundCount && cards.length > 0) {
+        const sep = new PIXI.Graphics();
+        sep.beginFill(0xfff4c0, 0.55);
+        sep.drawRoundedRect(-3, 6, 2, ORDER_CARD_H - 12, 1);
+        sep.endFill();
+        card.addChild(sep);
+      }
+
       cards.push(card);
-    }
+    });
     if (cards.length === 0) return;
 
     const totalW = cards.length * (ORDER_CARD_W + gap) - gap;
@@ -991,16 +1042,46 @@ export function createBattlePlaybackView(
 
       const aiming = phase === 'aim' && aimSlot ? sim.skillAiming(uid, aimSlot) : null;
       if (phase === 'aim' && !aiming) phase = 'act';
-      const attackables = pending.canAttack ? sim.legalAttackTargets(uid) : [];
+      // 普攻瞄准时目标没了（被别人打死等）就退回行动态
+      const attackables = sim.legalAttackTargets(uid);
+      if (phase === 'attackAim' && (pending.didAttack || attackables.length === 0)) {
+        phase = 'act';
+      }
+      const moveCells = pending.canMove ? sim.legalMoveCells(uid) : [];
+      const units = sim.getUnits();
+      // 危险格按「站到该格之后」算，和落地后威胁箭头同一口径（见 dangerMoveCellsForMover）
+      const dangerMoveCells = pending.canMove
+        ? dangerMoveCellsForMover(units, UNIT_DEFS, terrain, uid, moveCells)
+        : [];
+      // 威胁箭头只在「已经走位、还没出手」时画：选移动格阶段不画；
+      // 移动后放了技能 / 普攻 / 待机（回合结束）也不再画。
+      const showThreatArrows =
+        phase === 'act' && pending.didMove && !pending.didSkill && !pending.didAttack;
+      const threatFrom = showThreatArrows
+        ? enemiesThreateningCell(
+          units,
+          UNIT_DEFS,
+          terrain,
+          self.pos,
+          self.faction,
+        ).map((e) => ({ ...e.pos }))
+        : [];
+      const attackButton: AttackButtonState = pending.didAttack
+        ? 'spent'
+        : (pending.canAttack ? 'ready' : 'noTarget');
       ui.update({
         pending,
         phase,
         activeCell: { ...self.pos },
-        moveCells: pending.canMove ? sim.legalMoveCells(uid) : [],
+        moveCells,
+        dangerMoveCells,
         attackCells: cellsOfUids(attackables),
         skillRangeCells: aiming?.rangeCells ?? [],
         skillCandidateCells: cellsOfUids(aiming?.candidates ?? []),
+        skillAimCells: aiming?.aimCells ?? [],
+        threatFrom,
         skillButtons: skillButtonSpecs(uid, pending),
+        attackButton,
       });
       updateOrderStrip(uid);
 
@@ -1013,6 +1094,8 @@ export function createBattlePlaybackView(
           break;
         case 'undo':
           await playEvents(sim.commandUndoMove(uid).events);
+          phase = 'act';
+          aimSlot = null;
           break;
         case 'cancelAim':
           phase = 'act';
@@ -1022,8 +1105,9 @@ export function createBattlePlaybackView(
           if (!pending.castableSlots.includes(input.slot)) break;
           const aim = sim.skillAiming(uid, input.slot);
           if (!aim) break;
-          // AoE 没有目标可选，点一下就放；要选目标的才进瞄准态
-          if (aim.candidates.length === 0) {
+          // 要选单位或选范围格 → 进瞄准；否则点按钮直接放
+          const needsAim = aim.candidates.length > 0 || aim.aimCells.length > 0;
+          if (!needsAim) {
             await playEvents(sim.commandSkill(uid, undefined, input.slot).events);
           } else {
             phase = 'aim';
@@ -1031,19 +1115,52 @@ export function createBattlePlaybackView(
           }
           break;
         }
+        case 'attack': {
+          if (!pending.canAttack || attackables.length === 0) break;
+          // 只有一个目标：点按钮就砍，少一次确认
+          if (attackables.length === 1) {
+            await playEvents(sim.commandAttack(uid, attackables[0]!).events);
+            phase = 'act';
+            aimSlot = null;
+          } else {
+            phase = 'attackAim';
+            aimSlot = null;
+          }
+          break;
+        }
         case 'cell': {
           const hitUid = unitUidAtCell(input.cell);
           if (phase === 'aim') {
-            if (hitUid && aiming?.candidates.includes(hitUid) && aimSlot) {
+            if (!aimSlot || !aiming) break;
+            // 单体点名
+            if (hitUid && aiming.candidates.includes(hitUid)) {
               await playEvents(sim.commandSkill(uid, hitUid, aimSlot).events);
               phase = 'act';
               aimSlot = null;
+              break;
             }
-            // 瞄准态下点击只有一个含义：选目标。这时候弹信息面板会挡住高亮，
-            // 而且玩家的手已经在「要打谁」上了，不是在「他是谁」上。
+            // 直线/AoE：点高亮范围格确认方向（穿透打整条线，不是点哪个敌人打哪个）
+            const onAimCell = aiming.aimCells.some(
+              (c) => c.x === input.cell.x && c.y === input.cell.y,
+            );
+            if (onAimCell) {
+              await playEvents(
+                sim.commandSkill(uid, undefined, aimSlot, { ...input.cell }).events,
+              );
+              phase = 'act';
+              aimSlot = null;
+            }
             break;
           }
-          if (hitUid && attackables.includes(hitUid)) {
+          if (phase === 'attackAim') {
+            if (hitUid && attackables.includes(hitUid)) {
+              await playEvents(sim.commandAttack(uid, hitUid).events);
+              phase = 'act';
+            }
+            break;
+          }
+          // 行动态仍可直接点敌人普攻（老手捷径）；按钮是防忘的主路径
+          if (hitUid && pending.canAttack && attackables.includes(hitUid)) {
             await playEvents(sim.commandAttack(uid, hitUid).events);
             break;
           }
@@ -1062,16 +1179,23 @@ export function createBattlePlaybackView(
     ui.hide();
   }
 
+  function floatStatusNote(x: number, y: number, text: string, tone: 'buff' | 'debuff'): void {
+    spawnCombatFloat(floatHost(), x, y, text, tone);
+  }
+
   function renderPotionEvents(evs: BattleEvent[]): void {
     for (const ev of evs) {
       if (ev.type === 'potion') {
-        floatText(sw / 2, originY + 30, `使用 ${ev.name}`, 0x9ae2ff, { large: true });
+        floatUtility(sw / 2, originY + 30, `使用 ${ev.name}`);
       } else if (ev.type === 'heal') {
         const tok = tokens.get(ev.target);
         if (tok) {
-          floatText(tok.x, tok.y, `+${ev.amount}`, 0x7ee24a, { large: true });
+          floatHeal(tok.x, tok.y, ev.amount);
           tokenOverheads.get(ev.target)?.updateHp(ev.hpLeft);
         }
+      } else if (ev.type === 'statusNote') {
+        const tok = tokens.get(ev.target);
+        if (tok) floatStatusNote(tok.x, tok.y, ev.text, ev.tone);
       }
     }
   }
@@ -1082,24 +1206,16 @@ export function createBattlePlaybackView(
     switch (ev.type) {
       case 'round': {
         setRoundLabel();
-        if (skipping) return;
-        const banner = new PIXI.Container();
-        const bg = new PIXI.Graphics();
-        bg.beginFill(0x000000, 0.55);
-        bg.drawRoundedRect(0, 0, 160, 36, 8);
-        bg.endFill();
-        const tx = new PIXI.Text(`第 ${ev.round} 回合`, { fill: 0xffffff, fontSize: 16 });
-        tx.anchor.set(0.5);
-        tx.x = 80;
-        tx.y = 18;
-        banner.addChild(bg);
-        banner.addChild(tx);
-        banner.x = sw / 2 - 80;
-        banner.y = 44;
-        fxLayer.addChild(banner);
-        await awaitEase(dur(380), () => {});
-        fxLayer.removeChild(banner);
-        banner.destroy({ children: true });
+        await spawnRoundBanner(floatHost(), sw / 2, 56, `第 ${ev.round} 回合`);
+        break;
+      }
+      case 'dot': {
+        const tok = tokens.get(ev.uid);
+        if (tok) {
+          floatDot(tok.x, tok.y, ev.damage, ev.source);
+          tokenOverheads.get(ev.uid)?.updateHp(ev.hpLeft);
+          await awaitEase(dur(280), () => {});
+        }
         break;
       }
       case 'moveRange': {
@@ -1137,25 +1253,36 @@ export function createBattlePlaybackView(
             firstTargetPos.y - casterPos.y,
           );
         }
-        showSkillLabel(
-          cx,
-          cy - Math.max(42, cell * 0.6),
-          ev.atkTerrainNote ? `${ev.skillName} · ${ev.atkTerrainNote}` : ev.skillName,
-        );
+        showSkillLabel(cx, cy - Math.max(42, cell * 0.6), ev.skillName);
+        floatAtkTerrain(cx, cy - Math.max(22, cell * 0.32), ev.atkTerrainNote);
 
-        const recipe = SKILL_VFX[ev.skillId];
+        const vfxKey = skillVfxOverride.get(`${ev.uid}:${ev.skillId}`) ?? ev.skillId;
+        const recipe = SKILL_VFX[vfxKey] ?? SKILL_VFX[ev.skillId];
         const applyHitFx = (h: (typeof ev.hits)[number]): void => {
           tokenOverheads.get(h.target)?.updateHp(h.hpLeft);
           const tt = tokens.get(h.target);
           if (tt) {
-            hitShake(tt);
-            floatText(tt.x, tt.y, `-${h.damage}`, 0xff4444, { large: true });
-            // AoE 里每个目标脚下的地形可能不同，所以归因是逐 hit 的，不能只看施法者那格
-            floatTerrainNote(tt.x, tt.y, h.defTerrainNote);
+            // 纯 buff/debuff（damage:0）不飘「0」、不抖——那是号角/缠足一类，不是失手
+            if (h.damage > 0) {
+              hitShake(tt);
+              floatDamage(tt.x, tt.y, h.damage);
+              floatTerrainNote(tt.x, tt.y, h.defTerrainNote);
+            }
           }
         };
 
-        if (recipe?.travel) {
+        if (recipe?.travel && recipe.travelPerTarget) {
+          // 蜂群：每个敌人各飞一发蜜蜂团，落到才飘伤害
+          const targets = ev.hits.map((h) => {
+            const tok = tokens.get(h.target);
+            return {
+              at: tok ? { x: tok.x, y: tok.y } : { x: cx, y: cy },
+              run: () => applyHitFx(h),
+            };
+          });
+          await playRecipe(recipe, { x: cx, y: cy }, targets[0]?.at, { onTargets: targets });
+          await awaitEase(dur(180), () => {});
+        } else if (recipe?.travel) {
           // 远程弹道：箭飞到才结算。贯穿技能沿途依次中招，否则穿透就读成「一起爆了」
           const endUid = farthestHitUid(ev.uid, ev.hits) ?? ev.hits[0]?.target;
           const endTok = endUid ? tokens.get(endUid) : undefined;
@@ -1208,16 +1335,13 @@ export function createBattlePlaybackView(
       case 'attack': {
         const a = tokens.get(ev.attacker);
         const t = tokens.get(ev.target);
-        // 攻击方地形并进招式标签而不是单独飘一条：它和「普攻」讲的是同一件事
-        // （我这一下打出了多少），拆成两个飘字反而要玩家自己在脑子里合并。
-        const label = ev.atkTerrainNote
-          ? `${ev.attackLabel ?? '普攻'} · ${ev.atkTerrainNote}`
-          : (ev.attackLabel ?? '普攻');
         if (a && t) {
           const ap = posByUid.get(ev.attacker);
           const tp = posByUid.get(ev.target);
           if (ap && tp) animByUid.get(ev.attacker)?.playAttack(tp.x - ap.x, tp.y - ap.y);
-          showSkillLabel(a.x, a.y - Math.max(42, cell * 0.6), label);
+          // 技能名胶囊与高地加成分开：一个讲「出了哪招」，一个讲「站位加成」
+          showSkillLabel(a.x, a.y - Math.max(42, cell * 0.6), ev.attackLabel ?? '普攻');
+          floatAtkTerrain(a.x, a.y - Math.max(22, cell * 0.32), ev.atkTerrainNote);
           // 普攻按兵种原型取配方：近战只有命中闪光，弓手是飞箭 → 命中。
           // 有飞行段时 await 抵达再飘伤害，否则读成「敌人自己爆了」
           const kind = defIdByUid.get(ev.attacker);
@@ -1225,12 +1349,12 @@ export function createBattlePlaybackView(
           if (ev.charged) void playRecipe(CHARGE_VFX, { x: a.x, y: a.y }, undefined);
           await playRecipe(ATTACK_VFX[kind ?? 'sword'], { x: a.x, y: a.y }, { x: t.x, y: t.y });
           hitShake(t);
-          floatText(t.x, t.y, `-${ev.damage}`, 0xff4444, { large: true });
+          floatDamage(t.x, t.y, ev.damage);
           floatTerrainNote(t.x, t.y, ev.defTerrainNote);
           tokenOverheads.get(ev.target)?.updateHp(ev.hpLeft);
           await awaitEase(dur(260), () => {});
         } else if (t) {
-          floatText(t.x, t.y, `-${ev.damage}`, 0xff4444, { large: true });
+          floatDamage(t.x, t.y, ev.damage);
           tokenOverheads.get(ev.target)?.updateHp(ev.hpLeft);
           await awaitEase(dur(260), () => {});
         }
@@ -1239,13 +1363,19 @@ export function createBattlePlaybackView(
       case 'heal': {
         const tok = tokens.get(ev.target);
         if (tok) {
-          floatText(tok.x, tok.y, `+${ev.amount}`, 0x7ee24a, { large: true });
+          floatHeal(tok.x, tok.y, ev.amount);
           tokenOverheads.get(ev.target)?.updateHp(ev.hpLeft);
         }
         break;
       }
+      case 'statusNote': {
+        const tok = tokens.get(ev.target);
+        if (tok) floatStatusNote(tok.x, tok.y, ev.text, ev.tone);
+        await awaitEase(dur(220), () => {});
+        break;
+      }
       case 'potion': {
-        floatText(sw / 2, originY + 30, `使用 ${ev.name}`, 0x9ae2ff, { large: true });
+        floatUtility(sw / 2, originY + 30, `使用 ${ev.name}`);
         break;
       }
       case 'death': {
@@ -1335,6 +1465,7 @@ export function createBattlePlaybackView(
     screenW: sw,
     barBottomY: orderStrip.y - 10,
     highlightLayer: rangeLayer,
+    threatLayer: fxLayer,
     inputLayer,
     hudLayer,
     onIdleTap: showUnitInfoAt,

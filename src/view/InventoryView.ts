@@ -1,8 +1,10 @@
 import * as PIXI from 'pixi.js';
+import { makeText } from '@/theme/typography';
 import { POTION_DEFS } from '@/data/potionCatalog';
 import { getSkillSpec } from '@/data/skillCatalog';
 import { getSkillMod } from '@/data/skillModCatalog';
 import { PLACEABLE_TERRAIN_IDS, terrainTicketName } from '@/data/dungeonCatalog';
+import { describePotion, describeTempSkill, describeTerrainTicket } from '@/data/itemText';
 import type { MvpGameState } from '@/game/MvpState';
 import { createBackground, createUiIcon } from '@/view/renderHelpers';
 
@@ -30,7 +32,7 @@ export function createInventoryView(
   const root = new PIXI.Container();
   root.addChild(createBackground(W, H));
 
-  const titleTx = new PIXI.Text('背  包', { fill: 0xffffff, fontSize: 18, fontWeight: 'bold' });
+  const titleTx = makeText('背  包', 'title', { fill: 0xffffff });
   titleTx.anchor.set(0.5, 0);
   titleTx.x = W / 2; titleTx.y = 12;
   root.addChild(titleTx);
@@ -41,8 +43,8 @@ export function createInventoryView(
   const bannerText = run
     ? '⏳ 以下物资仅本次冒险有效，冒险结束后清空'
     : '当前不在冒险中 · 物资在冒险内获得与消耗，结束即清空';
-  const bannerTx = new PIXI.Text(bannerText, {
-    fill: 0xffe08a, fontSize: 11, fontWeight: 'bold',
+  const bannerTx = makeText(bannerText, 'caption', {
+    fill: 0xffe08a, fontWeight: 'bold',
     wordWrap: true, wordWrapWidth: W - 48, align: 'center',
   });
   bannerTx.anchor.set(0.5, 0.5);
@@ -73,14 +75,14 @@ export function createInventoryView(
       icon.x = 10; icon.y = 12;
       soulCard.addChild(icon);
     }
-    const name = new PIXI.Text('魂晶（永久保留）', { fill: 0xffffff, fontSize: 14, fontWeight: 'bold' });
+    const name = makeText('魂晶（永久保留）', 'uiStrong', { fill: 0xffffff });
     name.x = 48; name.y = 8;
     soulCard.addChild(name);
-    const desc = new PIXI.Text('战斗与通关获得 · 用于角色升级/学技能/招募', { fill: 0xb9b0c8, fontSize: 10 });
+    const desc = makeText('战斗与通关获得 · 用于角色升级/学技能/招募', 'caption', { fill: 0xb9b0c8, fontSize: 10 });
     desc.x = 48; desc.y = 28;
     soulCard.addChild(desc);
-    const cnt = new PIXI.Text(`×${state.meta.metaCurrency}`, {
-      fill: 0xd8b0ff, fontSize: 16, fontWeight: 'bold',
+    const cnt = makeText(`×${state.meta.metaCurrency}`, 'uiStrong', {
+      fill: 0xd8b0ff, fontSize: 16,
     });
     cnt.anchor.set(1, 0.5);
     cnt.x = W - 36; cnt.y = 26;
@@ -90,7 +92,7 @@ export function createInventoryView(
   }
 
   const section = (label: string, rows: ItemRowSpec[]): void => {
-    const t = new PIXI.Text(label, { fill: 0xfff3d8, fontSize: 14, fontWeight: 'bold' });
+    const t = makeText(label, 'uiStrong', { fill: 0xfff3d8 });
     t.x = 12; t.y = y;
     root.addChild(t);
     y += 24;
@@ -109,18 +111,18 @@ export function createInventoryView(
         art.x = 12; art.y = cardH / 2 - 13;
         card.addChild(art);
       } else if (row.icon) {
-        const icon = new PIXI.Text(row.icon, { fontSize: 24 });
+        const icon = makeText(row.icon, 'ui', { fontSize: 24 });
         icon.x = 12; icon.y = cardH / 2 - 14;
         card.addChild(icon);
       }
-      const name = new PIXI.Text(row.name, { fill: has ? TEXT : MUTED, fontSize: 14, fontWeight: 'bold' });
+      const name = makeText(row.name, 'uiStrong', { fill: has ? TEXT : MUTED });
       name.x = 48; name.y = 8;
       card.addChild(name);
-      const desc = new PIXI.Text(row.desc, { fill: MUTED, fontSize: 10, wordWrap: true, wordWrapWidth: W - 150 });
+      const desc = makeText(row.desc, 'body', { fill: MUTED, fontSize: 10, wordWrap: true, wordWrapWidth: W - 150 });
       desc.x = 48; desc.y = 28;
       card.addChild(desc);
-      const cnt = new PIXI.Text(`×${row.count}`, {
-        fill: has ? 0xcc8833 : MUTED, fontSize: 16, fontWeight: 'bold',
+      const cnt = makeText(`×${row.count}`, 'uiStrong', {
+        fill: has ? 0xcc8833 : MUTED, fontSize: 16,
       });
       cnt.anchor.set(1, 0.5);
       cnt.x = W - 36; cnt.y = cardH / 2;
@@ -133,19 +135,18 @@ export function createInventoryView(
 
   section('药剂（战斗中使用）', Object.keys(POTION_DEFS).map((id) => {
     const d = POTION_DEFS[id]!;
-    const icon = id === 'heal' ? '🧪' : id === 'slow' ? '🫙' : '⚗';
     return {
-      icon,
+      iconKey: `icon_potion_${id}`,
       name: d.name,
-      desc: `${d.desc} · 商店购买/战利品`,
+      desc: describePotion(id),
       count: run?.potions[id] ?? 0,
     };
   }));
 
   section('地形券（布阵时放置）', PLACEABLE_TERRAIN_IDS.map((tid) => ({
-    icon: tid === 'high' ? '⛰' : tid === 'forest' ? '🌲' : '🧱',
+    iconKey: 'icon_terrain',
     name: terrainTicketName(tid),
-    desc: '布阵阶段放置一格对应地形 · 商店购买',
+    desc: describeTerrainTicket(tid),
     count: run?.terrainCharges[tid] ?? 0,
   })));
 
@@ -185,7 +186,7 @@ export function createInventoryView(
     tempRows.push({
       iconKey: `skill_${spec.id}`,
       name: `${m.name} · ${spec.name}`,
-      desc: `第二技能位 · 冷却 ${spec.cooldown} 回合 · 本局有效`,
+      desc: describeTempSkill(spec.id),
       count: 1,
     });
   }

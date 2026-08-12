@@ -21,16 +21,19 @@ function defOf(u: UnitState, defs: Record<UnitKind, UnitArchetypeDef>): UnitDef 
   return effectiveUnitDef(u, defs);
 }
 
+/** 普攻能否从 `from` 打到格子 `cell`（近战邻格 / 远程 1..range） */
+export function canAttackCell(atkDef: UnitDef, from: Vec2, cell: Vec2): boolean {
+  const d = manhattan(from, cell);
+  if (atkDef.isRanged) return d >= 1 && d <= atkDef.range;
+  return d === 1;
+}
+
 export function canAttackFrom(
   atkDef: UnitDef,
   fromPos: Vec2,
   target: UnitState,
 ): boolean {
-  const d = manhattan(fromPos, target.pos);
-  if (atkDef.isRanged) {
-    return d <= atkDef.range && d >= 1;
-  }
-  return d === 1;
+  return canAttackCell(atkDef, fromPos, target.pos);
 }
 
 /**

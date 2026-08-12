@@ -6,6 +6,7 @@ import { DUNGEON_DEFS } from '@/data/dungeonCatalog';
 import { POTION_DEFS } from '@/data/potionCatalog';
 import { getSkillSpec } from '@/data/skillCatalog';
 import { allSkillMods, modStacks } from '@/data/skillModCatalog';
+import { describePotion } from '@/data/itemText';
 import { resolveBattleSkillIdForCharacter } from './DeployManager';
 import { instantiateCharacter } from '@/game/characterFactory';
 import type { Character } from '@/game/characterTypes';
@@ -161,7 +162,7 @@ export function rollLoot(state: MvpGameState): LootOption[] {
     const ids = Object.keys(POTION_DEFS);
     const pid = ids[Math.floor(Math.random() * ids.length)]!;
     const pd = POTION_DEFS[pid]!;
-    picks.push({ kind: 'potion', potionId: pid, name: pd.name, desc: pd.desc });
+    picks.push({ kind: 'potion', potionId: pid, name: pd.name, desc: describePotion(pid) });
     if (picks.length >= 3) break;
   }
   return picks;

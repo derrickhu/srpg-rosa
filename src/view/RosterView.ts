@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import { makeText } from '@/theme/typography';
 import { UNIT_DEFS } from '@/data/unitDefs';
 import { getCharacterDef, levelUpCost, type CharacterDef } from '@/data/characterCatalog';
 import { getDungeonDef } from '@/data/dungeonCatalog';
@@ -58,7 +59,7 @@ export function createRosterView(
   pill.y = 8;
   root.addChild(pill);
 
-  const titleTx = new PIXI.Text('角  色', { fill: 0xffffff, fontSize: 18, fontWeight: 'bold' });
+  const titleTx = makeText('角  色', 'title', { fill: 0xffffff });
   titleTx.anchor.set(0.5, 0);
   titleTx.x = W / 2; titleTx.y = 12;
   root.addChild(titleTx);
@@ -66,7 +67,7 @@ export function createRosterView(
   let y = pill.y + pill.height + 14;
 
   const sectionTitle = (label: string): void => {
-    const t = new PIXI.Text(label, { fill: 0xfff3d8, fontSize: 14, fontWeight: 'bold' });
+    const t = makeText(label, 'uiStrong', { fill: 0xfff3d8 });
     t.x = 12; t.y = y;
     root.addChild(t);
     y += 24;
@@ -116,10 +117,10 @@ export function createRosterView(
     const token = createUnitToken(m.profession, 'player', Math.min(w - 14, 52));
     token.x = w / 2; token.y = h / 2 - 10;
     c.addChild(token);
-    const nameTx = new PIXI.Text(m.name, { fill: 0xffffff, fontSize: 12, fontWeight: 'bold' });
+    const nameTx = makeText(m.name, 'uiStrong', { fill: 0xffffff, fontSize: 12 });
     nameTx.anchor.set(0.5, 0); nameTx.x = w / 2; nameTx.y = h - 32;
     c.addChild(nameTx);
-    const lvTx = new PIXI.Text(`Lv.${m.level}`, { fill: 0xffe08a, fontSize: 10 });
+    const lvTx = makeText(`Lv.${m.level}`, 'caption', { fill: 0xffe08a, fontSize: 10 });
     lvTx.anchor.set(0.5, 0); lvTx.x = w / 2; lvTx.y = h - 17;
     c.addChild(lvTx);
     c.eventMode = 'static'; c.cursor = 'pointer';
@@ -140,11 +141,11 @@ export function createRosterView(
       lock.x = w / 2 - 13; lock.y = h / 2 - 27;
       c.addChild(lock);
     }
-    const nameTx = new PIXI.Text(def.name, { fill: 0xcccccc, fontSize: 11 });
+    const nameTx = makeText(def.name, 'caption', { fill: 0xcccccc });
     nameTx.anchor.set(0.5, 0); nameTx.x = w / 2; nameTx.y = h - 32;
     c.addChild(nameTx);
-    const condTx = new PIXI.Text(unlockConditionText(def), {
-      fill: 0xffe08a, fontSize: 9,
+    const condTx = makeText(unlockConditionText(def), 'micro', {
+      fill: 0xffe08a,
       wordWrap: true, wordWrapWidth: w - 8, align: 'center',
     });
     condTx.anchor.set(0.5, 0); condTx.x = w / 2; condTx.y = h - 18;
@@ -185,15 +186,15 @@ export function createRosterView(
     panel.eventMode = 'static';
 
     let cy = 14;
-    const nameTx = new PIXI.Text(`${m.name}  Lv.${m.level}`, { fill: TEXT, fontSize: 17, fontWeight: 'bold' });
+    const nameTx = makeText(`${m.name}  Lv.${m.level}`, 'title', { fill: TEXT, fontSize: 17 });
     nameTx.x = 14; nameTx.y = cy; panel.addChild(nameTx);
-    const profTx = new PIXI.Text(UNIT_DEFS[m.profession].name, { fill: MUTED, fontSize: 12 });
+    const profTx = makeText(UNIT_DEFS[m.profession].name, 'body', { fill: MUTED });
     profTx.x = 14; profTx.y = cy + 24; panel.addChild(profTx);
     cy += 48;
 
     const eff = characterEffectiveStats(m);
     const statLine = `生命 ${eff.maxHp}   攻击 ${eff.atk}   速度 ${eff.spd}   移动 ${eff.move}`;
-    const statTx = new PIXI.Text(statLine, { fill: TEXT, fontSize: 12 });
+    const statTx = makeText(statLine, 'body', { fill: TEXT });
     statTx.x = 14; statTx.y = cy; panel.addChild(statTx);
     cy += 26;
 
@@ -215,7 +216,7 @@ export function createRosterView(
     cy += 48;
 
     // 已装配技能
-    const equipTitle = new PIXI.Text('装配技能（点击切换）', { fill: 0x6b4c2a, fontSize: 12, fontWeight: 'bold' });
+    const equipTitle = makeText('装配技能（点击切换）', 'uiStrong', { fill: 0x6b4c2a, fontSize: 12 });
     equipTitle.x = 14; equipTitle.y = cy; panel.addChild(equipTitle);
     cy += 20;
     let sx = 14;
@@ -239,8 +240,8 @@ export function createRosterView(
     // 可学习技能
     const learnable = def ? unlockableSkillsFor(m) : [];
     if (learnable.length > 0) {
-      const learnTitle = new PIXI.Text(`学习新技能（每个魂晶 ${SKILL_LEARN_COST}）`, {
-        fill: 0x6b4c2a, fontSize: 12, fontWeight: 'bold',
+      const learnTitle = makeText(`学习新技能（每个魂晶 ${SKILL_LEARN_COST}）`, 'uiStrong', {
+        fill: 0x6b4c2a, fontSize: 12,
       });
       learnTitle.x = 14; learnTitle.y = cy; panel.addChild(learnTitle);
       cy += 20;

@@ -10,12 +10,30 @@ import '@/platform/wxPlatform';
 
 declare const GameGlobal: any;
 
+function formatBootErr(e: unknown): string {
+  if (e == null) return String(e);
+  if (typeof e === 'string') return e;
+  if (e instanceof Error) return e.stack || e.message;
+  if (typeof e === 'object') {
+    const o = e as { errMsg?: unknown; message?: unknown; reason?: unknown };
+    if (o.errMsg != null) return String(o.errMsg);
+    if (o.message != null) return String(o.message);
+    if (o.reason != null) return formatBootErr(o.reason);
+    try {
+      return JSON.stringify(e);
+    } catch {
+      return Object.prototype.toString.call(e);
+    }
+  }
+  return String(e);
+}
+
 if (typeof GameGlobal !== 'undefined') {
-  GameGlobal.onError = (msg: string) => {
-    console.error('[GlobalError]', msg);
+  GameGlobal.onError = (msg: unknown) => {
+    console.error('[GlobalError]', formatBootErr(msg));
   };
   GameGlobal.onUnhandledRejection = (ev: unknown) => {
-    console.error('[UnhandledRejection]', ev);
+    console.error('[UnhandledRejection]', formatBootErr(ev));
   };
 }
 

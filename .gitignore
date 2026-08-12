@@ -13,9 +13,18 @@ scripts/.cdn_manifest.cloudbase.json
 scripts/cdn_manifest_for_upload.json
 scripts/.cdn_secret
 
-# Godot 字体源（仅本地子集用，子集与 godot-cdn/ 入库）
+# Godot 字体源（工程已废弃，可删；若本地还残留全量 OTF 勿提交）
 godot/art/fonts/SourceHanSansSC-Medium.otf
 godot/art/fonts/SourceHanSansSC-Bold.otf
+
+# 展示字体源（得意黑全量 TTF，仅本地 subset；产物 fonts/SmileySans-subset.ttf 入库）
+tools/font-src/
+fonts/.charset.txt
+
+# 本地 Godot 编辑器与微信导出模板（体积大，不入库）
+tools/godot-4.6.2/
+wechat-godot-4.6.2/
+wechat-godot-untyped-main/
 
 # generate2dsprite 的审片产物：由 raw-sheet.png 可重新生成，不入库。
 # 逐帧 PNG、pipeline-meta.json、scale-profile.json、raw-sheet.png 是 sprite2anim 的

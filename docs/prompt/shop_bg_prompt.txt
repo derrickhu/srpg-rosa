@@ -1,0 +1,47 @@
+局内补给点场景背景
+产出 → images/bg/shop_bg.png（832×1248，2:3，随包或 CDN 同 battle_bg）
+生成器：Cursor 内置 GenerateImage，aspect_ratio 2:3
+
+后处理：
+    # 母版等比 cover 裁到 832x1248，再 pngquant
+    python3 scripts/... 或手工 PIL cover-resize
+
+用在哪：ShopView 全屏底。商人/摊是**正视 chibi**，不能再用俯视 battle_bg——
+机位会打架。本图允许地平线与天空（同章节卡例外，不是棋盘舞台）。
+
+构图要点：
+- 轻微仰视/平视的路边草地空地，前景中下留干净空地给商人+摊
+- 两侧侧面看的圆冠灌木/矮树（不是俯视圆饼树冠）
+- 暖黄绿草地 #B4D45A / #C2DE6E，与草原章一致
+- 禁止文字、禁止商人/摊/货物、禁止写实厚涂
+
+---
+
+A full-screen PORTRAIT (2:3) background for a roadside supply-shop scene in a cartoon fantasy tactics mobile game.
+
+CAMERA — eye-level / slight front view looking into a sunny grassland clearing.
+NOT top-down. NOT bird's-eye. Trees and bushes must be seen from the SIDE
+(trunk + rounded leafy crown), never as flat circular canopies from above.
+
+COMPOSITION:
+- LOWER 45%: open warm yellow-green grass and a soft pale dirt patch in the center —
+  this is empty stage space where a merchant and stall will be placed in code.
+  Keep it clean, low detail, no props.
+- MIDDLE: gently rising grass, a few chunky round side-view bushes left and right.
+- UPPER: soft rolling hills on the horizon, calm pale sky with 2–3 simple flat clouds.
+  Horizon allowed (this is a scene poster, not a tactics board).
+
+COLOUR — match chapter grassland:
+- Grass BRIGHT warm sunny yellow-green #B4D45A, #C2DE6E, #A8CC4E
+- Bushes deeper green with one cel highlight
+- Dirt path pale cream-tan #E8D8A8
+- Sky soft light blue, flat fills
+
+STYLE:
+- Hand-drawn cartoon, thick near-black outlines on bushes/hills only (grass can be softer)
+- Flat saturated fills, light cel shading, NO gradients, NO texture noise, NO painterly,
+  NO photographic detail
+- Friendly toy-like shapes
+
+NO characters, NO merchant, NO stall, NO goods, NO price tags, NO text, NO watermark,
+NO UI frames, NO phone bezel.

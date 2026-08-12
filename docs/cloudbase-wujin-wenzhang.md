@@ -30,7 +30,8 @@
 | 类型 | 目录 | 说明 |
 |------|------|------|
 | **CDN**（瘦包可排除） | `images/terrain/`、`images/units/`、`images/fx/`、`images/bg/` | 走 HTTPS 下载 + `USER_DATA_PATH/cdn_cache` |
-| **Bundled**（随包） | `images/ui/` | 首屏按钮、Logo 等关键 UI |
+| **Bundled**（随包） | `images/ui/`、`fonts/`（得意黑展示子集） | 首屏 UI + 展示字体；`packOptions.ignore` 必须排除 `tools/`/`godot/`/`art/` 等，否则上传体积爆炸 |
+
 
 示例：
 

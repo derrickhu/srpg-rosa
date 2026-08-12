@@ -54,11 +54,26 @@ describe('单位信息面板的数值来源', () => {
   });
 
   it('战斗中显示技能剩余冷却，布阵页预览不显示', () => {
-    const u: UnitState = { ...enemySpawnToUnitState(spawn, 1), skillCd: 2 };
+    const bossSpawn = STAGES_MVP[6]!.enemies.find((e) => e.boss)!;
+    const u: UnitState = { ...enemySpawnToUnitState(bossSpawn, 1), skillCd: 2 };
     const inBattle = battleUnitInfoModel(u, { showCooldown: true });
     const inDeploy = battleUnitInfoModel(u, { showCooldown: false });
-    if (inBattle.skills.length === 0) return; // 这只小怪没技能，跳过
     expect(inBattle.skills[0]!.cooldownNote).toBe('（剩 2）');
     expect(inDeploy.skills[0]!.cooldownNote).toBeUndefined();
+  });
+
+  it('第一章小怪面板不出现装备技能', () => {
+    const u = enemySpawnToUnitState(spawn, 1);
+    const model = battleUnitInfoModel(u, { showCooldown: false });
+    expect(model.skills).toHaveLength(0);
+  });
+
+  it('Boss 面板显示皮肤名与图标，不暴露底层 savage_roar 名', () => {
+    const bossSpawn = STAGES_MVP[6]!.enemies.find((e) => e.boss)!;
+    const u = enemySpawnToUnitState(bossSpawn, 1.1);
+    const model = battleUnitInfoModel(u, { showCooldown: false });
+    expect(model.skills).toHaveLength(1);
+    expect(model.skills[0]!.name).toBe('血牙咆哮');
+    expect(model.skills[0]!.iconKey).toBe('skill_bloodfang_roar');
   });
 });

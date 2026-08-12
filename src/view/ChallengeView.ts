@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import { makeText } from '@/theme/typography';
 import { DUNGEON_DEFS, type DungeonDef } from '@/data/dungeonCatalog';
 import type { MvpGameState } from '@/game/MvpState';
 import { createBackground, createUiIcon } from '@/view/renderHelpers';
@@ -24,15 +25,15 @@ export function createChallengeView(
   const root = new PIXI.Container();
   root.addChild(createBackground(W, H));
 
-  const titleTx = new PIXI.Text('副本挑战', { fill: 0xffffff, fontSize: 18, fontWeight: 'bold' });
+  const titleTx = makeText('副本挑战', 'title', { fill: 0xffffff });
   titleTx.anchor.set(0.5, 0);
   titleTx.x = W / 2; titleTx.y = 12;
   root.addChild(titleTx);
 
   let y = 46;
 
-  const secTitle = new PIXI.Text('章节重挑战（可重复获得魂晶）', {
-    fill: 0xfff3d8, fontSize: 13, fontWeight: 'bold',
+  const secTitle = makeText('章节重挑战（可重复获得魂晶）', 'uiStrong', {
+    fill: 0xfff3d8, fontSize: 13,
   });
   secTitle.x = 12; secTitle.y = y;
   root.addChild(secTitle);
@@ -40,7 +41,7 @@ export function createChallengeView(
 
   const cleared = DUNGEON_DEFS.filter((d) => state.meta.clearedDungeonIds.includes(d.id));
   if (cleared.length === 0) {
-    const empty = new PIXI.Text('通关任意章节后可在此重复挑战', { fill: 0xd8d0c8, fontSize: 12 });
+    const empty = makeText('通关任意章节后可在此重复挑战', 'body', { fill: 0xd8d0c8 });
     empty.x = 12; empty.y = y;
     root.addChild(empty);
     y += 30;
@@ -54,10 +55,10 @@ export function createChallengeView(
     g.drawRoundedRect(0, 0, W - 24, cardH, 10);
     g.endFill();
     card.addChild(g);
-    const name = new PIXI.Text(`${d.name} ✓`, { fill: TEXT, fontSize: 14, fontWeight: 'bold' });
+    const name = makeText(`${d.name} ✓`, 'uiStrong', { fill: TEXT });
     name.x = 14; name.y = 10;
     card.addChild(name);
-    const desc = new PIXI.Text(d.desc, { fill: MUTED, fontSize: 10 });
+    const desc = makeText(d.desc, 'caption', { fill: MUTED, fontSize: 10 });
     desc.x = 14; desc.y = 32;
     card.addChild(desc);
     const btn = makeButton('挑战', () => cb.onChallenge(d), {
@@ -70,7 +71,7 @@ export function createChallengeView(
   }
 
   y += 12;
-  const futureTitle = new PIXI.Text('更多玩法', { fill: 0xfff3d8, fontSize: 13, fontWeight: 'bold' });
+  const futureTitle = makeText('更多玩法', 'uiStrong', { fill: 0xfff3d8, fontSize: 13 });
   futureTitle.x = 12; futureTitle.y = y;
   root.addChild(futureTitle);
   y += 24;
@@ -88,13 +89,13 @@ export function createChallengeView(
     g.drawRoundedRect(0, 0, W - 24, cardH, 10);
     g.endFill();
     card.addChild(g);
-    const icon = new PIXI.Text(p.icon, { fontSize: 22 });
+    const icon = makeText(p.icon, 'ui', { fontSize: 22 });
     icon.x = 14; icon.y = cardH / 2 - 13;
     card.addChild(icon);
-    const name = new PIXI.Text(p.name, { fill: 0xcccccc, fontSize: 14, fontWeight: 'bold' });
+    const name = makeText(p.name, 'uiStrong', { fill: 0xcccccc });
     name.x = 50; name.y = 10;
     card.addChild(name);
-    const desc = new PIXI.Text(p.desc, { fill: 0x999999, fontSize: 10 });
+    const desc = makeText(p.desc, 'caption', { fill: 0x999999, fontSize: 10 });
     desc.x = 50; desc.y = 32;
     card.addChild(desc);
     const lock = createUiIcon('icon_lock', 20);

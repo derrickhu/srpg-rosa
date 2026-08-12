@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import { makeText } from '@/theme/typography';
 import { CHARACTER_DEFS } from '@/data/characterCatalog';
 import { UNIT_DEFS } from '@/data/unitDefs';
 import {
@@ -32,14 +33,14 @@ export function createMetaShopView(
   pill.y = 8;
   root.addChild(pill);
 
-  const titleTx = new PIXI.Text('商  店', { fill: 0xffffff, fontSize: 18, fontWeight: 'bold' });
+  const titleTx = makeText('商  店', 'title', { fill: 0xffffff });
   titleTx.anchor.set(0.5, 0);
   titleTx.x = W / 2; titleTx.y = 12;
   root.addChild(titleTx);
 
   let y = pill.y + pill.height + 14;
 
-  const secTitle = new PIXI.Text('角色招募（魂晶）', { fill: 0xfff3d8, fontSize: 14, fontWeight: 'bold' });
+  const secTitle = makeText('角色招募（魂晶）', 'uiStrong', { fill: 0xfff3d8 });
   secTitle.x = 12; secTitle.y = y;
   root.addChild(secTitle);
   y += 24;
@@ -63,20 +64,21 @@ export function createMetaShopView(
     token.x = 34; token.y = cardH / 2;
     card.addChild(token);
 
-    const name = new PIXI.Text(`${def.name} · ${UNIT_DEFS[def.profession].name}`, {
-      fill: TEXT, fontSize: 14, fontWeight: 'bold',
+    const name = makeText(`${def.name} · ${UNIT_DEFS[def.profession].name}`, 'uiStrong', {
+      fill: TEXT,
     });
     name.x = 64; name.y = 12;
     card.addChild(name);
-    const desc = new PIXI.Text(
+    const desc = makeText(
       `生命 ${def.base.maxHp}  攻击 ${def.base.atk}  速度 ${def.base.spd}  移动 ${def.base.move}`,
-      { fill: MUTED, fontSize: 11 },
+      'caption',
+      { fill: MUTED },
     );
     desc.x = 64; desc.y = 36;
     card.addChild(desc);
 
     if (owned) {
-      const done = new PIXI.Text('已招募', { fill: 0x5a9e3a, fontSize: 13, fontWeight: 'bold' });
+      const done = makeText('已招募', 'uiStrong', { fill: 0x5a9e3a, fontSize: 13 });
       done.anchor.set(1, 0.5);
       done.x = W - 40; done.y = cardH / 2;
       card.addChild(done);
@@ -96,20 +98,21 @@ export function createMetaShopView(
     listed += 1;
   }
   if (listed === 0) {
-    const empty = new PIXI.Text('暂无可招募角色', { fill: 0xd8d0c8, fontSize: 12 });
+    const empty = makeText('暂无可招募角色', 'body', { fill: 0xd8d0c8 });
     empty.x = 12; empty.y = y;
     root.addChild(empty);
     y += 26;
   }
 
   y += 8;
-  const noteTitle = new PIXI.Text('魂晶获取', { fill: 0xfff3d8, fontSize: 14, fontWeight: 'bold' });
+  const noteTitle = makeText('魂晶获取', 'uiStrong', { fill: 0xfff3d8 });
   noteTitle.x = 12; noteTitle.y = y;
   root.addChild(noteTitle);
   y += 24;
-  const note = new PIXI.Text(
+  const note = makeText(
     '· 每场战斗胜利掉落少量魂晶\n· Boss 战与章节通关掉落大额魂晶\n· 魂晶用于：角色升级 / 学习技能 / 招募角色（角色页操作升级与学技能）',
-    { fill: 0xd8d0c8, fontSize: 12, lineHeight: 20, wordWrap: true, wordWrapWidth: W - 24 },
+    'body',
+    { fill: 0xd8d0c8, lineHeight: 20, wordWrap: true, wordWrapWidth: W - 24 },
   );
   note.x = 12; note.y = y;
   root.addChild(note);

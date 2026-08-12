@@ -45,6 +45,8 @@
 
 | 现役 | 取代 | 主要变化 |
 |---|---|---|
+| `shop_scene` | 补给点白卡片列表 | 神秘商人 + 木摊场景图（`shop_merchant` / `shop_stall`），货与价签运行时叠 |
+| `shop_bg` | 补给点复用俯视 `battle_bg` | 平视草地空地 832×1248，允许地平线/天空，给正视商人搭机位 |
 | `battle_bg_v9` | `battle_bg_v5` / `v6` | 彻底去掉天空，草地转暖黄绿以避开弓手色相 |
 | `terrain_v4_3x2` | `terrain_v3_3x2`（已删） | 去掉黑描边，键色改品红，明度序写进 prompt |
 | `ui_icons_v2` | `toolbar_icons_2x2` | 九个图标一次出齐，三种药剂共用瓶型 |

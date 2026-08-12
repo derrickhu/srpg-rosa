@@ -37,13 +37,17 @@ const MOOK_SETS = new Set(['slime', 'sporecap', 'bloodwolf', 'rockshell']);
 
 /**
  * 要派生 token 的集合。前四个是 UnitKind（与 src/battle/types.ts 一致），
- * 后四个是第一章杂兵的专属外观（stagesMvp 的 animSet），布阵格里预览敌方阵容要用；
- * 不派生的话那格会退回同名兵种的我方贴图，布阵看到的和进战斗看到的对不上。
+ * 后接第一章杂兵 + 精英/Boss 的专属外观（stagesMvp 的 animSet），布阵格预览敌方阵容要用。
+ * 漏掉的话 `createUnitToken` 找不到贴图，那格只剩阵营色圆——精英/Boss 尤其扎眼。
  *
  * 敌我必须在同一个裁剪框里出图：布阵格里两边并排站，各切各的框就没法比大小了。
  * 杂兵按 MOOK_HEIGHT 烤进去——同框里人矮一截，运行时按高度撑满时自然就是小怪体型。
  */
-const TOKEN_SETS = ['sword', 'bow', 'shield', 'cavalry', 'slime', 'sporecap', 'bloodwolf', 'rockshell'];
+const TOKEN_SETS = [
+  'sword', 'bow', 'shield', 'cavalry',
+  'slime', 'sporecap', 'bloodwolf', 'rockshell',
+  'bloodfang',
+];
 
 function loadSet(id) {
   const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/data/anim', `${id}.json`), 'utf8'));
