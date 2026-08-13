@@ -596,6 +596,16 @@ export function createBattlePlaybackView(
     if (!note) return;
     spawnCombatFloat(floatHost(), x, y, note, 'terrainBuff');
   }
+  /**
+   * 条件触发的词条（处决）：飘在伤害数字上方。
+   *
+   * 用 `buff` 的亮金而不是地形那档小字——地形是「站位造成的常态修正」，
+   * 词条触发是「这一下发生了别的事」，两者混同一档的话玩家学不会区分。
+   */
+  function floatModNote(x: number, y: number, note: string | undefined): void {
+    if (!note) return;
+    spawnCombatFloat(floatHost(), x, y - 26, note, 'buff');
+  }
   function floatUtility(x: number, y: number, msg: string): void {
     spawnCombatFloat(floatHost(), x, y, msg, 'utility');
   }
@@ -1267,6 +1277,7 @@ export function createBattlePlaybackView(
               hitShake(tt);
               floatDamage(tt.x, tt.y, h.damage);
               floatTerrainNote(tt.x, tt.y, h.defTerrainNote);
+              floatModNote(tt.x, tt.y, h.modNote);
             }
           }
         };

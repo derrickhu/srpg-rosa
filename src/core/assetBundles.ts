@@ -68,7 +68,9 @@ export const UI_BUNDLE: AssetBundleDef = {
     // 战斗胜利弹窗的标题横幅。图里刻意留空——「胜利」两个字用游戏字体在代码里画，
     // 烧进贴图的话既换不了文案，字形也和界面其余部分对不上。
     banner_victory: 'images/ui/banner_victory.png',
-    // 技能词条图标，键名 = SkillModDef.icon（见 src/data/skillModCatalog.ts）
+    // 技能词条图标，键名 = SkillModDef.icon（见 src/data/skillModCatalog.ts）。
+    // **普通词条一条一张**；专属词条不各配图，十八条共用 mod_signature 徽记——
+    // 卡面正中已经是那一招的技能大图了，理由见《美术风格圣经》§6.1。
     mod_sharpen: 'images/ui/mod_sharpen.png',
     mod_quick: 'images/ui/mod_quick.png',
     mod_rout: 'images/ui/mod_rout.png',
@@ -78,6 +80,17 @@ export const UI_BUNDLE: AssetBundleDef = {
     mod_fury: 'images/ui/mod_fury.png',
     mod_wide: 'images/ui/mod_wide.png',
     mod_overwhelm: 'images/ui/mod_overwhelm.png',
+    mod_guard: 'images/ui/mod_guard.png',
+    mod_haste: 'images/ui/mod_haste.png',
+    mod_splash: 'images/ui/mod_splash.png',
+    mod_execute: 'images/ui/mod_execute.png',
+    mod_momentum: 'images/ui/mod_momentum.png',
+    mod_bloodthirst: 'images/ui/mod_bloodthirst.png',
+    mod_relentless: 'images/ui/mod_relentless.png',
+    mod_lasting: 'images/ui/mod_lasting.png',
+    mod_blessing: 'images/ui/mod_blessing.png',
+    mod_mend: 'images/ui/mod_mend.png',
+    mod_signature: 'images/ui/mod_signature.png',
     // 技能图标，键名 = `skill_` + SkillSpec.id（见 src/data/skillCatalog.ts）。
     // 三选一卡片按 `skill_${skillId}` 直接拼 key，所以**加技能必须同步加图标**，
     // 漏了会退成灰色占位圆，由 skillIcons.test.ts 守着。

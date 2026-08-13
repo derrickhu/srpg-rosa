@@ -10,7 +10,6 @@ import type {
 import { effectiveUnitDef } from './effectiveUnit';
 import { canAttackFrom, chooseTurnAction, selectAttackTarget, type AiDifficulty } from './ai';
 import { computeDamage, terrainAttackNote, terrainDefenseNote } from './damage';
-import { getSkillSpec } from '@/data/skillCatalog';
 import { POTION_DEFS } from '@/data/potionCatalog';
 import { getTerrainAt, type TerrainGrid } from './grid';
 import { MAX_BATTLE_ROUNDS } from './constants';
@@ -21,6 +20,7 @@ import {
   type SkillSlot,
   trySkillAfterMove,
   trySkillBeforeMove,
+  unitSkillSpec,
   type SkillAiming,
 } from './skills';
 import { tickTimedBattleEffects } from './timedBattleEffects';
@@ -420,7 +420,9 @@ export function createBattleSim(
     const defT = effectiveUnitDef(target, defs);
     let dmg = computeDamage(atkDef, defT, terrain, self.pos, target.pos);
     const sk = atkDef.skill;
-    const chargeMul = sk ? getSkillSpec(sk.id)?.passiveBasicAttackMulIfMoved : undefined;
+    // 走 `unitSkillSpec` 而不是 `getSkillSpec`：冲锋的倍率也吃词条（「蓄势」「践地」），
+    // 读原始规格的话那两条选了等于没选，而表现只是普攻数字偏小，肉眼查不出来。
+    const chargeMul = sk ? unitSkillSpec(self, sk.id)?.passiveBasicAttackMulIfMoved : undefined;
     const charged = Boolean(chargeMul) && self.movedInTurn;
     if (chargeMul && charged) {
       dmg = Math.max(1, Math.floor(dmg * chargeMul));

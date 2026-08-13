@@ -85,7 +85,7 @@ describe('临时技能槽', () => {
     expect(u.tempSkillCd ?? 0, '同一回合不该再放临时技能').toBe(0);
   });
 
-  it('词条同时作用于两个槽：词条挂在角色身上，不是挂在某一招上', () => {
+  it('词条强化主技能', () => {
     const sim = makeSim();
     toPending(sim);
     const before = sim.getUnit('e1')!.hp;
@@ -98,5 +98,29 @@ describe('临时技能槽', () => {
     const b0 = buffed.getUnit('e1')!.hp;
     buffed.commandSkill('p1', undefined, 'main');
     expect(b0 - buffed.getUnit('e1')!.hp).toBeGreaterThan(plain);
+  });
+
+  /**
+   * 临时技能**不吃**词条。这条早先是反的（词条按人挂、两槽都吃），但那样一来
+   * 三选一卡面就没法说实话：卡上画着临时技能 + 一条词条，实际主技能也在吃，
+   * 玩家读到的作用范围是错的。收敛到主技能后卡面画的那一招就是唯一被改的那一招。
+   *
+   * 用冷却而不是伤害来验：野草缠足是 `damage: none`，伤害类词条本来就挂不上去，
+   * 拿伤害断言等于什么都没验（上一版就是这么悄悄失效的）。
+   */
+  it('临时技能不吃词条：迅捷只缩短主技能的冷却', () => {
+    const sim = makeSim();
+    sim.getUnit('p1')!.skillMods = ['quick_cast'];
+    toPending(sim);
+    sim.commandSkill('p1', 'e1', 'temp');
+    // 野草缠足冷却 2，没吃到迅捷就还是 2
+    expect(sim.getUnit('p1')!.tempSkillCd).toBe(2);
+
+    const main = makeSim();
+    main.getUnit('p1')!.skillMods = ['quick_cast'];
+    toPending(main);
+    main.commandSkill('p1', undefined, 'main');
+    // 旋风斩冷却 3，吃到迅捷后是 2
+    expect(main.getUnit('p1')!.skillCd).toBe(2);
   });
 });

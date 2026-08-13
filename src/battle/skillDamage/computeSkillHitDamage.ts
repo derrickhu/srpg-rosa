@@ -1,4 +1,4 @@
-import type { SkillDamageSpec } from '@/data/skillCatalog';
+import type { SkillDamageSpec, SkillSpec } from '@/data/skillCatalog';
 import { computeDamage, counterMultiplier, terrainAttackMul, terrainDefenseMul } from '../damage';
 import type { UnitDef } from '../types';
 import type { SkillDamageContext } from './context';
@@ -72,12 +72,38 @@ function percentTargetMaxHp(
 }
 
 /**
+ * 「处决」类词条的倍率：目标残血时才生效。
+ *
+ * 读 `target.hp` 而不是词条侧预判，因为同一次 AoE 里前面的目标已经掉过血了——
+ * 谁进了处决线只有结算这一刻知道。
+ */
+function executeMul(ctx: SkillDamageContext): number {
+  const ex = ctx.spec.executeBonus;
+  if (!ex) return 1;
+  return isExecuting(ctx.spec, ctx.target.hp, ctx.targetDef.maxHp) ? ex.mul : 1;
+}
+
+/**
+ * 这一击有没有踩到处决线。结算和飘字问的是同一个函数，两边算法分家的话
+ * 会出现「飘了处决但伤害没涨」这种查不出来的对不上。
+ *
+ * 必须在扣血**之前**问：处决读的是命中那一刻的血量。
+ */
+export function isExecuting(spec: SkillSpec, targetHp: number, targetMaxHp: number): boolean {
+  const ex = spec.executeBonus;
+  if (!ex || targetMaxHp <= 0) return false;
+  return targetHp / targetMaxHp < ex.belowHpRatio;
+}
+
+/**
  * 对单个目标结算技能伤害（不含治疗等；`none` 为 0）。
  * 内置种类在 `SkillDamageSpec`；扩展用 `custom` + `registerSkillDamageCalculator`。
  */
 export function computeSkillHitDamage(ctx: SkillDamageContext): number {
-  const d = ctx.spec.damage;
-  return dispatchDamage(d, ctx);
+  const base = dispatchDamage(ctx.spec.damage, ctx);
+  if (base <= 0) return base;
+  const mul = executeMul(ctx);
+  return mul === 1 ? base : clampDamage(base * mul);
 }
 
 function dispatchDamage(d: SkillDamageSpec, ctx: SkillDamageContext): number {

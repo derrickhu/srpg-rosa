@@ -2,7 +2,7 @@ import type { TerrainId } from '@/battle/types';
 import { getTerrainSpec } from '@/data/terrainSpec';
 import { POTION_DEFS } from '@/data/potionCatalog';
 import { getSkillSpec, type SkillSpec } from '@/data/skillCatalog';
-import { describeSkillSpec } from '@/data/skillText';
+import { describeReach, describeSkillSpec } from '@/data/skillText';
 
 /**
  * 局内消耗品 / 临时技能的说明——商店、背包、战利品共用。
@@ -23,9 +23,11 @@ function briefShape(spec: SkillSpec): string {
     case 'discAoE':
       return shape.radius === 1 ? '邻格全体敌人' : `周围 ${shape.radius} 格全体敌人`;
     case 'neighborPickLowest':
-      return `周围 ${shape.manhattan} 格·选血最低敌人`;
+      return `${describeReach(shape.manhattan, 'exact')}·选血最低敌人`;
     case 'neighborPickFoe':
-      return `周围 ${shape.manhattan} 格·选血${shape.pick === 'lowestHp' ? '最低' : '最高'}敌人`;
+      return `${describeReach(shape.manhattan, shape.reach)}·选血${
+        shape.pick === 'lowestHp' ? '最低' : '最高'
+      }敌人`;
     case 'neighborPickAlly':
       return `周围 ${shape.manhattan} 格·选血${shape.pick === 'lowestHp' ? '最低' : '最高'}友军`;
     case 'lineBestRayAllFoes':

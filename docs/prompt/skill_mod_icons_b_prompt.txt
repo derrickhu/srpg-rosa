@@ -1,0 +1,110 @@
+技能词条图标 第二批 11 个（当前使用中）
+产出 → images/ui/mod_{guard,haste,splash,execute,momentum,bloodthirst,relentless,lasting,blessing,mend}.png
+       images/ui/mod_signature.png（专属词条共用徽记）
+生成器：Cursor 内置 GenerateImage，aspect_ratio 1:1
+参考图：images/ui/mod_{sharpen,quick,rout,hobble,venom}.png（第一批，只学画法不抄题材）
+
+规则来源：《美术风格圣经》§6.1「技能图标与词条图标」。改这份 prompt 前先读它。
+
+切图：
+    python3 scripts/split-tile-sheet.py --input <sheet>.png --out-dir <tmp> --size 64 \
+        --names guard haste splash execute momentum bloodthirst relentless lasting blessing mend signature
+    python3 scripts/despill-magenta.py <tmp>
+    # signature 是深红金徽记、bloodthirst 有大面积深红，都离品红不远。
+    # 切之前先量键色可分性，必要时给 --key-threshold / --min-spill 定值（量法见美术管线文档）。
+
+为什么是 11 个而不是 28 个：专属词条一招一条，技能只会越加越多，一条一图等于每加一个技能
+就欠一张 26px 上根本分不清的小图。专属统一用 signature 徽记——卡面正中本来就是那一招的
+40px 技能图标，徽记只需要回答「这是招牌强化」。**新技能 0 张词条图标，新普通词条 1 张。**
+
+十一个的语义（改 prompt 前先看 src/data/skillModCatalog.ts，两边必须对得上）：
+    guard 护阵      施放后自身嘲讽，吸引敌人打自己
+    haste 疾风      施放后自身速度提升
+    splash 溅射     单体技能额外打到目标周围
+    execute 处决    目标残血时伤害大幅提升
+    momentum 蓄势   移动后普攻更疼（被动系唯一杠杆）
+    bloodthirst 嗜血  史诗：伤害提升且回复其中一部分
+    relentless 不息   史诗：冷却缩短且伤害提升
+    lasting 顽疾    技能施加的减益延长回合
+    blessing 恩泽   给友方的增益更强更久
+    mend 妙手       治疗量提升
+    signature 徽记  专属词条共用的印记，不对应任何一条具体词条
+
+关键约束（改 prompt 时别丢）：
+- 和第一批九个**必须像同一套**：同样的描边粗细、同样的简化程度、同样的平涂厚描边。
+  参考图只用来对齐画法，题材一个都不要抄。
+- 与第一批的形状不许撞：
+  haste 是**带翅膀的靴子**，不要再画沙漏（quick 已占）；
+  bloodthirst 是**剑穿过心脏**，不要画成 siphon 那种「心 + 液滴」；
+  lasting 是**圆钟表盘**，不要画沙漏；
+  splash 是**冲击环 + 甩出的水滴**，不要画成 overwhelm 那种实心星爆；
+  execute 是**骷髅**，不要再画第三把剑（sharpen 完整剑、rout 断剑已占）。
+- 每个图标必须是**一整块连通的剪影**，不许有飘在旁边的独立小部件——16px 下读不出来，
+  切图也会因为块数对不上名字数而失败。
+- 玩家要在 0.5 秒内从三张卡里挑一张，图标是第一眼看到的东西，比文字先到。
+
+生图实测偏差（下一个人抄的时候知道哪里模型不听话）：
+- 一次就出齐 11 个，风格和第一批对得上，参考图这招有效。
+- **布局按 4/4/3 出的，切图要分两刀**：上两行走 `--grid 4x2`（chevron、水滴这类
+  分离部件必须用 grid 模式，连通域会把一个图标数成好几块），最后一行三个各自都是
+  连通的，直接走默认连通域模式。
+- **signature 默认参数会被吃掉 70% 的像素**：深红离品红太近，和当年的 overwhelm 同一个坑。
+  实测素材自身品红度 p99=93，真溢色边到 255，取 `--min-spill 120` 卡在中间，
+  校正率从 70.2% 降到 0.5%。
+- `lasting` 出来偏「绿色水滴」而不是「钟表盘」，16px 下读作一个绿点。26px 以上没问题，
+  真要重做时把表盘画得更大、把那颗水滴缩小。
+- `splash` 的冲击环出成了缺口很大的「C」形，比预期更像字母。可接受，但重做时应要求
+  「环的缺口不超过四分之一圈」。
+- `bloodthirst` 是全套里最弱的一个：竖着的剑让包围盒变成 46x64，等比缩到 40px 后
+  心脏只剩不到 30px 宽，16px 下退化成一个红点。它是史诗档、恰恰是最该亮眼的位置。
+  下次重出整套时把剑改成**斜插**、心脏放大占满宽度。
+
+---
+
+A grid of 11 GAME UI ICONS representing combat skill upgrades in a cartoon fantasy tactics mobile game. Arrange them in three rows: 4 icons in the top row, 4 in the middle row, 3 centred in the bottom row.
+
+CRITICAL BACKGROUND: the entire background, including all space between and around the icons, must be 100% solid flat MAGENTA, hex #FF00FF. It is a chroma key and will be deleted. No white, no grey, no gradient, no drop shadows onto the background.
+
+CRITICAL SIZE CONSTRAINT — the most important rule: these icons are displayed at only 16 to 44 pixels in the game. Every icon must be ONE bold, chunky, instantly readable silhouette that survives being shrunk to the size of a fingernail. Think of a chess piece, not an illustration. NO thin lines, NO small parts, NO fine detail, NO tiny sparkles, NO text, NO numbers. If an element would be less than a tenth of the icon's width, delete it.
+
+CRITICAL CONNECTIVITY: each icon must be ONE single connected shape. No detached floating pieces sitting beside the main shape — every part must touch or overlap the main mass.
+
+CRITICAL — THESE SIT ON A CREAM WHITE CARD (#FCFCF6). Every icon needs a THICK near-black outline (#1A1410) all the way around it and a saturated fill inside, so it does not float on the pale card.
+
+STYLE — must match the game's characters, which are chunky cartoon figures with heavy black outlines and flat colours:
+- SOLID FILLED SILHOUETTES with a thick near-black outline. These are not line icons and not outline icons — the shape is filled in.
+- Flat saturated colour fills, at most 3 colours per icon plus the outline, plus one simple lighter shade for a single cel-shaded highlight.
+- Chunky, rounded, friendly shapes. Slightly exaggerated and toy-like.
+- No gradients, no glow, no bevel, no gloss, no photographic detail, no pixel art, no thin strokes.
+- Each icon drawn straight-on, facing the viewer, upright and centred.
+
+Per-cell contents, left-to-right then top-to-bottom:
+
+Cell 1 (GUARD / taunt, pull enemy attacks onto yourself) — a broad rounded heater shield, cool blue-grey (#7A8CA0) with a lighter top edge, and a FAT concentric bullseye target painted on its face in dull orange-red (#D2543C) and cream. Two thick rings only, no thin rings. It must read as "hit me", not as a plain shield.
+
+Cell 2 (HASTE / self speed up) — a chunky ankle boot in warm brown (#A87840) with a thick cream sole, and ONE bold bright cyan (#3CC8E4) wing sprouting from its heel, drawn as three fat rounded feathers fused into a single blocky wing. The wing must touch the boot.
+
+Cell 3 (SPLASH / damage spilling onto nearby enemies) — a thick broken impact ring, bold orange (#F08C2A) with a cream inner edge, with three FAT teardrop shapes flung outward from the upper right, each one attached to the ring. Blobby drops, never thin streaks. It must read as "the hit spilled sideways", not as a star.
+
+Cell 4 (EXECUTE / finish off a wounded target) — a bold rounded skull, bone cream (#EDE4CC) with two big dark sunken eye sockets and a simple blocky jaw, and one thick dull orange-red (#D2543C) diagonal slash mark cutting across it. Chunky and toy-like, not scary or detailed.
+
+Cell 5 (MOMENTUM / harder hit after moving) — a single big thick rightward arrowhead in bold orange-red (#D2543C) with two shorter chevrons fused directly behind it so the whole thing is one solid connected mass, like a heavy ">>" wedge. Blocky, no gaps between the chevrons and the head.
+
+Cell 6 (BLOODTHIRST / epic, big damage plus lifesteal) — a broad short steel blade (#B4BCC8) driven straight down through a bold rounded crimson heart (#E05446), the blade entering the top and its tip emerging below. One fat crimson droplet hangs off the tip, touching it. This is an epic-tier icon: make it visually heavier and bolder than the common ones.
+
+Cell 7 (RELENTLESS / epic, shorter cooldown and more damage) — a thick circular arrow forming a closed loop with one fat triangular arrowhead, bright golden yellow (#FCB40C), with bold blocky orange (#F08C2A) flames rising off its outer edge as two or three big rounded tongues fused to the ring. No wispy flame tips. Epic tier: heavier and bolder than the common ones.
+
+Cell 8 (LASTING / debuffs last longer) — a fat round clock face in a chunky dark frame, sickly deep green (#3E7A2E) face with ONE thick black hand pointing up-right, and one big rounded green (#54C43C) drip running down off the bottom edge of the frame and staying attached to it. It must read as "the sickness drags on", and must NOT be an hourglass.
+
+Cell 9 (BLESSING / stronger, longer buffs on allies) — a chunky cupped hand seen from the side, simple rounded mitten silhouette with NO separate fingers, warm skin tone (#EEC49A) with a brown cuff, holding up one bold golden (#FCB40C) glowing orb with a cream core. The orb rests on and touches the palm.
+
+Cell 10 (MEND / stronger healing) — a fat equal-armed cross with rounded ends in bright healing green (#54C43C), with one bold rounded leaf fused to the upper-right arm. Thick chunky arms, roughly as wide as they are long.
+
+Cell 11 (SIGNATURE / the shared "exclusive mod" seal) — a wax-seal medallion: one thick round disc with a chunky scalloped edge in deep crimson (#A03040), with a bold four-pointed star embossed in the centre in bright gold (#FCB40C). It must read as "a mark of distinction / a crest", and must NOT look like the shield in cell 1.
+
+LAYOUT RULES:
+1. EXACTLY 11 icons: 4 in the top row, 4 in the middle row, 3 centred in the bottom row.
+2. NO borders, NO dividing lines, NO frames, NO circles or badges behind the icons — they are separated only by magenta.
+3. Each icon fills about 70% of its cell, leaving a clear magenta margin on all four sides. Nothing touches or crosses into a neighbouring icon.
+4. All eleven must feel like ONE set with the reference icons: same outline thickness, same level of simplification, same chunky proportions.
+5. NO text, no labels, no captions, no letters, no numbers, no watermark anywhere in the image.

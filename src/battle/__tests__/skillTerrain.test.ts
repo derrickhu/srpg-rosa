@@ -45,10 +45,22 @@ function ctx(casterPos: Vec2, targetPos: Vec2, terrain: TerrainGrid): SkillDamag
   };
 }
 
-const ATK_MUL = 0.85; // bash 的 scaledAtk 倍率
+/**
+ * 倍率从技能表读回来，不写字面量。
+ *
+ * 这里原本硬编码 `0.85`，平衡调整把「震击」改成 0.7 时下面 5 条断言全红——
+ * 而它们要验的是地形乘数，跟震击打多疼毫无关系。这种失败最费时间：
+ * 报错指向地形测试，真正的改动却在技能表里。
+ */
+const BASH = getSkillSpec('bash')!;
+const ATK_MUL = BASH.damage.kind === 'scaledAtk' ? BASH.damage.atkMul : 1;
 
 describe('技能伤害与地形', () => {
   const base = Math.floor(40 * ATK_MUL);
+
+  it('前提：震击是按攻击力缩放的，否则下面测的就不是技能伤害路径', () => {
+    expect(BASH.damage.kind).toBe('scaledAtk');
+  });
 
   it('目标站森林时技能也要吃减伤', () => {
     const grid: TerrainGrid = [['plain', 'forest']];

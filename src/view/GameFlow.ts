@@ -5,7 +5,7 @@ import { createBattleSim, type BattleMode } from '@/battle/engine';
 import { AdManager } from '@/platform/AdManager';
 import { UNIT_DEFS } from '@/data/unitDefs';
 import { DUNGEON_DEFS } from '@/data/dungeonCatalog';
-import { getSkillMod, modStacks } from '@/data/skillModCatalog';
+import { getSkillMod, isExclusiveMod, modStacks } from '@/data/skillModCatalog';
 import {
   createLootOverlay,
   createRewardOverlay,
@@ -97,6 +97,7 @@ function lootToCard(state: MvpGameState, o: LootOption): LootCard {
     desc: o.desc,
     stacks: modStacks(state.run?.skillMods[o.rosterId], o.modId) + 1,
     rarity: mod?.rarity ?? 'common',
+    exclusive: mod ? isExclusiveMod(mod) : false,
   };
 }
 

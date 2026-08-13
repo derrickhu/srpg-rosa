@@ -21,8 +21,17 @@ function defOf(u: UnitState, defs: Record<UnitKind, UnitArchetypeDef>): UnitDef 
   return effectiveUnitDef(u, defs);
 }
 
-/** 普攻能否从 `from` 打到格子 `cell`（近战邻格 / 远程 1..range） */
-export function canAttackCell(atkDef: UnitDef, from: Vec2, cell: Vec2): boolean {
+/**
+ * 普攻能否从 `from` 打到格子 `cell`（近战邻格 / 远程 1..range）。
+ *
+ * 只要 `isRanged` 与 `range` 两个字段，不要求完整 `UnitDef`：威胁染色只有射程信息，
+ * 没有也不需要凑出一整个单位定义。
+ */
+export function canAttackCell(
+  atkDef: Pick<UnitDef, 'isRanged' | 'range'>,
+  from: Vec2,
+  cell: Vec2,
+): boolean {
   const d = manhattan(from, cell);
   if (atkDef.isRanged) return d >= 1 && d <= atkDef.range;
   return d === 1;

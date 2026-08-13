@@ -1,10 +1,10 @@
 import {
+  canCharacterUseSkill,
   getCharacterDef,
   levelUpCost,
   type CharacterDef,
 } from '@/data/characterCatalog';
 import { getDungeonDef } from '@/data/dungeonCatalog';
-import { canProfessionEquipSkill, getSkillSpec } from '@/data/skillCatalog';
 import { instantiateCharacter } from '@/game/characterFactory';
 import type { Character } from '@/game/characterTypes';
 import type { MetaState, MvpGameState } from './GameState';
@@ -23,12 +23,18 @@ export function levelUpCharacter(state: MvpGameState, rosterId: string): boolean
   return true;
 }
 
-/** 持久装配一个已解锁/可解锁技能（meta 层；不消耗货币，纯装配切换） */
+/**
+ * 持久装配一个已解锁技能（meta 层；不消耗货币，纯装配切换）。
+ *
+ * 路线校验走 `canCharacterUseSkill`，不只看职业：老存档里可能留着可学列表收紧前
+ * 学到的越界技能（比如输出路线角色学过的战场祝福），只查 `ownedSkillIds`
+ * 会让它照样装得上，而那正是词条批量休眠的入口。
+ */
 export function equipSkill(state: MvpGameState, rosterId: string, skillId: string): boolean {
   const m = state.meta.roster.find((x) => x.rosterId === rosterId);
   if (!m) return false;
-  if (!getSkillSpec(skillId)) return false;
-  if (!canProfessionEquipSkill(m.profession, skillId)) return false;
+  const def = getCharacterDef(m.catalogId ?? m.rosterId);
+  if (!def || !canCharacterUseSkill(def, skillId)) return false;
   if (!m.ownedSkillIds.includes(skillId)) return false;
   m.activeSkillId = skillId;
   return true;

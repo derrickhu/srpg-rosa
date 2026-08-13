@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { castSkillManual } from '../skills';
 import { tickTimedBattleEffects } from '../timedBattleEffects';
 import type { TerrainGrid } from '../grid';
-import type { BattleEvent, UnitArchetypeDef, UnitKind, UnitState, Vec2 } from '../types';
+import type { BattleEvent, SkillHit, UnitArchetypeDef, UnitKind, UnitState, Vec2 } from '../types';
 
 /**
  * 词条只在目录层「折进规格」是不够的——真正会出事的是它有没有走到结算里。
@@ -47,9 +47,13 @@ function dummy(uid: string, pos: Vec2, hp = 100): UnitState {
   return { uid, defId: 'shield', faction: 'enemy', hp, pos, skillCd: 0, movedInTurn: false };
 }
 
-function skillHits(events: BattleEvent[]): { target: string; damage: number }[] {
+function rawSkillHits(events: BattleEvent[]): SkillHit[] {
   const cast = events.find((e) => e.type === 'skillCast');
-  return cast?.type === 'skillCast' ? cast.hits.map((h) => ({ target: h.target, damage: h.damage })) : [];
+  return cast?.type === 'skillCast' ? cast.hits : [];
+}
+
+function skillHits(events: BattleEvent[]): { target: string; damage: number }[] {
+  return rawSkillHits(events).map((h) => ({ target: h.target, damage: h.damage }));
 }
 
 describe('词条在实际战斗中生效', () => {
@@ -125,6 +129,66 @@ describe('词条在实际战斗中生效', () => {
     const nearPlain = skillHits(plain).find((h) => h.target === 'near')!.damage;
     const nearBoost = skillHits(boosted).find((h) => h.target === 'near')!.damage;
     expect(nearBoost).toBeGreaterThan(nearPlain);
+  });
+
+  it('溅射让单体技能打到目标邻格，但减益只落在主目标身上', () => {
+    const self: UnitState = {
+      ...hero({ x: 3, y: 3 }, ['splash', 'rout']),
+      battleSkill: { id: 'cleave', name: '重劈', cooldown: 2, kind: 'singleBash' },
+    };
+    const main = dummy('main', { x: 3, y: 2 }, 30);
+    const side = dummy('side', { x: 2, y: 2 });
+    const events = castSkillManual(self, DEFS, [self, main, side], FLAT, 'main');
+
+    const hits = skillHits(events);
+    expect(hits.map((h) => h.target).sort()).toEqual(['main', 'side']);
+    const mainDmg = hits.find((h) => h.target === 'main')!.damage;
+    const sideDmg = hits.find((h) => h.target === 'side')!.damage;
+    expect(sideDmg).toBeLessThan(mainDmg);
+
+    // 溅射只溅伤害：一条词条把单体控制变群控，「点谁」这个决策就没了
+    expect(main.timedBattleEffects?.some((e) => e.kind === 'atkDown')).toBe(true);
+    expect(side.timedBattleEffects ?? []).toEqual([]);
+  });
+
+  it('处决只在目标残血时加伤，满血目标一点不多', () => {
+    const mk = (mods?: string[]): UnitState => ({
+      ...hero({ x: 3, y: 3 }, mods),
+      battleSkill: { id: 'cleave', name: '重劈', cooldown: 2, kind: 'singleBash' },
+    });
+    const dmgOn = (hp: number, mods?: string[]): number => {
+      const self = mk(mods);
+      const foe = dummy('e1', { x: 3, y: 2 }, hp);
+      return skillHits(castSkillManual(self, DEFS, [self, foe], FLAT, 'e1'))[0]!.damage;
+    };
+
+    // 靶子上限 140，30 血在 50% 线内，120 血不在
+    expect(dmgOn(30, ['ex_cleave_reap'])).toBeGreaterThan(dmgOn(30));
+    expect(dmgOn(120, ['ex_cleave_reap'])).toBe(dmgOn(120));
+  });
+
+  /**
+   * 处决是**条件触发**的，不飘字玩家就只看到一个更大的数字、没有对照可比，
+   * 那这条词条在战斗里等于不存在。飘字掉了不会报错也不会崩，所以钉在这里。
+   */
+  it('处决触发时给回放层一条注记，没触发时不给', () => {
+    const noteOn = (hp: number): string | undefined => {
+      const self: UnitState = {
+        ...hero({ x: 3, y: 3 }, ['ex_cleave_reap']),
+        battleSkill: { id: 'cleave', name: '重劈', cooldown: 2, kind: 'singleBash' },
+      };
+      const foe = dummy('e1', { x: 3, y: 2 }, hp);
+      return rawSkillHits(castSkillManual(self, DEFS, [self, foe], FLAT, 'e1'))[0]!.modNote;
+    };
+    expect(noteOn(30)).toBe('处决');
+    expect(noteOn(120)).toBeUndefined();
+  });
+
+  it('疾风给的是自身加速，会飘字也会进限时效果表', () => {
+    const self = hero({ x: 3, y: 3 }, ['haste']);
+    const events = castSkillManual(self, DEFS, [self, dummy('e1', { x: 3, y: 2 })], FLAT);
+    expect(self.timedBattleEffects).toContainEqual({ kind: 'spdBonus', addSpd: 2, roundsLeft: 2 });
+    expect(events).toContainEqual({ type: 'statusNote', target: 'hero', text: '速+2', tone: 'buff' });
   });
 
   it('词条不会跟着技能表泄漏给没挂词条的单位', () => {

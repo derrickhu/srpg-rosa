@@ -36,11 +36,11 @@ function mainSection(
   };
 }
 
-function tempSection(
-  specId: string,
-  modIds: readonly string[] | undefined,
-  cooldownNote?: string,
-): UnitInfoSkillSection | null {
+/**
+ * 临时技能段。**不套词条**——词条只强化主技能（见 `unitSkillSpec`），
+ * 这里套上去面板会写出一个战斗里不会发生的数值。
+ */
+function tempSection(specId: string, cooldownNote?: string): UnitInfoSkillSection | null {
   const base = getSkillSpec(specId);
   if (!base) return null;
   return {
@@ -48,13 +48,12 @@ function tempSection(
     name: base.name,
     nameColor: TEMP_SKILL_COLOR,
     iconKey: `skill_${base.id}`,
-    // 词条跟人不跟技能，所以临时技能同样吃这一局攒下的加成
-    spec: effectiveSkillSpec(base, modIds),
+    spec: base,
     baseSpec: base,
     cooldownNote,
     // 不画范围格：两张格子图叠起来面板要滚动，而临时技能大多是贴脸的单体控制
     showRange: false,
-    extraDesc: [TEMP_SKILL_NOTE],
+    extraDesc: [TEMP_SKILL_NOTE, '词条只强化主技能，不影响这一招'],
   };
 }
 
@@ -72,7 +71,7 @@ export function characterInfoModel(state: MvpGameState, m: Character): UnitInfoM
   if (mainSec) skills.push(mainSec);
   const tempId = tempSkillIdForRoster(state, m.rosterId);
   if (tempId) {
-    const s = tempSection(tempId, modIds);
+    const s = tempSection(tempId);
     if (s) skills.push(s);
   }
 
@@ -140,7 +139,7 @@ export function battleUnitInfoModel(u: UnitState, opts: BattleUnitInfoOptions): 
     }
   }
   if (u.tempSkill) {
-    const s = tempSection(u.tempSkill.id, u.skillMods, cdNote(u.tempSkillCd ?? 0));
+    const s = tempSection(u.tempSkill.id, cdNote(u.tempSkillCd ?? 0));
     if (s) skills.push(s);
   }
 

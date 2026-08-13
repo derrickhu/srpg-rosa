@@ -1,7 +1,12 @@
 import * as PIXI from 'pixi.js';
 import { makeText } from '@/theme/typography';
 import { UNIT_DEFS } from '@/data/unitDefs';
-import { getCharacterDef, levelUpCost, type CharacterDef } from '@/data/characterCatalog';
+import {
+  canCharacterUseSkill,
+  getCharacterDef,
+  levelUpCost,
+  type CharacterDef,
+} from '@/data/characterCatalog';
 import { getDungeonDef } from '@/data/dungeonCatalog';
 import { getSkillSpec } from '@/data/skillCatalog';
 import { characterEffectiveStats, lockedCharacterDefs } from '@/game/characterFactory';
@@ -220,9 +225,12 @@ export function createRosterView(
     equipTitle.x = 14; equipTitle.y = cy; panel.addChild(equipTitle);
     cy += 20;
     let sx = 14;
+    // 过一遍路线判定而不是直接列 `ownedSkillIds`：老存档里可能留着可学列表收紧前
+    // 学到的越界技能，列出来只会是一个点了没反应的按钮（`equipSkill` 会拒）。
     for (const skId of m.ownedSkillIds) {
       const spec = getSkillSpec(skId);
       if (!spec) continue;
+      if (def && !canCharacterUseSkill(def, skId)) continue;
       const active = m.activeSkillId === skId;
       const chip = makeButton(spec.name, () => {
         if (equipSkill(state, m.rosterId, skId)) { closeOverlay(); cb.onChanged(); }

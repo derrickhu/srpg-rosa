@@ -2,7 +2,8 @@ import * as PIXI from 'pixi.js';
 import { makeText } from '@/theme/typography';
 import { POTION_DEFS } from '@/data/potionCatalog';
 import { getSkillSpec } from '@/data/skillCatalog';
-import { getSkillMod } from '@/data/skillModCatalog';
+import { getSkillMod, isExclusiveMod } from '@/data/skillModCatalog';
+import { battleSkillIdsForCharacter } from '@/game/state/DeployManager';
 import { PLACEABLE_TERRAIN_IDS, terrainTicketName } from '@/data/dungeonCatalog';
 import { describePotion, describeTempSkill, describeTerrainTicket } from '@/data/itemText';
 import type { MvpGameState } from '@/game/MvpState';
@@ -156,7 +157,9 @@ export function createInventoryView(
   for (const [rosterId, ids] of Object.entries(run?.skillMods ?? {})) {
     const m = state.meta.roster.find((c) => c.rosterId === rosterId);
     if (!m) continue;
-    const spec = getSkillSpec(m.activeSkillId);
+    // 只看主技能：词条只强化主技能（见 `unitSkillSpec`），临时槽装了什么与休眠无关。
+    const mainId = battleSkillIdsForCharacter(state, m).main;
+    const mainSpec = mainId ? getSkillSpec(mainId) : undefined;
     const counted = new Map<string, number>();
     for (const id of ids) counted.set(id, (counted.get(id) ?? 0) + 1);
     for (const [modId, n] of counted) {
@@ -165,10 +168,10 @@ export function createInventoryView(
       // 词条跟人走，换主技能后个别条目会挂不上去（「横扫」挂到单体技能）。
       // 那种情况必须写出来：它不是失效了，是换回去就恢复——不说明的话
       // 玩家只会看到面板上有这条、打起来却没效果，然后认为是 bug。
-      const dormant = spec ? !mod.canApply(spec) : false;
+      const dormant = mainSpec !== undefined && !mod.canApply(mainSpec);
       modRows.push({
         iconKey: mod.icon,
-        name: `${m.name} · ${mod.name}`,
+        name: `${m.name} · ${mod.name}${isExclusiveMod(mod) ? '（专属）' : ''}`,
         desc: dormant
           ? `当前技能不适用（换回可用技能即恢复）· ${mod.describe(Math.min(n, mod.maxStacks))}`
           : mod.describe(Math.min(n, mod.maxStacks)),

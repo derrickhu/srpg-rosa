@@ -1,8 +1,8 @@
 import * as PIXI from 'pixi.js';
 import { makeText, textStyle } from '@/theme/typography';
 import type { SkillSpec } from '@/data/skillCatalog';
-import { describeSkillSpec } from '@/data/skillText';
-import { getSkillMod, type SkillModRarity } from '@/data/skillModCatalog';
+import { describeReach, describeSkillSpec } from '@/data/skillText';
+import { getSkillMod, isExclusiveMod, type SkillModRarity } from '@/data/skillModCatalog';
 import { createUiIcon } from '@/view/renderHelpers';
 
 /**
@@ -106,7 +106,9 @@ function buildRunModList(
     }
     const textX = icon ? 18 : 0;
 
-    const name = makeText(n > 1 ? `${mod.name}×${n}` : mod.name, 'caption', {
+    // 专属词条标出来：它换个技能就再也拿不到，玩家换招前得知道自己会丢什么
+    const label = isExclusiveMod(mod) ? `${mod.name}（专属）` : n > 1 ? `${mod.name}×${n}` : mod.name;
+    const name = makeText(label, 'caption', {
       fill: live ? MOD_TEXT_COLOR[mod.rarity] : 0x8a8a7a,
       fontSize: 10,
       fontWeight: 'bold',
@@ -159,11 +161,11 @@ function buildRangeRow(
     rangeDesc = `周围${shape.radius}格全覆盖\n命中所有敌人`;
   } else if (shape.type === 'neighborPickLowest') {
     gridR = shape.manhattan + 1;
-    rangeDesc = `周围${shape.manhattan}格范围\n选中血量最低的敌人`;
+    rangeDesc = `${describeReach(shape.manhattan, 'exact')}\n选中血量最低的敌人`;
   } else if (shape.type === 'neighborPickFoe') {
     gridR = shape.manhattan + 1;
     const pickLabel = shape.pick === 'lowestHp' ? '血量最低' : '血量最高';
-    rangeDesc = `周围${shape.manhattan}格范围\n选中${pickLabel}的敌人`;
+    rangeDesc = `${describeReach(shape.manhattan, shape.reach)}\n选中${pickLabel}的敌人`;
   } else if (shape.type === 'neighborPickAlly') {
     gridR = shape.manhattan + 1;
     const pickLabel = shape.pick === 'lowestHp' ? '血量最低' : '血量最高';
@@ -188,10 +190,21 @@ function buildRangeRow(
       || shape.type === 'neighborPickFoe' || shape.type === 'neighborPickAlly'
       || shape.type === 'discAoE') {
     const md = shape.type === 'discAoE' ? shape.radius : shape.manhattan;
+    /*
+     * 整片（曼哈顿 <= md）还是一圈环（正好 = md）。
+     *
+     * 这里原先无条件按整片画，而除 `discAoE` 和 `reach: 'within'` 以外的形状都是环：
+     * 「长驱突刺」（正好 2 格）的图因此多画了 4 个贴脸格，玩家照图走到敌人旁边，
+     * 技能却点不出来。md 为 1 时环和整片恰好一样，所以这个错一直被邻格技能盖着，
+     * 只有 2 格以上的技能会露出来。
+     */
+    const solid = shape.type === 'discAoE'
+      || (shape.type === 'neighborPickFoe' && shape.reach === 'within');
     for (let dy = -md; dy <= md; dy++) {
       for (let dx = -md; dx <= md; dx++) {
         if (dx === 0 && dy === 0) continue;
-        if (Math.abs(dx) + Math.abs(dy) <= md) cells[gridR + dy]![gridR + dx] = 'hit';
+        const d = Math.abs(dx) + Math.abs(dy);
+        if (solid ? d <= md : d === md) cells[gridR + dy]![gridR + dx] = 'hit';
       }
     }
   } else if (isLine) {

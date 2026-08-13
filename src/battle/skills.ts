@@ -10,7 +10,7 @@ import type {
 } from './types';
 import { effectiveUnitDef } from './effectiveUnit';
 import { terrainAttackNote, terrainDefenseNote } from './damage';
-import { computeSkillHitDamage } from './skillDamage';
+import { computeSkillHitDamage, isExecuting } from './skillDamage';
 import {
   applySkillCastAllyEffects,
   applySkillCastFoeEffects,
@@ -168,16 +168,36 @@ function canCast(self: UnitState, spec: SkillSpec): boolean {
 }
 
 /**
- * 单位这一场实际生效的技能规格 = 技能表原始规格 + 挂在它身上的词条。
+ * 单位这一场实际生效的技能规格 = 技能表原始规格 + 词条（**仅主技能**）。
  *
  * 所有施放路径（AI 的 before/afterMove、人工的 castSkillManual、瞄准预览）都必须
  * 从这里拿规格。任何一处漏用，表现是「这个技能在某些情况下不吃词条」——
  * 伤害数字看着正常，只是偏小，肉眼几乎发现不了。
+ *
+ * **词条只强化主技能。** 临时技能是局内买来的第二个选项，让它也吃满词条的话，
+ * 玩家一路攒的投入会分摊到两招上，而三选一卡面只能画其中一招——
+ * 卡上写着「惊扰蜂群 · 锋锐」，实际上主技能也在吃这 25%，那张卡就是在撒谎。
+ * 收敛到主技能之后，卡面画的那一招**就是**唯一被改的那一招。
  */
-function unitSkillSpec(self: UnitState, skillId: string): SkillSpec | undefined {
+export function unitSkillSpec(self: UnitState, skillId: string): SkillSpec | undefined {
   const base = getSkillSpec(skillId);
   if (!base) return undefined;
-  return effectiveSkillSpec(base, self.skillMods);
+  return effectiveSkillSpec(base, mainSkillMods(self, skillId));
+}
+
+/**
+ * 这一招该不该吃这个单位的词条：只有主槽那一招吃。
+ *
+ * 判据是「等于主槽的 id」而不是「不等于临时槽的 id」。两者在主槽和临时槽
+ * 装了同一招时（通用技能允许这样，商店只挡了「重复买同一个临时技能」）会分岔：
+ * 反向判据那时会把**主技能**也算成临时的，玩家一路攒的词条当场全失效——
+ * 而正向判据最坏只是让那一招在两个槽里表现一致，本来也是同一招。
+ *
+ * 敌方也走这条：Boss 的皮肤只换显示名，结算 id 仍写在 `battleSkill.id` 上
+ * （见 `skillCastName`），所以 Boss 强化词条照样生效。
+ */
+function mainSkillMods(self: UnitState, skillId: string): readonly string[] | undefined {
+  return self.battleSkill?.id === skillId ? self.skillMods : undefined;
 }
 
 /**
@@ -205,6 +225,8 @@ function pushAttrNotes(
     for (const e of spec.onCastSelfEffects ?? []) {
       if (e.kind === 'atkBonus') {
         events.push({ type: 'statusNote', target: who.self.uid, text: `攻+${e.addAtk}`, tone: 'buff' });
+      } else if (e.kind === 'spdBonus') {
+        events.push({ type: 'statusNote', target: who.self.uid, text: `速+${e.addSpd}`, tone: 'buff' });
       } else if (e.kind === 'taunt') {
         events.push({ type: 'statusNote', target: who.self.uid, text: '嘲讽', tone: 'buff' });
       }
@@ -264,6 +286,8 @@ function resolveHit(
   terrain: TerrainGrid,
   defs: Record<UnitKind, UnitArchetypeDef>,
 ): SkillHit {
+  // 处决要在扣血**之前**判：它读的是命中那一刻的血量
+  const modNote = hitModNote(spec, tgt, defs);
   const damage = skillHitDamage(self, def, spec, tgt, terrain, defs);
   tgt.hp -= damage;
   return {
@@ -271,7 +295,68 @@ function resolveHit(
     damage,
     hpLeft: Math.max(0, tgt.hp),
     defTerrainNote: terrainDefenseNote(terrain, tgt.pos) ?? undefined,
+    modNote,
   };
+}
+
+/**
+ * 这一击上有没有**条件触发**的词条要报给玩家。
+ *
+ * 只收条件型的：处决打的是残血目标，触发与否取决于当时的血量，不说出来玩家
+ * 就只看到一个更大的数字、没有对照。每次都生效的数值词条（锋锐）不进来——
+ * 那种飘字只会挤掉真正要读的信息。
+ */
+function hitModNote(
+  spec: SkillSpec,
+  tgt: UnitState,
+  defs: Record<UnitKind, UnitArchetypeDef>,
+): string | undefined {
+  // maxHp 走 effectiveUnitDef，和 computeSkillHitDamage 里那次判定读同一个数
+  return isExecuting(spec, tgt.hp, effectiveUnitDef(tgt, defs).maxHp) ? '处决' : undefined;
+}
+
+/**
+ * 「溅射」词条：单体技能额外打到主目标邻格的敌人。
+ *
+ * 溅射伤害按**各自**重新算一遍再打折，不是拿主目标的数字乘比例：克制关系、地形减伤
+ * 都跟站位有关，直接乘会出现「打到森林里的弓手和打到空地上的一样疼」。
+ */
+function resolveSplashHits(
+  self: UnitState,
+  def: UnitDef,
+  spec: SkillSpec,
+  main: UnitState,
+  units: UnitState[],
+  terrain: TerrainGrid,
+  defs: Record<UnitKind, UnitArchetypeDef>,
+): SkillHit[] {
+  const ratio = spec.splashRatio ?? 0;
+  if (ratio <= 0 || spec.damage.kind === 'none') return [];
+  const out: SkillHit[] = [];
+  for (const t of livingFoes(self, units)) {
+    if (t.uid === main.uid) continue;
+    if (manhattan(t.pos, main.pos) !== 1) continue;
+    const modNote = hitModNote(spec, t, defs);
+    const full = skillHitDamage(self, def, spec, t, terrain, defs);
+    const damage = Math.max(1, Math.floor(full * ratio));
+    t.hp -= damage;
+    out.push({
+      target: t.uid,
+      damage,
+      hpLeft: Math.max(0, t.hp),
+      defTerrainNote: terrainDefenseNote(terrain, t.pos) ?? undefined,
+      modNote,
+    });
+  }
+  return out;
+}
+
+/** 溅射打到的人也要能死、也要飘字，靠 uid 找回单位 */
+function pushHitDeaths(events: BattleEvent[], units: UnitState[], hits: readonly SkillHit[]): void {
+  for (const h of hits) {
+    const t = units.find((u) => u.uid === h.target);
+    if (t) pushDeathIfNeeded(events, t);
+  }
 }
 
 /**
@@ -382,7 +467,10 @@ function castNeighborPickLowest(
   const foes = foesAtManhattan(self, units, dist);
   if (foes.length === 0) return [];
   const tgt = resolveChoice(foes, chosenUid, () => foes.reduce((a, b) => (a.hp <= b.hp ? a : b)))!;
-  const hit = resolveHit(self, def, spec, tgt, terrain, defs);
+  const hits = [
+    resolveHit(self, def, spec, tgt, terrain, defs),
+    ...resolveSplashHits(self, def, spec, tgt, units, terrain, defs),
+  ];
   const events: BattleEvent[] = [
     {
       type: 'skillCast',
@@ -391,15 +479,15 @@ function castNeighborPickLowest(
       skillName: skillCastName(self, spec),
       kind: spec.displayKind,
       rangeCells: cellsAtManhattan(self.pos, dist, terrain),
-      hits: [hit],
+      hits,
       atkTerrainNote: terrainAttackNote(terrain, self.pos) ?? undefined,
     },
   ];
-  pushDeathIfNeeded(events, tgt);
+  pushHitDeaths(events, units, hits);
   applySkillCastFoeEffects(tgt, spec);
   applySkillCastSelfEffects(self, spec);
   pushAttrNotes(events, spec, { self, foes: [tgt] });
-  pushLifesteal(self, spec, [hit], defs, events);
+  pushLifesteal(self, spec, hits, defs, events);
   return events;
 }
 
@@ -413,15 +501,22 @@ function castNeighborPickFoe(
   dist: number,
   pick: 'lowestHp' | 'highestHp',
   chosenUid?: string,
+  reach: 'exact' | 'within' = 'exact',
 ): BattleEvent[] {
-  const foes = foesAtManhattan(self, units, dist);
+  const within = reach === 'within';
+  const foes = within
+    ? foesWithinManhattan(self, units, dist)
+    : foesAtManhattan(self, units, dist);
   const tgt = resolveChoice(foes, chosenUid, () => pickFoeInRing(foes, pick));
   if (!tgt) return [];
   // 纯 debuff（破甲/缠足）：保留 hit 供回放对准目标，但不走扣血
   const hits: SkillHit[] =
     spec.damage.kind === 'none'
       ? [{ target: tgt.uid, damage: 0, hpLeft: tgt.hp }]
-      : [resolveHit(self, def, spec, tgt, terrain, defs)];
+      : [
+          resolveHit(self, def, spec, tgt, terrain, defs),
+          ...resolveSplashHits(self, def, spec, tgt, units, terrain, defs),
+        ];
   const events: BattleEvent[] = [
     {
       type: 'skillCast',
@@ -429,12 +524,16 @@ function castNeighborPickFoe(
       skillId: spec.id,
       skillName: skillCastName(self, spec),
       kind: spec.displayKind,
-      rangeCells: cellsAtManhattan(self.pos, dist, terrain),
+      // 跟着 reach 走：回放高亮的格子和实际打得到的格子不一致，
+      // 玩家会照着高亮记这一招的射程，然后在下一场里点空
+      rangeCells: within
+        ? cellsWithinManhattan(self.pos, dist, terrain)
+        : cellsAtManhattan(self.pos, dist, terrain),
       hits,
       atkTerrainNote: terrainAttackNote(terrain, self.pos) ?? undefined,
     },
   ];
-  pushDeathIfNeeded(events, tgt);
+  pushHitDeaths(events, units, hits);
   applySkillCastFoeEffects(tgt, spec);
   applySkillCastSelfEffects(self, spec);
   pushAttrNotes(events, spec, { self, foes: [tgt] });
@@ -580,56 +679,6 @@ function castLineBestRay(
   return events;
 }
 
-function runBeforeMoveShape(
-  self: UnitState,
-  def: UnitDef,
-  spec: SkillSpec,
-  units: UnitState[],
-  terrain: TerrainGrid,
-  defs: Record<UnitKind, UnitArchetypeDef>,
-): BattleEvent[] {
-  switch (spec.shape.type) {
-    case 'neighborAoE':
-      return castAreaAoE(self, def, spec, units, terrain, defs, {
-        kind: 'ring',
-        dist: spec.shape.manhattan,
-      });
-    case 'discAoE':
-      return castAreaAoE(self, def, spec, units, terrain, defs, {
-        kind: 'disc',
-        radius: spec.shape.radius,
-      });
-    case 'neighborPickLowest':
-      return castNeighborPickLowest(self, def, spec, units, terrain, defs, spec.shape.manhattan);
-    case 'neighborPickFoe':
-      return castNeighborPickFoe(
-        self,
-        def,
-        spec,
-        units,
-        terrain,
-        defs,
-        spec.shape.manhattan,
-        spec.shape.pick,
-      );
-    case 'neighborPickAlly':
-      return castNeighborPickAlly(
-        self,
-        def,
-        spec,
-        units,
-        terrain,
-        defs,
-        spec.shape.manhattan,
-        spec.shape.pick,
-      );
-    case 'selfCast':
-      return castSelfCast(self, spec);
-    default:
-      return [];
-  }
-}
-
 /**
  * 技能槽。主槽来自布阵配置，临时槽来自局内商店。
  *
@@ -693,7 +742,7 @@ export function trySkillBeforeMove(
   for (const slot of CAST_ORDER) {
     const spec = readySlotSpec(self, def, slot);
     if (!spec || spec.timing !== 'beforeMove') continue;
-    const events = commitCast(self, slot, spec, runBeforeMoveShape(self, def, spec, units, terrain, defs));
+    const events = commitCast(self, slot, spec, castByShape(self, def, spec, units, terrain, defs));
     if (events.length) return events;
   }
   return [];
@@ -709,8 +758,7 @@ export function trySkillAfterMove(
   for (const slot of CAST_ORDER) {
     const spec = readySlotSpec(self, def, slot);
     if (!spec || spec.timing !== 'afterMove') continue;
-    if (spec.shape.type !== 'lineBestRayAllFoes') continue;
-    const events = commitCast(self, slot, spec, castLineBestRay(self, def, spec, units, terrain, defs));
+    const events = commitCast(self, slot, spec, castByShape(self, def, spec, units, terrain, defs));
     if (events.length) return events;
   }
   return [];
@@ -800,11 +848,15 @@ export function skillAiming(
     }
     case 'neighborPickLowest':
     case 'neighborPickFoe': {
-      const foes = foesAtManhattan(self, units, spec.shape.manhattan);
+      const within = spec.shape.type === 'neighborPickFoe' && spec.shape.reach === 'within';
+      const d = spec.shape.manhattan;
+      const foes = within ? foesWithinManhattan(self, units, d) : foesAtManhattan(self, units, d);
       if (foes.length === 0) return null;
       return {
         ...base,
-        rangeCells: cellsAtManhattan(self.pos, spec.shape.manhattan, terrain),
+        rangeCells: within
+          ? cellsWithinManhattan(self.pos, d, terrain)
+          : cellsAtManhattan(self.pos, d, terrain),
         candidates: foes.map((f) => f.uid),
         autoTargets: [],
       };
@@ -877,6 +929,18 @@ export function castSkillManual(
   );
 }
 
+/**
+ * 按形状分发到对应的 `cast*`。三条施放路径（AI 的 before/afterMove、人工）共用这一处，
+ * 所以 switch **必须覆盖全部形状**（不写 `default`，漏了形状就是编译错误）。
+ *
+ * AI 那两条路径原先没走这里：`trySkillAfterMove` 硬写 `shape.type !== 'lineBestRayAllFoes'
+ * continue`，另有一份漏了射线的 switch 给 beforeMove 用。当时能跑只是因为 afterMove
+ * 恰好只有弓系射线技能。给 afterMove 技能换形状（把「速射」改成点名单体）时，
+ * AI 会**一声不响地不放这一招**：人工模式正常，自动模式废掉，
+ * 而这种漏放要跑完整章胜率回归才看得出来。
+ *
+ * 合到一处之后，形状和 `timing` 是两个自由维度，新技能想配什么组合都行。
+ */
 function castByShape(
   self: UnitState,
   def: UnitDef,
@@ -904,7 +968,8 @@ function castByShape(
       );
     case 'neighborPickFoe':
       return castNeighborPickFoe(
-        self, def, spec, units, terrain, defs, spec.shape.manhattan, spec.shape.pick, targetUid,
+        self, def, spec, units, terrain, defs,
+        spec.shape.manhattan, spec.shape.pick, targetUid, spec.shape.reach,
       );
     case 'neighborPickAlly':
       return castNeighborPickAlly(

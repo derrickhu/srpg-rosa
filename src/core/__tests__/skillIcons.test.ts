@@ -32,6 +32,30 @@ describe('图标资源完整性', () => {
     }
   });
 
+  /**
+   * 图标的两层规则（《美术风格圣经》§6.1）由这两条守着。
+   *
+   * 普通词条是跨技能复用的通用词汇，共用图标会让「挫锐」和「顽疾」在 26px 的列表里
+   * 变成同一行；专属词条反过来必须共用徽记，一条一图的话每加一个技能就欠一张
+   * 在那个尺寸上根本认不出的新图。两个方向都会在扩内容时被顺手破坏，所以钉死。
+   */
+  it('普通词条的图标各不相同', () => {
+    const seen = new Map<string, string>();
+    for (const mod of allSkillMods()) {
+      if (mod.scope.kind !== 'generic') continue;
+      const owner = seen.get(mod.icon);
+      expect(owner, `词条「${mod.name}」和「${owner}」共用图标 ${mod.icon}`).toBeUndefined();
+      seen.set(mod.icon, mod.name);
+    }
+  });
+
+  it('专属词条统一用徽记，不各配图标', () => {
+    for (const mod of allSkillMods()) {
+      if (mod.scope.kind !== 'exclusive') continue;
+      expect(mod.icon, `专属词条「${mod.name}」不该自带图标`).toBe('mod_signature');
+    }
+  });
+
   // 操作条上的按钮已经不写字了，图标掉了就只剩一圈空环，玩家没法知道哪个是待机
   it('战斗操作条的动作图标齐全', () => {
     for (const key of ['act_wait', 'act_undo', 'act_cancel']) {

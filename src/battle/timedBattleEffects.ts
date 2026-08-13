@@ -102,6 +102,9 @@ function mergeCastSelfEffect(list: TimedBattleEffect[], e: SkillCastSelfEffect):
     const rest = list.filter((x) => x.kind !== 'taunt');
     return [...rest, { kind: 'taunt', roundsLeft: e.rounds }];
   }
+  if (e.kind === 'spdBonus') {
+    return [...list, { kind: 'spdBonus', addSpd: e.addSpd, roundsLeft: e.rounds }];
+  }
   return [...list, { kind: 'atkBonus', addAtk: e.addAtk, roundsLeft: e.rounds }];
 }
 

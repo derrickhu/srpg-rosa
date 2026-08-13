@@ -74,6 +74,11 @@ export interface LootCard {
   /** 叠到第几层，画在卡片底部的小圆里 */
   stacks: number;
   rarity: SkillModRarity;
+  /**
+   * 专属词条（只有这一招能出）。色条上加前缀点出来——
+   * 专属是这一招的招牌强化，玩家得知道「这张牌换个技能就再也见不到了」。
+   */
+  exclusive?: boolean;
 }
 
 export interface LootOverlayOpts {
@@ -391,7 +396,8 @@ function buildLootCard(card: LootCard, cardW: number, cardH: number): PIXI.Conta
   strip.drawRect(0, 11, cardW, 11);
   strip.endFill();
   cc.addChild(strip);
-  const rar = makeText(RARITY_LABEL[card.rarity], 'caption', {
+  const rarLabel = card.exclusive ? `专属 · ${RARITY_LABEL[card.rarity]}` : RARITY_LABEL[card.rarity];
+  const rar = makeText(rarLabel, 'caption', {
     fill: C.textOnDark, fontSize: 10, fontWeight: 'bold',
   });
   rar.anchor.set(0.5);

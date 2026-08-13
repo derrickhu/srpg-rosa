@@ -3,6 +3,7 @@ import { playerDeployRowRange } from '@/battle/constants';
 import { gridSize, inBounds } from '@/battle/grid';
 import { enemyBaseStats } from '@/data/enemyCatalog';
 import type { StageEnemySpawn } from '@/data/stagesMvp';
+import { canCharacterUseSkill, getCharacterDef } from '@/data/characterCatalog';
 import { canProfessionEquipSkill, defaultSkillId, skillDefForId } from '@/data/skillCatalog';
 import { resolveEnemyBattleSkill } from '@/data/enemySkillCatalog';
 import { characterEffectiveStats } from '@/game/characterFactory';
@@ -96,9 +97,17 @@ export function removePlacement(state: MvpGameState, pos: Vec2): void {
  * （`run.runTempSkill`），不参与主槽轮换。两个池子混在一起时，
  * 「换主技能」和「买到新技能」这两件事在布阵页长得一模一样，
  * 但前者是可逆的选择、后者是花过钱的既成事实。
+ *
+ * 再按**技能路线**过一遍（`canCharacterUseSkill`）：老存档里可能留着可学列表收紧前
+ * 学到的越界技能，不滤掉的话换到它身上会让词条批量休眠，而这条路是静默的。
+ * 兜底保证至少留一个——全被滤掉时交给 `resolveBattleSkillIdForCharacter` 的
+ * 默认技能兜底，那一招的定位一定在路线上。
  */
 export function effectiveOwnedSkillIds(_state: MvpGameState, m: Character): string[] {
-  return [...new Set(m.ownedSkillIds)];
+  const def = getCharacterDef(m.catalogId ?? m.rosterId);
+  const all = [...new Set(m.ownedSkillIds)];
+  if (!def) return all;
+  return all.filter((id) => canCharacterUseSkill(def, id));
 }
 
 /** 本局某角色的临时技能（第二槽）id；没买过则 undefined */

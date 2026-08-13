@@ -5,9 +5,9 @@ import {
 import { DUNGEON_DEFS } from '@/data/dungeonCatalog';
 import { POTION_DEFS } from '@/data/potionCatalog';
 import { getSkillSpec } from '@/data/skillCatalog';
-import { allSkillMods, modStacks } from '@/data/skillModCatalog';
+import { allSkillMods, modRollWeight, modStacks } from '@/data/skillModCatalog';
 import { describePotion } from '@/data/itemText';
-import { resolveBattleSkillIdForCharacter } from './DeployManager';
+import { battleSkillIdsForCharacter } from './DeployManager';
 import { instantiateCharacter } from '@/game/characterFactory';
 import type { Character } from '@/game/characterTypes';
 import {
@@ -19,7 +19,6 @@ import {
   currentStage,
   requireRun,
   resetPid,
-  shuffle,
   type LootOption,
   type MetaState,
   type MvpGameState,
@@ -118,41 +117,101 @@ export function canAutoBattle(state: MvpGameState): boolean {
  * 尽量凑**三个不同的人**：三张卡都是同一个角色时，玩家的选择退化成
  * 「给雷恩挑哪条词条」，队伍层面的取舍就没了。凑不齐才允许重复。
  */
-function lootCandidatesFor(state: MvpGameState, m: Character): LootOption[] {
+type SkillModLoot = Extract<LootOption, { kind: 'skillMod' }>;
+
+/** 一张候选卡 + 它这一次的抽取权重 */
+interface WeightedLoot {
+  opt: SkillModLoot;
+  weight: number;
+}
+
+function lootCandidatesFor(state: MvpGameState, m: Character, depth: number): WeightedLoot[] {
   const run = state.run;
   if (!run) return [];
-  const skillId = resolveBattleSkillIdForCharacter(state, m);
+  const owned = run.skillMods[m.rosterId] ?? [];
+  // 只看主槽：词条只强化主技能（见 `unitSkillSpec`），所以临时技能不该出候选。
+  // 这样卡面画的那一招**就是**唯一被改的那一招，不需要额外解释作用范围。
+  const skillId = battleSkillIdsForCharacter(state, m).main;
+  if (!skillId) return [];
   const spec = getSkillSpec(skillId);
   if (!spec) return [];
-  const owned = run.skillMods[m.rosterId] ?? [];
-  const out: LootOption[] = [];
+
+  const out: WeightedLoot[] = [];
   for (const mod of allSkillMods()) {
     if (!mod.canApply(spec)) continue;
     const next = modStacks(owned, mod.id) + 1;
     if (next > mod.maxStacks) continue;
     out.push({
-      kind: 'skillMod',
-      modId: mod.id,
-      rosterId: m.rosterId,
-      skillId,
-      name: `${m.name} · ${mod.name}`,
-      desc: mod.describe(next),
+      weight: modRollWeight(mod, depth),
+      opt: {
+        kind: 'skillMod',
+        modId: mod.id,
+        rosterId: m.rosterId,
+        skillId,
+        name: `${m.name} · ${mod.name}`,
+        desc: mod.describe(next),
+      },
     });
   }
   return out;
 }
 
-export function rollLoot(state: MvpGameState): LootOption[] {
-  const byChar = shuffle(partyCharacters(state)).map((m) => shuffle(lootCandidatesFor(state, m)));
+/** 掷点来源。默认 `Math.random`，测试传固定序列来验证权重与去重 */
+export type LootRng = () => number;
+
+function shuffleWith<T>(arr: readonly T[], rng: LootRng): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [a[i], a[j]] = [a[j]!, a[i]!];
+  }
+  return a;
+}
+
+/**
+ * 从一个人的候选里按权重抽一张并**从池子里移除**（同一张卡不会在一屏里出现两次）。
+ *
+ * `avoid` 是这一屏已经出过的词条 id。撞上了就先在剩下的里挑——三张卡都是「锋锐」
+ * 时玩家其实只有一个选项。只剩重复项时才允许重复，那也比退化成药剂好。
+ */
+function drawFrom(pool: WeightedLoot[], avoid: ReadonlySet<string>, rng: LootRng): SkillModLoot | undefined {
+  if (pool.length === 0) return undefined;
+  const fresh = pool.filter((c) => !avoid.has(c.opt.modId));
+  const from = fresh.length ? fresh : pool;
+  const total = from.reduce((s, c) => s + c.weight, 0);
+  if (total <= 0) return undefined;
+
+  let roll = rng() * total;
+  let hit = from[from.length - 1]!;
+  for (const c of from) {
+    roll -= c.weight;
+    if (roll < 0) {
+      hit = c;
+      break;
+    }
+  }
+  pool.splice(pool.indexOf(hit), 1);
+  return hit.opt;
+}
+
+export function rollLoot(state: MvpGameState, rng: LootRng = Math.random): LootOption[] {
+  // 节点越深，稀有/史诗越常见。前几场就狂出史诗的话，后面的三选一只会越来越平淡。
+  const depth = state.run?.nodeIndex ?? 0;
+  const byChar = shuffleWith(partyCharacters(state), rng).map((m) =>
+    lootCandidatesFor(state, m, depth),
+  );
 
   // 先每人抽一张（轮转），抽完一圈还不够 3 张再回头拿第二张。
   const picks: LootOption[] = [];
-  for (let round = 0; picks.length < 3; round += 1) {
+  const used = new Set<string>();
+  for (let round = 0; picks.length < 3 && round < 4; round += 1) {
     const before = picks.length;
-    for (const list of byChar) {
+    for (const pool of byChar) {
       if (picks.length >= 3) break;
-      const opt = list[round];
-      if (opt) picks.push(opt);
+      const opt = drawFrom(pool, used, rng);
+      if (!opt) continue;
+      picks.push(opt);
+      used.add(opt.modId);
     }
     if (picks.length === before) break;
   }
@@ -160,7 +219,7 @@ export function rollLoot(state: MvpGameState): LootOption[] {
   // 药剂垫底：后期整队词条都点满时，池子会真的抽干。
   while (picks.length < 3) {
     const ids = Object.keys(POTION_DEFS);
-    const pid = ids[Math.floor(Math.random() * ids.length)]!;
+    const pid = ids[Math.floor(rng() * ids.length)]!;
     const pd = POTION_DEFS[pid]!;
     picks.push({ kind: 'potion', potionId: pid, name: pd.name, desc: describePotion(pid) });
     if (picks.length >= 3) break;
