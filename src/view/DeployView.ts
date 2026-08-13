@@ -9,12 +9,14 @@ import { PLACEABLE_TERRAIN_IDS, terrainTicketName } from '@/data/dungeonCatalog'
 import type { Character } from '@/game/characterTypes';
 import { characterEffectiveStats } from '@/game/characterFactory';
 import type { BattleMode } from '@/battle/engine';
-import { AdManager } from '@/platform/AdManager';
 import { enemySpawnToUnitState } from '@/game/state/DeployManager';
 import {
   activeSkillIdForRun,
   benchCharacters,
-  canAutoBattle,
+  canSweep,
+  nodeClearedBefore,
+  sweepLeftToday,
+  sweepQuota,
   currentDungeon,
   currentNode,
   currentEnemyScale,
@@ -158,15 +160,17 @@ function computeDeployLayout(screen: DeployLayoutScreen, gridW: number, gridH: n
 
 export interface DeployCallbacks {
   onStartBattle: (mode: BattleMode) => void;
+  /**
+   * 扫荡：直接拿这一关的结果，不进战斗页。
+   *
+   * 和 `onStartBattle('auto')` 是两件事，不能合并：自动战斗要跑完整模拟、要回放、
+   * 有输的可能；扫荡是「这关我赢过了」的兑现，判胜不模拟。
+   */
+  onSweep: () => void;
   onReset: () => void;
   onHome: () => void;
   /** 刷新部署界面（不重置状态） */
   onRefresh?: () => void;
-  /**
-   * 未通过的关卡想自动战斗时走广告。返回是否看完（看完才自动开打）。
-   * 由 GameFlow 实现，DeployView 不直接碰 AdManager。
-   */
-  onRequestAutoByAd?: () => Promise<boolean>;
   /** 提示（走 GameFlow 的 toast，DeployView 不自己造弹窗） */
   onWarn?: (msg: string) => void;
 }
@@ -845,16 +849,21 @@ export function createDeployView(
   redrawGrid();
   redrawHand();
 
-  // ---- 开打按钮：手动是主行动，自动是次行动 ----
-  // 自动只在这一关**打赢过**之后才是一个按钮（见 canAutoBattle）；没打过时退化成
-  // 一个写明代价的广告入口，看不了广告（非微信环境）就干脆不出现——
-  // 摆一个点不动的「自动」比没有更糟，玩家会一直找解锁条件在哪。
-  const autoUnlocked = canAutoBattle(state);
-  const adAvailable = !autoUnlocked && callbacks.onRequestAutoByAd !== undefined && AdManager.isAvailable;
-  const showAuto = autoUnlocked || adAvailable;
+  // ---- 开打按钮 ----
+  //
+  // 这一关**打赢过**的时候，扫荡是主按钮、开打是次按钮：玩家会回到一个已经通关的
+  // 节点，绝大多数时候就是想快点过去。把「再打一遍」摆在主位等于让他每次都要
+  // 先绕过一个自己不想点的按钮。没打过的关只有开打，扫荡连位置都不占——
+  // 摆一个点不动的按钮比没有更糟，玩家会一直找解锁条件在哪。
+  const cleared = nodeClearedBefore(state);
+  const sweepLeft = sweepLeftToday(state.meta, run.dungeonId);
+  const canSweepNow = canSweep(state);
   const fh = 46;
   const gapBtn = 8;
-  const manualW = showAuto ? Math.floor(fightW * 0.6) : fightW;
+  // 通关过的关两个按钮**等宽同位**，主次只用颜色表达。让主按钮更宽会使「开始战斗」
+  // 在通关前后落在屏幕不同位置上，而这两个按钮的后果完全不同（一个花三分钟，
+  // 一个花一次每日配额），位移带来的误触代价太高。
+  const btnW = cleared ? Math.floor((fightW - gapBtn) / 2) : fightW;
 
   /**
    * Boss 空手上阵要二次确认。
@@ -877,8 +886,10 @@ export function createDeployView(
     }
     callbacks.onStartBattle('manual');
   }, {
-    variant: 'primary',
-    width: manualW,
+    // 有扫荡可用时开打让位给它，但仍是一个正常按钮：想重打的人（练手、试新词条、
+    // 想省下配额）不该被降级成一个看起来点不动的灰块。
+    variant: canSweepNow ? 'secondary' : 'primary',
+    width: btnW,
     height: fh,
     fontSize: needsPotionWarning ? 13 : 15,
     radius: 10,
@@ -887,21 +898,25 @@ export function createDeployView(
   fightC.y = fightY;
   root.addChild(fightC);
 
-  if (showAuto) {
-    const autoW = fightW - manualW - gapBtn;
-    const label = autoUnlocked ? '自动战斗' : '广告自动';
-    const autoBtn = makeButton(label, () => {
-      if (autoUnlocked) {
-        callbacks.onStartBattle('auto');
+  if (cleared) {
+    const quota = sweepQuota(run.dungeonId);
+    const sweepBtn = makeButton(canSweepNow ? `扫荡 (${sweepLeft})` : '扫荡 (0)', () => {
+      if (!canSweep(state)) {
+        callbacks.onWarn?.(`今天这个副本的扫荡次数用完了（每天 ${quota} 次），明天恢复`);
         return;
       }
-      void callbacks.onRequestAutoByAd?.().then((ok) => {
-        if (ok) callbacks.onStartBattle('auto');
-      });
-    }, { variant: 'secondary', width: autoW, height: fh, fontSize: 13, radius: 10 });
-    autoBtn.x = fightX + manualW + gapBtn;
-    autoBtn.y = fightY;
-    root.addChild(autoBtn);
+      callbacks.onSweep();
+    }, {
+      variant: canSweepNow ? 'primary' : 'secondary',
+      width: btnW,
+      height: fh,
+      fontSize: 15,
+      radius: 10,
+    });
+    sweepBtn.x = fightX + btnW + gapBtn;
+    sweepBtn.y = fightY;
+    sweepBtn.alpha = canSweepNow ? 1 : 0.5;
+    root.addChild(sweepBtn);
   }
 
   root.addChild(settingsOverlay);

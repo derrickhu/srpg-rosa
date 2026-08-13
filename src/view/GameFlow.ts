@@ -2,7 +2,6 @@ import * as PIXI from 'pixi.js';
 import type { PixiHost } from '@/boot/createPixiApp';
 import type { Faction } from '@/battle/types';
 import { createBattleSim, type BattleMode } from '@/battle/engine';
-import { AdManager } from '@/platform/AdManager';
 import { UNIT_DEFS } from '@/data/unitDefs';
 import { DUNGEON_DEFS } from '@/data/dungeonCatalog';
 import { getSkillMod, isExclusiveMod, modStacks } from '@/data/skillModCatalog';
@@ -19,7 +18,9 @@ import {
   battleTerrain,
   buildBattleUnits,
   buyShopOffer,
+  canSweep,
   claimLoot,
+  consumeSweep,
   currentDungeon,
   currentNode,
   currentStage,
@@ -262,14 +263,14 @@ export class GameFlow {
       this.state,
       {
         onStartBattle: (mode) => void this.resolveBattle(mode),
-        onRequestAutoByAd: () => AdManager.showRewarded('autoBattle'),
+        onSweep: () => this.sweepNode(),
         onWarn: (msg) => this.showToast(msg),
         onReset: () => {
-          // 放弃当前副本回大厅，累计魂晶按比例结算
-          const gained = abandonRun(this.state);
+          // 放弃当前副本回大厅。沿途首通的魂晶早已当场入账，这里没有补偿要算
+          abandonRun(this.state);
           SaveManager.saveRun(null);
           SaveManager.save(this.state);
-          this.showToast(`已放弃副本，魂晶 +${gained}`);
+          this.showToast('已放弃副本');
           this.renderShell('adventure');
         },
         onHome: () => this.renderHome(),
@@ -281,6 +282,33 @@ export class GameFlow {
     // 免得进战瞬间图集还没就位、回退成静态贴图
     void ensureAnimSets(animSetsForUnits(buildBattleUnits(this.state)));
     this.scenes.replaceAll(containerScene(container));
+  }
+
+  /**
+   * 扫荡：**直接判胜**，不建模拟器、不进战斗页、不等图集。
+   *
+   * 前提是这一关以前赢过（`canSweep`），所以再模拟一遍没有信息价值——而且模拟会有
+   * 输的可能：同一支队伍同一关，玩家上次赢了、这次 AI 代打输了，对他来说就是
+   * 「点了扫荡结果倒扣一次配额还没奖励」，无从解释。扫荡是兑现已有结果，不是重打。
+   *
+   * 奖励走和手打完全一样的 `applyVictory`：金币、三选一、通关魂晶一分不少。
+   * 刷取的天花板由每日配额来定（见 `SWEEP_ROUNDS_PER_DAY`），不靠削奖励来防——
+   * 削奖励只会让扫荡变成一个没人用的按钮。
+   */
+  private sweepNode(): void {
+    if (!canSweep(this.state)) {
+      this.showToast('这一关还不能扫荡');
+      return;
+    }
+    consumeSweep(this.state);
+    const run = this.state.run!;
+    run.lastReportWinner = 'player';
+    applyVictory(this.state);
+    const last = isRunComplete(this.state);
+    SaveManager.save(this.state);
+    // 弹层盖在布阵页上（`showRewardOverlay` 用 pushOverlay），不换场景：
+    // 扫荡的卖点就是不离开当前这一屏，切页会把「快」这件事又变慢。
+    this.showRewardOverlay(last);
   }
 
   private async resolveBattle(mode: BattleMode = 'manual'): Promise<void> {

@@ -86,23 +86,98 @@ function isNodeFirstClear(meta: MetaState, dungeonId: string, nodeIndex: number)
   return nodeIndex >= (meta.clearedNodesByDungeonId[dungeonId] ?? 0);
 }
 
-/** 记下「这个副本至少打通到第几个节点」，写进 meta 供自动战斗解锁判定 */
+/** 记下「这个副本至少打通到第几个节点」，写进 meta 供扫荡解锁判定 */
 function markNodeCleared(meta: MetaState, dungeonId: string, nodeIndex: number): void {
   const prev = meta.clearedNodesByDungeonId[dungeonId] ?? 0;
   meta.clearedNodesByDungeonId[dungeonId] = Math.max(prev, nodeIndex + 1);
 }
 
+// ---------------- 扫荡：打赢过的关直接拿结果 ----------------
+
 /**
- * 当前节点是否已经通过过、因而允许自动战斗。
+ * 每天每个副本能扫荡几**轮**（一轮 = 该副本的全部战斗节点）。
  *
- * 「打赢过才能自动」不是为了卡人，而是因为自动模式看不到任何操作，
- * 它给不了新手任何关于「我为什么输了」的信息。没打过就能自动，等于允许玩家
- * 用一个学不到东西的方式去撞一个他还不理解的关卡。
+ * 配额按轮而不是按固定次数给，是因为副本长度不一样（草原 7 场，之后每章 5 场）。
+ * 定一个固定数字必然在某一章不够用，而不够用的表现特别难受：扫到第 5 关时次数耗尽，
+ * 玩家被迫手动打完剩下两关——他刚才选扫荡就是因为不想打，这时候等于被半路扣下。
+ * 按轮给保证了「要么完整扫一遍，要么完整打一遍」，不会卡在中间。
  */
-export function canAutoBattle(state: MvpGameState): boolean {
+export const SWEEP_ROUNDS_PER_DAY = 1;
+
+/** 一个副本里的战斗节点数（商店不算，它不消耗扫荡次数） */
+function battleNodeCount(dungeonId: string): number {
+  const d = DUNGEON_DEFS.find((x) => x.id === dungeonId);
+  if (!d) return 0;
+  return d.nodes.filter((n) => n.kind !== 'shop').length;
+}
+
+/** 这个副本每天的扫荡次数上限 */
+export function sweepQuota(dungeonId: string): number {
+  return battleNodeCount(dungeonId) * SWEEP_ROUNDS_PER_DAY;
+}
+
+/**
+ * 「今天」的口径：**本地**日期。
+ *
+ * 用本地时间而不是 UTC，因为配额的说明文字写的是「今天还剩 N 次」，玩家理解的
+ * 「今天」就是他手机上显示的那个日期。UTC 会让国内玩家在早上 8 点前看到昨天的额度。
+ *
+ * 代价是改系统时间能刷额度。不做防御是权衡后的结果：存档就在本地，真想刷的人
+ * 直接改存档比改时钟省事得多，多一道校验挡不住他；而按「存的日期不等于今天就归零」
+ * 处理，时钟回拨也只是白送额度，不会把正常玩家（跨时区、夏令时）锁在零次上。
+ */
+function todayKey(now: Date = new Date()): string {
+  const y = now.getFullYear();
+  const m = `${now.getMonth() + 1}`.padStart(2, '0');
+  const d = `${now.getDate()}`.padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+/** 今天在这个副本上已经用掉的扫荡次数（跨天自动归零） */
+export function sweepUsedToday(meta: MetaState, dungeonId: string): number {
+  const rec = meta.sweepUsageByDungeonId[dungeonId];
+  if (!rec || rec.date !== todayKey()) return 0;
+  return rec.used;
+}
+
+/** 今天在这个副本上还能扫荡几次 */
+export function sweepLeftToday(meta: MetaState, dungeonId: string): number {
+  return Math.max(0, sweepQuota(dungeonId) - sweepUsedToday(meta, dungeonId));
+}
+
+/**
+ * 当前节点能不能扫荡：**以前通过过** + 今天还有配额。
+ *
+ * 「打赢过才能扫荡」是硬条件，因为扫荡直接判胜、不做模拟。没打过就能扫等于白送通关。
+ * 而配额是给刷取设的天花板：扫荡发的是全额奖励（含整章重复通关的魂晶），
+ * 不限次的话最优策略就变成一直点扫荡，那关卡本身就没人玩了。
+ */
+export function canSweep(state: MvpGameState): boolean {
   const run = state.run;
   if (!run) return false;
+  return nodeClearedBefore(state) && sweepLeftToday(state.meta, run.dungeonId) > 0;
+}
+
+/**
+ * 当前节点以前通过过没有——即「够不够格扫荡」，不看今天还剩几次。
+ *
+ * 和 `canSweep` 分开导出是给界面用的：次数用完时按钮仍要画出来并说明原因，
+ * 直接藏掉的话玩家会以为扫荡是随机出现的。
+ */
+export function nodeClearedBefore(state: MvpGameState): boolean {
+  const run = state.run;
+  if (!run) return false;
+  if (currentNode(state).kind === 'shop') return false;
   return run.nodeIndex < (state.meta.clearedNodesByDungeonId[run.dungeonId] ?? 0);
+}
+
+/** 扣一次当前副本的扫荡配额。调用方须先过 `canSweep` */
+export function consumeSweep(state: MvpGameState): void {
+  const run = requireRun(state);
+  const today = todayKey();
+  const rec = state.meta.sweepUsageByDungeonId[run.dungeonId];
+  const used = rec && rec.date === today ? rec.used : 0;
+  state.meta.sweepUsageByDungeonId[run.dungeonId] = { date: today, used: used + 1 };
 }
 
 /**

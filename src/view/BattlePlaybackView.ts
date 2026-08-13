@@ -2,7 +2,7 @@ import * as PIXI from 'pixi.js';
 import { makeText } from '@/theme/typography';
 import type { PixiHost } from '@/boot/createPixiApp';
 import type { BattleEvent, Faction, SkillKind, UnitKind, UnitState, Vec2 } from '@/battle/types';
-import type { BattleSim } from '@/battle/engine';
+import type { BattleSim, BattleStep } from '@/battle/engine';
 import { effectiveUnitDef } from '@/battle/effectiveUnit';
 import { gridSize } from '@/battle/grid';
 import type { TerrainGrid } from '@/battle/grid';
@@ -164,6 +164,14 @@ export function createBattlePlaybackView(
   let completed = false;
   /** 人工操作 UI，自动模式下为 null */
   let manualUi: ManualTurnUi | null = null;
+  /**
+   * 切托管时 AI 当场接手打完的那一步，等主循环来播。
+   *
+   * 不在按钮回调里直接 await 播放：那会和主循环并发跑同一套动画（同一个单位可能
+   * 一边被接手协程移动、一边被主循环播下一个事件），画面会串。事件产生的时机由
+   * 引擎决定，播放的时机只归主循环——单一播放者是这套回放能保持顺序的前提。
+   */
+  let takeOverStep: BattleStep | null = null;
 
   function dur(ms: number): number {
     return ms / speedMul;
@@ -245,9 +253,13 @@ export function createBattlePlaybackView(
     roundTx.text = `${gameState.nodeLabel} · 第 ${Math.max(1, sim.getRound())} 回合`;
   }
 
-  // 开场提示：集火交互（几秒后淡出）
+  // 开场提示（几秒后淡出）。两种开局说两句不同的话：手动要说清一回合能做几件事，
+  // 托管要让玩家知道方向盘随时拿得回来，否则他只会盯着一场自己插不上手的战斗。
   {
-    const hintTx = makeText('点击敌人集火 · 技能自动释放', 'combatLabel', {
+    const openingHint = sim.isAuto()
+      ? 'AI 代打中 · 右上角「接手」随时接管'
+      : '移动 / 技能 / 普攻各一次 · 右上角可切托管';
+    const hintTx = makeText(openingHint, 'combatLabel', {
       fill: 0xffe08a, fontSize: 13,
       stroke: 0x000000, strokeThickness: 3,
     });
@@ -351,8 +363,57 @@ export function createBattlePlaybackView(
     if (skipping || completed) return;
     skipping = true;
     manualUi?.hide();
+    // 正在等指令时必须解开那个 await，否则协程挂死、战场彻底不动（见 abortWait）
+    manualUi?.abortWait();
   });
   root.addChild(skipBtn);
+
+  // --- 托管开关：战斗中随时在「自己打」和「AI 代打」之间来回切 ---
+  //
+  // 摆在这里而不是只在开局选一次，是因为这两种玩法解决的是**同一局里不同段落**的问题：
+  // 前半场清杂兵没有任何决策，让 AI 走；Boss 起手或残局需要走位和集火时收回来自己打。
+  // 逼玩家开局二选一的话，他为了那三回合的关键操作，得把前面十几回合也一步步点完。
+  //
+  // 标签用动词写「点下去会发生什么」而不是当前状态：状态由配色表达（托管中高亮），
+  // 而写「自动/手动」时玩家永远要先猜这是当前值还是切换目标。
+  const pilotBtnW = 68;
+  const pilotBtn = new PIXI.Container();
+  const pilotBg = new PIXI.Graphics();
+  const pilotLbl = makeText('托管', 'ui', { fill: 0xffffff, fontSize: 13 });
+  pilotLbl.anchor.set(0.5);
+  pilotLbl.x = pilotBtnW / 2;
+  pilotLbl.y = ctrlH / 2;
+  function drawPilotBtn(): void {
+    const auto = sim.isAuto();
+    pilotBg.clear();
+    pilotBg.lineStyle(1.5, auto ? 0x52c4dc : 0x888888, 1);
+    pilotBg.beginFill(auto ? 0x2a7a8c : 0x000000, auto ? 0.85 : 0.4);
+    pilotBg.drawRoundedRect(0, 0, pilotBtnW, ctrlH, 10);
+    pilotBg.endFill();
+    pilotLbl.text = auto ? '接手' : '托管';
+  }
+  drawPilotBtn();
+  pilotBtn.addChild(pilotBg);
+  pilotBtn.addChild(pilotLbl);
+  pilotBtn.x = sw - pilotBtnW - 8;
+  pilotBtn.y = skipBtn.y + ctrlH + 6;
+  pilotBtn.eventMode = 'static';
+  pilotBtn.cursor = 'pointer';
+  pilotBtn.hitArea = new PIXI.Rectangle(0, 0, pilotBtnW, ctrlH);
+  pilotBtn.on('pointertap', () => {
+    if (skipping || completed) return;
+    const toAuto = !sim.isAuto();
+    // 切到托管时引擎会当场把手上这个单位打完，事件交给主循环去播（见 run）。
+    // 已经结算的动作不回滚：玩家从下一个该他动的单位开始接手。
+    const step = sim.setAuto(toAuto);
+    if (step.events.length > 0) takeOverStep = step;
+    drawPilotBtn();
+    if (toAuto) {
+      manualUi?.hide();
+      manualUi?.abortWait();
+    }
+  });
+  root.addChild(pilotBtn);
 
   // --- 单位信息面板 ---
   //
@@ -1433,16 +1494,20 @@ export function createBattlePlaybackView(
   /** 主循环：AI 单位边模拟边播，玩家单位停下来等指令 */
   async function run(): Promise<void> {
     while (!root.destroyed) {
-      const step = sim.stepTurn();
+      // 中途切托管时，引擎已经把手上那个单位打完了（见 pilotBtn），先把它的动作播出来。
+      // 走同一条 playEvents 是有意的：托管接手看起来必须和 AI 平时行动一模一样，
+      // 否则玩家会以为自己那一下点出了别的效果。
+      const step = takeOverStep ?? sim.stepTurn();
+      takeOverStep = null;
       await playEvents(step.events);
       if (root.destroyed) return;
       if (step.done) {
         finishPlayback(step.winner ?? 'enemy');
         return;
       }
-      // 轮到玩家单位：交互直到它的回合结束。跳过时 pending 会由 runToEnd 接管
+      // 轮到玩家单位：交互直到它的回合结束。跳过 / 托管时 pending 由 AI 接管
       const pending = sim.pending();
-      if (pending && !skipping) {
+      if (pending && !skipping && !sim.isAuto()) {
         await runPlayerTurn(pending.uid);
         if (root.destroyed) return;
       }

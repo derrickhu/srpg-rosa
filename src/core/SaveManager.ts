@@ -75,11 +75,18 @@ function normalizeRun(run: RunState): RunState {
  * 同上，meta 侧的新增字段补默认值。
  *
  * `clearedNodesByDungeonId` 缺失时补空对象而不是「按 clearedDungeonIds 推算」：
- * 老档里没有逐节点记录，猜出来的值可能给出玩家其实没打过的关的自动权限。
- * 补空的代价只是老玩家要再打一次才拿到自动，而猜错的代价是他能跳过没学会的内容。
+ * 老档里没有逐节点记录，猜出来的值可能给出玩家其实没打过的关的扫荡权限。
+ * 补空的代价只是老玩家要再打一次才拿到扫荡，而猜错的代价是他能跳过没学会的内容。
+ *
+ * `sweepUsageByDungeonId` 补空则是白送老玩家今天的配额——反正它每天都要归零，
+ * 没有值得防的东西。
  */
 function normalizeMeta(meta: MetaState): MetaState {
-  return { ...meta, clearedNodesByDungeonId: meta.clearedNodesByDungeonId ?? {} };
+  return {
+    ...meta,
+    clearedNodesByDungeonId: meta.clearedNodesByDungeonId ?? {},
+    sweepUsageByDungeonId: meta.sweepUsageByDungeonId ?? {},
+  };
 }
 
 /** 进入副本后断点续局时，从节点类型推断稳妥的恢复阶段（不恢复战斗中/结算中） */

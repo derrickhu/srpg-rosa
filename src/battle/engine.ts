@@ -211,6 +211,16 @@ export interface BattleSim {
   /** 使用药剂（立即生效，返回产生的事件供回放展示） */
   usePotion(potionId: string): BattleEvent[];
   /**
+   * 中途切换托管（自动 / 手动），返回**切换这一下**立即产生的事件供回放播出。
+   *
+   * 切到自动时，正在等指令的那个单位由 AI 接手打完（没用完的动作接着打，见 `actTurn`
+   * 的 resume），所以会有事件；切回手动时只是不再代打**下一个**单位，事件为空。
+   * 已经结算完的动作不回滚——玩家从下一个该他动的单位开始接手。
+   */
+  setAuto(on: boolean): BattleStep;
+  /** 当前是不是 AI 代打玩家单位 */
+  isAuto(): boolean;
+  /**
    * 跳过：一口气模拟到结束，返回完整战报（含之前已消费的事件）。
    * 人工模式下也可用——剩下的交给 AI 代打，当前单位没用完的动作会被接着打完。
    */
@@ -243,9 +253,10 @@ export function createBattleSim(
   const mode: BattleMode = opts.mode ?? 'auto';
   const allEvents: BattleEvent[] = [];
   /**
-   * 跳过 / 扫荡时置位，之后玩家单位也由 AI 接手。
-   * 和 `mode` 分开：`mode` 是这一局开局选的，`forceAuto` 是中途按了跳过——
-   * 两者混成一个变量的话，跳过一次就等于永久改了这局的模式，回不去了。
+   * 置位时玩家单位也由 AI 接手（开局选了自动，或中途切了托管 / 按了跳过）。
+   *
+   * 和 `mode` 分开：`mode` 是这一局的开场状态，`forceAuto` 是当下的实际状态。
+   * 合成一个变量的话「托管」就成了单向门——切过去之后没有东西记得原本该由谁操作。
    */
   let forceAuto = mode === 'auto';
   /** 人工模式下当前停下来等指令的单位 */
@@ -658,15 +669,20 @@ export function createBattleSim(
     return events;
   }
 
+  function setAuto(on: boolean): BattleStep {
+    forceAuto = on;
+    const idle: BattleStep = { events: [], done, winner };
+    // 切回手动不需要动当前状态：下一次 stepTurn 自然会停下来等指令。
+    if (!on || done || !pendingTurn) return idle;
+    // 当前单位如果已经走了一半，把剩下的动作接着打完（见 actTurn 的 resume）
+    const resume = pendingTurn;
+    pendingTurn = null;
+    const u = liveUnit(resume.uid);
+    return u ? actTurn(u, resume) : idle;
+  }
+
   function runToEnd(): BattleReport {
-    // 之后全部交给 AI。当前单位如果已经走了一半，把剩下的动作接着打完（见 actTurn 的 resume）
-    forceAuto = true;
-    if (pendingTurn) {
-      const resume = pendingTurn;
-      pendingTurn = null;
-      const u = liveUnit(resume.uid);
-      if (u) actTurn(u, resume);
-    }
+    setAuto(true);
     while (!done) stepTurn();
     return { events: allEvents, winner: winner ?? 'enemy', rounds };
   }
@@ -692,6 +708,8 @@ export function createBattleSim(
     commandAttack,
     commandWait,
     usePotion,
+    setAuto,
+    isAuto: () => forceAuto,
     runToEnd,
     getUnits: () => units,
     getUnit: (uid) => units.find((u) => u.uid === uid),

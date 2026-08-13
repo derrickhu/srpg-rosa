@@ -72,13 +72,22 @@ export interface MetaState {
   unlockedDungeonIds: string[];
   clearedDungeonIds: string[];
   /**
-   * 各副本**已打通过的战斗节点数**，用来判定某个节点能不能自动战斗（见 `canAutoBattle`）。
+   * 各副本**已打通过的战斗节点数**，用来判定某个节点能不能扫荡（见 `canSweep`）。
    *
-   * 按节点记而不是按副本记：自动的用途是「把已经会打的关快速过掉」，
-   * 而玩家通常是卡在某一关反复重来的。要求整章通关才给自动，等于在他最需要少受折磨的
+   * 按节点记而不是按副本记：扫荡的用途是「把已经会打的关快速过掉」，
+   * 而玩家通常是卡在某一关反复重来的。要求整章通关才给扫荡，等于在他最需要少受折磨的
    * 那段路上一直不给——而通关之后他也不太会再回来刷了。
    */
   clearedNodesByDungeonId: Record<string, number>;
+  /**
+   * 每日扫荡配额的消耗记录：dungeonId → 那天用了几次。
+   *
+   * 扫荡直接发全额奖励（含整章重复通关的魂晶），所以刷取的天花板只能靠次数来定。
+   * 记 `date` 而不是记「剩余次数」：剩余次数需要有人在跨天时主动去重置，而这个游戏
+   * 没有服务端 tick，玩家不开客户端就没人跑那段代码。存「哪天用了多少」则是自证的——
+   * 读的时候比一下日期就知道该不该归零。
+   */
+  sweepUsageByDungeonId: Record<string, { date: string; used: number }>;
 }
 
 /** 单副本一局的临时状态（roguelike 构筑都在这里，结束即弃） */
@@ -169,6 +178,7 @@ export function createInitialMeta(): MetaState {
     unlockedDungeonIds: [...DEFAULT_DUNGEON_IDS],
     clearedDungeonIds: [],
     clearedNodesByDungeonId: {},
+    sweepUsageByDungeonId: {},
   };
 }
 

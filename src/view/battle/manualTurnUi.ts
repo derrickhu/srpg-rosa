@@ -262,6 +262,14 @@ export interface ManualTurnUi {
   update(s: ManualUiState): void;
   next(): Promise<ManualInput>;
   hide(): void;
+  /**
+   * 解开正在等的那个 `next()`（切托管 / 跳过时用），但不销毁 UI——之后还要用。
+   *
+   * `hide()` 只是把界面擦掉，它不会让 `await next()` 返回。玩家在自己回合中途按下
+   * 「托管」或「跳过」时，如果只 hide，回放协程会永远挂在那个 await 上：屏幕上是一张
+   * 空战场，谁也不动。控制权要交出去，就得先把等待解开。
+   */
+  abortWait(): void;
   destroy(): void;
 }
 
@@ -849,6 +857,11 @@ export function createManualTurnUi(opts: ManualTurnUiOptions): ManualTurnUi {
     next(): Promise<ManualInput> {
       if (destroyed) return Promise.resolve({ kind: 'abort' });
       return new Promise((res) => { resolver = res; });
+    },
+
+    abortWait(): void {
+      if (destroyed) return;
+      emit({ kind: 'abort' });
     },
 
     hide(): void {
