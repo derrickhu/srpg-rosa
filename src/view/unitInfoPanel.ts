@@ -383,7 +383,21 @@ export interface UnitInfoPanel {
   stop(): void;
 }
 
-export function createUnitInfoPanel(model: UnitInfoModel, panelW: number): UnitInfoPanel {
+export interface UnitInfoPanelOptions {
+  /**
+   * 画自己的米白底（默认画）。
+   *
+   * 嵌进另一个米白面板时关掉：两层同色圆角矩形叠在一起只会在拐角处露出一圈
+   * 深浅不一的边，读起来像没对齐。角色页的详情弹窗就是这种嵌套。
+   */
+  drawBg?: boolean;
+}
+
+export function createUnitInfoPanel(
+  model: UnitInfoModel,
+  panelW: number,
+  opts?: UnitInfoPanelOptions,
+): UnitInfoPanel {
   const panel = new PIXI.Container();
   panel.eventMode = 'static';
 
@@ -506,11 +520,13 @@ export function createUnitInfoPanel(model: UnitInfoModel, panelW: number): UnitI
 
   cy += 12;
 
-  const bg = new PIXI.Graphics();
-  bg.beginFill(0xfefef6, 0.97);
-  bg.drawRoundedRect(0, 0, panelW, cy, 14);
-  bg.endFill();
-  panel.addChildAt(bg, 0);
+  if (opts?.drawBg ?? true) {
+    const bg = new PIXI.Graphics();
+    bg.beginFill(0xfefef6, 0.97);
+    bg.drawRoundedRect(0, 0, panelW, cy, 14);
+    bg.endFill();
+    panel.addChildAt(bg, 0);
+  }
 
   // 场景可能被 SceneManager 整棵拆掉而不经过 `stop()`（战斗结束时面板还开着），
   // 所以 ticker 自己也要能发现容器没了并摘掉自己，否则它会一直抓着这棵树不放。

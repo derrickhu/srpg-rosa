@@ -42,10 +42,9 @@ import { createShopView } from '@/view/ShopView';
 import { createHomeView } from '@/view/HomeView';
 import { createAdventureView } from '@/view/AdventureView';
 import { createRosterView } from '@/view/RosterView';
-import { createInventoryView } from '@/view/InventoryView';
-import { createMetaShopView } from '@/view/MetaShopView';
+import { createRecruitView } from '@/view/RecruitView';
 import { createChallengeView } from '@/view/ChallengeView';
-import { createTabBar, TAB_BAR_HEIGHT, type TabId } from '@/view/TabBar';
+import { createTabBar, tabBarHeight, type TabId } from '@/view/TabBar';
 import { C } from '@/view/mvpTheme';
 import { loadGameFonts } from '@/core/FontLoader';
 import { makeText } from '@/theme/typography';
@@ -161,7 +160,7 @@ export class GameFlow {
   private get shellScreen(): { screenWidth: number; screenHeight: number } {
     return {
       screenWidth: this.app.screen.width,
-      screenHeight: this.app.screen.height - TAB_BAR_HEIGHT,
+      screenHeight: this.app.screen.height - tabBarHeight(),
     };
   }
 
@@ -193,8 +192,11 @@ export class GameFlow {
 
   private buildTabContent(tab: TabId): PIXI.Container {
     const screen = this.shellScreen;
-    const persistAndRedraw = (): void => {
+    const persist = (): void => {
       SaveManager.saveMeta(this.state.meta);
+    };
+    const persistAndRedraw = (): void => {
+      persist();
       this.renderShell();
     };
     switch (tab) {
@@ -211,11 +213,15 @@ export class GameFlow {
           screen,
         );
       case 'roster':
-        return createRosterView(this.state, { onChanged: persistAndRedraw }, screen);
-      case 'inventory':
-        return createInventoryView(this.state, screen);
-      case 'shop':
-        return createMetaShopView(this.state, { onChanged: persistAndRedraw }, screen);
+        // 角色页的弹窗要能连着升级不被弹回网格，所以给它一个「只存盘」的口子；
+        // 重绘推迟到关窗时由它自己发起（见 RosterCallbacks.onPersist）
+        return createRosterView(
+          this.state,
+          { onChanged: persistAndRedraw, onPersist: persist },
+          screen,
+        );
+      case 'recruit':
+        return createRecruitView(this.state, { onChanged: persistAndRedraw }, screen);
       case 'challenge':
         return createChallengeView(
           this.state,

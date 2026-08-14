@@ -10,12 +10,12 @@ import {
 import { AssetManager } from '@/core/AssetManager';
 import {
   createBackground,
-  createCurrencyPill,
   createUiIcon,
   createUnitToken,
   drawCheck,
   drawChevron,
 } from '@/view/renderHelpers';
+import { createHubHeader } from '@/view/hubHeader';
 import { C, shade } from '@/view/mvpTheme';
 import { createNodeStrip } from '@/view/NodeStrip';
 import { makeButton } from '@/ui/Button';
@@ -107,11 +107,12 @@ export function createAdventureView(
 
   let chapter = Math.max(0, Math.min(chapterIndex, DUNGEON_DEFS.length - 1));
 
-  // 顶栏：魂晶 pill
-  const pill = createCurrencyPill('icon_soul', `${state.meta.metaCurrency}`);
-  pill.x = 8;
-  pill.y = 8;
-  root.addChild(pill);
+  // 顶栏走四页共用的那一份，胶囊避让在它内部处理。
+  // 这一页不出「冒险」标题：章节绶带本身就是标题，再写一行只是把卡片往下挤。
+  const header = createHubHeader({ screenWidth: W, soul: state.meta.metaCurrency });
+  root.addChild(header.root);
+  /** 章节卡顶。绶带跨在卡片上沿，所以要比顶栏再让出它的一半高度 */
+  const cardY = Math.max(66, header.height + 26);
 
   // 章节内容层（切章节时整体滑动）
   const chapterLayer = new PIXI.Container();
@@ -131,9 +132,10 @@ export function createAdventureView(
     const cleared = state.meta.clearedDungeonIds.includes(d.id);
 
     const cardW = W - 48;
-    const cardH = Math.min(H * 0.42, 340);
     const cardX = 24;
-    const cardY = 66;
+    // 卡片下方还要放节点进度条和底部按钮，所以高度是「剩下多少」而不是固定比例：
+    // 顶栏在刘海机上会比在旧机型高 40 多像素，按固定比例算会把进度条顶到按钮里
+    const cardH = Math.min(H * 0.42, 340, H - cardY - STRIP_BAR_H - 108);
 
     // 卡片底：统一用面板色，章节身份交给上方插图。底色跟着 themeColor 走的话，
     // 草原章的绿会和同样是绿的战场背景糊在一起，卡片边界看不出来。

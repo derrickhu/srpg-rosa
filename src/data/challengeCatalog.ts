@@ -1,0 +1,115 @@
+import { DUNGEON_DEFS, getDungeonDef } from '@/data/dungeonCatalog';
+import type { MetaState } from '@/game/state/GameState';
+
+/**
+ * 副本页的条目表。
+ *
+ * 副本页管的是**可重复刷的内容**——冒险页负责推进主线，这里负责「已经会打的东西怎么
+ * 再换成收益」。三类：
+ *
+ * - `chapterRepeat`：已通关章节重打。它不写在表里，由通关记录当场派生——
+ *   章节数据的唯一出处是 `dungeonCatalog`，抄一份进这里迟早两边对不上。
+ * - `event`：限时活动副本。
+ * - `endless`：无尽试炼。
+ *
+ * 后两类现在是**框架 + 测试数据**：卡片、状态、奖励说明都按真条目走通，只是点开
+ * 告诉玩家还没开。这么做是为了让「加一个活动」变成往这张表里加一行，而不是再写一遍页面。
+ */
+export type ChallengeKind = 'chapterRepeat' | 'event' | 'endless';
+
+/**
+ * 条目当前能不能打。
+ *
+ * `soon` 和 `locked` 必须分开：前者是「我们还没做」，后者是「你还没到」。
+ * 混成一个「未解锁」会让玩家去找一个根本不存在的解锁条件。
+ */
+export type ChallengeStatus =
+  | { kind: 'open' }
+  | { kind: 'locked'; reason: string }
+  | { kind: 'soon' };
+
+export interface ChallengeEntry {
+  id: string;
+  kind: ChallengeKind;
+  name: string;
+  desc: string;
+  /** `UI_BUNDLE` 里的图标 key；由 challengeCatalog.test.ts 保证已登记 */
+  icon: string;
+  /** 一句话奖励说明。玩家决定要不要打，看的就是这行 */
+  reward: string;
+  /** 开放时间描述，如「常驻」「每周六 · 周日」 */
+  window: string;
+  /** `chapterRepeat` 专用：对应章节 */
+  dungeonId?: string;
+  /** 解锁条件的人话说明，`locked` 时显示 */
+  requirement?: string;
+}
+
+/**
+ * 静态条目（活动 + 无尽）。
+ *
+ * 图标暂时借用已有的几张（`tab_challenge` / `node_boss`）。宁可复用也不写一个
+ * 不存在的 key——那样卡片上会静默地少一个图标，而这种缺失只有真机上才看得见。
+ */
+export const CHALLENGE_ENTRIES: readonly ChallengeEntry[] = [
+  {
+    id: 'event_grass_hunt',
+    kind: 'event',
+    name: '草原围猎',
+    desc: '限时活动：草原魔物成群出没，全程无补给点，一口气打完五场。',
+    icon: 'tab_challenge',
+    reward: '魂晶 ×15 · 稀有词条保底 1 次',
+    window: '每周六 · 周日',
+  },
+  {
+    id: 'event_boss_rush',
+    kind: 'event',
+    name: '首领连战',
+    desc: '限时活动：连续挑战三名章节首领，中途不回血、不换人。',
+    icon: 'node_boss',
+    reward: '魂晶 ×25',
+    window: '每月首周',
+  },
+  {
+    id: 'endless_trial',
+    kind: 'endless',
+    name: '无尽试炼',
+    desc: '波次递增，敌人越打越强，直到全队倒下。记录你到过的最深层数。',
+    icon: 'tab_challenge',
+    reward: '按层数结算魂晶，每层都算',
+    window: '常驻',
+  },
+];
+
+/** 已通关章节 → 重挑战条目（顺序跟随章节表） */
+export function chapterRepeatEntries(meta: MetaState): ChallengeEntry[] {
+  return DUNGEON_DEFS.filter((d) => meta.clearedDungeonIds.includes(d.id)).map((d) => ({
+    id: `repeat_${d.id}`,
+    kind: 'chapterRepeat' as const,
+    name: d.name,
+    desc: d.desc,
+    icon: 'tab_adventure',
+    // 和扫荡口径对齐：重复通关整章照样给魂晶，每日次数才是天花板（见 `sweepQuota`）
+    reward: `通关魂晶 ×${d.metaReward} · 可扫荡`,
+    window: '常驻',
+    dungeonId: d.id,
+  }));
+}
+
+export function challengeStatus(entry: ChallengeEntry, meta: MetaState): ChallengeStatus {
+  if (entry.kind === 'chapterRepeat') {
+    const cleared = !!entry.dungeonId && meta.clearedDungeonIds.includes(entry.dungeonId);
+    return cleared ? { kind: 'open' } : { kind: 'locked', reason: '尚未通关' };
+  }
+  return { kind: 'soon' };
+}
+
+/** 无尽试炼当前记录（老存档没有这个字段，缺省 0） */
+export function endlessBestFloor(meta: MetaState): number {
+  return meta.endlessBestFloor ?? 0;
+}
+
+/** `chapterRepeat` 条目对应的章节定义 */
+export function challengeDungeon(entry: ChallengeEntry) {
+  return entry.dungeonId ? getDungeonDef(entry.dungeonId) : undefined;
+}

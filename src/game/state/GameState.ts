@@ -88,6 +88,12 @@ export interface MetaState {
    * 读的时候比一下日期就知道该不该归零。
    */
   sweepUsageByDungeonId: Record<string, { date: string; used: number }>;
+  /**
+   * 无尽试炼到过的最深层数。可选：老存档没有这个字段，读的时候按 0 算
+   * （`endlessBestFloor()`）。玩法还没实装，先把存档位留出来——
+   * 等真做的时候再改 `MetaState` 就得连着迁版本，而这只是一个数。
+   */
+  endlessBestFloor?: number;
 }
 
 /** 单副本一局的临时状态（roguelike 构筑都在这里，结束即弃） */

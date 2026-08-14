@@ -1,4 +1,19 @@
-import type { SkillSpec } from './skillCatalog';
+import type { SkillRole, SkillSpec } from './skillCatalog';
+
+/**
+ * 技能定位的中文名。角色卡上的「定位」和技能的 `role` 必须是同一个词——
+ * 角色的技能路线就是它全部技能的定位（见 `CharacterDef.skillRoute`），
+ * 两处各起一套叫法会让玩家以为是两件事。
+ */
+const ROLE_LABEL: Record<SkillRole, string> = {
+  damage: '输出',
+  control: '控制',
+  support: '辅助',
+};
+
+export function describeSkillRole(role: SkillRole): string {
+  return ROLE_LABEL[role];
+}
 
 /**
  * 技能范围/选目标方式的一句话说明。

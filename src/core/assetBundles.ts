@@ -58,11 +58,11 @@ export const UI_BUNDLE: AssetBundleDef = {
     // 节点进度条上的补给点与 Boss 点，直径只有 20px
     node_supply: 'images/ui/node_supply.png',
     node_boss: 'images/ui/node_boss.png',
-    // 底部导航，键名对齐 TabId
+    // 底部导航。曾对齐 TabId，招募 tab 暂时借用 tab_shop（欠一张专门的招募图标）；
+    // 背包 tab 已删，tab_inventory 随之下架
     tab_shop: 'images/ui/tab_shop.png',
     tab_roster: 'images/ui/tab_roster.png',
     tab_adventure: 'images/ui/tab_adventure.png',
-    tab_inventory: 'images/ui/tab_inventory.png',
     tab_challenge: 'images/ui/tab_challenge.png',
     logo_emblem: 'images/ui/logo_emblem.png',
     // 战斗胜利弹窗的标题横幅。图里刻意留空——「胜利」两个字用游戏字体在代码里画，
