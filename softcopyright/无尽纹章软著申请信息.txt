@@ -1,0 +1,60 @@
+无尽纹章软著申请信息
+====================
+
+一、软件基本信息
+
+软件全称：深圳幸运呱科技有限公司无尽纹章小游戏软件
+软件简称：无尽纹章
+版本号：V1.0.0
+软件分类：游戏软件 / 小游戏软件
+运行平台：微信小游戏
+开发语言：TypeScript、JavaScript
+渲染技术：PixiJS 7 + WebGL/Canvas
+构建工具：Vite
+后端平台：腾讯云 CloudBase（资源 CDN；后续 wujin-wenzhang-api）
+著作权人：深圳幸运呱科技有限公司
+
+二、建议软件说明摘要
+
+无尽纹章是一款基于微信小游戏平台的战棋休闲小游戏。玩家在大厅招募并养成固定角色，通过冒险章节推进主线：进入节点后先布阵再战斗，战后从三选一战利品中强化本局队伍，并在补给点购买药剂、地形券与临时技能。副本页提供可重复挑战的无尽试炼，同一战场布阵一次、连续迎敌最多十波。客户端采用 TypeScript 与 PixiJS 实现，战斗逻辑与渲染分离，进度本地持久化。
+
+三、已生成材料
+
+1. 软著文档-无尽纹章-V1.0.0.pdf
+   - 文档类型：设计说明书
+   - 当前生成：27 页（全流程说明 + 完整技术设计，含 13 张实机截图）
+   - 截图目录：softcopyright/pics/
+   - 补正说明：已按版署要求图文结合介绍游戏全流程。加载完成后直接进入大厅，无独立开始页。截图已替换为实机图。
+
+2. 软著源程序-无尽纹章-V1.0.0.pdf
+   - 源码文件数：106 个
+   - 源码总页数：402 页
+   - 提取方式：前 30 页 + 后 30 页
+   - 最终生成：60 页
+   - 入口优先：game.js -> src/main.ts
+
+四、截图目录
+
+请将运行截图按文件名放入：
+
+/Users/huyi/dk_proj/srpg-rosa/softcopyright/pics/
+
+详细要求见同目录 截图清单.txt。当前 PDF 中已预留占位框，补图后重新生成文档 PDF 即可自动替换。
+
+五、生成命令
+
+1. 设计说明书（文档鉴别材料，含界面截图占位/实图）：
+
+python3 "/Users/huyi/dk_proj/srpg-rosa/softcopyright/generate_softcopyright_doc_pdf.py"
+
+输出：
+/Users/huyi/dk_proj/srpg-rosa/softcopyright/软著文档-无尽纹章-V1.0.0.pdf
+
+2. 源程序（代码鉴别材料）：
+
+python3 "/Users/huyi/dk_proj/srpg-rosa/softcopyright/generate_softcopyright_pdf.py"
+
+输出：
+/Users/huyi/dk_proj/srpg-rosa/softcopyright/软著源程序-无尽纹章-V1.0.0.pdf
+
+说明：源程序 PDF 通常仅在源码有大版本变化时需要重新生成；文档 PDF 在替换 pics 截图后需要重新生成。

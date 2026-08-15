@@ -153,6 +153,14 @@ export const BG_BUNDLE: AssetBundleDef = {
   },
 };
 
+/** 启动页专用：随包底图，必须先于其它 bundle 加载，避免 Logo 闪入 */
+export const LOADING_BUNDLE: AssetBundleDef = {
+  name: 'loading',
+  assets: {
+    splash: 'images/ui/loading/loading_splash.jpg',
+  },
+};
+
 export const ALL_BUNDLES: AssetBundleDef[] = [
   TERRAIN_BUNDLE,
   UNIT_BUNDLE,

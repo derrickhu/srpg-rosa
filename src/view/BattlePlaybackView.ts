@@ -500,7 +500,7 @@ export function createBattlePlaybackView(
       btnDeploy.x = 16; btnDeploy.y = by; panel.addChild(btnDeploy); by += 52;
     }
 
-    const btnHome = makeButton('回到首页', () => { settingsOverlay.visible = false; callbacks.onHome(); },
+    const btnHome = makeButton('返回大厅', () => { settingsOverlay.visible = false; callbacks.onHome(); },
       { variant: 'ghost', width: btnW, height: 42, fontSize: 15 });
     btnHome.x = 16; btnHome.y = by; panel.addChild(btnHome);
 

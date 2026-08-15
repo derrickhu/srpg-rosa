@@ -417,7 +417,7 @@ export function createDeployView(
     panel.addChild(btnRestart);
     by += 52;
 
-    const btnHome = makeButton('回到首页', () => {
+    const btnHome = makeButton('返回大厅', () => {
       settingsOverlay.visible = false;
       callbacks.onHome();
     }, { variant: 'ghost', width: btnW, height: 42, fontSize: 15 });

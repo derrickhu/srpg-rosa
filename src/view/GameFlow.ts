@@ -53,7 +53,7 @@ import { dungeonClearSoul } from '@/game/MvpState';
 import { animSetsForUnits, createBattlePlaybackView } from '@/view/BattlePlaybackView';
 import { createDeployView } from '@/view/DeployView';
 import { createShopView } from '@/view/ShopView';
-import { createHomeView } from '@/view/HomeView';
+import { createLoadingView, type LoadingView } from '@/view/LoadingView';
 import { createAdventureView } from '@/view/AdventureView';
 import { createRosterView } from '@/view/RosterView';
 import { createRecruitView } from '@/view/RecruitView';
@@ -67,7 +67,7 @@ import type { Scene } from '@/scene/Scene';
 import { makeButton } from '@/ui/Button';
 import { SaveManager } from '@/core/SaveManager';
 import { AssetManager } from '@/core/AssetManager';
-import { ALL_BUNDLES } from '@/core/assetBundles';
+import { ALL_BUNDLES, LOADING_BUNDLE, UI_BUNDLE } from '@/core/assetBundles';
 import { animSetReady, ensureAnimSets, loadAnimSets } from '@/view/animSets';
 import { createBackground, createUiIcon, createUnitToken } from '@/view/renderHelpers';
 import { getCharacter } from '@/game/state/GameState';
@@ -117,7 +117,7 @@ function lootToCard(state: MvpGameState, o: LootOption): LootCard {
 
 /**
  * 两层流程：
- *   Home → 大厅 Shell（底部 Tab：招募/角色/冒险/副本）
+ *   Loading → 大厅 Shell（底部 Tab：招募/角色/冒险/副本）
  *        → Run（节点序列：Deploy→Battle→三选一 / Shop）→ 结算回大厅
  *        → 无尽试炼（布阵一次，同图连打最多 10 波）
  */
@@ -132,6 +132,7 @@ export class GameFlow {
   private adventureChapter = 0;
   /** 刚结束那场战斗的单位快照，无尽用来把血量和站位带进下一波 */
   private lastBattleUnits: UnitState[] = [];
+  private loading: LoadingView | null = null;
 
   constructor(private readonly app: PixiHost) {
     this.scenes = new SceneManager(app.stage);
@@ -141,28 +142,54 @@ export class GameFlow {
   }
 
   private showLoading(): void {
-    const c = new PIXI.Container();
-    const bg = new PIXI.Graphics();
-    bg.beginFill(C.bg, 1);
-    bg.drawRect(0, 0, this.app.screen.width, this.app.screen.height);
-    bg.endFill();
-    c.addChild(bg);
-    const t = makeText('加载中…', 'title', { fill: C.text });
-    t.anchor.set(0.5);
-    t.x = this.app.screen.width / 2;
-    t.y = this.app.screen.height / 2;
-    c.addChild(t);
-    this.scenes.replaceAll(containerScene(c));
+    const loading = createLoadingView(this.screen);
+    this.loading = loading;
+    this.scenes.replaceAll(containerScene(loading.root));
+    loading.setProgress(0.04);
   }
 
   private async loadAssetsAndStart(): Promise<void> {
+    const loading = this.loading;
+    const setP = (ratio: number): void => {
+      loading?.setProgress(ratio);
+    };
+
+    const fontsReady = loadGameFonts();
+    // 底图 + Logo 都在主包，两张先出，避免等完整 UI bundle 时标题闪成图
     await Promise.all([
-      loadGameFonts(),
-      ...ALL_BUNDLES.map((b) => AssetManager.loadBundle(b)),
+      AssetManager.loadBundle(LOADING_BUNDLE),
+      AssetManager.loadNamed('ui', 'logo_emblem', UI_BUNDLE.assets.logo_emblem),
     ]);
+    loading?.applySplash(AssetManager.texture('loading', 'splash'));
+    loading?.applyLogo(AssetManager.texture('ui', 'logo_emblem'));
+    setP(0.12);
+
+    await AssetManager.loadBundle(UI_BUNDLE, (n, t) => {
+      setP(0.12 + (t > 0 ? n / t : 1) * 0.28);
+    });
+    await fontsReady;
+    loading?.refreshTitleFont();
+    setP(0.42);
+
+    const rest = ALL_BUNDLES.filter((b) => b.name !== 'ui');
+    const restTotal = rest.reduce((sum, b) => sum + Object.keys(b.assets).length, 0);
+    let restDone = 0;
+    await Promise.all(
+      rest.map((b) => {
+        let last = 0;
+        return AssetManager.loadBundle(b, (n) => {
+          restDone += n - last;
+          last = n;
+          if (restTotal > 0) setP(0.42 + (restDone / restTotal) * 0.53);
+        });
+      }),
+    );
+
     // 动画图集走 CDN、约 2MB，不能挡主页。resolveBattle 进战前会等本场要用的那几个。
     loadAnimSets();
-    this.renderHome();
+    setP(1);
+    this.loading = null;
+    this.renderShell();
   }
 
   private cx(): number {
@@ -179,20 +206,6 @@ export class GameFlow {
       screenWidth: this.app.screen.width,
       screenHeight: this.app.screen.height - tabBarHeight(),
     };
-  }
-
-  private renderHome(): void {
-    const container = createHomeView({ onStart: () => this.routeFromHome() }, this.screen);
-    this.scenes.replaceAll(containerScene(container));
-  }
-
-  /** Home 的开始按钮：有进行中的 run 则续局，否则进大厅 */
-  private routeFromHome(): void {
-    if (this.state.run) {
-      this.renderNode();
-    } else {
-      this.renderShell();
-    }
   }
 
   // ---------------- 大厅 Shell（Tab 框架） ----------------
@@ -340,7 +353,7 @@ export class GameFlow {
           this.showToast(endless ? '已离开试炼' : '已放弃副本');
           this.renderShell(endless ? 'challenge' : 'adventure');
         },
-        onHome: () => this.renderHome(),
+        onHome: () => this.renderShell(),
         onRefresh: () => this.renderDeploy(),
       },
       this.screen,
@@ -424,7 +437,7 @@ export class GameFlow {
           run.lastReportWinner = winner;
           this.finishBattleAfterPlayback(winner);
         },
-        onHome: () => this.renderHome(),
+        onHome: () => this.renderShell(),
         onReturnDeploy: () => {
           undoDeployForRetry(this.state);
           this.renderDeploy();

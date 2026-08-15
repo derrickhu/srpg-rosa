@@ -1,0 +1,34 @@
+启动 Loading 底图（现役）。竖屏 9:16 全出血 key-art，随包 `images/ui/loading/loading_splash.jpg`。
+Logo / 进度条 / 健康忠告由代码叠在上面，图里禁止出现任何文字。
+
+构图必须给叠层留空：
+- 上三分之一：开阔天空 + 远山，中央留白给 Logo
+- 下三分之一：偏暗、少细节，给进度条和忠告留可读底
+
+世界与 `chapter_grassland` 同一片草原战线，只是改成竖构图。参考那张图的配色、木望楼、兽皮帐篷，不要另起一套风景。
+
+---
+
+Vertical 9:16 full-bleed mobile game LOADING SPLASH illustration for a cartoon fantasy tactics game. Edge-to-edge, no borders, no frames, no UI chrome.
+
+This is KEY ART, not a gameplay screenshot, not a chessboard, not a top-down battle map. Camera is a slightly elevated landscape view with a visible horizon, similar to a chapter-select poster.
+
+ART STYLE: hand-drawn cartoon, flat saturated fills, simple cel shading (one highlight, one shadow), thick near-black outlines ONLY on buildings / tents / props. Grass and hills have NO thick black outline. No gradients, no texture noise, no painterly brushwork, no photographic detail, no glossy highlights.
+
+COLOUR — must match the existing grassland chapter:
+- Grass: BRIGHT warm sunny yellow-green. Anchor #B4D45A, #C2DE6E, #A8CC4E. Do not drift toward cool green, deep green, olive or khaki.
+- Sky: simple flat pale blue with two or three chunky cream-white clouds. Keep the UPPER CENTER of the sky OPEN and empty.
+- Timber: warm brown logs. Friendly banners cream and steel-blue.
+- Enemy camp: dark hide tents, jagged dull-red banners, cartoon skull totems — menacing but never gory.
+
+LAYOUT, top to bottom:
+- TOP third: open sky and soft rolling distant hills. The very center of this sky band must stay clear and uncluttered so a separate gold title logo can sit there.
+- MIDDLE: a dirt path winding through open grassland. LEFT: a small friendly wooden palisade with a watchtower and cream-blue pennant. RIGHT: two crude hide tents with red banners and skull totems. Keep the exact center of the grass fairly open.
+- BOTTOM third: the grass and bushes recede into a slightly darker dusk-teal shade so UI can overlay. Leave BOTTOM CENTER simple — no tents, no tower, no totems in the bottom-center strip.
+
+No human characters, no chibi soldiers, no horses, no faces.
+
+Hard bans:
+NO TEXT in any language, NO letters, NO numbers, NO Chinese characters, NO logos, NO watermarks, NO signatures,
+NO UI, NO buttons, NO progress bars, NO loading indicators, NO HUD, NO phone frames,
+NO photo realism, NO metallic sheen, NO smooth gradients, NO glow.

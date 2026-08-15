@@ -1,6 +1,6 @@
 {
   "libVersion": "3.15.1",
-  "projectname": "无尽纹章",
+  "projectname": "%E6%97%A0%E5%B0%BD%E7%BA%B9%E7%AB%A0",
   "setting": {
     "urlCheck": false,
     "coverView": false,
@@ -17,5 +17,6 @@
     "useStaticServer": false,
     "useLanDebug": false,
     "ignoreDevUnusedFiles": true
-  }
+  },
+  "condition": {}
 }

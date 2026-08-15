@@ -70,13 +70,40 @@ function loadImageAsTexture(src: string): Promise<PIXI.Texture> {
 }
 
 export const AssetManager = {
-  async loadBundle(def: AssetBundleDef): Promise<void> {
-    if (loadedBundles.has(def.name)) return;
-    const entries = Object.entries(def.assets);
+  /**
+   * 加载单张图并写入指定 bundle 缓存。Loading 首屏用它先拉 Logo，
+   * 不会把整个 `ui` bundle 标成已加载。
+   */
+  async loadNamed(bundle: string, name: string, logicalPath: string): Promise<PIXI.Texture> {
+    const key = bundleKey(bundle, name);
+    const hit = textureCache.get(key);
+    if (hit && hit !== PIXI.Texture.WHITE) return hit;
+    const src = await AssetLoader.resolveOrDownload(logicalPath);
+    const tex = await loadImageAsTexture(src);
+    textureCache.set(key, tex);
+    return tex;
+  },
+
+  async loadBundle(
+    def: AssetBundleDef,
+    onProgress?: (loaded: number, total: number) => void,
+  ): Promise<void> {
+    const total = Object.keys(def.assets).length;
+    const entries = Object.entries(def.assets).filter(
+      ([key]) => !textureCache.has(bundleKey(def.name, key)),
+    );
+    if (entries.length === 0) {
+      loadedBundles.add(def.name);
+      onProgress?.(total, total);
+      return;
+    }
+    let done = total - entries.length;
     const loaded = await Promise.all(
       entries.map(async ([key, logicalPath]) => {
         const src = await AssetLoader.resolveOrDownload(logicalPath);
         const tex = await loadImageAsTexture(src);
+        done += 1;
+        onProgress?.(done, total);
         return [key, tex] as const;
       }),
     );
