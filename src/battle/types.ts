@@ -204,6 +204,10 @@ export type BattleEvent =
       defTerrainNote?: string;
     }
   | { type: 'death'; uid: string }
+  /** 敌人倒下时掉在死亡格上的药剂（无尽试炼） */
+  | { type: 'drop'; pos: Vec2; potionId: string }
+  /** 走到掉落格上待机后拾取 */
+  | { type: 'pickup'; uid: string; pos: Vec2; potionId: string }
   /**
    * 轮首持续伤害（中毒 / 沼泽等）。
    *

@@ -43,6 +43,7 @@ import {
   createBackground,
   createUiIcon,
 } from '@/view/renderHelpers';
+import { ENDLESS_MAX_WAVES, isEndlessDungeon } from '@/data/endlessCatalog';
 import { createNodeStrip } from '@/view/NodeStrip';
 import { AssetManager } from '@/core/AssetManager';
 import { makeButton } from '@/ui/Button';
@@ -181,6 +182,7 @@ export function createDeployView(
   screen: DeployLayoutScreen,
 ): PIXI.Container {
   const run = state.run!;
+  const endless = isEndlessDungeon(run.dungeonId);
   const st0 = currentStage(state);
   const { w: GW, h: GH } = gridSize(st0.terrain);
   const [depR0, depR1] = playerDeployRowRange(GH);
@@ -337,7 +339,15 @@ export function createDeployView(
   root.addChild(deployInfoContainer);
 
   // --- 节点进度链（代替「2/9」数字） ---
-  {
+  // 无尽没有章节节点，只显示当前波次
+  if (endless) {
+    const wave = run.endless?.wave ?? 1;
+    const waveTx = makeText(`第 ${wave} / ${ENDLESS_MAX_WAVES} 波`, 'uiStrong', { fill: 0xffffff, fontSize: 13 });
+    waveTx.anchor.set(0.5, 0);
+    waveTx.x = Math.floor(screen.screenWidth / 2);
+    waveTx.y = deployInfoContainer.y + deployInfoH + 10;
+    root.addChild(waveTx);
+  } else {
     const stripW = Math.min(screen.screenWidth - 32, 360);
     const strip = createNodeStrip(dungeon0, { currentIndex: run.nodeIndex, width: stripW });
     strip.x = Math.floor((screen.screenWidth - stripW) / 2);
@@ -483,7 +493,8 @@ export function createDeployView(
         }
 
         const placed = run.placements.find((p) => p.pos.x === x && p.pos.y === y);
-        const enemy = st.enemies.find((e) => e.x === x && e.y === y);
+        // 无尽开战才抽落点，布阵页不能画第一章那批预设敌人
+        const enemy = endless ? undefined : st.enemies.find((e) => e.x === x && e.y === y);
         if (enemy) {
           const d = UNIT_DEFS[enemy.defId];
           const scale = currentEnemyScale(state);
@@ -898,7 +909,7 @@ export function createDeployView(
   fightC.y = fightY;
   root.addChild(fightC);
 
-  if (cleared) {
+  if (cleared && !endless) {
     const quota = sweepQuota(run.dungeonId);
     const sweepBtn = makeButton(canSweepNow ? `扫荡 (${sweepLeft})` : '扫荡 (0)', () => {
       if (!canSweep(state)) {

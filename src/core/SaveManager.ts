@@ -2,6 +2,7 @@ import { safeStorageGet, safeStorageSet } from '@/platform/wxPlatform';
 import type { MetaState, MvpGameState, RunState } from '@/game/state/GameState';
 import { createInitialMeta, createInitialState, META_VERSION } from '@/game/state/GameState';
 import { getDungeonDef } from '@/data/dungeonCatalog';
+import { isEndlessDungeon } from '@/data/endlessCatalog';
 
 const META_KEY = 'srpg_meta_v3';
 // run v4：第一章扩为 7 关后关卡下标整体变更，v3 的局内进度直接作废（只损失一局）
@@ -68,6 +69,11 @@ function normalizeRun(run: RunState): RunState {
     runTempSkill: rest.runTempSkill ?? {},
     // 老档的 placements 上挂着 statBonus，读进来会原样带着一个没人认识的字段。
     placements: rest.placements.map((p) => ({ uid: p.uid, rosterId: p.rosterId, pos: p.pos })),
+    endless: rest.endless ?? (
+      isEndlessDungeon(rest.dungeonId)
+        ? { wave: 1, clearedCurrent: false, carry: null }
+        : undefined
+    ),
   };
 }
 

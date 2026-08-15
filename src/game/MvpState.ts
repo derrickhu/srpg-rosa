@@ -15,6 +15,8 @@ export {
   type TerrainOverlayCell,
   type MetaState,
   type RunState,
+  type EndlessCarry,
+  type EndlessRunState,
   type MvpGameState,
   type BuyShopContext,
   META_VERSION,
@@ -80,6 +82,12 @@ export {
   dungeonClearSoul,
   abandonRun,
   applyDungeonClearUnlocks,
+  isEndlessRun,
+  endlessWavesCleared,
+  applyEndlessWaveVictory,
+  snapshotEndlessCarry,
+  continueEndlessWave,
+  finishEndlessRun,
 } from './state/ProgressManager';
 
 export {

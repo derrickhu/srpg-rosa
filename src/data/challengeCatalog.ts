@@ -1,4 +1,5 @@
 import { DUNGEON_DEFS, getDungeonDef } from '@/data/dungeonCatalog';
+import { ENDLESS_DUNGEON_ID } from '@/data/endlessCatalog';
 import type { MetaState } from '@/game/state/GameState';
 
 /**
@@ -12,8 +13,8 @@ import type { MetaState } from '@/game/state/GameState';
  * - `event`：限时活动副本。
  * - `endless`：无尽试炼。
  *
- * 后两类现在是**框架 + 测试数据**：卡片、状态、奖励说明都按真条目走通，只是点开
- * 告诉玩家还没开。这么做是为了让「加一个活动」变成往这张表里加一行，而不是再写一遍页面。
+ * 活动仍是框架（点开告诉玩家还没开）。无尽试炼已经能打：点挑战走
+ * `ENDLESS_DUNGEON_ID`，不进冒险页章节表。
  */
 export type ChallengeKind = 'chapterRepeat' | 'event' | 'endless';
 
@@ -78,6 +79,7 @@ export const CHALLENGE_ENTRIES: readonly ChallengeEntry[] = [
     icon: 'tab_challenge',
     reward: '按层数结算魂晶，每层都算',
     window: '常驻',
+    dungeonId: ENDLESS_DUNGEON_ID,
   },
 ];
 
@@ -97,6 +99,7 @@ export function chapterRepeatEntries(meta: MetaState): ChallengeEntry[] {
 }
 
 export function challengeStatus(entry: ChallengeEntry, meta: MetaState): ChallengeStatus {
+  if (entry.kind === 'endless') return { kind: 'open' };
   if (entry.kind === 'chapterRepeat') {
     const cleared = !!entry.dungeonId && meta.clearedDungeonIds.includes(entry.dungeonId);
     return cleared ? { kind: 'open' } : { kind: 'locked', reason: '尚未通关' };

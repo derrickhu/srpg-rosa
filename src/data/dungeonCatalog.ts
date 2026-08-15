@@ -1,5 +1,6 @@
 import type { TerrainId } from '@/battle/types';
 import { STAGES_MVP, type StageDefMvp } from '@/data/stagesMvp';
+import { ENDLESS_DUNGEON, ENDLESS_DUNGEON_ID } from '@/data/endlessCatalog';
 import { getTerrainSpec } from '@/data/terrainSpec';
 
 /**
@@ -223,6 +224,8 @@ const DUNGEON_BY_ID: Record<string, DungeonDef> = Object.fromEntries(
 );
 
 export function getDungeonDef(id: string): DungeonDef | undefined {
+  // 无尽试炼不进 DUNGEON_DEFS（那是冒险页章节表），但存档和 currentDungeon 仍按 id 查
+  if (id === ENDLESS_DUNGEON_ID) return ENDLESS_DUNGEON;
   return DUNGEON_BY_ID[id];
 }
 

@@ -64,10 +64,21 @@ describe('副本页条目表', () => {
   });
 
   // 「还没做」和「你还没到」必须分开，否则玩家会去找一个不存在的解锁条件
-  it('未实装玩法的状态是 soon，不是 locked', () => {
+  it('未实装活动的状态是 soon，不是 locked', () => {
     const meta = createInitialMeta();
-    for (const e of CHALLENGE_ENTRIES) {
+    for (const e of CHALLENGE_ENTRIES.filter((x) => x.kind === 'event')) {
       expect(challengeStatus(e, meta).kind).toBe('soon');
+    }
+  });
+
+  it('无尽试炼可以直接挑战，并且挂着 dungeonId', () => {
+    const meta = createInitialMeta();
+    const endless = CHALLENGE_ENTRIES.filter((e) => e.kind === 'endless');
+    expect(endless.length).toBeGreaterThan(0);
+    for (const e of endless) {
+      expect(challengeStatus(e, meta)).toEqual({ kind: 'open' });
+      expect(e.dungeonId).toBeTruthy();
+      expect(challengeDungeon(e)?.id).toBe(e.dungeonId);
     }
   });
 

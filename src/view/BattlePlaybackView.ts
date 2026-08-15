@@ -76,6 +76,10 @@ export interface PlaybackState {
   potions: Record<string, number>;
   /** 使用药剂后同步扣减 run 库存 */
   onConsumePotion: (potionId: string) => void;
+  /** 无尽：待机拾取后写入 run 库存。有这个回调时药剂栏会把 0 库存的瓶子也画出来 */
+  onPickupPotion?: (potionId: string) => void;
+  /** 无尽第二波起不能回布阵：站位已经带过来了，回去等于拆掉这一局 */
+  allowReturnDeploy?: boolean;
 }
 
 export interface PlaybackCallbacks {
@@ -201,6 +205,7 @@ export function createBattlePlaybackView(
 
   const bgLayer = createBackground(sw, sh);
   const gridLayer = new PIXI.Container();
+  const dropLayer = new PIXI.Container();
   const rangeLayer = new PIXI.Container();
   const tokenLayer = new PIXI.Container();
   /** 棋盘点击接收层，夹在棋子和特效之间（见 manualTurnUi 的 inputLayer 说明） */
@@ -208,6 +213,7 @@ export function createBattlePlaybackView(
   const fxLayer = new PIXI.Container();
   root.addChild(bgLayer);
   root.addChild(gridLayer);
+  root.addChild(dropLayer);
   root.addChild(rangeLayer);
   root.addChild(tokenLayer);
   root.addChild(inputLayer);
@@ -460,7 +466,8 @@ export function createBattlePlaybackView(
     settingsOverlay.addChild(dim);
 
     const panelW = Math.min(280, sw - 40);
-    const panelH = 220;
+    const allowDeploy = gameState.allowReturnDeploy !== false;
+    const panelH = allowDeploy ? 220 : 168;
     const panelX = Math.floor((sw - panelW) / 2);
     const panelY = Math.floor((sh - panelH) / 2) - 30;
     const panel = new PIXI.Container();
@@ -487,9 +494,11 @@ export function createBattlePlaybackView(
       { variant: 'primary', width: btnW, height: 42, fontSize: 15 });
     btnContinue.x = 16; btnContinue.y = by; panel.addChild(btnContinue); by += 52;
 
-    const btnDeploy = makeButton('返回布阵', () => { settingsOverlay.visible = false; callbacks.onReturnDeploy(); },
-      { variant: 'secondary', width: btnW, height: 42, fontSize: 15 });
-    btnDeploy.x = 16; btnDeploy.y = by; panel.addChild(btnDeploy); by += 52;
+    if (allowDeploy) {
+      const btnDeploy = makeButton('返回布阵', () => { settingsOverlay.visible = false; callbacks.onReturnDeploy(); },
+        { variant: 'secondary', width: btnW, height: 42, fontSize: 15 });
+      btnDeploy.x = 16; btnDeploy.y = by; panel.addChild(btnDeploy); by += 52;
+    }
 
     const btnHome = makeButton('回到首页', () => { settingsOverlay.visible = false; callbacks.onHome(); },
       { variant: 'ghost', width: btnW, height: 42, fontSize: 15 });
@@ -575,6 +584,44 @@ export function createBattlePlaybackView(
   const tokens = new Map<string, PIXI.Container>();
   const tokenOverheads = new Map<string, UnitOverheadHandle>();
   const animByUid = new Map<string, AnimatedUnitHandle>();
+  const dropMarkers = new Map<string, PIXI.Container>();
+
+  function dropKey(p: Vec2): string {
+    return `${p.x},${p.y}`;
+  }
+
+  function showDropMarker(pos: Vec2, potionId: string): void {
+    const key = dropKey(pos);
+    if (dropMarkers.has(key)) return;
+    const marker = new PIXI.Container();
+    const at = cellCenter(originX, originY, cell, pos);
+    marker.x = at.x;
+    marker.y = at.y;
+    const size = Math.max(18, Math.floor(cell * 0.55));
+    const icon = createUiIcon(`icon_potion_${potionId}`, size);
+    if (icon) {
+      icon.x = -size / 2;
+      icon.y = -size / 2;
+      marker.addChild(icon);
+    } else {
+      const fallback = new PIXI.Graphics();
+      fallback.beginFill(0xc86ad4, 0.9);
+      fallback.drawCircle(0, 0, size / 2);
+      fallback.endFill();
+      marker.addChild(fallback);
+    }
+    dropLayer.addChild(marker);
+    dropMarkers.set(key, marker);
+  }
+
+  function hideDropMarker(pos: Vec2): void {
+    const key = dropKey(pos);
+    const marker = dropMarkers.get(key);
+    if (!marker) return;
+    dropLayer.removeChild(marker);
+    marker.destroy({ children: true });
+    dropMarkers.delete(key);
+  }
 
   for (const u of initialUnits) {
     const ed = effectiveUnitDef(u, UNIT_DEFS);
@@ -891,7 +938,9 @@ export function createBattlePlaybackView(
     const gapX = 12;
     const hudH = btnR * 2 + 26;
     const hudY = sh - hudH - 8;
-    const potionIds = Object.keys(POTION_DEFS).filter((id) => (gameState.potions[id] ?? 0) > 0);
+    const potionIds = Object.keys(POTION_DEFS).filter((id) =>
+      (gameState.potions[id] ?? 0) > 0 || !!gameState.onPickupPotion,
+    );
 
     if (potionIds.length > 0) {
       potionTopY = hudY - 6;
@@ -954,8 +1003,10 @@ export function createBattlePlaybackView(
           renderPotionEvents(evs);
         });
 
+        const startCount = gameState.potions[pid] ?? 0;
+        if (startCount <= 0) c.alpha = 0.45;
         hudLayer.addChild(c);
-        potionBtns.set(pid, { count: gameState.potions[pid] ?? 0, countLbl, container: c });
+        potionBtns.set(pid, { count: startCount, countLbl, container: c });
         bx += btnR * 2 + gapX;
       }
 
@@ -1463,6 +1514,28 @@ export function createBattlePlaybackView(
           tokens.delete(ev.uid);
           tokenOverheads.delete(ev.uid);
         }
+        break;
+      }
+      case 'drop': {
+        showDropMarker(ev.pos, ev.potionId);
+        const at = cellCenter(originX, originY, cell, ev.pos);
+        const name = POTION_DEFS[ev.potionId]?.name ?? '药剂';
+        floatUtility(at.x, at.y - cell * 0.35, `掉落 ${name}`);
+        break;
+      }
+      case 'pickup': {
+        hideDropMarker(ev.pos);
+        gameState.potions[ev.potionId] = (gameState.potions[ev.potionId] ?? 0) + 1;
+        gameState.onPickupPotion?.(ev.potionId);
+        const h = potionBtns.get(ev.potionId);
+        if (h) {
+          h.count += 1;
+          h.countLbl.text = `×${h.count}`;
+          h.container.alpha = 1;
+        }
+        const at = cellCenter(originX, originY, cell, ev.pos);
+        const name = POTION_DEFS[ev.potionId]?.name ?? '药剂';
+        floatUtility(at.x, at.y - cell * 0.35, `拾取 ${name}`);
         break;
       }
       case 'turnStart': {

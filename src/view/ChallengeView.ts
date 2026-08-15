@@ -32,9 +32,8 @@ const ACTION_W = 82;
 /**
  * 副本页：可重复刷的内容。
  *
- * 三个分区分别对应「重打已通关章节 / 限时活动 / 无尽试炼」。后两个还没实装，
- * 但按真卡片画出来，因为这一页要回答的问题是「练出来的队伍能拿去干什么」，
- * 而上一版用 emoji 灰卡当占位，读起来像是界面坏了。
+ * 三个分区分别对应「重打已通关章节 / 限时活动 / 无尽试炼」。
+ * 活动还没开；无尽已经能从这里进，布阵一次后同图连打。
  */
 export function createChallengeView(
   state: MvpGameState,
@@ -127,7 +126,7 @@ export function createChallengeView(
       btn.y = (CARD_H - 32) / 2 - 6;
       card.addChild(btn);
 
-      if (d) {
+      if (d && entry.kind !== 'endless') {
         const left = sweepLeftToday(state.meta, d.id);
         const quota = sweepQuota(d.id);
         const sw = makeText(`今日扫荡 ${left}/${quota}`, 'micro', { fill: C.muted, fontSize: 8 });

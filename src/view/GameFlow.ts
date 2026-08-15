@@ -1,9 +1,17 @@
 import * as PIXI from 'pixi.js';
 import type { PixiHost } from '@/boot/createPixiApp';
-import type { Faction } from '@/battle/types';
+import type { Faction, UnitState } from '@/battle/types';
 import { createBattleSim, type BattleMode } from '@/battle/engine';
 import { UNIT_DEFS } from '@/data/unitDefs';
 import { DUNGEON_DEFS } from '@/data/dungeonCatalog';
+import {
+  ENDLESS_CLEAR_BONUS,
+  ENDLESS_DUNGEON_ID,
+  ENDLESS_MAX_WAVES,
+  ENDLESS_WAVE_SOUL,
+  endlessAiDifficulty,
+  isEndlessDungeon,
+} from '@/data/endlessCatalog';
 import { getSkillMod, isExclusiveMod, modStacks } from '@/data/skillModCatalog';
 import {
   createLootOverlay,
@@ -14,6 +22,7 @@ import {
 import {
   abandonRun,
   advanceNode,
+  applyEndlessWaveVictory,
   applyVictory,
   battleTerrain,
   buildBattleUnits,
@@ -21,11 +30,16 @@ import {
   canSweep,
   claimLoot,
   consumeSweep,
+  continueEndlessWave,
   currentDungeon,
   currentNode,
   currentStage,
+  endlessWavesCleared,
+  finishEndlessRun,
   finishRunVictory,
+  isEndlessRun,
   isRunComplete,
+  snapshotEndlessCarry,
   rollShop,
   skipLoot,
   startRun,
@@ -103,8 +117,9 @@ function lootToCard(state: MvpGameState, o: LootOption): LootCard {
 
 /**
  * 两层流程：
- *   Home → 大厅 Shell（底部 Tab：商店/角色/冒险/背包/副本）
+ *   Home → 大厅 Shell（底部 Tab：招募/角色/冒险/副本）
  *        → Run（节点序列：Deploy→Battle→三选一 / Shop）→ 结算回大厅
+ *        → 无尽试炼（布阵一次，同图连打最多 10 波）
  */
 export class GameFlow {
   private readonly scenes: SceneManager;
@@ -115,6 +130,8 @@ export class GameFlow {
   private currentTab: TabId = 'adventure';
   /** 冒险页当前章节页码（Tab 切换回来不丢） */
   private adventureChapter = 0;
+  /** 刚结束那场战斗的单位快照，无尽用来把血量和站位带进下一波 */
+  private lastBattleUnits: UnitState[] = [];
 
   constructor(private readonly app: PixiHost) {
     this.scenes = new SceneManager(app.stage);
@@ -227,6 +244,10 @@ export class GameFlow {
           this.state,
           {
             onChallenge: (d) => {
+              if (isEndlessDungeon(d.id)) {
+                this.startEndless();
+                return;
+              }
               this.adventureChapter = Math.max(0, this.dungeonChapterIndex(d.id));
               this.renderShell('adventure');
             },
@@ -248,11 +269,50 @@ export class GameFlow {
     this.renderNode();
   }
 
+  /** 无尽从副本页直接开打，不绕冒险页选章 */
+  private startEndless(): void {
+    if (this.state.run) {
+      this.showToast('先结束当前的冒险');
+      return;
+    }
+    const party = this.state.meta.roster.map((m) => m.rosterId);
+    this.startRunAndEnter(ENDLESS_DUNGEON_ID, party);
+  }
+
   // ---------------- 副本节点路由 ----------------
 
   private renderNode(): void {
     if (!this.state.run) {
       this.renderShell('adventure');
+      return;
+    }
+    if (isEndlessRun(this.state)) {
+      const run = this.state.run;
+      const e = run.endless;
+      // 断线时三选一可能还挂着：先弹卡，不能直接刷下一波把选项吞掉
+      if ((run.pendingLoot?.length ?? 0) > 0) {
+        this.renderEndlessBackdrop();
+        this.showLootOverlay();
+        return;
+      }
+      // 第一波还没布阵：进布阵页。之后同图连打，不再回布阵。
+      if (!e?.carry && e?.wave === 1 && !e.clearedCurrent) {
+        this.renderDeploy();
+        return;
+      }
+      if (e?.clearedCurrent && e.wave >= ENDLESS_MAX_WAVES) {
+        const bonus = finishEndlessRun(this.state);
+        SaveManager.saveRun(null);
+        SaveManager.save(this.state);
+        this.showToast(bonus > 0 ? `试炼完成，额外魂晶 +${bonus}` : '试炼结束');
+        this.renderShell('challenge');
+        return;
+      }
+      if (e?.clearedCurrent && e.wave < ENDLESS_MAX_WAVES) {
+        continueEndlessWave(this.state, this.lastBattleUnits);
+        SaveManager.save(this.state);
+      }
+      void this.resolveBattle('manual');
       return;
     }
     const node = currentNode(this.state);
@@ -272,12 +332,13 @@ export class GameFlow {
         onSweep: () => this.sweepNode(),
         onWarn: (msg) => this.showToast(msg),
         onReset: () => {
-          // 放弃当前副本回大厅。沿途首通的魂晶早已当场入账，这里没有补偿要算
-          abandonRun(this.state);
+          const endless = isEndlessRun(this.state);
+          if (endless) finishEndlessRun(this.state);
+          else abandonRun(this.state);
           SaveManager.saveRun(null);
           SaveManager.save(this.state);
-          this.showToast('已放弃副本');
-          this.renderShell('adventure');
+          this.showToast(endless ? '已离开试炼' : '已放弃副本');
+          this.renderShell(endless ? 'challenge' : 'adventure');
         },
         onHome: () => this.renderHome(),
         onRefresh: () => this.renderDeploy(),
@@ -340,9 +401,11 @@ export class GameFlow {
     // 而且要等到该单位下次行动才生效——玩家能感到自己在操作，却影响不了任何结果。
     // 战棋的策略全部长在「谁站哪儿」上，不交出走位就等于没有策略。
     // 自动模式（扫荡）走同一个引擎的 AI 分支，不存在两套结算规则。
+    const endless = isEndlessRun(this.state);
     const sim = createBattleSim(units, map, UNIT_DEFS, {
-      aiDifficulty: stage.aiDifficulty,
+      aiDifficulty: endless ? endlessAiDifficulty(run.endless?.wave ?? 1) : stage.aiDifficulty,
       mode,
+      enableDrops: endless,
     });
     this.state.phase = 'battle';
     const container = createBattlePlaybackView(
@@ -353,6 +416,11 @@ export class GameFlow {
       this.screen,
       {
         onComplete: (winner: Faction) => {
+          this.lastBattleUnits = sim.getUnits().map((u) => ({
+            ...u,
+            pos: { ...u.pos },
+            timedBattleEffects: u.timedBattleEffects?.map((e) => ({ ...e })),
+          }));
           run.lastReportWinner = winner;
           this.finishBattleAfterPlayback(winner);
         },
@@ -363,12 +431,20 @@ export class GameFlow {
         },
       },
       {
-        nodeLabel: `${dungeon.name} ${run.nodeIndex + 1}/${dungeon.nodes.length}`,
+        nodeLabel: endless
+          ? `${dungeon.name} ${run.endless?.wave ?? 1}/${ENDLESS_MAX_WAVES}`
+          : `${dungeon.name} ${run.nodeIndex + 1}/${dungeon.nodes.length}`,
         gold: run.gold,
         potions: run.potions,
+        allowReturnDeploy: !endless || (run.endless?.wave ?? 1) === 1,
         onConsumePotion: (potionId: string) => {
           run.potions[potionId] = Math.max(0, (run.potions[potionId] ?? 0) - 1);
         },
+        onPickupPotion: endless
+          ? (potionId: string) => {
+              run.potions[potionId] = (run.potions[potionId] ?? 0) + 1;
+            }
+          : undefined,
       },
     );
     this.scenes.replaceAll(containerScene(container));
@@ -381,10 +457,24 @@ export class GameFlow {
       this.scenes.replaceAll(containerScene(this.buildResultPanel(false, false, 'reward')));
       return;
     }
-    applyVictory(this.state);
+    if (isEndlessRun(this.state)) {
+      applyEndlessWaveVictory(this.state);
+      const e = this.state.run?.endless;
+      // 立刻把站位和血量写进存档：三选一还没选完就退出时，下一波不能靠内存快照
+      if (e) e.carry = snapshotEndlessCarry(this.lastBattleUnits);
+    } else {
+      applyVictory(this.state);
+    }
     const last = isRunComplete(this.state);
     SaveManager.save(this.state);
     this.showRewardOverlay(last);
+  }
+
+  /** 无尽战后弹层的底板。不能直接盖在已销毁的战场上，也不该把人送回布阵改站位 */
+  private renderEndlessBackdrop(): void {
+    const c = new PIXI.Container();
+    c.addChild(createBackground(this.app.screen.width, this.app.screen.height));
+    this.scenes.replaceAll(containerScene(c));
   }
 
   /**
@@ -410,8 +500,31 @@ export class GameFlow {
     const dungeon = currentDungeon(this.state);
     const v = run.lastVictory;
     const entries: RewardEntry[] = [];
+    const endless = isEndlessRun(this.state);
+    const wave = run.endless?.wave ?? 1;
 
-    if (isRunFinal) {
+    if (endless) {
+      entries.push({
+        iconKey: 'icon_soul',
+        name: '魂晶',
+        amount: v?.soul ?? ENDLESS_WAVE_SOUL,
+        quality: '永久',
+        desc: `清掉第 ${wave} 波当场入账。撑过的波次越多，这一局拿得越多。`,
+        sources: ['无尽试炼'],
+        tint: C.soul,
+      });
+      if (isRunFinal) {
+        entries.push({
+          iconKey: 'icon_soul',
+          name: '通关魂晶',
+          amount: ENDLESS_CLEAR_BONUS,
+          quality: '永久',
+          desc: `打完全部 ${ENDLESS_MAX_WAVES} 波的额外奖励。离开时入账。`,
+          sources: ['无尽试炼'],
+          tint: C.soul,
+        });
+      }
+    } else if (isRunFinal) {
       const soul = dungeonClearSoul(this.state, dungeon.id);
       const first = !this.state.meta.clearedDungeonIds.includes(dungeon.id);
       entries.push({
@@ -451,24 +564,35 @@ export class GameFlow {
     }
 
     const hasLoot = !isRunFinal && (run.pendingLoot?.length ?? 0) > 0;
+    const subtitle = endless
+      ? `${dungeon.name} 第 ${wave}/${ENDLESS_MAX_WAVES} 波`
+      : `${dungeon.name} ${run.nodeIndex + 1}/${dungeon.nodes.length}`;
     let close = (): void => undefined;
     close = this.pushOverlay(
       createRewardOverlay({
         screenW: this.app.screen.width,
         screenH: this.app.screen.height,
         title: isRunFinal ? '通  关' : '胜  利',
-        subtitle: `${dungeon.name} ${run.nodeIndex + 1}/${dungeon.nodes.length}`,
+        subtitle,
         entries,
-        confirmLabel: hasLoot ? '选择强化' : (isRunFinal ? '返回大厅' : '继续前进'),
+        confirmLabel: hasLoot ? '选择强化' : (isRunFinal ? (endless ? '离开试炼' : '返回大厅') : (endless ? '下一波' : '继续前进')),
         onConfirm: () => {
           close();
           if (hasLoot) {
             this.showLootOverlay();
           } else if (isRunFinal) {
-            const gained = finishRunVictory(this.state);
-            SaveManager.save(this.state);
-            this.showToast(`通关「${dungeon.name}」，魂晶 +${gained}`);
-            this.renderShell('adventure');
+            if (endless) {
+              const bonus = finishEndlessRun(this.state);
+              SaveManager.saveRun(null);
+              SaveManager.save(this.state);
+              this.showToast(bonus > 0 ? `试炼完成，额外魂晶 +${bonus}` : '试炼结束');
+              this.renderShell('challenge');
+            } else {
+              const gained = finishRunVictory(this.state);
+              SaveManager.save(this.state);
+              this.showToast(`通关「${dungeon.name}」，魂晶 +${gained}`);
+              this.renderShell('adventure');
+            }
           } else {
             this.advanceAfterVictory();
           }
@@ -547,10 +671,30 @@ export class GameFlow {
     cardBg.y = cardY;
     c.addChild(cardBg);
 
-    const sub = makeText('本节点可重新布阵再试', 'ui', { fill: C.text });
+    const endless = isEndlessRun(this.state);
+    const waves = endlessWavesCleared(this.state);
+    const sub = makeText(
+      endless ? `撑到第 ${waves} 波` : '本节点可重新布阵再试',
+      'ui',
+      { fill: C.text },
+    );
     sub.x = 36;
     sub.y = cardY + 22;
     c.addChild(sub);
+
+    if (endless) {
+      const btnLeave = makeButton('离开试炼（保留已得魂晶）', () => {
+        finishEndlessRun(this.state);
+        SaveManager.saveRun(null);
+        SaveManager.save(this.state);
+        this.showToast(`试炼结束，最高记录 ${this.state.meta.endlessBestFloor ?? waves} 波`);
+        this.renderShell('challenge');
+      }, { variant: 'primary', width: cardW, height: 46, fontSize: 16, radius: 12 });
+      btnLeave.x = 20;
+      btnLeave.y = cardY + 64 + 16;
+      c.addChild(btnLeave);
+      return c;
+    }
 
     const btnNext = makeButton('返回布阵', () => {
       undoDeployForRetry(this.state);
@@ -578,6 +722,11 @@ export class GameFlow {
   }
 
   private advanceAfterVictory(): void {
+    if (isEndlessRun(this.state)) {
+      SaveManager.save(this.state);
+      this.renderNode();
+      return;
+    }
     advanceNode(this.state);
     this.shopOffers = null;
     SaveManager.save(this.state);

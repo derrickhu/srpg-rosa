@@ -115,6 +115,14 @@ export interface BattleSimOptions {
   aiDifficulty?: AiDifficulty;
   /** 缺省 `auto`，保持 `runBattle` 等纯模拟调用方的行为不变 */
   mode?: BattleMode;
+  /**
+   * 敌人死亡时是否在死亡格掉药剂。只给无尽试炼开：
+   * 主线有商店买药，再在战场上掉会让补给点变得可有可无。
+   */
+  enableDrops?: boolean;
+  /** 掉落掷点，测试传入固定序列 */
+  dropRng?: () => number;
+  dropChance?: number;
 }
 
 /**
@@ -251,6 +259,12 @@ export function createBattleSim(
   const units = cloneUnits(initialUnits);
   const aiDifficulty = opts.aiDifficulty ?? 'normal';
   const mode: BattleMode = opts.mode ?? 'auto';
+  const enableDrops = opts.enableDrops ?? false;
+  const dropRng = opts.dropRng ?? Math.random;
+  const dropChance = opts.dropChance ?? 0.35;
+  const pickups: { pos: Vec2; potionId: string }[] = [];
+  const rolledDeaths = new Set<string>();
+  const DROP_POTIONS = ['heal', 'heal', 'heal', 'draught', 'slow'] as const;
   const allEvents: BattleEvent[] = [];
   /**
    * 置位时玩家单位也由 AI 接手（开局选了自动，或中途切了托管 / 按了跳过）。
@@ -266,13 +280,39 @@ export function createBattleSim(
   let done = false;
   let winner: Faction | null = null;
 
+  function attachDrops(events: BattleEvent[]): BattleEvent[] {
+    if (!enableDrops) return events;
+    const extra: BattleEvent[] = [];
+    for (const ev of events) {
+      if (ev.type !== 'death') continue;
+      if (rolledDeaths.has(ev.uid)) continue;
+      rolledDeaths.add(ev.uid);
+      const u = units.find((x) => x.uid === ev.uid);
+      if (!u || u.faction !== 'enemy') continue;
+      if (pickups.some((p) => p.pos.x === u.pos.x && p.pos.y === u.pos.y)) continue;
+      if (dropRng() >= dropChance) continue;
+      const potionId = DROP_POTIONS[Math.floor(dropRng() * DROP_POTIONS.length)]!;
+      pickups.push({ pos: { ...u.pos }, potionId });
+      extra.push({ type: 'drop', pos: { ...u.pos }, potionId });
+    }
+    return extra.length ? [...events, ...extra] : events;
+  }
+
+  function tryPickup(u: UnitState): BattleEvent[] {
+    const i = pickups.findIndex((p) => p.pos.x === u.pos.x && p.pos.y === u.pos.y);
+    if (i < 0) return [];
+    const drop = pickups.splice(i, 1)[0]!;
+    return [{ type: 'pickup', uid: u.uid, pos: { ...drop.pos }, potionId: drop.potionId }];
+  }
+
   function finish(w: Faction, events: BattleEvent[]): BattleStep {
     done = true;
     winner = w;
     pendingTurn = null;
-    events.push({ type: 'end', winner: w });
-    allEvents.push(...events);
-    return { events, done: true, winner: w };
+    const evs = attachDrops(events);
+    evs.push({ type: 'end', winner: w });
+    allEvents.push(...evs);
+    return { events: evs, done: true, winner: w };
   }
 
   /** 沿最短路走到 `to`，逐格发 moveStep 供回放做动画 */
@@ -342,10 +382,11 @@ export function createBattleSim(
       }
     }
     order = bySpeedOrder(units, defs).map((u) => u.uid);
+    const evs = attachDrops(events);
     const w = checkWinner(units);
-    if (w) return finish(w, events);
-    allEvents.push(...events);
-    return { events, done: false, winner: null };
+    if (w) return finish(w, evs);
+    allEvents.push(...evs);
+    return { events: evs, done: false, winner: null };
   }
 
   /**
@@ -417,8 +458,9 @@ export function createBattleSim(
 
     w = checkWinner(units);
     if (w) return finish(w, events);
-    allEvents.push(...events);
-    return { events, done: false, winner: null };
+    const evs = attachDrops(events);
+    allEvents.push(...evs);
+    return { events: evs, done: false, winner: null };
   }
 
   /**
@@ -542,16 +584,17 @@ export function createBattleSim(
    * 但只要还有技能能放，就一定停下来等：替玩家决定放弃一次技能，比多一次点击糟得多。
    */
   function settleAfterAction(events: BattleEvent[]): BattleStep {
+    const evs = attachDrops(events);
     const w = checkWinner(units);
-    if (w) return finish(w, events);
+    if (w) return finish(w, evs);
     const v = pendingView();
     // 还有移动/出手额度，或还能撤销走位时，都停下来等。
     // 走完若立刻收尾，玩家来不及点撤销；先技能后走位也不能出手完就掐掉移动。
     if (!v || (!v.canMove && !v.canSkill && !v.canAttack && !v.canUndoMove)) {
       pendingTurn = null;
     }
-    allEvents.push(...events);
-    return { events, done: false, winner: null };
+    allEvents.push(...evs);
+    return { events: evs, done: false, winner: null };
   }
 
   function noop(): BattleStep {
@@ -619,8 +662,11 @@ export function createBattleSim(
   function commandWait(uid: string): BattleStep {
     const cur = activePending(uid);
     if (!cur) return noop();
+    // 走到掉落格上再待机才捡起来：只路过不捡，否则走位会被「顺手拾取」绑死
+    const events = tryPickup(cur.u);
     pendingTurn = null;
-    return noop();
+    allEvents.push(...events);
+    return { events, done: false, winner: null };
   }
 
   function usePotion(potionId: string): BattleEvent[] {

@@ -19,10 +19,18 @@ import {
   currentStage,
   requireRun,
   resetPid,
+  type EndlessCarry,
   type LootOption,
   type MetaState,
   type MvpGameState,
 } from './GameState';
+import {
+  ENDLESS_CLEAR_BONUS,
+  ENDLESS_MAX_WAVES,
+  ENDLESS_WAVE_SOUL,
+  isEndlessDungeon,
+} from '@/data/endlessCatalog';
+import type { UnitState } from '@/battle/types';
 
 /**
  * 魂晶的三个来源，合起来要同时满足两件事：**不能无风险刷**，而且**失败也有长进**。
@@ -155,6 +163,8 @@ export function sweepLeftToday(meta: MetaState, dungeonId: string): number {
 export function canSweep(state: MvpGameState): boolean {
   const run = state.run;
   if (!run) return false;
+  // 无尽每波敌人落点都是现抽的，不存在「这关我赢过了」可以兑现
+  if (isEndlessDungeon(run.dungeonId)) return false;
   return nodeClearedBefore(state) && sweepLeftToday(state.meta, run.dungeonId) > 0;
 }
 
@@ -167,6 +177,7 @@ export function canSweep(state: MvpGameState): boolean {
 export function nodeClearedBefore(state: MvpGameState): boolean {
   const run = state.run;
   if (!run) return false;
+  if (isEndlessDungeon(run.dungeonId)) return false;
   if (currentNode(state).kind === 'shop') return false;
   return run.nodeIndex < (state.meta.clearedNodesByDungeonId[run.dungeonId] ?? 0);
 }
@@ -271,7 +282,7 @@ function drawFrom(pool: WeightedLoot[], avoid: ReadonlySet<string>, rng: LootRng
 
 export function rollLoot(state: MvpGameState, rng: LootRng = Math.random): LootOption[] {
   // 节点越深，稀有/史诗越常见。前几场就狂出史诗的话，后面的三选一只会越来越平淡。
-  const depth = state.run?.nodeIndex ?? 0;
+  const depth = state.run?.endless?.wave ?? state.run?.nodeIndex ?? 0;
   const byChar = shuffleWith(partyCharacters(state), rng).map((m) =>
     lootCandidatesFor(state, m, depth),
   );
@@ -325,9 +336,95 @@ export function skipLoot(state: MvpGameState): void {
 
 /** 是否已通关（节点走完） */
 export function isRunComplete(state: MvpGameState): boolean {
-  const d = currentDungeon(state);
   const run = requireRun(state);
+  if (isEndlessDungeon(run.dungeonId)) {
+    return (run.endless?.clearedCurrent ?? false) && (run.endless?.wave ?? 0) >= ENDLESS_MAX_WAVES;
+  }
+  const d = currentDungeon(state);
   return run.nodeIndex >= d.nodes.length - 1;
+}
+
+export function isEndlessRun(state: MvpGameState): boolean {
+  return !!state.run && isEndlessDungeon(state.run.dungeonId);
+}
+
+/** 这一局已经打赢的波数（当前波还没赢就不算） */
+export function endlessWavesCleared(state: MvpGameState): number {
+  const e = state.run?.endless;
+  if (!e) return 0;
+  return e.clearedCurrent ? e.wave : Math.max(0, e.wave - 1);
+}
+
+/**
+ * 无尽一波胜利：当场给魂晶，非最后一波掷三选一。
+ *
+ * 不走 `applyVictory`：那条路径按节点首通发魂晶、按 `isRunComplete`（单节点恒真）
+ * 跳过三选一，第一波就会被当成整章通关。
+ */
+export function applyEndlessWaveVictory(state: MvpGameState): void {
+  const run = requireRun(state);
+  if (!run.endless) return;
+  run.endless.clearedCurrent = true;
+  const soul = ENDLESS_WAVE_SOUL;
+  state.meta.metaCurrency += soul;
+  run.lastVictory = { gold: 0, soul, firstClear: false };
+  run.pendingLoot = isRunComplete(state) ? null : rollLoot(state);
+}
+
+/** 把还活着的我方记下来，供下一波原地接着打 */
+export function snapshotEndlessCarry(units: readonly UnitState[]): EndlessCarry[] {
+  return units
+    .filter((u) => u.faction === 'player' && u.hp > 0 && u.rosterId)
+    .map((u) => ({
+      rosterId: u.rosterId!,
+      uid: u.uid,
+      hp: u.hp,
+      pos: { ...u.pos },
+      skillCd: u.skillCd,
+      tempSkillCd: u.tempSkillCd,
+      timedBattleEffects: u.timedBattleEffects?.map((e) => ({ ...e })),
+    }));
+}
+
+/** 进入下一波：波数 +1，位置沿用上一波结束时的站位 */
+export function continueEndlessWave(state: MvpGameState, lastUnits: readonly UnitState[]): void {
+  const run = requireRun(state);
+  if (!run.endless) return;
+  const carry = lastUnits.length > 0
+    ? snapshotEndlessCarry(lastUnits)
+    : (run.endless.carry ?? []);
+  run.endless.carry = carry;
+  run.endless.wave += 1;
+  run.endless.clearedCurrent = false;
+  run.pendingLoot = null;
+  run.lastReportWinner = null;
+  // 部署格跟着人走，断线重进时 buildBattleUnits 才找得到这些人
+  for (const c of carry) {
+    const p = run.placements.find((x) => x.rosterId === c.rosterId);
+    if (p) {
+      p.pos = { ...c.pos };
+      p.uid = c.uid;
+    }
+  }
+  state.phase = 'battle';
+}
+
+/**
+ * 无尽结束（打完 / 全灭 / 放弃）：记下最高波，打完十波再给一笔通关奖。
+ * 返回本次额外入账的魂晶（放弃和中途失败是 0，波次奖已经当场发过了）。
+ */
+export function finishEndlessRun(state: MvpGameState): number {
+  const waves = endlessWavesCleared(state);
+  const prev = state.meta.endlessBestFloor ?? 0;
+  if (waves > prev) state.meta.endlessBestFloor = waves;
+  let bonus = 0;
+  if (waves >= ENDLESS_MAX_WAVES) {
+    bonus = ENDLESS_CLEAR_BONUS;
+    state.meta.metaCurrency += bonus;
+  }
+  state.run = null;
+  state.phase = 'hub';
+  return bonus;
 }
 
 /** 推进到下一节点：清空本节点部署/地形，按节点类型切换阶段 */

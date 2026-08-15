@@ -17,8 +17,17 @@ import {
   type MvpGameState,
   type RunState,
 } from './GameState';
+import {
+  ENDLESS_DUNGEON,
+  generateEndlessWave,
+  endlessWaveScale,
+  isEndlessDungeon,
+} from '@/data/endlessCatalog';
+import { battleTerrain } from './GameState';
 
 function enemyAt(state: MvpGameState, pos: Vec2): boolean {
+  // 无尽的敌人是开战时才抽落点的，布阵阶段棋盘上没有预设敌格
+  if (isEndlessDungeon(requireRun(state).dungeonId)) return false;
   return currentStage(state).enemies.some((e) => e.x === pos.x && e.y === pos.y);
 }
 
@@ -31,7 +40,10 @@ const DEFAULT_MAX_DEPLOY = 3;
 /** 当前节点的有效最大上阵人数（含广告额外位） */
 export function getMaxDeploy(state: MvpGameState): number {
   const run = requireRun(state);
-  const base = currentStage(state).maxDeploy ?? DEFAULT_MAX_DEPLOY;
+  // 第一章第一关 maxDeploy=2，无尽复用那张地形但不能沿用 2 人上限
+  const base = isEndlessDungeon(run.dungeonId)
+    ? ENDLESS_DUNGEON.maxParty
+    : (currentStage(state).maxDeploy ?? DEFAULT_MAX_DEPLOY);
   return base + (run.adExtraSlot ?? 0);
 }
 
@@ -195,10 +207,30 @@ export function enemySpawnToUnitState(e: StageEnemySpawn, scale: number): UnitSt
 export function buildBattleUnits(state: MvpGameState): UnitState[] {
   const run = requireRun(state);
   const st = currentStage(state);
-  const scale = currentEnemyScale(state);
+  const endless = isEndlessDungeon(run.dungeonId);
+  const scale = endless ? endlessWaveScale(run.endless?.wave ?? 1) : currentEnemyScale(state);
   const units: UnitState[] = [];
-  for (const e of st.enemies) units.push(enemySpawnToUnitState(e, scale));
-  for (const p of run.placements) {
+
+  if (endless) {
+    const occupied = (run.endless?.carry ?? []).map((c) => c.pos);
+    const fallback = run.placements.map((p) => p.pos);
+    const wave = generateEndlessWave(
+      run.endless?.wave ?? 1,
+      battleTerrain(state),
+      occupied.length > 0 ? occupied : fallback,
+    );
+    for (const e of wave) units.push(enemySpawnToUnitState(e, scale));
+  } else {
+    for (const e of st.enemies) units.push(enemySpawnToUnitState(e, scale));
+  }
+
+  const carryByRoster = new Map((run.endless?.carry ?? []).map((c) => [c.rosterId, c]));
+  // 无尽第二波起只带还活着的人上场。死掉的不复活——「直到全队倒下」否则没有牙齿。
+  const playerSlots = endless && carryByRoster.size > 0
+    ? run.placements.filter((p) => carryByRoster.has(p.rosterId))
+    : run.placements;
+
+  for (const p of playerSlots) {
     const m = getCharacter(state, p.rosterId);
     if (!m) continue;
     const eff = characterEffectiveStats(m);
@@ -211,17 +243,21 @@ export function buildBattleUnits(state: MvpGameState): UnitState[] {
     const tempSkill = tmpInfo
       ? { id: tmpInfo.id, name: tmpInfo.name, cooldown: tmpInfo.cooldown, kind: tmpInfo.kind }
       : undefined;
+    const carry = carryByRoster.get(p.rosterId);
     units.push({
-      uid: p.uid,
+      uid: carry?.uid ?? p.uid,
       defId: m.profession,
       faction: 'player',
-      hp: eff.maxHp,
-      pos: { ...p.pos },
-      skillCd: 0,
+      hp: carry ? carry.hp : eff.maxHp,
+      pos: carry ? { ...carry.pos } : { ...p.pos },
+      skillCd: carry?.skillCd ?? 0,
       movedInTurn: false,
       battleSkill,
       tempSkill,
-      tempSkillCd: 0,
+      tempSkillCd: carry?.tempSkillCd ?? 0,
+      timedBattleEffects: carry?.timedBattleEffects
+        ? carry.timedBattleEffects.map((e) => ({ ...e }))
+        : undefined,
       // 词条按**角色**挂，所以两个槽都吃：规则是「这个人的技能更强了」，
       // 不是「这一招更强了」。临时技能大多是控制/治疗，`canApply` 会把
       // 「伤害 +25%」这类挂不上去的自动跳过，不会出现临时技能白嫖伤害词条。

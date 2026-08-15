@@ -1,4 +1,4 @@
-import type { TerrainId, UnitKind, Vec2 } from '@/battle/types';
+import type { TerrainId, TimedBattleEffect, UnitKind, Vec2 } from '@/battle/types';
 import type { StageDefMvp } from '@/data/stagesMvp';
 import { STAGES_MVP } from '@/data/stagesMvp';
 import {
@@ -7,6 +7,7 @@ import {
   type DungeonDef,
   type NodeDef,
 } from '@/data/dungeonCatalog';
+import { ENDLESS_DUNGEON_ID } from '@/data/endlessCatalog';
 import { mergeTerrainOverlay, type TerrainGrid } from '@/battle/grid';
 import { createStarterRoster } from '@/game/characterFactory';
 import type { Character } from '@/game/characterTypes';
@@ -89,9 +90,8 @@ export interface MetaState {
    */
   sweepUsageByDungeonId: Record<string, { date: string; used: number }>;
   /**
-   * 无尽试炼到过的最深层数。可选：老存档没有这个字段，读的时候按 0 算
-   * （`endlessBestFloor()`）。玩法还没实装，先把存档位留出来——
-   * 等真做的时候再改 `MetaState` 就得连着迁版本，而这只是一个数。
+   * 无尽试炼到过的最高波数。可选：老存档没有这个字段，读的时候按 0 算
+   * （`endlessBestFloor()`）。同版本内加一个数，不升档。
    */
   endlessBestFloor?: number;
 }
@@ -144,6 +144,33 @@ export interface RunState {
   lastReportWinner: 'player' | 'enemy' | null;
   /** 刚打完那场的结算奖励，供战后弹窗显示；领完清空 */
   lastVictory: VictoryReward | null;
+  /**
+   * 无尽试炼局内状态。主线 run 为 undefined。
+   *
+   * 波次不走 `nodeIndex`：无尽是同一张图连打，布阵只做一次。
+   * 用节点推进会清掉部署、把玩家踢回布阵页，和「清完一波原地刷下一波」对着干。
+   */
+  endless?: EndlessRunState;
+}
+
+/** 无尽试炼里一名我方单位跨波带过去的状态 */
+export interface EndlessCarry {
+  rosterId: string;
+  uid: string;
+  hp: number;
+  pos: Vec2;
+  skillCd: number;
+  tempSkillCd?: number;
+  timedBattleEffects?: TimedBattleEffect[];
+}
+
+export interface EndlessRunState {
+  /** 当前正在打 / 刚打完的波，从 1 起 */
+  wave: number;
+  /** 当前这一波是否已经打赢。用来区分「第 3 波进行中」和「第 3 波刚清完」 */
+  clearedCurrent: boolean;
+  /** 上一波结束时还活着的我方。第一波布阵前是 null */
+  carry: EndlessCarry[] | null;
 }
 
 /** 一场战斗胜利的固定奖励（三选一不含在内，那是另一步） */
@@ -216,6 +243,9 @@ export function createRunState(dungeonId: string, partyRosterIds: string[]): Run
     pendingLoot: null,
     lastReportWinner: null,
     lastVictory: null,
+    endless: dungeonId === ENDLESS_DUNGEON_ID
+      ? { wave: 1, clearedCurrent: false, carry: null }
+      : undefined,
   };
 }
 

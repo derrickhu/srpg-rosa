@@ -80,12 +80,15 @@ function euid(): string {
 // 四只都只有一张静止图（没有行走/攻击图集），呼吸与出手位移由 AnimatedUnit 用代码补，
 // 一章的杂兵不值得每只做四方向；精英和 Boss 才用完整图集。
 
-const ROOKIE: Record<UnitKind, { name: string; animSet: string; stats: StageEnemyStatOverride }> = {
+/** 第一章杂兵模板。无尽试炼复用同一套，不要各抄一份数字。 */
+export const CHAPTER1_ROOKIE: Record<UnitKind, { name: string; animSet: string; stats: StageEnemyStatOverride }> = {
   sword: { name: '黏泥怪', animSet: 'slime', stats: { maxHp: 78, atk: 15 } },
   bow: { name: '孢子菇', animSet: 'sporecap', stats: { maxHp: 48, atk: 18 } },
   cavalry: { name: '血牙狼', animSet: 'bloodwolf', stats: { maxHp: 70, atk: 16 } },
   shield: { name: '岩甲龟', animSet: 'rockshell', stats: { maxHp: 118, atk: 9 } },
 };
+
+const ROOKIE = CHAPTER1_ROOKIE;
 
 function rookie(defId: UnitKind, x: number, y: number): StageEnemySpawn {
   const r = ROOKIE[defId];
