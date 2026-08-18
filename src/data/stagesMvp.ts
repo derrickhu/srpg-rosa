@@ -126,7 +126,7 @@ function rookie(defId: UnitKind, x: number, y: number): StageEnemySpawn {
 }
 
 /** 关 1：两名剑士正面接触，玩家侧有两块高地可抢占（教移动与高地增伤） */
-const s1: StageBlueprint = {
+const c1_1: StageBlueprint = {
   title: '草原哨站',
   goldReward: 8,
   terrain: withCells(emptyTerrain(7, 8), [
@@ -142,7 +142,7 @@ const s1: StageBlueprint = {
 };
 
 /** 关 2：高台弓手 + 护卫，路边森林提供 30% 闪避掩护（教远程威胁与地形掩护） */
-const s2: StageBlueprint = {
+const c1_2: StageBlueprint = {
   title: '猎手小径',
   goldReward: 10,
   terrain: withCells(emptyTerrain(8, 9), [
@@ -159,7 +159,7 @@ const s2: StageBlueprint = {
 };
 
 /** 关 3：一条大河把战场拦腰截断，只留两处浅滩；盾卫堵桥头（教隘口与涉水惩罚） */
-const s3: StageBlueprint = {
+const c1_3: StageBlueprint = {
   title: '渡口之争',
   goldReward: 12,
   terrain: withCells(emptyTerrain(9, 10), [
@@ -176,7 +176,7 @@ const s3: StageBlueprint = {
 };
 
 /** 关 4：开阔地两翼骑兵包抄 + 后排弓手，玩家侧有可依托的双高地（教集火与反骑兵） */
-const s4: StageBlueprint = {
+const c1_4: StageBlueprint = {
   title: '骑兵突袭',
   goldReward: 14,
   terrain: withCells(emptyTerrain(8, 9), [
@@ -191,7 +191,7 @@ const s4: StageBlueprint = {
 };
 
 /** 关 5：北部三连高台弓阵 + 中门盾卫，两侧城墙不可通行，必须仰攻中路（教破阵） */
-const s5: StageBlueprint = {
+const c1_5: StageBlueprint = {
   title: '高地弓阵',
   goldReward: 16,
   terrain: withCells(emptyTerrain(9, 10), [
@@ -207,7 +207,7 @@ const s5: StageBlueprint = {
 };
 
 /** 关 6：精英百夫长坐镇中央缓丘，弓手两翼 + 骑兵侧袭（Boss 前的综合考试） */
-const s6: StageBlueprint = {
+const c1_6: StageBlueprint = {
   title: '前哨围剿',
   goldReward: 18,
   terrain: withCells(emptyTerrain(9, 10), [
@@ -237,7 +237,7 @@ const s6: StageBlueprint = {
 };
 
 /** 关 7：Boss 血牙酋长踞守祭坛高台（血牙咆哮 = savage_roar AoE+自强化），盾卫堵台下，弓手依墙 */
-const s7: StageBlueprint = {
+const c1_7: StageBlueprint = {
   title: '血牙酋长',
   goldReward: 24,
   terrain: withCells(emptyTerrain(9, 11), [
@@ -339,7 +339,7 @@ function forestYoung(defId: UnitKind, x: number, y: number): StageEnemySpawn {
 }
 
 /** 关 8：敌人躲在林子里打（教「掩体对双方都生效」，第一章的林子只掩护过玩家） */
-const s8: StageBlueprint = {
+const c2_1: StageBlueprint = {
   title: '藤蔓小径',
   goldReward: 14,
   // 9x10 而不是更紧凑的 8x9：四只标准杂兵在小图上会同时贴上来，实测胜率掉到 55%——
@@ -368,7 +368,7 @@ const s8: StageBlueprint = {
  * 从空地直接横穿则会同时吃到两个弓手。墙挡视线是这一章前才补上的机制，
  * 得有一关专门把它教明白。
  */
-const s9: StageBlueprint = {
+const c2_2: StageBlueprint = {
   title: '哨塔盲角',
   goldReward: 16,
   terrain: withCells(emptyTerrain(9, 10), [
@@ -395,7 +395,7 @@ const s9: StageBlueprint = {
  * 穿林要吃两个弓手一轮齐射，烧开则要接受林子没了、自己也失去掩体，
  * 而且燃烧格本身会掉血。这一关就是把那个取舍摆到台面上。
  */
-const s10: StageBlueprint = {
+const c2_3: StageBlueprint = {
   title: '松脂林道',
   goldReward: 16,
   terrain: withCells(emptyTerrain(9, 10), [
@@ -421,7 +421,7 @@ const s10: StageBlueprint = {
 };
 
 /** 关 11：河道两处浅滩，滩口各一片林子当掩体；两翼影林狼包抄（隘口 + 反骑兵复习） */
-const s11: StageBlueprint = {
+const c2_4: StageBlueprint = {
   title: '涸河林隘',
   goldReward: 18,
   terrain: withCells(emptyTerrain(9, 10), [
@@ -449,7 +449,7 @@ const s11: StageBlueprint = {
  * 和第一章的百夫长一样**不带技能**、只靠面板压人。精英该考的是站位与集火，
  * 再叠一个技能会让这一关的失败原因变成「没看懂他那一招」。
  */
-const s12: StageBlueprint = {
+const c2_5: StageBlueprint = {
   title: '血牙猎长',
   goldReward: 20,
   terrain: withCells(emptyTerrain(9, 10), [
@@ -480,7 +480,7 @@ const s12: StageBlueprint = {
  * 玩家用来贴近的林子变成燃烧格，逼人离开掩体去打开阔地。
  * 所以这张图的林子刻意铺在通往高台的路上——那既是玩家想走的路，也是他的燃料。
  */
-const s13: StageBlueprint = {
+const c2_6: StageBlueprint = {
   title: '血牙萨满',
   goldReward: 26,
   terrain: withCells(withHighCells(emptyTerrain(9, 11), [{ x: 4, y: 2 }, { x: 4, y: 3 }]), [
@@ -520,81 +520,234 @@ const s13: StageBlueprint = {
   maxDeploy: 4,
 };
 
-// ─── Chapter 3: 要塞战 ───
+// ─── Chapter 3: 要塞攻防 ───
+// 教学曲线：机关初见 → 闸门是捷径不是唯一路 → 开了门他们也出来 → 双闸取舍
+//           → 精英城卫长 → Boss 城主。
+//
+// 这一章的主题是**地形可以被操作**。第一章的地形只能读（高地、森林），
+// 第二章可以改写（点火烧掉林子），到这里第一次有了「开关」：站上机关，
+// 下一轮闸门永久打开。整章反复问的是**什么时候开门**——
+// 开门是为了进去，但开了他们也能出来，而按机关要押一个人一整回合。
+//
+// 一条硬约束（`stageIntegrity` 里有断言守着）：**每关不开闸门也要能打到所有敌人**。
+// AI 不会主动去站机关，所以闸门若是唯一通路，托管和扫荡就会一直磨到回合上限。
+// 这反过来定义了闸门的用法：它是捷径和优势，不是通行证。
+//
+// 敌人外观复用四兵种剪影（红 tint），不再用前两章的野生魔物：
+// 这一章打的是**成建制的守军**，剪影从魔物换成士兵本身就是「这里不一样了」的信号。
+// 叙事上接得住——血牙部族退到要塞后据城而守。
 
-const s14: StageBlueprint = {
-  title: '城墙阻隔',
+/**
+ * 第三章守军：`UNIT_DEFS` 标准数值，外观走四兵种默认剪影。
+ *
+ * 不写 `animSet` 就是默认按兵种取图（敌方会自动加红 tint），
+ * 所以这里只给名字。同样刻意不抄 `stats`——抄了就会和 `UNIT_DEFS` 走岔。
+ */
+export const CHAPTER3_GARRISON: Record<UnitKind, { name: string }> = {
+  sword: { name: '血牙守卒' },
+  bow: { name: '城头弓手' },
+  cavalry: { name: '巡墙狼骑' },
+  shield: { name: '闸门盾卫' },
+};
+
+function garrison(defId: UnitKind, x: number, y: number): StageEnemySpawn {
+  return { defId, x, y, uid: euid(), name: CHAPTER3_GARRISON[defId].name };
+}
+
+/** 第三章的填充档位，同 `forestYoung`（七折面板），名字换成「新卒」 */
+function garrisonGreen(defId: UnitKind, x: number, y: number): StageEnemySpawn {
+  const b = UNIT_DEFS[defId].base;
+  return {
+    defId, x, y, uid: euid(),
+    name: `新募${CHAPTER3_GARRISON[defId].name.slice(-2)}`,
+    stats: {
+      maxHp: Math.round(b.maxHp * YOUNG_RATIO),
+      atk: Math.round(b.atk * YOUNG_RATIO),
+    },
+  };
+}
+
+/**
+ * 关 14：机关初见。
+ *
+ * 闸门只夹住一条中路窄道，两侧完全敞开——玩家不按机关也能绕过去打完，
+ * 按了则少走四格。第一关要让「机关是干什么的」这件事零成本学会，
+ * 所以代价压到最低：机关就在部署区抬脚可达的地方。
+ */
+const c3_1: StageBlueprint = {
+  title: '闸门机关',
   goldReward: 18,
+  terrain: withCells(emptyTerrain(9, 10), [
+    { x: 3, y: 4, t: 'wall' }, { x: 5, y: 4, t: 'wall' },
+    { x: 4, y: 4, t: 'gate_closed' },
+    { x: 4, y: 7, t: 'lever' },
+  ]),
+  enemies: [
+    garrison('sword', 4, 2),
+    garrison('bow', 2, 1),
+    garrison('sword', 6, 2),
+    garrisonGreen('bow', 7, 1),
+  ],
+  aiDifficulty: 'easy',
+};
+
+/**
+ * 关 15：闸门是捷径。
+ *
+ * 中路闸门后面就是弓手，绕行要多花两轮——而那两轮里弓手一直在射。
+ * 这一关教的是「开门省下的不是路，是挨打的回合数」。
+ */
+const c3_2: StageBlueprint = {
+  title: '瓮城窄道',
+  goldReward: 20,
   terrain: withCells(emptyTerrain(9, 10), [
     { x: 2, y: 4, t: 'wall' }, { x: 3, y: 4, t: 'wall' },
     { x: 5, y: 4, t: 'wall' }, { x: 6, y: 4, t: 'wall' },
+    { x: 4, y: 4, t: 'gate_closed' },
+    { x: 7, y: 6, t: 'lever' },
+    { x: 4, y: 2, t: 'high' },
   ]),
   enemies: [
-    { defId: 'bow', x: 4, y: 1, uid: euid() },
-    { defId: 'shield', x: 4, y: 3, uid: euid() },
-    { defId: 'sword', x: 2, y: 2, uid: euid() },
-  ],
-};
-
-const s15: StageBlueprint = {
-  title: '高地争夺',
-  goldReward: 20,
-  terrain: withHighCells(emptyTerrain(9, 10), [
-    { x: 3, y: 3 }, { x: 4, y: 3 }, { x: 5, y: 3 },
-    { x: 3, y: 6 }, { x: 4, y: 6 }, { x: 5, y: 6 },
-  ]),
-  enemies: [
-    { defId: 'bow', x: 4, y: 3, uid: euid() },
-    { defId: 'cavalry', x: 3, y: 1, uid: euid() },
-    { defId: 'cavalry', x: 5, y: 1, uid: euid() },
+    garrison('bow', 4, 2),
+    garrison('sword', 3, 1),
+    garrison('cavalry', 7, 2),
+    garrison('shield', 4, 3),
+    garrisonGreen('sword', 1, 2),
   ],
   aiDifficulty: 'normal',
 };
 
-const s16: StageBlueprint = {
-  title: '双面夹攻',
-  goldReward: 20,
-  terrain: withCells(emptyTerrain(10, 11), [
-    { x: 0, y: 5, t: 'wall' }, { x: 1, y: 5, t: 'wall' },
-    { x: 8, y: 5, t: 'wall' }, { x: 9, y: 5, t: 'wall' },
-  ]),
-  enemies: [
-    { defId: 'sword', x: 2, y: 1, uid: euid() },
-    { defId: 'sword', x: 7, y: 1, uid: euid() },
-    { defId: 'bow', x: 5, y: 0, uid: euid() },
-    { defId: 'shield', x: 5, y: 2, uid: euid() },
-  ],
-};
-
-const s17: StageBlueprint = {
-  title: '城门攻防',
+/**
+ * 关 16：开了门他们也出来。
+ *
+ * 门后压着两个狼骑——机动最高的兵种。玩家如果一进场就去按机关，
+ * 门开的那一轮狼骑直接冲进部署区；先清掉外面的再开门才是对的顺序。
+ * 这是这一章「什么时候开门」这道题的第一次正式提问。
+ */
+const c3_3: StageBlueprint = {
+  title: '放闸',
   goldReward: 22,
-  terrain: withCells(emptyTerrain(9, 10), [
-    { x: 3, y: 3, t: 'wall' }, { x: 5, y: 3, t: 'wall' },
-    { x: 3, y: 4, t: 'wall' }, { x: 5, y: 4, t: 'wall' },
-    { x: 4, y: 3, t: 'high' },
+  terrain: withCells(emptyTerrain(10, 11), [
+    { x: 3, y: 5, t: 'wall' }, { x: 4, y: 5, t: 'wall' },
+    { x: 6, y: 5, t: 'wall' }, { x: 7, y: 5, t: 'wall' },
+    { x: 5, y: 5, t: 'gate_closed' },
+    { x: 1, y: 7, t: 'lever' },
+    { x: 2, y: 3, t: 'forest' }, { x: 8, y: 3, t: 'forest' },
   ]),
   enemies: [
-    { defId: 'shield', x: 4, y: 2, uid: euid() },
-    { defId: 'bow', x: 4, y: 1, uid: euid() },
-    { defId: 'cavalry', x: 1, y: 1, uid: euid() },
-    { defId: 'cavalry', x: 7, y: 1, uid: euid() },
+    // 门后的两个狼骑：不开门它们过不来，开门的那一轮它们就到脸上
+    garrison('cavalry', 4, 3),
+    garrison('cavalry', 6, 3),
+    // 门外的守军，绕行路线上必须先处理掉
+    garrison('sword', 1, 4),
+    garrison('bow', 8, 4),
+    garrison('shield', 5, 2),
   ],
+  aiDifficulty: 'normal',
 };
 
-const s18: StageBlueprint = {
-  title: '要塞 Boss',
+/**
+ * 关 17：两道闸门，一个机关。
+ *
+ * 机关是全开全关（`openGates` 一次开全场），所以这一关没法只开一边——
+ * 开门就等于同时放开左右两条通道。取舍从「开不开」变成
+ * 「我的阵型撑不撑得住两边同时来人」。
+ */
+const c3_4: StageBlueprint = {
+  title: '双门齐落',
+  goldReward: 22,
+  terrain: withCells(emptyTerrain(10, 11), [
+    { x: 1, y: 5, t: 'wall' }, { x: 3, y: 5, t: 'wall' },
+    { x: 6, y: 5, t: 'wall' }, { x: 8, y: 5, t: 'wall' },
+    { x: 2, y: 5, t: 'gate_closed' },
+    { x: 7, y: 5, t: 'gate_closed' },
+    { x: 5, y: 8, t: 'lever' },
+    { x: 4, y: 4, t: 'high' }, { x: 5, y: 4, t: 'high' },
+  ]),
+  enemies: [
+    garrison('shield', 4, 3),
+    garrison('bow', 2, 2),
+    garrison('sword', 7, 3),
+    garrisonGreen('cavalry', 5, 1),
+    garrisonGreen('bow', 8, 2),
+  ],
+  aiDifficulty: 'normal',
+};
+
+/**
+ * 关 18：精英 · 城卫长。
+ *
+ * 精英本体站在高地上，门后是弓手。这一关不给机关捷径的甜头——
+ * 机关远在侧翼，去按的人这一轮完全脱离战线，所以多数打法是**不开门**硬啃。
+ * 闸门在这里的作用是「一个你可以选择不用的选项」，精英关就该考清楚这个。
+ */
+const c3_5: StageBlueprint = {
+  title: '城卫长',
+  goldReward: 24,
+  terrain: withCells(withHighCells(emptyTerrain(10, 11), [{ x: 4, y: 3 }, { x: 5, y: 3 }]), [
+    { x: 3, y: 6, t: 'wall' }, { x: 4, y: 6, t: 'wall' },
+    { x: 6, y: 6, t: 'wall' }, { x: 7, y: 6, t: 'wall' },
+    { x: 5, y: 6, t: 'gate_closed' },
+    { x: 0, y: 8, t: 'lever' },
+  ]),
+  enemies: [
+    {
+      ...garrison('sword', 4, 3),
+      name: '血牙城卫长',
+      stats: { maxHp: 250, atk: 26 },
+    },
+    garrison('bow', 6, 2),
+    garrison('shield', 5, 5),
+    garrisonGreen('sword', 2, 4),
+  ],
+  aiDifficulty: 'normal',
+  maxDeploy: 4,
+};
+
+/**
+ * 关 19：Boss · 血牙城主。
+ *
+ * 城主会放「破阵冲撞」——和玩家在这一章商店里买的「撞城槌」同一个形状。
+ * 这是整章最后一课：玩家学了一路「直线穿透吃走廊的对齐」，
+ * 而闸门通道会把自己也排成一列。**走廊对双方都成立。**
+ *
+ * 数值沿用前两章 Boss 那条实测结论——有效旋钮是敌方总血量而不是 Boss 的攻击，
+ * 所以盾卫的血在这里显式压到 95（同第一二章的做法），免得它把战线拖到弓手打够本。
+ *
+ * 这一关的数值是**按四人上阵**标定的（关卡 `maxDeploy` 就是 4），和前两章按三人标定的
+ * Boss 不是同一把尺子——两章的 Boss 用四人打其实是 78% / 91%。整套口径的统一
+ * 见 `docs/玩法重设计.md` 的待办，那件事要等角色/等级/技能扩完再一起做。
+ *
+ * 调参时踩到的两条坑，写下来免得下次重走：
+ *   - **Boss 攻击调高会同时压低裸打和带药胜率**。血 235 时攻 22/28/31 对应裸打
+ *     72.7%/56.7%/41.3%、带 2 药 94.7%/75.3%/63.0%——单位被一轮打死之后治疗补不回来，
+ *     所以攻击不是「难度」旋钮，是「把药废掉」旋钮。
+ *   - **药的边际价值随战斗长度衰减**。第二章 8.9 回合时两瓶药值 +75pp，
+ *     这一关拉到 11 回合就只值 +30pp。想让「备药能过」成立，仗必须短。
+ */
+const c3_6: StageBlueprint = {
+  title: '血牙城主',
   goldReward: 28,
   terrain: withCells(withHighCells(emptyTerrain(10, 11), [{ x: 4, y: 2 }, { x: 5, y: 2 }]), [
-    { x: 2, y: 4, t: 'wall' }, { x: 7, y: 4, t: 'wall' },
-    { x: 2, y: 5, t: 'wall' }, { x: 7, y: 5, t: 'wall' },
+    { x: 2, y: 6, t: 'wall' }, { x: 3, y: 6, t: 'wall' },
+    { x: 6, y: 6, t: 'wall' }, { x: 7, y: 6, t: 'wall' },
+    { x: 4, y: 6, t: 'gate_closed' }, { x: 5, y: 6, t: 'gate_closed' },
+    { x: 9, y: 8, t: 'lever' },
   ]),
   enemies: [
-    { defId: 'shield', x: 4, y: 1, uid: euid() },
-    { defId: 'shield', x: 5, y: 1, uid: euid() },
-    { defId: 'bow', x: 3, y: 0, uid: euid() },
-    { defId: 'bow', x: 6, y: 0, uid: euid() },
-    { defId: 'cavalry', x: 5, y: 3, uid: euid() },
+    {
+      ...garrison('sword', 4, 2),
+      name: '血牙城主',
+      boss: true,
+      animSet: 'bloodfang',
+      stats: { maxHp: 210, atk: 24, spd: 6 },
+      skillSkin: 'bloodfang_breach',
+    },
+    {
+      ...garrison('shield', 5, 4),
+      stats: { maxHp: 95 },
+    },
+    garrison('bow', 2, 2),
   ],
   isBoss: true,
   aiDifficulty: 'normal',
@@ -603,7 +756,7 @@ const s18: StageBlueprint = {
 
 // ─── Chapter 4: 沼泽战 ───
 
-const s19: StageBlueprint = {
+const c4_1: StageBlueprint = {
   title: '沼泽初遇',
   goldReward: 22,
   terrain: withCells(emptyTerrain(9, 10), [
@@ -617,7 +770,7 @@ const s19: StageBlueprint = {
   ],
 };
 
-const s20: StageBlueprint = {
+const c4_2: StageBlueprint = {
   title: '毒沼围困',
   goldReward: 24,
   terrain: withCells(emptyTerrain(9, 10), [
@@ -634,7 +787,7 @@ const s20: StageBlueprint = {
   aiDifficulty: 'normal',
 };
 
-const s21: StageBlueprint = {
+const c4_3: StageBlueprint = {
   title: '沼泽渡河',
   goldReward: 24,
   terrain: withCells(emptyTerrain(10, 11), [
@@ -651,7 +804,7 @@ const s21: StageBlueprint = {
   ],
 };
 
-const s22: StageBlueprint = {
+const c4_4: StageBlueprint = {
   title: '迷雾沼泽',
   goldReward: 26,
   terrain: withCells(emptyTerrain(10, 11), [
@@ -667,7 +820,7 @@ const s22: StageBlueprint = {
   aiDifficulty: 'hard',
 };
 
-const s23: StageBlueprint = {
+const c4_5: StageBlueprint = {
   title: '沼泽 Boss',
   goldReward: 32,
   terrain: withCells(emptyTerrain(10, 11), [
@@ -690,7 +843,7 @@ const s23: StageBlueprint = {
 
 // ─── Chapter 5: 龙岭战 ───
 
-const s24: StageBlueprint = {
+const c5_1: StageBlueprint = {
   title: '悬崖之战',
   goldReward: 26,
   terrain: withCells(emptyTerrain(10, 11), [
@@ -707,7 +860,7 @@ const s24: StageBlueprint = {
   aiDifficulty: 'hard',
 };
 
-const s25: StageBlueprint = {
+const c5_2: StageBlueprint = {
   title: '龙岭隘口',
   goldReward: 28,
   terrain: withCells(emptyTerrain(10, 11), [
@@ -725,7 +878,7 @@ const s25: StageBlueprint = {
   aiDifficulty: 'hard',
 };
 
-const s26: StageBlueprint = {
+const c5_3: StageBlueprint = {
   title: '火山裂谷',
   goldReward: 28,
   terrain: withCells(emptyTerrain(10, 11), [
@@ -743,7 +896,7 @@ const s26: StageBlueprint = {
   aiDifficulty: 'hard',
 };
 
-const s27: StageBlueprint = {
+const c5_4: StageBlueprint = {
   title: '龙脊峰',
   goldReward: 30,
   terrain: withCells(emptyTerrain(10, 11), [
@@ -761,7 +914,7 @@ const s27: StageBlueprint = {
   aiDifficulty: 'hard',
 };
 
-const s28: StageBlueprint = {
+const c5_5: StageBlueprint = {
   title: '龙王',
   goldReward: 40,
   terrain: withCells(withHighCells(emptyTerrain(11, 12), [
@@ -788,13 +941,19 @@ const s28: StageBlueprint = {
  * 章节 → 关卡，顺序即游戏顺序。这是关卡编号与章节归属的**唯一来源**。
  *
  * 第 i 章对应 `DUNGEON_DEFS[i]`（`stageIntegrity` 校验两边章数一致）。
+ *
+ * 关卡常量一律用**章内编号** `c<章>_<章内第几关>`，不要用全局序号（`s17` 那种）。
+ * 全局序号看着直观，但往中间任何一章插一关，后面所有章的变量名都得跟着挪——
+ * 第三章从 5 关加到 6 关时就撞上了这个：新的 Boss 关和原第四章第一关都叫 `s19`。
+ * 关卡的**展示序号**由这张表的位置推导（见下面的 `STAGES_MVP`），
+ * 所以变量名不承担编号职责，它只需要说清「这是第几章的第几关」。
  */
 const CHAPTERS: StageBlueprint[][] = [
-  [s1, s2, s3, s4, s5, s6, s7],
-  [s8, s9, s10, s11, s12, s13],
-  [s14, s15, s16, s17, s18],
-  [s19, s20, s21, s22, s23],
-  [s24, s25, s26, s27, s28],
+  [c1_1, c1_2, c1_3, c1_4, c1_5, c1_6, c1_7],
+  [c2_1, c2_2, c2_3, c2_4, c2_5, c2_6],
+  [c3_1, c3_2, c3_3, c3_4, c3_5, c3_6],
+  [c4_1, c4_2, c4_3, c4_4, c4_5],
+  [c5_1, c5_2, c5_3, c5_4, c5_5],
 ];
 
 export const STAGES_MVP: StageDefMvp[] = CHAPTERS.flat().map(({ title, ...rest }, i) => ({

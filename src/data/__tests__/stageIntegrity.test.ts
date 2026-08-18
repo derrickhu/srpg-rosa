@@ -136,6 +136,67 @@ describe('关卡数据完整性', () => {
     }
   });
 
+  /**
+   * 每个敌人都要能在**不开闸门**的前提下走到，否则自动模式会死锁。
+   *
+   * AI 不知道机关的价值——它不会主动去站机关（那是玩家的决定，见 `terrainSpec` 的
+   * 机关契约）。所以如果一关的敌人只能穿过闸门才能打到，那么托管、扫荡、
+   * 以及 1000 局的难度模拟全都会一直磨到回合上限，而不是清关。
+   *
+   * 这条约束反过来定义了闸门该怎么用：**它是捷径和优势，不是唯一通路**。
+   * 玩家押一个人开门换来的是更短的路线和更早接触到后排，而不是「不开就没法打」。
+   *
+   * 用连通性而不是真跑寻路：单位互相挡路是动态的，而这里要问的是静态可达性。
+   */
+  it('不开闸门也能走到每个敌人（否则自动模式死锁）', () => {
+    for (const stage of STAGES_MVP) {
+      const { w, h } = gridSize(stage.terrain);
+      const [top, bottom] = playerDeployRowRange(h);
+      const passable = (x: number, y: number): boolean => {
+        const t = stage.terrain[y]?.[x];
+        return !!t && isPassable(t);
+      };
+
+      const seen = new Set<string>();
+      const queue: { x: number; y: number }[] = [];
+      for (let y = top; y <= bottom; y += 1) {
+        for (let x = 0; x < w; x += 1) {
+          if (!passable(x, y)) continue;
+          seen.add(`${x},${y}`);
+          queue.push({ x, y });
+        }
+      }
+      while (queue.length > 0) {
+        const c = queue.shift()!;
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+          const nx = c.x + dx;
+          const ny = c.y + dy;
+          const k = `${nx},${ny}`;
+          if (seen.has(k) || !passable(nx, ny)) continue;
+          seen.add(k);
+          queue.push({ x: nx, y: ny });
+        }
+      }
+
+      for (const e of stage.enemies) {
+        expect(
+          seen.has(`${e.x},${e.y}`),
+          `「${stage.name}」的 ${e.name ?? e.defId} (${e.x},${e.y}) 不开闸门就走不到，自动模式会死锁`,
+        ).toBe(true);
+      }
+    }
+  });
+
+  /** 摆了闸门却没摆机关，那道门就永远打不开，等于一段谁也读不懂的死墙 */
+  it('有闸门的关卡必须有机关，反之亦然', () => {
+    for (const stage of STAGES_MVP) {
+      const ids = stage.terrain.flat();
+      const hasGate = ids.some((t) => t === 'gate_closed');
+      const hasLever = ids.some((t) => t === 'lever');
+      expect(hasGate, `「${stage.name}」有机关却没有闸门，机关按了没反应`).toBe(hasLever);
+    }
+  });
+
   it('maxDeploy 不超过部署行的可站格数', () => {
     for (const stage of STAGES_MVP) {
       if (stage.maxDeploy === undefined) continue;

@@ -116,9 +116,14 @@ export const UI_BUNDLE: AssetBundleDef = {
     skill_temp_fo_thorn: 'images/ui/skill_temp_fo_thorn.png',
     skill_temp_fo_bark: 'images/ui/skill_temp_fo_bark.png',
     skill_temp_fo_warden: 'images/ui/skill_temp_fo_warden.png',
+    skill_temp_ft_ram: 'images/ui/skill_temp_ft_ram.png',
+    skill_temp_ft_suppress: 'images/ui/skill_temp_ft_suppress.png',
+    skill_temp_ft_banner: 'images/ui/skill_temp_ft_banner.png',
+    skill_temp_ft_grapple: 'images/ui/skill_temp_ft_grapple.png',
     // 敌方技能皮肤图标（键名见 enemySkillCatalog.iconKey，不进玩家商店池）
     skill_bloodfang_roar: 'images/ui/skill_bloodfang_roar.png',
     skill_bloodfang_wildfire: 'images/ui/skill_bloodfang_wildfire.png',
+    skill_bloodfang_breach: 'images/ui/skill_bloodfang_breach.png',
     // 战斗操作条的动作图标。压在深色圆按钮上，所以这批是**浅色填充**，
     // 和压在米白卡上的那两批（mod_* / skill_*）配色相反，不要互相借用。
     act_wait: 'images/ui/act_wait.png',

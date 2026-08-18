@@ -1,0 +1,80 @@
+技能图标 D 组 2x2（要塞攻防章临时技能，当前使用中）
+产出 → images/ui/skill_temp_ft_{ram,suppress,banner,grapple}.png
+生成器：Cursor 内置 GenerateImage，aspect_ratio 1:1
+
+切图：
+    python3 scripts/split-tile-sheet.py --input <sheet>.png --out-dir <tmp> --size 72 \
+        --grid 2x2 --names temp_ft_ram temp_ft_suppress temp_ft_banner temp_ft_grapple
+    python3 scripts/despill-magenta.py <tmp>
+
+用 --grid 2x2：战旗是「旗面 + 旗杆」、钩索是「钩 + 绳圈」、压制是「断成两截的剑」，
+全都是分离部件，连通域会把块数数错（理由见脚本头部注释）。
+
+约束同 A 组（见 skill_icons_a_3x3_prompt.txt 开头那几段），这里只记差异：
+
+**这一组是第三章「要塞攻防」的专属临时技能。**
+
+材质分界要在这里改口径，得说清楚为什么。前两组的规矩是「常规技能是金属，
+临时技能是自然物」，用来把商店里买的临时招和角色自带的招分开。但这一章的临时招是
+**攻城器械**，天生就是人造的——硬套自然物会画出四个不知道是什么的东西。
+
+所以这一组换一条轴：不是「自然 vs 金属」，而是**「粗制的工地器械」vs「锻造的兵器」**。
+撞城槌是捆着麻绳的原木、战旗是布和木杆、钩索是铸铁钩加绳——都看得出是临时凑出来的
+围城家伙，而常规技能那批是打磨过的刀剑盾。
+
+配色也必须和前两章拉开。玩家从密林走进要塞，商店里应该一眼看出换了一批：
+    第一章 草原：亮草绿 + 蜜蜂黄（明快）
+    第二章 密林：深绿 + 树皮棕 + 橙火（暖、有机）
+    第三章 要塞：**石灰岩灰 + 冷铁深灰 + 麻绳米色 + 一点血红**（冷、无机）
+关键是**不要再出现第二章那种大面积暖棕和橙**。木头在这一组只能是次要色，
+而且要画成风吹雨打过的灰木，不是密林那种新鲜树皮棕。
+
+四个技能的语义（改 prompt 前先看 src/data/skillCatalog.ts）：
+    temp_ft_ram      撞城槌    直线穿透伤害（吃走廊对齐，这一章的招牌）
+    temp_ft_suppress 压制号令  隔两格点名，削敌方攻击 6 点
+    temp_ft_banner   攻城战旗  给邻格友军加攻 +5 加速 +3
+    temp_ft_grapple  飞爪钩索  自身加速 +5
+
+关键约束：
+- ram 是全组唯一的**进攻器械**，要最抢眼、最重，读作「这一下很疼」。
+- suppress 不要画成武器，它是**敌人的武器被打断**：一把断成两截的剑。
+  这一组里唯一可以出现制式刀剑的就是它，而且必须是断的——完整的剑是常规技能的符号。
+- banner 和 grapple 都带绳/布，别都画成一根杆子：前者是**大块旗面**（横向铺开），
+  后者是**三爪铁钩 + 一圈绳**（纵向紧凑）。轮廓方向要拉开。
+- 这一组里不要出现火、不要出现植物、不要出现制式盾牌。
+
+---
+
+A 2-column x 2-row grid of 4 GAME UI ICONS representing combat SKILLS in a cartoon fantasy tactics mobile game. Theme: siege warfare against a stone fortress — crude, improvised siege gear made of timber, rope and cast iron.
+
+CRITICAL BACKGROUND: the entire background, including all space between and around the icons, must be 100% solid flat MAGENTA, hex #FF00FF. It is a chroma key and will be deleted. No white, no grey, no gradient, no drop shadows onto the background.
+
+CRITICAL SIZE CONSTRAINT — the most important rule: these icons are displayed at only 26 to 56 pixels in the game. Every icon must be ONE bold, chunky, instantly readable silhouette that survives being shrunk to the size of a fingernail. Think of a chess piece, not an illustration. NO thin lines, NO small parts, NO fine detail, NO tiny sparkles, NO text, NO numbers. If an element would be less than a tenth of the icon's width, delete it.
+
+CRITICAL — THESE SIT ON A CREAM WHITE CARD (#FCFCF6). Every icon needs a THICK near-black outline (#1A1410) all the way around it and a saturated fill inside, so it does not float on the pale card.
+
+CRITICAL PALETTE — this set must read COLD and STONY, clearly different from earlier warm woodland sets. Use limestone grey (#8A8578), cold iron dark grey (#4A4A52), pale hemp rope beige (#C9B896), weathered grey-brown timber (#6E6055), and ONE saturated blood red (#B83A2E) used only on the banner cloth. Do NOT use bright grass green, leaf green, warm orange, fire yellow, or fresh reddish-brown bark tones.
+
+STYLE — must match the game's characters, which are chunky cartoon figures with heavy black outlines and flat colours:
+- SOLID FILLED SILHOUETTES with a thick near-black outline. These are not line icons and not outline icons — the shape is filled in.
+- Flat saturated colour fills, at most 3 colours per icon plus the outline, plus one simple lighter shade for a single cel-shaded highlight.
+- Chunky, rounded, friendly shapes. Slightly exaggerated and toy-like.
+- No gradients, no glow, no bevel, no gloss, no photographic detail, no pixel art, no thin strokes.
+- Each icon drawn straight-on, upright and centred in its cell.
+
+Per-cell contents, left-to-right then top-to-bottom:
+
+Cell 1 (BATTERING RAM / piercing damage in a straight line) — a thick heavy horizontal LOG battering ram, the body a fat weathered grey-brown timber (#6E6055) cylinder lying on its side, its front end capped with a blunt chunky cast-iron head (#4A4A52) shaped like a heavy rounded block, and TWO fat pale hemp rope bands (#C9B896) wrapped around the log. It must read as the single heaviest, most forceful object in the set. Pointing to the right. No wheels, no frame, no chains, no scaffolding.
+
+Cell 2 (SUPPRESS / the enemy's weapon is broken, their attack drops) — a single straight SWORD SNAPPED cleanly into TWO chunky pieces, cold iron grey blade (#4A4A52) with a simple dark grip, the upper piece tilted and separated from the lower piece by a clear magenta gap so the break is obvious at a glance. Both halves must be fat and blocky, not slender. It must read as "a broken blade", not as a usable weapon. No sparks, no crack lines, no motion streaks, no shield.
+
+Cell 3 (SIEGE BANNER / rallies a nearby ally, more attack and speed) — a bold rectangular BANNER of heavy cloth in saturated blood red (#B83A2E), hanging wide from a short stout weathered timber pole (#6E6055) on the left, the cloth filling most of the cell as one big chunky quadrilateral with a simple notched swallowtail on the right edge. Keep the cloth a big flat shape. No emblem, no crest, no pattern, no text, no rope, no tassels, no folds.
+
+Cell 4 (GRAPPLING HOOK / boosts own speed) — a chunky cast-iron GRAPPLING HOOK with exactly THREE fat curved prongs fanning upward in cold iron grey (#4A4A52), sitting on a thick central shaft, with ONE bold closed loop of pale hemp rope (#C9B896) hanging below it. Compact and tall. The prongs must be thick and rounded, not thin claws. No knots, no coils of rope, no wall, no stone.
+
+LAYOUT RULES:
+1. EXACTLY 4 icons in a clean 2x2 arrangement.
+2. NO borders, NO dividing lines, NO frames, NO circles or badges behind the icons — they are separated only by magenta.
+3. Each icon fills about 70% of its cell, leaving a clear magenta margin on all four sides. Nothing touches or crosses into a neighbouring cell.
+4. All four icons must feel like ONE set: same outline thickness, same level of simplification, same chunky proportions.
+5. NO text, no labels, no captions, no letters, no numbers, no watermark anywhere in the image.

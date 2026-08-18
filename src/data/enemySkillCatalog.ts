@@ -49,6 +49,21 @@ export const ENEMY_SKILL_SKINS: Record<string, EnemySkillSkin> = {
     iconKey: 'skill_bloodfang_wildfire',
     vfxId: 'bloodfang_wildfire',
   },
+  /**
+   * 第三章 Boss · 血牙城主。底层是 `warlord_breach`（直线穿透）。
+   *
+   * 特效**复用现有 additive 图集**（穿透拖尾 + 震地命中），是这一章明确记账的美术欠账：
+   * 前两个 Boss 各有专属序列帧，这个暂时没有。这么做的依据是「先用现有 animSet
+   * 把玩法和数值跑通，美术留作后续专项」这条决定——形态上它已经和前两个分得开
+   * （那两个是环和柱，这个是一条贯穿线），欠的只是这条线的专属贴图。
+   */
+  bloodfang_breach: {
+    id: 'bloodfang_breach',
+    implementsId: 'warlord_breach',
+    name: '破阵冲撞',
+    iconKey: 'skill_bloodfang_breach',
+    vfxId: 'bloodfang_breach',
+  },
 };
 
 export function getEnemySkillSkin(id: string): EnemySkillSkin | undefined {

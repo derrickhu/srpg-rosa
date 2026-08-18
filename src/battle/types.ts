@@ -165,12 +165,16 @@ export type TerrainId =
   | 'swamp'
   | 'wall'
   | 'abyss'
+  // 机关与闸门：关卡底图直接摆，闸门初始是 gate_closed
+  | 'lever'
+  | 'gate_closed'
+  | 'gate_open'
   // 以下是战斗中由地形转移产生的**中间态**，关卡底图一般不直接摆（见 terrainSpec 的转移边）
   | 'burning'
   | 'scorched';
 
 /** 地形发生转移的原因，只用于回放飘字选词 */
-export type TerrainChangeReason = 'ignite' | 'burnout';
+export type TerrainChangeReason = 'ignite' | 'burnout' | 'gate';
 
 export interface CellTerrain {
   terrain: TerrainId;

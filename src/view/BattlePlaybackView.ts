@@ -518,6 +518,16 @@ export function createBattlePlaybackView(
    */
   const terrainCellHosts = new Map<string, PIXI.Container>();
 
+  /**
+   * 闸门开启的飘字只出一次。
+   *
+   * `openGates` 是按格发事件的，一道四格的门会连来四个 `terrain` 事件；
+   * 逐个飘字就是四条「开闸」叠在相邻格上，还要各等一段动画。
+   * 而闸门一场战斗只开一次且不会关（见 `terrainSpec` 的 `gate_open`），
+   * 所以「开了」这件事本身就该只播报一次。
+   */
+  let gateAnnounced = false;
+
   function paintTerrainCell(x: number, y: number): void {
     const k = `${x},${y}`;
     let host = terrainCellHosts.get(k);
@@ -1571,10 +1581,18 @@ export function createBattlePlaybackView(
       }
       case 'terrain': {
         paintTerrainCell(ev.x, ev.y);
+        if (ev.reason === 'gate') {
+          if (gateAnnounced) break;
+          gateAnnounced = true;
+        }
         const at = cellCenter(originX, originY, cell, { x: ev.x, y: ev.y });
         // 烧起来要出声。玩家点了一发带火的技能，如果棋盘只是悄悄换了个颜色，
         // 他不会把「掩体消失」和自己那一下联系起来。
-        floatUtility(at.x, at.y - cell * 0.35, ev.reason === 'ignite' ? '燃起' : '烧尽');
+        floatUtility(
+          at.x,
+          at.y - cell * 0.35,
+          ev.reason === 'ignite' ? '燃起' : ev.reason === 'gate' ? '闸门开启' : '烧尽',
+        );
         await awaitEase(dur(180), () => {});
         break;
       }

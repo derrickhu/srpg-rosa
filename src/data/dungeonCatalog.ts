@@ -118,12 +118,22 @@ const POOL_FOREST = r([
   { category: 'tempSkill', skillId: 'temp_fo_warden', price: 7 },
 ]);
 
+/**
+ * 要塞攻防：卖城墙券是这一章的关键一格。
+ *
+ * 城墙在这一章既挡路又挡视线，所以「买一堵墙放下去」是玩家手里唯一能主动
+ * 制造掩体的手段——闸门开启之后门口那条走廊会变成对射场，
+ * 一堵墙就能把它切断。和机关的关系是互补的：机关开路，墙封路。
+ */
 const POOL_FORTRESS = r([
   { category: 'terrain', terrainId: 'high', price: 5 },
   { category: 'terrain', terrainId: 'wall', price: 5 },
   { category: 'potion', potionId: 'heal', price: 6 },
   { category: 'potion', potionId: 'draught', price: 6 },
-  ...TEMP_GENERIC,
+  { category: 'tempSkill', skillId: 'temp_ft_ram', price: 9 },
+  { category: 'tempSkill', skillId: 'temp_ft_suppress', price: 7 },
+  { category: 'tempSkill', skillId: 'temp_ft_banner', price: 8 },
+  { category: 'tempSkill', skillId: 'temp_ft_grapple', price: 7 },
 ]);
 
 const POOL_SWAMP = r([

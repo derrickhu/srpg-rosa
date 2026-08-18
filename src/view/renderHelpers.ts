@@ -81,6 +81,10 @@ interface TerrainBadge {
 export function terrainBadge(terrainId: TerrainId): TerrainBadge | null {
   const spec = getTerrainSpec(terrainId);
   if (spec.moveCost === Infinity) return null;
+  // 机关排在最前面：它是全场唯一能改写地形的格子，玩家扫一眼最该先看到它。
+  // 这也是唯一一条**不是**在说「站上去你会怎样」的角标——机关对站上去的人毫无影响，
+  // 「开闸」说的是它对战场做什么（见 `terrainSpec` 顶部契约的第三类）。
+  if (spec.opensGates) return { text: '开闸', color: C.gold };
   if (spec.atkMul !== 1) {
     const pct = Math.round((spec.atkMul - 1) * 100);
     return { text: `攻${pct > 0 ? '+' : ''}${pct}%`, color: pct > 0 ? C.gold : C.warnText };
@@ -134,6 +138,15 @@ export function terrainInfoLines(terrainId: TerrainId): string[] {
   }
   if (spec.decay) {
     out.push(`${spec.decay.rounds} 回合后变成${getTerrainSpec(spec.decay.to).name}`);
+  }
+  // 机关的说明必须写「我方」和「不会再关上」这两点：前者是玩家踩了才有用，
+  // 后者决定他愿不愿意为此押一个人——会关回去的门和永久打开的门是两种战术。
+  if (spec.opensGates) {
+    out.push('我方单位站在此处，下一回合开启全部闸门');
+    out.push('闸门开启后不会再关上');
+  }
+  if (spec.opensTo) {
+    out.push('站上机关可将其永久开启');
   }
   if (out.length === 1 && spec.moveCost === 1) out.push('没有特殊效果');
   return out;

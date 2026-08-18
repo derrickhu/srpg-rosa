@@ -365,6 +365,28 @@ export function createBattleSim(
       .map((t) => t.uid);
   }
 
+  /**
+   * 有活着的**玩家**单位站在机关上，就把全场闸门永久打开。
+   *
+   * 为什么判定放在轮首、而不是踏上机关的那一刻：`commandMove` 必须保持
+   * 「移动只改 `pos` 和 `movedInTurn`」这条不变量（见 `MutablePending.startPos` 的注释），
+   * 撤销移动才是精确回滚。踩上去立刻开门的话，玩家可以踩一下开门、再撤销移动，
+   * 门开着人也回来了——白嫖。挪到轮首结算，撤销就没有东西需要回滚。
+   *
+   * 顺带这也让代价更实在：开门要押一个人一整回合站在那里，而不是路过顺手一按。
+   *
+   * 只认玩家（见 `terrainSpec` 顶部契约）：守军没有理由开自家城门。
+   */
+  function checkLevers(): BattleEvent[] {
+    const held = units.some(
+      (u) =>
+        u.hp > 0
+        && u.faction === 'player'
+        && getTerrainSpec(getTerrainAt(terrain, u.pos)).opensGates,
+    );
+    return held ? terrainRt.openGates() : [];
+  }
+
   function startRound(): BattleStep {
     rounds += 1;
     const events: BattleEvent[] = [{ type: 'round', round: rounds }];
@@ -401,6 +423,7 @@ export function createBattleSim(
     // 地形自己的状态推进要放在上面那轮掉血**之后**：燃烧标 2 回合，就该在 2 个轮首
     // 各烧一次人再熄。放前面的话最后一个轮首会先变成焦土，实际只烧到 1 回合。
     events.push(...terrainRt.tick());
+    events.push(...checkLevers());
     order = bySpeedOrder(units, defs).map((u) => u.uid);
     const evs = attachDrops(events);
     const w = checkWinner(units);

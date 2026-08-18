@@ -28,6 +28,13 @@ export interface TerrainRuntime {
   ignite(cells: Vec2[]): BattleEvent[];
   /** 轮首推进定时转移（燃烧烧尽成焦土）。必须在地形掉血结算**之后**调，见 `startRound` */
   tick(): BattleEvent[];
+  /**
+   * 把全场闸门（`opensTo`）永久打开，返回地形变更事件；已经全开时返回空数组。
+   *
+   * 「全场一起开」而不是「开机关旁边那一道」：一关里的闸门是同一道城门的几格，
+   * 分开开会让玩家去数哪格归哪个机关，而这道题没有任何战术价值。
+   */
+  openGates(): BattleEvent[];
 }
 
 export function createTerrainRuntime(base: TerrainGrid): TerrainRuntime {
@@ -63,6 +70,18 @@ export function createTerrainRuntime(base: TerrainGrid): TerrainRuntime {
     return out;
   }
 
+  function openGates(): BattleEvent[] {
+    const out: BattleEvent[] = [];
+    for (let y = 0; y < grid.length; y += 1) {
+      for (let x = 0; x < grid[y]!.length; x += 1) {
+        const spec = getTerrainSpec(getTerrainAt(grid, { x, y }));
+        if (!spec.opensTo) continue;
+        out.push(change({ x, y }, spec.opensTo, 'gate'));
+      }
+    }
+    return out;
+  }
+
   function tick(): BattleEvent[] {
     const out: BattleEvent[] = [];
     // 遍历快照：`change` 可能给刚变过的格子登记新计时器，那些不该在本轮就跟着 -1
@@ -75,5 +94,5 @@ export function createTerrainRuntime(base: TerrainGrid): TerrainRuntime {
     return out;
   }
 
-  return { grid, ignite, tick };
+  return { grid, ignite, tick, openGates };
 }

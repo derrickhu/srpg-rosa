@@ -344,6 +344,33 @@ export const SKILL_VFX: Record<string, VfxRecipe> = {
       sparks: skillSparks([0xffd8e8, 0xc2185b, 0x8b0000]),
     },
   },
+  /**
+   * 第三章 Boss 皮肤「破阵冲撞」：起手一圈冲锋光环，然后沿线逐个突刺。
+   *
+   * 三个血牙 Boss 都是红色系，所以只能靠**形态**区分（见 §4.4）：
+   * 咆哮是向外扩散的环、咒火是向上窜的柱、这一招是**一条贯穿线**。
+   *
+   * 这里复用了 `charge_aura` 和 `thrust` 两个现成图集，是记了账的美术欠账
+   * （见 `enemySkillCatalog` 里这个皮肤的注释）。`impactPerHit` 必须开：
+   * 一条线上穿三个人却只闪一下，玩家会以为只打到了一个。
+   */
+  bloodfang_breach: {
+    cast: {
+      set: 'charge_aura',
+      anchor: 'caster',
+      cells: 2.2,
+      mode: 'burst',
+      sparks: skillSparks([0xffd8e8, 0xc2185b, 0x8b0000]),
+    },
+    impact: {
+      set: 'thrust',
+      anchor: 'target',
+      cells: 1.6,
+      mode: 'aimed',
+      sparks: skillSparks([0xffd8e8, 0xc2185b, 0x8b0000]),
+    },
+    impactPerHit: true,
+  },
   // ── 草原战线临时技能：四种完全不同的「零件」语言，禁止再做成同质环光 ──
   // 野草缠足：目标格藤蔓收束（additive 序列帧）
   temp_gl_snare: {

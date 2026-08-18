@@ -621,6 +621,105 @@ const SPECS: Record<string, SkillSpec> = {
     ],
   },
   /**
+   * ── 要塞攻防专属临时技能（`temp_ft_*`）────────────────────────────
+   *
+   * 口径继承前两组（主打功能不主打伤害 / 不吃伤害词条 / 认得出是要塞）。
+   * 这一组的分工原则和前两组一样是「四张牌不许都在打得更疼上」，但这里还多一条约束：
+   * **四个动词必须是前两章没用过的**，否则玩家花钱买到的是换了名字的旧招。
+   *
+   * 已被占掉的：减速（缠足、绞缠）、治疗（敷治）、中毒（蜂群）、自身嘲讽（号角、守林人）、
+   * 点燃（火把）、护友减伤（庇护）。
+   * 这一组拿的是四个新的：**直线穿透**、**削敌攻击**、**给友方加攻速**、**自身加速**。
+   *
+   * 四招都咬着这一章的几何——城墙和闸门把战场切成走廊：
+   * 撞城槌吃走廊的对齐，压制号令对付墙后的远程，战旗和钩索都是为了
+   * 「闸门开的那一刻冲进去」——这一章的题目是时机，所以要有招去兑现时机。
+   */
+  temp_ft_ram: {
+    id: 'temp_ft_ram',
+    name: '撞城槌',
+    cooldown: 3,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'damage',
+    displayKind: 'lineShot',
+    /**
+     * 全游戏第一个走直线穿透的**临时**技能。选这个形状是因为它的价值完全由地形决定：
+     * 空旷地图上一条线通常只穿到一个人，而这一章的城墙和闸门把敌人挤进走廊，
+     * 同一招在这里能穿三个。技能强度随「玩家读懂了这张图」变化，这正是想要的。
+     *
+     * 倍率 0.6 且**吃**克制与地形（和其它临时技能相反）：这一招是纯输出定位，
+     * 不像火把那样「主要拿来改地形」，所以它应该像普通伤害技能一样奖励站位。
+     */
+    shape: { type: 'lineBestRayAllFoes' },
+    damage: { kind: 'scaledAtk', atkMul: 0.6 },
+    shopPrice: 9,
+  },
+  temp_ft_suppress: {
+    id: 'temp_ft_suppress',
+    name: '压制号令',
+    cooldown: 2,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'control',
+    displayKind: 'whirlwind',
+    /**
+     * `reach: 'within'` + 取血最多的那个：要塞里最疼的是墙后的远程和盾卫，
+     * 而它们通常不在贴脸格。`within` 让这一招能隔着两格点名，
+     * 「正好 2 格」的环会在敌人贴上来之后失效——那时候更需要它。
+     *
+     * 削攻击是全游戏第一次把 `atkDown` 用在临时技能上。这一章的伤害压力
+     * 主要来自「你在开门，他在射你」，减少挨的那一下比多打一下更解决问题。
+     */
+    shape: { type: 'neighborPickFoe', manhattan: 2, pick: 'highestHp', reach: 'within' },
+    damage: { kind: 'none' },
+    shopPrice: 7,
+    onCastFoeEffects: [{ kind: 'atkDown', subAtk: 6, rounds: 2 }],
+  },
+  temp_ft_banner: {
+    id: 'temp_ft_banner',
+    name: '攻城战旗',
+    cooldown: 3,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'support',
+    displayKind: 'whirlwind',
+    /**
+     * 给**友方**同时加攻和加速。前两章的友方招是治疗和减伤，都是让人活下来；
+     * 这一招是让人打进去——闸门开启的那一回合，把突进的那个人推上去。
+     *
+     * 加速比加攻重要：这一章的机关要押一个人一整回合，队伍等于少一个输出，
+     * 光加攻补不回来；速度让另一个人在同一回合里既走得更远又更早动手。
+     */
+    shape: { type: 'neighborPickAlly', manhattan: 1, pick: 'highestHp' },
+    damage: { kind: 'none' },
+    shopPrice: 8,
+    onCastAllyEffects: [
+      { kind: 'atkBonus', addAtk: 5, rounds: 2 },
+      { kind: 'spdBonus', addSpd: 3, rounds: 2 },
+    ],
+  },
+  temp_ft_grapple: {
+    id: 'temp_ft_grapple',
+    name: '飞爪钩索',
+    cooldown: 3,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'support',
+    displayKind: 'whirlwind',
+    shape: { type: 'selfCast' },
+    damage: { kind: 'none' },
+    shopPrice: 7,
+    /**
+     * 自身加速，全游戏第一个。它存在的理由是这一章的**代价结构**：
+     * 开闸门要押一个人站机关，那个回合队伍就是三打四。
+     * 钩索让押上去的人能更快回到战线，把「按机关」的代价从一整回合压回半个回合。
+     *
+     * 不给嘲讽也不给减伤（那是守林人和庇护的位置）：这一招只管一件事——挪得更快。
+     */
+    onCastSelfEffects: [{ kind: 'spdBonus', addSpd: 5, rounds: 2 }],
+  },
+  /**
    * 通用：邻格选一友（不含自身），纯 buff。
    *
    * `reserved` 指的是**没人能把它学进主槽**（第一章六个角色全是输出路线），
@@ -650,6 +749,31 @@ const SPECS: Record<string, SkillSpec> = {
     shape: { type: 'neighborAoE', manhattan: 1 },
     damage: { kind: 'scaledAtk', atkMul: 0.55 },
     onCastTerrainEffects: [{ kind: 'ignite' }],
+  },
+  /**
+   * 第三章 Boss 专属：一条直线犁到底。
+   *
+   * 和玩家在这一章商店里买的「撞城槌」是**同一个形状**，这是故意的，
+   * 沿用第二章那条思路（火把教「火能拆掉掩体」，Boss 的咒火教「掩体本身有风险」）：
+   * 玩家先学会拿直线穿透吃走廊的对齐，然后在 Boss 关发现**走廊对双方都成立**——
+   * 自己挤在闸门通道里排成一列，正是这一招最想看到的站位。
+   *
+   * 同一个机制的第二层读法，比再发明一种新招划算。
+   *
+   * 倍率 0.65 高于前两个 Boss（0.6 / 0.55），因为它有明确的**解法**：
+   * 散开就穿不到几个人。有解的高伤是压力，无解的高伤才是惩罚。
+   */
+  warlord_breach: {
+    id: 'warlord_breach',
+    name: '破阵冲撞',
+    cooldown: 3,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'damage',
+    enemyOnly: true,
+    displayKind: 'lineShot',
+    shape: { type: 'lineBestRayAllFoes' },
+    damage: { kind: 'scaledAtk', atkMul: 0.65 },
   },
   field_bless: {
     id: 'field_bless',
