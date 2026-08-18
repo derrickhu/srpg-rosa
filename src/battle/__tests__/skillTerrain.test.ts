@@ -25,6 +25,7 @@ function def(id: UnitKind, atk: number): UnitDef {
     range: 1,
     isRanged: false,
     taunt: false,
+    damageTakenMul: 1,
   };
 }
 

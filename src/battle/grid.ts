@@ -40,6 +40,24 @@ export function emptyTerrain(width: number, height: number): TerrainGrid {
   );
 }
 
+/**
+ * 逐行深拷贝一份地形，给**会写地形的调用方**用（见 `createBattleSim`）。
+ *
+ * `STAGES_MVP` 里每关的 `terrain` 是模块加载时算一次的共享对象。地形在战斗中变成
+ * 可写之后，不拷贝就会把「这一局烧掉的森林」留在关卡数据里：第二次打同一关开局
+ * 就是焦土，而 1000 局的数值模拟会把地形改动一路累积下去。这个 bug 不会报错，
+ * 只会让数值悄悄失真，所以拷贝要放在引擎入口这种绕不过去的地方。
+ */
+export function cloneTerrain(g: TerrainGrid): TerrainGrid {
+  return g.map((row) => [...row]);
+}
+
+/** 写一格地形；越界静默忽略（与 `getTerrainAt` 的宽容读取对称） */
+export function setTerrainAt(g: TerrainGrid, p: Vec2, id: TerrainId): void {
+  if (!inBounds(p, g)) return;
+  g[p.y]![p.x] = id;
+}
+
 /** 将玩家布阵阶段放置的地形叠到关卡底图上（浅拷贝行） */
 export function mergeTerrainOverlay(base: TerrainGrid, overlay: { x: number; y: number; terrain: TerrainId }[]): TerrainGrid {
   const g = base.map((row) => [...row]);

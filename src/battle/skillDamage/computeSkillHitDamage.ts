@@ -36,7 +36,10 @@ function scaledStandard(ctx: SkillDamageContext, atkMul: number): number {
   if (atkMul <= 0) return 0;
   const atk = Math.max(1, Math.floor(ctx.casterDef.atk * atkMul));
   const sad = atkDefScaled(ctx.casterDef, atk);
-  return clampDamage(computeDamage(sad, ctx.targetDef, ctx.terrain, ctx.self.pos, ctx.target.pos));
+  // 目标减伤在 `computeSkillHitDamage` 的尾巴上统一乘，所以这里要把它摘掉，
+  // 否则这一种伤害会吃两次减伤（`computeDamage` 内部已经乘过一次）。
+  const target = { ...ctx.targetDef, damageTakenMul: 1 };
+  return clampDamage(computeDamage(sad, target, ctx.terrain, ctx.self.pos, ctx.target.pos));
 }
 
 /**
@@ -98,11 +101,16 @@ export function isExecuting(spec: SkillSpec, targetHp: number, targetMaxHp: numb
 /**
  * 对单个目标结算技能伤害（不含治疗等；`none` 为 0）。
  * 内置种类在 `SkillDamageSpec`；扩展用 `custom` + `registerSkillDamageCalculator`。
+ *
+ * **目标减伤在这里统一乘，不在各个分支里乘。** `flat` 和 `percentTargetMaxHp` 是自己
+ * 算克制和地形的，不走 `computeDamage`，各分支各写一遍的话必然漏掉某一种——
+ * 而漏掉的表现是「套了盾，敌人的某一招照样打满」，玩家只会认为盾是坏的。
+ * `custom` 计算器同理：它应当返回**未计减伤**的伤害，由这里补上。
  */
 export function computeSkillHitDamage(ctx: SkillDamageContext): number {
   const base = dispatchDamage(ctx.spec.damage, ctx);
   if (base <= 0) return base;
-  const mul = executeMul(ctx);
+  const mul = executeMul(ctx) * ctx.targetDef.damageTakenMul;
   return mul === 1 ? base : clampDamage(base * mul);
 }
 

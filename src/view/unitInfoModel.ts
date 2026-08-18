@@ -103,6 +103,8 @@ function describeTimedEffect(e: TimedBattleEffect): string {
     case 'atkDown': return `攻击 -${e.subAtk}（剩 ${e.roundsLeft} 回合）`;
     case 'spdBonus': return `速度 +${e.addSpd}（剩 ${e.roundsLeft} 回合）`;
     case 'spdDown': return `速度 -${e.subSpd}（剩 ${e.roundsLeft} 回合）`;
+    case 'guard':
+      return `减伤: 受到伤害 -${Math.round(e.reduceRatio * 100)}%（剩 ${e.roundsLeft} 回合）`;
   }
 }
 

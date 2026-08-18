@@ -332,6 +332,18 @@ export const SKILL_VFX: Record<string, VfxRecipe> = {
       sparks: skillSparks([0xffe8e0, 0xff3a2a, 0x8b0000]),
     },
   },
+  // 第二章 Boss 皮肤「燎原咒火」：一圈竖直火柱。同为血牙部族，但形态从「环」换成
+  // 「向上窜」——两场 Boss 战的招式不能靠颜色分辨（都是红的），只能靠形态。
+  // 火星用品红偏冷的一族，和玩家「松脂火把」的暖橙分开。
+  bloodfang_wildfire: {
+    impact: {
+      set: 'bloodfang_wildfire',
+      anchor: 'caster',
+      cells: 3,
+      mode: 'burst',
+      sparks: skillSparks([0xffd8e8, 0xc2185b, 0x8b0000]),
+    },
+  },
   // ── 草原战线临时技能：四种完全不同的「零件」语言，禁止再做成同质环光 ──
   // 野草缠足：目标格藤蔓收束（additive 序列帧）
   temp_gl_snare: {

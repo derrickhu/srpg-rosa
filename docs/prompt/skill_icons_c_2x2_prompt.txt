@@ -1,0 +1,65 @@
+技能图标 C 组 2x2（密林深处章临时技能，当前使用中）
+产出 → images/ui/skill_temp_fo_{torch,thorn,bark,warden}.png
+生成器：Cursor 内置 GenerateImage，aspect_ratio 1:1
+
+切图：
+    python3 scripts/split-tile-sheet.py --input <sheet>.png --out-dir <tmp> --size 72 \
+        --grid 2x2 --names temp_fo_torch temp_fo_thorn temp_fo_bark temp_fo_warden
+    python3 scripts/despill-magenta.py <tmp>
+
+用 --grid 2x2：火把是「柄 + 火焰」、守林人是「人形 + 光」，都是分离部件，
+连通域会把块数数错（理由见脚本头部注释）。
+
+约束同 A 组（见 skill_icons_a_3x3_prompt.txt 开头那几段），这里只记差异：
+
+**这一组是第二章「密林深处」的专属临时技能。** 材质分界继承 B 组那条：
+常规技能是**金属**（钢、铁、盾），临时技能是**自然物**。但第二章要和第一章的草原
+换一套自然物——草原是草、药、蜂、木（明快的黄绿），密林是**树皮、松脂、荆棘、火**
+（深绿 + 树皮棕 + 一点橙火）。玩家从第一章走到第二章，应该在商店里一眼看出
+「这批不是刚才那批」，所以不要再出现草原那套的亮草绿和蜜蜂黄。
+
+四个技能的语义（改 prompt 前先看 src/data/skillCatalog.ts）：
+    temp_fo_torch  松脂火把    贴身四格小伤 + **点燃可燃地形**（这一章的招牌）
+    temp_fo_thorn  荆棘绞缠    2 格外一圈小伤 + 减速
+    temp_fo_bark   树皮庇护    给邻格友军减伤 35%
+    temp_fo_warden 守林人之姿  自身嘲讽 + 减伤 25%
+
+关键约束：
+- torch 是全组唯一带**火**的，它是这一章的机制核心，火焰要够抢眼；其余三个不要出现火。
+- bark 和 warden 都是防御向，别都画成盾：前者是**一片树皮**（给别人挡），
+  后者是**披斗篷持杖的守林人剪影**（自己站前面）。这一组里不要出现制式盾牌，
+  那是常规技能 shield_wall / hammer 的符号。
+
+---
+
+A 2-column x 2-row grid of 4 GAME UI ICONS representing combat SKILLS in a cartoon fantasy tactics mobile game. Theme: a deep, dark forest.
+
+CRITICAL BACKGROUND: the entire background, including all space between and around the icons, must be 100% solid flat MAGENTA, hex #FF00FF. It is a chroma key and will be deleted. No white, no grey, no gradient, no drop shadows onto the background.
+
+CRITICAL SIZE CONSTRAINT — the most important rule: these icons are displayed at only 26 to 56 pixels in the game. Every icon must be ONE bold, chunky, instantly readable silhouette that survives being shrunk to the size of a fingernail. Think of a chess piece, not an illustration. NO thin lines, NO small parts, NO fine detail, NO tiny sparkles, NO text, NO numbers. If an element would be less than a tenth of the icon's width, delete it.
+
+CRITICAL — THESE SIT ON A CREAM WHITE CARD (#FCFCF6). Every icon needs a THICK near-black outline (#1A1410) all the way around it and a saturated fill inside, so it does not float on the pale card.
+
+STYLE — must match the game's characters, which are chunky cartoon figures with heavy black outlines and flat colours:
+- SOLID FILLED SILHOUETTES with a thick near-black outline. These are not line icons and not outline icons — the shape is filled in.
+- Flat saturated colour fills, at most 3 colours per icon plus the outline, plus one simple lighter shade for a single cel-shaded highlight.
+- Chunky, rounded, friendly shapes. Slightly exaggerated and toy-like.
+- No gradients, no glow, no bevel, no gloss, no photographic detail, no pixel art, no thin strokes.
+- Each icon drawn straight-on, upright and centred in its cell.
+
+Per-cell contents, left-to-right then top-to-bottom:
+
+Cell 1 (RESIN TORCH / sets the forest on fire) — a thick stubby wooden TORCH held upright, the handle a chunky bark-brown (#6B4A2A) club shape wrapped with one fat darker band, and on top a big bold FLAME made of two or three chunky rounded tongues in saturated orange (#F07818) with a smaller bright yellow (#FFCC33) core. The flame must be at least as large as the handle and read as fire at a glance. No sparks, no smoke, no embers.
+
+Cell 2 (THORN SNARE / brambles erupt in a ring and slow enemies) — a bold closed RING of thick woody BRAMBLE, dark forest green (#2D6A3A) with a deeper shade underneath, studded with four or five FAT triangular thorns pointing outward. It must read as a spiky circular barrier, clearly a ring with a hole in the middle. Woody and dark, not the bright grass green of the grassland set. No leaves, no flowers.
+
+Cell 3 (BARK WARD / shields a nearby ally, reduces damage taken) — a single chunky curved slab of TREE BARK held up like a plate, warm bark brown (#7A5230) with three fat vertical grooves carved down its face and a lighter tan (#B08858) top edge, its outline slightly rounded like a piece of a tree trunk. It must read as "a piece of bark used as cover", NOT as a manufactured shield — no rim, no boss, no straps, no metal, no heraldry.
+
+Cell 4 (WARDEN'S STANCE / self taunt plus damage reduction) — a bold frontal SILHOUETTE of a hooded FOREST WARDEN from the chest up, deep pine green (#1E4D33) hooded cloak with a chunky rounded hood, shoulders planted wide and square, holding one thick vertical wooden STAFF (#6B4A2A) across the body. The face inside the hood is solid dark, no features. It must read as "someone standing firm and blocking the way". No bow, no arrows, no shield, no fire.
+
+LAYOUT RULES:
+1. EXACTLY 4 icons in a clean 2x2 arrangement.
+2. NO borders, NO dividing lines, NO frames, NO circles or badges behind the icons — they are separated only by magenta.
+3. Each icon fills about 70% of its cell, leaving a clear magenta margin on all four sides. Nothing touches or crosses into a neighbouring cell.
+4. All four icons must feel like ONE set: same outline thickness, same level of simplification, same chunky proportions.
+5. NO text, no labels, no captions, no letters, no numbers, no watermark anywhere in the image.

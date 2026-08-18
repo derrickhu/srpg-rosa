@@ -62,12 +62,28 @@ function formatPct(mul: number): string {
 }
 
 /**
- * 基础伤害：`atk × 克制 × 攻击方地形 × 目标地形`，下限 1。
+ * 目标身上的减伤对本次伤害的影响，供回放飘字用；无减伤返回 null。
+ *
+ * 减伤必须有飘字，理由和地形减伤完全一样：它只表现为「这一刀比预想的少」，
+ * 而玩家同时还挂着地形、克制、削攻好几层修正，没有归因就分不清是哪一层在起作用，
+ * 于是「放这个盾到底有没有用」永远得不到回答。
+ */
+export function guardNote(targetDef: UnitDef): string | null {
+  if (targetDef.damageTakenMul === 1) return null;
+  return `减伤 ${formatPct(targetDef.damageTakenMul)}`;
+}
+
+/**
+ * 基础伤害：`atk × 克制 × 攻击方地形 × 目标地形 × 目标减伤`，下限 1。
  *
  * `targetPos` 现在是必填。它曾经是可选的，于是技能伤害那条路径一直没传，
  * 技能等于无视目标地形——只要有一种可通行地形带减伤，同一个森林里的敌人就会
  * 「普攻打不动、技能照样打满」。地形规则必须对普攻和技能完全一致，
  * 不然「站进森林」这条策略是真是假取决于对手用哪一招，没人教得会。
+ *
+ * 目标减伤（`damageTakenMul`）乘在同一处，是同一条教训的延伸：只要有一条伤害路径
+ * 绕过它，「套盾」就会变成一条要靠试出来的规则。这也是它被放进 `UnitDef` 的原因——
+ * 所有路径都从这个面板取数，漏不掉。
  */
 export function computeDamage(
   attackerDef: UnitDef,
@@ -79,6 +95,6 @@ export function computeDamage(
   const cm = counterMultiplier(attackerDef.id, targetDef.id);
   const tm = terrainAttackMul(terrainGrid, attackerPos);
   const dm = terrainDefenseMul(terrainGrid, targetPos);
-  const raw = attackerDef.atk * cm * tm * dm;
+  const raw = attackerDef.atk * cm * tm * dm * targetDef.damageTakenMul;
   return Math.max(1, Math.floor(raw));
 }

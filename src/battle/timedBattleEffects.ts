@@ -54,6 +54,9 @@ export function tickTimedBattleEffects(units: UnitState[]): PoisonTick[] {
         case 'poison':
           next.push({ kind: 'poison', dmgPerRound: e.dmgPerRound, roundsLeft: left });
           break;
+        case 'guard':
+          next.push({ kind: 'guard', reduceRatio: e.reduceRatio, roundsLeft: left });
+          break;
       }
     }
     if (next.length === 0) delete u.timedBattleEffects;
@@ -102,10 +105,38 @@ function mergeCastSelfEffect(list: TimedBattleEffect[], e: SkillCastSelfEffect):
     const rest = list.filter((x) => x.kind !== 'taunt');
     return [...rest, { kind: 'taunt', roundsLeft: e.rounds }];
   }
+  if (e.kind === 'guard') return mergeGuard(list, e.reduceRatio, e.rounds);
   if (e.kind === 'spdBonus') {
     return [...list, { kind: 'spdBonus', addSpd: e.addSpd, roundsLeft: e.rounds }];
   }
   return [...list, { kind: 'atkBonus', addAtk: e.addAtk, roundsLeft: e.rounds }];
+}
+
+/**
+ * 减伤取**新盖旧**，而不是像增攻那样多条并存。
+ *
+ * 并存的话两条 25% 会乘成 44%、三条 58%，一路叠下去无限逼近免伤，而「刷盾刷到无敌」
+ * 是这类游戏最经典的崩坏方式，且它出现得很隐蔽：单看一条减伤的数值永远是合理的。
+ * 增攻可以并存是因为它线性叠加、不存在渐近上限。
+ *
+ * 同类相遇时保留**更强的那条**（比例更高，或比例相同但回合更长），不是无脑覆盖：
+ * 玩家刚放完大减伤，又被小减伤盖掉会读成 bug。
+ */
+function mergeGuard(
+  list: TimedBattleEffect[],
+  reduceRatio: number,
+  rounds: number,
+): TimedBattleEffect[] {
+  const cur = list.find((x) => x.kind === 'guard');
+  if (
+    cur?.kind === 'guard'
+    && (cur.reduceRatio > reduceRatio
+      || (cur.reduceRatio === reduceRatio && cur.roundsLeft >= rounds))
+  ) {
+    return list;
+  }
+  const rest = list.filter((x) => x.kind !== 'guard');
+  return [...rest, { kind: 'guard', reduceRatio, roundsLeft: rounds }];
 }
 
 function mergeFoeCastEffect(list: TimedBattleEffect[], e: SkillCastFoeEffect): TimedBattleEffect[] {
@@ -126,6 +157,7 @@ function mergeFoeCastEffect(list: TimedBattleEffect[], e: SkillCastFoeEffect): T
 function mergeAllyCastEffect(list: TimedBattleEffect[], e: SkillCastAllyEffect): TimedBattleEffect[] {
   // heal 不是限时效果，在 `pushAllyHeal` 里当场结算，不进这张表
   if (e.kind === 'heal') return list;
+  if (e.kind === 'guard') return mergeGuard(list, e.reduceRatio, e.rounds);
   if (e.kind === 'atkBonus') return [...list, { kind: 'atkBonus', addAtk: e.addAtk, roundsLeft: e.rounds }];
   return [...list, { kind: 'spdBonus', addSpd: e.addSpd, roundsLeft: e.rounds }];
 }
@@ -164,4 +196,17 @@ export function sumTimedSpdBonus(u: UnitState): number {
     if (e.kind === 'spdBonus' && e.roundsLeft > 0) s += e.addSpd;
   }
   return s;
+}
+
+/**
+ * 受到伤害的倍率（1 = 无减伤）。因为 `guard` 是新盖旧的单条，这里取最强的一条即可，
+ * 不做连乘——理由见 `mergeGuard`。
+ */
+export function timedGuardMul(u: UnitState): number {
+  let best = 0;
+  for (const e of u.timedBattleEffects ?? []) {
+    if (e.kind === 'guard' && e.roundsLeft > 0 && e.reduceRatio > best) best = e.reduceRatio;
+  }
+  // 夹在 [0, 0.9]：留 10% 是硬地板，免得将来某条词条把减伤推到 100% 变成无敌
+  return 1 - Math.min(0.9, Math.max(0, best));
 }

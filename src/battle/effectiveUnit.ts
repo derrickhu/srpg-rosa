@@ -5,6 +5,7 @@ import {
   sumTimedAtkDown,
   sumTimedSpdBonus,
   sumTimedSpdDown,
+  timedGuardMul,
   timedTauntActive,
 } from './timedBattleEffects';
 
@@ -53,5 +54,6 @@ export function effectiveUnitDef(
     range: baseRange,
     isRanged: baseRanged,
     taunt,
+    damageTakenMul: timedGuardMul(u),
   };
 }

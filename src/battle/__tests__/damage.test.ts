@@ -20,6 +20,7 @@ function makeDef(id: string, atk: number, overrides?: Partial<UnitDef>): UnitDef
     range: 1,
     isRanged: false,
     taunt: false,
+    damageTakenMul: 1,
     ...overrides,
   };
 }

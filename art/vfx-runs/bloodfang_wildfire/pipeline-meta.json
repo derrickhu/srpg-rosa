@@ -1,0 +1,65 @@
+{
+  "source": "scripts/vfx-sheet.py",
+  "input": "/Users/rosa/.cursor/projects/Users-rosa-rosa-games-srpg-rosa/assets/bloodfang_wildfire_raw.png",
+  "target": "vfx",
+  "mode": "vfx_sheet",
+  "rows": 3,
+  "cols": 3,
+  "cell_size": 256,
+  "threshold": 22,
+  "frame_labels": [
+    "bloodfang_wildfire-1",
+    "bloodfang_wildfire-2",
+    "bloodfang_wildfire-3",
+    "bloodfang_wildfire-4",
+    "bloodfang_wildfire-5",
+    "bloodfang_wildfire-6",
+    "bloodfang_wildfire-7",
+    "bloodfang_wildfire-8",
+    "bloodfang_wildfire-9"
+  ],
+  "shared_crop_side": 291,
+  "crop_offsets": [
+    {
+      "x": 26,
+      "y": 50
+    },
+    {
+      "x": 22,
+      "y": 50
+    },
+    {
+      "x": 17,
+      "y": 50
+    },
+    {
+      "x": 30,
+      "y": 42
+    },
+    {
+      "x": 21,
+      "y": 50
+    },
+    {
+      "x": 7,
+      "y": 50
+    },
+    {
+      "x": 19,
+      "y": 50
+    },
+    {
+      "x": 13,
+      "y": 50
+    },
+    {
+      "x": 7,
+      "y": 50
+    }
+  ],
+  "empty_frames": [],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}

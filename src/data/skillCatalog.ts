@@ -81,7 +81,9 @@ export type SkillShape =
 export type SkillCastSelfEffect =
   | { kind: 'taunt'; rounds: number }
   | { kind: 'atkBonus'; addAtk: number; rounds: number }
-  | { kind: 'spdBonus'; addSpd: number; rounds: number };
+  | { kind: 'spdBonus'; addSpd: number; rounds: number }
+  /** 减伤：受到的攻击/技能伤害 ×(1 - `reduceRatio`)，见 `TimedBattleEffect` 的 `guard` */
+  | { kind: 'guard'; reduceRatio: number; rounds: number };
 
 /** 对选中敌方单位施加的限时 debuff（成功施放且命中目标后） */
 export type SkillCastFoeEffect =
@@ -95,7 +97,19 @@ export type SkillCastAllyEffect =
   | { kind: 'atkBonus'; addAtk: number; rounds: number }
   | { kind: 'spdBonus'; addSpd: number; rounds: number }
   /** 即时回血（不是限时效果，命中当场结算，见 `pushAllyHeal`） */
-  | { kind: 'heal'; amount: number };
+  | { kind: 'heal'; amount: number }
+  /** 减伤，同 `SkillCastSelfEffect` 的 `guard`：护人和护自己走同一套结算 */
+  | { kind: 'guard'; reduceRatio: number; rounds: number };
+
+/**
+ * 技能对**格子**做的事，作用于技能范围内的每一格。
+ *
+ * 和 foe/ally 效果的区别是它不需要范围里有单位：一片空森林也能烧掉，
+ * 「先拆掉掩体再进攻」才成立。
+ */
+export type SkillCastTerrainEffect =
+  /** 点燃范围内所有可燃地形（`TerrainSpec.ignitesTo`） */
+  | { kind: 'ignite' };
 
 /**
  * 技能对「单个目标」的伤害规则（由 `computeSkillHitDamage` 解析）。
@@ -146,6 +160,18 @@ export interface SkillSpec {
    * 而它们的专属词条允许存在、不算死牌（`skillMods.test.ts`）。
    */
   reserved?: true;
+  /**
+   * **只给敌人用**：不进商店池、不在任何可学列表、玩家侧不配可学图标。
+   * 玩家看到的名字/图标一律走 `enemySkillCatalog` 的皮肤。
+   *
+   * 和 `reserved` 的区别是「永远不给」对「暂时没主人」：预留技能等的是一个角色上线，
+   * 这些则是 Boss 招式，给玩家就等于把 Boss 的压力手段变成玩家的数值升级。
+   *
+   * 之前这件事是靠 `allPlayerSkillSpecs()` 里一句 `s.id !== 'savage_roar'` 的黑名单做的。
+   * 加第二个 Boss 技能时漏改那一行不会报错，只会让它悄悄出现在玩家技能图标校验里
+   * （然后为了让测试变绿，有人去给它配一张玩家图标）。改成自己声明，加招时想漏也漏不掉。
+   */
+  enemyOnly?: true;
   /** 回放/UI 高亮色类 */
   displayKind: SkillKind;
   shape: SkillShape;
@@ -177,6 +203,13 @@ export interface SkillSpec {
    * 一条词条就把「点谁」这个决策抹平了——单体技能的取舍本来就在选目标上。
    */
   splashRatio?: number;
+  /**
+   * 施放后对**作用范围内的格子**做什么（点燃可燃地形）。见 `skills.applyCastTerrainEffects`。
+   *
+   * 只能挂在 AoE 形状的技能上：单体点名技能的作用范围是整个瞄准环，
+   * 拿它当点燃范围会烧掉一整圈。改地形的词条在 `canApply` 里守这条。
+   */
+  onCastTerrainEffects?: SkillCastTerrainEffect[];
   /** 已挂载的词条 id（由 `effectiveSkillSpec` 填充，仅供 UI 展示，不参与结算） */
   mods?: string[];
 }
@@ -314,6 +347,7 @@ const SPECS: Record<string, SkillSpec> = {
     exclusiveProfession: null,
     timing: 'beforeMove',
     role: 'damage',
+    enemyOnly: true,
     displayKind: 'whirlwind',
     shape: { type: 'neighborAoE', manhattan: 1 },
     damage: { kind: 'scaledAtk', atkMul: 0.6 },
@@ -495,12 +529,128 @@ const SPECS: Record<string, SkillSpec> = {
     onCastSelfEffects: [{ kind: 'taunt', rounds: 2 }, { kind: 'atkBonus', addAtk: 5, rounds: 2 }],
   },
   /**
+   * ── 密林深处专属临时技能（`temp_fo_*`）────────────────────────────
+   *
+   * 口径继承 `temp_gl_*` 那三条（主打功能不主打伤害 / 不吃伤害词条 / 认得出是林地），
+   * 第二章另外加一条：**这一组要把「森林可燃」教会**。
+   *
+   * 森林在第一章只是一块「站上去减伤 25%」的地形，玩家学到的是躲进去。第二章要把它
+   * 变成一个可以被拆掉的东西，于是掩体不再是无条件的答案——这是同一块地形在两章里
+   * 长出两种读法，比再发明一种新地形划算得多。
+   *
+   * 四招的分工刻意不重叠，一组临时技能最容易犯的错是四张牌都在「打得更疼」上：
+   * 火把改地形、绞缠改移动、庇护护别人、守林人自己站前面。
+   */
+  temp_fo_torch: {
+    id: 'temp_fo_torch',
+    name: '松脂火把',
+    cooldown: 3,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'control',
+    displayKind: 'whirlwind',
+    /**
+     * 用邻格环而不是半径 1 的圆盘：圆盘含施法者**自己那一格**，站在林子里放火把
+     * 会把自己脚下点着。那不是有趣的取舍，是玩家买了这一招、用了一次、然后觉得被坑。
+     * 环形只烧四周，「往外点火」这个动作和它的画面也对得上。
+     */
+    shape: { type: 'neighborAoE', manhattan: 1 },
+    // 6 点即时伤只为让飘字有东西可飘（同「惊扰蜂群」）：真正的输出是烧起来之后
+    // 每回合 8 点的地形掉血。不吃克制和地形，免得一个「主要拿来改地形」的招
+    // 因为站位不同打出三种数字，反而让人以为这招的重点是伤害。
+    damage: { kind: 'flat', amount: 6, applyCounter: false, applyTerrain: false },
+    shopPrice: 8,
+    onCastTerrainEffects: [{ kind: 'ignite' }],
+  },
+  temp_fo_thorn: {
+    id: 'temp_fo_thorn',
+    name: '荆棘绞缠',
+    cooldown: 2,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'control',
+    displayKind: 'whirlwind',
+    /**
+     * 距离**正好 2** 的一圈，不是贴身环。它拦的是**正在接近**的那一波：
+     * 已经贴上来的敌人绞不到，这是它的代价，也让它和「野草缠足」（贴身黏住一个突进的）
+     * 分成两件事。和「松脂火把」的贴身环叠起来正好是内外两层。
+     *
+     * 带 5 点伤而不是纯 debuff：无伤害的群体 debuff 会被
+     * `skillTargeting.test.ts` 那条「纯敌方无伤必须点单体」挡下来。那条规则是对的——
+     * 无伤 AoE 在回放里几乎看不出发生了什么，而这一招本来就该有荆棘划伤的感觉。
+     */
+    shape: { type: 'neighborAoE', manhattan: 2 },
+    damage: { kind: 'flat', amount: 5, applyCounter: false, applyTerrain: false },
+    shopPrice: 7,
+    onCastFoeEffects: [{ kind: 'spdDown', subSpd: 3, rounds: 2 }],
+  },
+  temp_fo_bark: {
+    id: 'temp_fo_bark',
+    name: '树皮庇护',
+    cooldown: 3,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'support',
+    displayKind: 'whirlwind',
+    shape: { type: 'neighborPickAlly', manhattan: 1, pick: 'lowestHp' },
+    damage: { kind: 'none' },
+    shopPrice: 8,
+    // 全游戏第一个减伤技能。挂在临时槽先跑一遍，是因为减伤这个动词的手感
+    // （35% / 2 回合合不合适）得在真实对局里量过，再决定要不要给某个职业当看家本领。
+    onCastAllyEffects: [{ kind: 'guard', reduceRatio: 0.35, rounds: 2 }],
+  },
+  temp_fo_warden: {
+    id: 'temp_fo_warden',
+    name: '守林人之姿',
+    cooldown: 3,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'support',
+    displayKind: 'whirlwind',
+    shape: { type: 'selfCast' },
+    damage: { kind: 'none' },
+    shopPrice: 7,
+    /**
+     * 和草原「牧野号角」都是自身嘲讽，但那个配增攻、这个配减伤——一个是拿自己当诱饵
+     * 换输出，一个是拿自己当墙。配上火把就是这一章的组合拳：烧掉隘口的林子，
+     * 再把敌人钉在火边上耗。
+     */
+    onCastSelfEffects: [
+      { kind: 'taunt', rounds: 2 },
+      { kind: 'guard', reduceRatio: 0.25, rounds: 2 },
+    ],
+  },
+  /**
    * 通用：邻格选一友（不含自身），纯 buff。
    *
    * `reserved` 指的是**没人能把它学进主槽**（第一章六个角色全是输出路线），
    * 不等于用不上——它仍在二至五章的临时技能池里卖，走第二槽。
    * 主槽要等一个辅助路线的角色。
    */
+  /**
+   * 第二章 Boss 专属：邻格 AoE + **点燃打到的林地**。
+   *
+   * 整章都在教玩家拿火把烧掉敌人的掩体，这一招把同一个动词交到 Boss 手上：
+   * 玩家贴近祭坛用的那几片林子，会在他脚下烧起来。学到的东西因此从
+   * 「火能拆掉掩体」升级成「掩体本身是有风险的」——同一个机制的第二层读法，
+   * 比再发明一种新地形划算。
+   *
+   * 倍率压在 0.55（低于血牙咆哮的 0.6）：真正的压力来自烧起来之后的地形掉血
+   * 和被迫离开掩体，即时伤再高就会变成「一发 AoE 秒掉后排」。
+   */
+  wild_burn: {
+    id: 'wild_burn',
+    name: '燎原咒火',
+    cooldown: 3,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'damage',
+    enemyOnly: true,
+    displayKind: 'whirlwind',
+    shape: { type: 'neighborAoE', manhattan: 1 },
+    damage: { kind: 'scaledAtk', atkMul: 0.55 },
+    onCastTerrainEffects: [{ kind: 'ignite' }],
+  },
   field_bless: {
     id: 'field_bless',
     name: '战场祝福',
@@ -532,13 +682,24 @@ export function getSkillSpec(id: string): SkillSpec | undefined {
 }
 
 /**
- * 玩家有可能带上场的全部技能。
+ * 玩家有可能带上场的全部技能（主槽可学 + 商店临时槽）。
  *
- * Boss 专属的 `savage_roar` 排除在外：它不进商店池也不在可学列表里。
- * 玩家侧展示走敌方皮肤（第一章「血牙咆哮」），不要在这里加玩家可学图标。
+ * 敌方专属技能（`enemyOnly`）排除在外：它们不进商店池也不在可学列表里，
+ * 玩家侧展示一律走 `enemySkillCatalog` 的皮肤，不要在这里给它们配玩家图标。
  */
 export function allPlayerSkillSpecs(): SkillSpec[] {
-  return Object.values(SPECS).filter((s) => s.id !== 'savage_roar');
+  return Object.values(SPECS).filter((s) => !s.enemyOnly);
+}
+
+/**
+ * 技能表全体，**含敌方专属**。给「所有技能都得满足的规则」用（形状/词条自审）。
+ *
+ * 这些规则对 Boss 招式同样成立，漏掉它们等于 Boss 技能没人校验；
+ * 而拿 `allPlayerSkillSpecs()` 再手动 push 回来那几个（原先的做法），
+ * 每加一个敌方技能就得记得改一处审计代码。
+ */
+export function allSkillSpecs(): SkillSpec[] {
+  return Object.values(SPECS);
 }
 
 /** 各职业开局默认携带的技能 id */

@@ -35,6 +35,7 @@ import { C } from '@/view/mvpTheme';
 import { createUnitOverhead } from '@/view/unitOverhead';
 import { battleUnitInfoModel, characterInfoModel } from '@/view/unitInfoModel';
 import { createUnitInfoOverlay, type UnitInfoModel } from '@/view/unitInfoPanel';
+import { createTerrainInfoOverlay } from '@/view/terrainInfoPanel';
 import {
   createTerrainBadge,
   terrainBadge,
@@ -599,6 +600,11 @@ export function createDeployView(
       redrawHand();
       return;
     }
+    // 走到这里说明这一格没有可做的操作（非部署行、或还没选人）。
+    // 在此之前点这些格子是**完全没有反馈**的，玩家分不清是「点歪了」还是「不能放」；
+    // 顺手把地形说明给出来，既回答了「这格怎么了」，也是唯一能读到移动消耗的地方。
+    const ter = currentStage(state).terrain[y]?.[x];
+    if (ter) showTerrainInfo(ter);
   }
 
   function makeToolChip(label: string, active: boolean, onPress: () => void, enabled = true, iconKey?: string): PIXI.Container {
@@ -759,6 +765,15 @@ export function createDeployView(
 
   function showMercDetail(m: Character): void {
     showUnitInfo(characterInfoModel(state, m));
+  }
+
+  /** 地形信息卡走的是同一个弹层槽位，所以复用 `hideUnitInfo` 收尾 */
+  function showTerrainInfo(terrainId: TerrainId): void {
+    hideUnitInfo();
+    detailOverlay.addChild(createTerrainInfoOverlay(
+      terrainId, screen.screenWidth, screen.screenHeight, hideUnitInfo,
+    ));
+    detailOverlay.visible = true;
   }
 
   function redrawHand(): void {

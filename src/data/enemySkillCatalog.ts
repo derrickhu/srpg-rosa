@@ -36,6 +36,19 @@ export const ENEMY_SKILL_SKINS: Record<string, EnemySkillSkin> = {
     iconKey: 'skill_bloodfang_roar',
     vfxId: 'bloodfang_roar',
   },
+  /**
+   * 第二章 Boss · 血牙萨满。底层是 `wild_burn`（邻格 AoE + 点燃林地）。
+   *
+   * 和血牙咆哮同属血牙部族、同为红色系，所以专属特效的区分只能落在**形态**上：
+   * 那个是犬齿环（向外扩散），这个是竖直火柱（向上窜）。见 docs/特效圣经.md §4.4。
+   */
+  bloodfang_wildfire: {
+    id: 'bloodfang_wildfire',
+    implementsId: 'wild_burn',
+    name: '燎原咒火',
+    iconKey: 'skill_bloodfang_wildfire',
+    vfxId: 'bloodfang_wildfire',
+  },
 };
 
 export function getEnemySkillSkin(id: string): EnemySkillSkin | undefined {

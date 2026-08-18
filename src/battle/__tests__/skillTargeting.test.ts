@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { UNIT_DEFS } from '@/data/unitDefs';
-import { allPlayerSkillSpecs, getSkillSpec, skillDefForId } from '@/data/skillCatalog';
+import { allSkillSpecs, skillDefForId } from '@/data/skillCatalog';
 import { emptyTerrain } from '../grid';
 import type { UnitState } from '../types';
 import { castSkillManual, skillAiming } from '../skills';
@@ -115,9 +115,5 @@ describe('技能表形状与效果口径一致', () => {
   });
 });
 
-function allAuditSpecs() {
-  const list = [...allPlayerSkillSpecs()];
-  const roar = getSkillSpec('savage_roar');
-  if (roar) list.push(roar);
-  return list;
-}
+/** 形状/效果的自审规则对敌方专属技能同样成立，所以审计范围是技能表全体 */
+const allAuditSpecs = allSkillSpecs;

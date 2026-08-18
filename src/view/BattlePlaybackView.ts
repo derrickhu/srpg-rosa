@@ -508,26 +508,42 @@ export function createBattlePlaybackView(
   }
 
   // --- 棋盘 ---
-  for (let y = 0; y < GH; y++) {
-    for (let x = 0; x < GW; x++) {
-      const px = originX + x * cell;
-      const py = originY + y * cell;
-      const ter = terrain[y]![x]!;
-      const tc = createTerrainCell(ter, cell);
-      tc.x = px;
-      tc.y = py;
-      gridLayer.addChild(tc);
+  /**
+   * 每格一个容器，重画时只清它自己的孩子。
+   *
+   * 原先是把地形贴图和角标直接铺进 `gridLayer`，整层扁平。地形会变之后那样就没法
+   * 单独换一格——要么整层重建（丢掉所有格子的引用，还会闪一下），要么按坐标去
+   * `gridLayer.children` 里翻，而一格可能贡献 1 个或 2 个孩子（角标是可选的），
+   * 索引对不上。给每格一个宿主容器，重画就是一句 `removeChildren()`。
+   */
+  const terrainCellHosts = new Map<string, PIXI.Container>();
 
-      // 战斗中也挂角标：伤害飘字说「森林 -25%」，玩家要能立刻在棋盘上找到那一格，
-      // 两者对上了这条规则才真的学会。角标在左上角，单位居中，不打架。
-      const badge = createTerrainBadge(ter, cell);
-      if (badge) {
-        badge.x += px;
-        badge.y += py;
-        badge.alpha = 0.85;
-        gridLayer.addChild(badge);
-      }
+  function paintTerrainCell(x: number, y: number): void {
+    const k = `${x},${y}`;
+    let host = terrainCellHosts.get(k);
+    if (!host) {
+      host = new PIXI.Container();
+      host.x = originX + x * cell;
+      host.y = originY + y * cell;
+      gridLayer.addChild(host);
+      terrainCellHosts.set(k, host);
     }
+    host.removeChildren();
+    // 读引擎的实时地形，不是开战时那份快照
+    const ter = sim.getTerrain()[y]?.[x] ?? 'plain';
+    host.addChild(createTerrainCell(ter, cell));
+
+    // 战斗中也挂角标：伤害飘字说「森林 -25%」，玩家要能立刻在棋盘上找到那一格，
+    // 两者对上了这条规则才真的学会。角标在左上角，单位居中，不打架。
+    const badge = createTerrainBadge(ter, cell);
+    if (badge) {
+      badge.alpha = 0.85;
+      host.addChild(badge);
+    }
+  }
+
+  for (let y = 0; y < GH; y++) {
+    for (let x = 0; x < GW; x++) paintTerrainCell(x, y);
   }
   const line = new PIXI.Graphics();
   line.lineStyle(1, C.gridLine, 0.15);
@@ -694,10 +710,23 @@ export function createBattlePlaybackView(
    * 目标所站地形对这一下的影响，飘在伤害数字**下方**。
    * 森林 -25% 必须显式说出来，否则只是一个玩家无从比较的数字。
    */
-  /** 目标侧承伤地形（森林 -25% 等） */
-  function floatTerrainNote(x: number, y: number, note: string | undefined): void {
-    if (!note) return;
-    spawnCombatFloat(floatHost(), x, y, note, 'terrain');
+  /**
+   * 目标侧的减伤归因：承伤地形（森林 -25%）和限时减伤（减伤 -25%）。
+   *
+   * 两条合成**一行**飘，不是各飘一次。它们会同时成立（森林里的人又套了盾），
+   * 而 `spawnCombatFloat` 同一档样式的 `yOffset` 是固定的——各飘一次就是在同一个
+   * 位置叠两行字，谁都读不出来。合成一行还顺带保住了「少掉的伤害记在哪一层」
+   * 这个信息，那正是玩家判断盾值不值得占一次施放时要看的东西。
+   */
+  function floatTerrainNote(
+    x: number,
+    y: number,
+    note: string | undefined,
+    guard?: string | undefined,
+  ): void {
+    const parts = [note, guard].filter((s): s is string => Boolean(s));
+    if (parts.length === 0) return;
+    spawnCombatFloat(floatHost(), x, y, parts.join(' · '), 'terrain');
   }
   /** 出手侧攻击地形（高地 +25%）：和技能名分开飘，不拼进同一串字 */
   function floatAtkTerrain(x: number, y: number, note: string | undefined): void {
@@ -1173,7 +1202,7 @@ export function createBattlePlaybackView(
       const units = sim.getUnits();
       // 危险格按「站到该格之后」算，和落地后威胁箭头同一口径（见 dangerMoveCellsForMover）
       const dangerMoveCells = pending.canMove
-        ? dangerMoveCellsForMover(units, UNIT_DEFS, terrain, uid, moveCells)
+        ? dangerMoveCellsForMover(units, UNIT_DEFS, sim.getTerrain(), uid, moveCells)
         : [];
       // 威胁箭头只在「已经走位、还没出手」时画：选移动格阶段不画；
       // 移动后放了技能 / 普攻 / 待机（回合结束）也不再画。
@@ -1183,7 +1212,7 @@ export function createBattlePlaybackView(
         ? enemiesThreateningCell(
           units,
           UNIT_DEFS,
-          terrain,
+          sim.getTerrain(),
           self.pos,
           self.faction,
         ).map((e) => ({ ...e.pos }))
@@ -1212,7 +1241,9 @@ export function createBattlePlaybackView(
 
       switch (input.kind) {
         case 'wait':
-          sim.commandWait(uid);
+          // 必须播事件：待机拾取写在 commandWait 的返回值里，丢掉的话
+          // 引擎已经把地上的药收走了，画面和背包却都不会变。
+          await playEvents(sim.commandWait(uid).events);
           break;
         case 'undo':
           await playEvents(sim.commandUndoMove(uid).events);
@@ -1388,7 +1419,7 @@ export function createBattlePlaybackView(
             if (h.damage > 0) {
               hitShake(tt);
               floatDamage(tt.x, tt.y, h.damage);
-              floatTerrainNote(tt.x, tt.y, h.defTerrainNote);
+              floatTerrainNote(tt.x, tt.y, h.defTerrainNote, h.guardNote);
               floatModNote(tt.x, tt.y, h.modNote);
             }
           }
@@ -1473,7 +1504,7 @@ export function createBattlePlaybackView(
           await playRecipe(ATTACK_VFX[kind ?? 'sword'], { x: a.x, y: a.y }, { x: t.x, y: t.y });
           hitShake(t);
           floatDamage(t.x, t.y, ev.damage);
-          floatTerrainNote(t.x, t.y, ev.defTerrainNote);
+          floatTerrainNote(t.x, t.y, ev.defTerrainNote, ev.guardNote);
           tokenOverheads.get(ev.target)?.updateHp(ev.hpLeft);
           await awaitEase(dur(260), () => {});
         } else if (t) {
@@ -1536,6 +1567,15 @@ export function createBattlePlaybackView(
         const at = cellCenter(originX, originY, cell, ev.pos);
         const name = POTION_DEFS[ev.potionId]?.name ?? '药剂';
         floatUtility(at.x, at.y - cell * 0.35, `拾取 ${name}`);
+        break;
+      }
+      case 'terrain': {
+        paintTerrainCell(ev.x, ev.y);
+        const at = cellCenter(originX, originY, cell, { x: ev.x, y: ev.y });
+        // 烧起来要出声。玩家点了一发带火的技能，如果棋盘只是悄悄换了个颜色，
+        // 他不会把「掩体消失」和自己那一下联系起来。
+        floatUtility(at.x, at.y - cell * 0.35, ev.reason === 'ignite' ? '燃起' : '烧尽');
+        await awaitEase(dur(180), () => {});
         break;
       }
       case 'turnStart': {

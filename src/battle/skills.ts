@@ -9,7 +9,7 @@ import type {
   Vec2,
 } from './types';
 import { effectiveUnitDef } from './effectiveUnit';
-import { terrainAttackNote, terrainDefenseNote } from './damage';
+import { guardNote, terrainAttackNote, terrainDefenseNote } from './damage';
 import { computeSkillHitDamage, isExecuting } from './skillDamage';
 import {
   applySkillCastAllyEffects,
@@ -19,6 +19,8 @@ import {
 import { canProfessionEquipSkill, getSkillSpec, type SkillSpec } from '@/data/skillCatalog';
 import { effectiveSkillSpec } from '@/data/skillModCatalog';
 import { gridSize, inBounds, manhattan, neighbors4, type TerrainGrid } from './grid';
+import { rayCellsUntilBlocked } from './sight';
+import type { TerrainRuntime } from './terrainDynamics';
 
 const RAY_DIRS: Vec2[] = [
   { x: 1, y: 0 },
@@ -47,23 +49,17 @@ function enemiesOnRay(
   terrain: TerrainGrid,
 ): UnitState[] {
   const out: UnitState[] = [];
-  let p = { x: from.x + dir.x, y: from.y + dir.y };
-  while (inBounds(p, terrain)) {
+  // 和 `rayCellsFrom` 共用同一条「到哪里为止」的规则：命中判定和高亮范围必须同源，
+  // 否则会出现「高亮画到墙后面但打不到那儿的人」，玩家只会认为范围提示是骗人的
+  for (const p of rayCellsUntilBlocked(from, dir, terrain)) {
     const occ = units.find((u) => u.hp > 0 && u.pos.x === p.x && u.pos.y === p.y);
     if (occ && occ.faction !== self.faction) out.push(occ);
-    p = { x: p.x + dir.x, y: p.y + dir.y };
   }
   return out;
 }
 
 function rayCellsFrom(from: Vec2, dir: Vec2, terrain: TerrainGrid): Vec2[] {
-  const cells: Vec2[] = [];
-  let p = { x: from.x + dir.x, y: from.y + dir.y };
-  while (inBounds(p, terrain)) {
-    cells.push({ ...p });
-    p = { x: p.x + dir.x, y: p.y + dir.y };
-  }
-  return cells;
+  return rayCellsUntilBlocked(from, dir, terrain);
 }
 
 function bestLinePick(
@@ -295,6 +291,7 @@ function resolveHit(
     damage,
     hpLeft: Math.max(0, tgt.hp),
     defTerrainNote: terrainDefenseNote(terrain, tgt.pos) ?? undefined,
+    guardNote: guardNote(effectiveUnitDef(tgt, defs)) ?? undefined,
     modNote,
   };
 }
@@ -345,6 +342,7 @@ function resolveSplashHits(
       damage,
       hpLeft: Math.max(0, t.hp),
       defTerrainNote: terrainDefenseNote(terrain, t.pos) ?? undefined,
+      guardNote: guardNote(effectiveUnitDef(t, defs)) ?? undefined,
       modNote,
     });
   }
@@ -373,12 +371,13 @@ function castAreaAoE(
   terrain: TerrainGrid,
   defs: Record<UnitKind, UnitArchetypeDef>,
   area: { kind: 'ring'; dist: number } | { kind: 'disc'; radius: number },
+  allowNoFoes = false,
 ): BattleEvent[] {
   const foes =
     area.kind === 'ring'
       ? foesAtManhattan(self, units, area.dist)
       : foesWithinManhattan(self, units, area.radius);
-  if (foes.length === 0) return [];
+  if (foes.length === 0 && !allowNoFoes) return [];
   const hits: SkillHit[] = [];
   for (const t of foes) {
     // 无伤 AoE（若还有）不要塞 damage:0 的 hit——回放会飘「0」
@@ -726,10 +725,42 @@ function readySlotSpec(
  * 改成由入口按「有没有真的放出去」来判定并落到对应槽上——
  * `skillCast` 事件就是那个判定：`cast*` 只在通过目标校验后才会发它。
  */
-function commitCast(self: UnitState, slot: SkillSlot, spec: SkillSpec, events: BattleEvent[]): BattleEvent[] {
+function commitCast(
+  self: UnitState,
+  slot: SkillSlot,
+  spec: SkillSpec,
+  events: BattleEvent[],
+  tr?: TerrainRuntime,
+): BattleEvent[] {
   if (!events.some((e) => e.type === 'skillCast')) return [];
   setSlotCd(self, slot, spec.cooldown);
-  return events;
+  const terrainEvents = applyCastTerrainEffects(spec, events, tr);
+  return terrainEvents.length ? [...events, ...terrainEvents] : events;
+}
+
+/**
+ * 技能改地形（目前只有点燃）。挂在 `commitCast` 上和冷却同一个道理：
+ * 这里是「真的放出去了」的唯一判定点，散到各个 `cast*` 里迟早会漏。
+ *
+ * 作用域取 `skillCast` 事件的 `rangeCells`。注意这只对 **AoE 形状**才等于真实作用域
+ * ——单体点名形状的 `rangeCells` 是整个瞄准环（见 `castNeighborPickLowest`），
+ * 拿它点燃会烧掉一整圈。所以改地形的词条在 `canApply` 里限定了只能挂 AoE 技能，
+ * 这条规则才能一直是诚实的。
+ */
+function applyCastTerrainEffects(
+  spec: SkillSpec,
+  events: BattleEvent[],
+  tr?: TerrainRuntime,
+): BattleEvent[] {
+  const effects = spec.onCastTerrainEffects;
+  if (!tr || !effects?.length) return [];
+  const cast = events.find((e) => e.type === 'skillCast');
+  if (cast?.type !== 'skillCast') return [];
+  const out: BattleEvent[] = [];
+  for (const eff of effects) {
+    if (eff.kind === 'ignite') out.push(...tr.ignite(cast.rangeCells));
+  }
+  return out;
 }
 
 export function trySkillBeforeMove(
@@ -737,12 +768,15 @@ export function trySkillBeforeMove(
   defs: Record<UnitKind, UnitArchetypeDef>,
   units: UnitState[],
   terrain: TerrainGrid,
+  tr?: TerrainRuntime,
 ): BattleEvent[] {
   const def = effectiveUnitDef(self, defs);
   for (const slot of CAST_ORDER) {
     const spec = readySlotSpec(self, def, slot);
     if (!spec || spec.timing !== 'beforeMove') continue;
-    const events = commitCast(self, slot, spec, castByShape(self, def, spec, units, terrain, defs));
+    const events = commitCast(
+      self, slot, spec, castByShape(self, def, spec, units, terrain, defs), tr,
+    );
     if (events.length) return events;
   }
   return [];
@@ -753,12 +787,15 @@ export function trySkillAfterMove(
   defs: Record<UnitKind, UnitArchetypeDef>,
   units: UnitState[],
   terrain: TerrainGrid,
+  tr?: TerrainRuntime,
 ): BattleEvent[] {
   const def = effectiveUnitDef(self, defs);
   for (const slot of CAST_ORDER) {
     const spec = readySlotSpec(self, def, slot);
     if (!spec || spec.timing !== 'afterMove') continue;
-    const events = commitCast(self, slot, spec, castByShape(self, def, spec, units, terrain, defs));
+    const events = commitCast(
+      self, slot, spec, castByShape(self, def, spec, units, terrain, defs), tr,
+    );
     if (events.length) return events;
   }
   return [];
@@ -821,9 +858,11 @@ export function skillAiming(
     aimCells: [] as Vec2[],
   };
   switch (spec.shape.type) {
+    // 会改地形的 AoE 不要求范围里有敌人，理由见 `changesTerrain`。
+    // 瞄准这一侧也得放开，否则按钮会一直是「没目标」的灰态——玩家根本按不下去。
     case 'neighborAoE': {
       const foes = foesAtManhattan(self, units, spec.shape.manhattan);
-      if (foes.length === 0) return null;
+      if (foes.length === 0 && !changesTerrain(spec)) return null;
       const rangeCells = cellsAtManhattan(self.pos, spec.shape.manhattan, terrain);
       // 自身 AoE：点范围内任意格确认释放（选的是范围，不是点某个敌人）
       return {
@@ -836,7 +875,7 @@ export function skillAiming(
     }
     case 'discAoE': {
       const foes = foesWithinManhattan(self, units, spec.shape.radius);
-      if (foes.length === 0) return null;
+      if (foes.length === 0 && !changesTerrain(spec)) return null;
       const rangeCells = cellsWithinManhattan(self.pos, spec.shape.radius, terrain);
       return {
         ...base,
@@ -917,6 +956,7 @@ export function castSkillManual(
   targetUid?: string,
   slot: SkillSlot = 'main',
   aimCell?: Vec2,
+  tr?: TerrainRuntime,
 ): BattleEvent[] {
   const def = effectiveUnitDef(self, defs);
   const spec = readySlotSpec(self, def, slot);
@@ -925,8 +965,25 @@ export function castSkillManual(
     self,
     slot,
     spec,
-    castByShape(self, def, spec, units, terrain, defs, targetUid, aimCell),
+    castByShape(self, def, spec, units, terrain, defs, targetUid, aimCell, changesTerrain(spec)),
+    tr,
   );
+}
+
+/**
+ * 会改地形的 AoE 技能，范围里没有敌人时**也能放**——但只在人工模式下。
+ *
+ * 放开是因为这类技能的主要用法本来就是对着空地：烧掉隘口的林子断敌人的路、
+ * 提前拆掉他们要躲进去的掩体。要求范围内有人，等于把「布置战场」这个用法整个删掉，
+ * 只剩下「敌人已经贴上来了才点火」，而那时候火烧不烧都快打完了。
+ *
+ * 不放开托管/自动那两条路径（`trySkill*`）是因为它们的判断是「够得着就放」，
+ * 没有「这一格值不值得烧」的概念——放开后自动模式会一到冷却就把脚边点着，
+ * 既浪费施放额度，又会把自己人架在火上。托管少用一招是可接受的退化，
+ * 自动纵火不是。
+ */
+function changesTerrain(spec: SkillSpec): boolean {
+  return Boolean(spec.onCastTerrainEffects?.length);
 }
 
 /**
@@ -950,18 +1007,19 @@ function castByShape(
   defs: Record<UnitKind, UnitArchetypeDef>,
   targetUid?: string,
   aimCell?: Vec2,
+  allowNoFoes = false,
 ): BattleEvent[] {
   switch (spec.shape.type) {
     case 'neighborAoE':
       return castAreaAoE(self, def, spec, units, terrain, defs, {
         kind: 'ring',
         dist: spec.shape.manhattan,
-      });
+      }, allowNoFoes);
     case 'discAoE':
       return castAreaAoE(self, def, spec, units, terrain, defs, {
         kind: 'disc',
         radius: spec.shape.radius,
-      });
+      }, allowNoFoes);
     case 'neighborPickLowest':
       return castNeighborPickLowest(
         self, def, spec, units, terrain, defs, spec.shape.manhattan, targetUid,

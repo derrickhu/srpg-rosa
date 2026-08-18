@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { UI_BUNDLE, UNIT_BUNDLE } from '@/core/assetBundles';
 import { ENEMY_SKILL_SKINS } from '@/data/enemySkillCatalog';
@@ -60,6 +61,21 @@ describe('图标资源完整性', () => {
   it('战斗操作条的动作图标齐全', () => {
     for (const key of ['act_wait', 'act_undo', 'act_cancel']) {
       expect(UI_BUNDLE.assets[key], `动作图标 ${key} 未登记`).toBeDefined();
+    }
+  });
+
+  /**
+   * 登记了 key **不等于**图真的在。
+   *
+   * 上面那几条只看 `UI_BUNDLE.assets` 里有没有这一项，所以「在 bundle 里写了一行、
+   * 但忘了把 PNG 放进 images/ui」会全绿通过，然后在真机上退成灰圆——
+   * 和忘了登记完全一样的表现，却少了一道拦。加技能配图标是两步，两步都得有人盯。
+   */
+  it('bundle 里登记的每张图在磁盘上都存在', () => {
+    for (const bundle of [UI_BUNDLE, UNIT_BUNDLE]) {
+      for (const [key, path] of Object.entries(bundle.assets)) {
+        expect(existsSync(path), `${key} 指向的 ${path} 不存在`).toBe(true);
+      }
     }
   });
 

@@ -9,7 +9,7 @@ import type {
 } from './types';
 import { effectiveUnitDef } from './effectiveUnit';
 import { canAttackFrom, chooseTurnAction, selectAttackTarget, type AiDifficulty } from './ai';
-import { computeDamage, terrainAttackNote, terrainDefenseNote } from './damage';
+import { computeDamage, guardNote, terrainAttackNote, terrainDefenseNote } from './damage';
 import { POTION_DEFS } from '@/data/potionCatalog';
 import { getTerrainAt, type TerrainGrid } from './grid';
 import { MAX_BATTLE_ROUNDS } from './constants';
@@ -24,6 +24,7 @@ import {
   type SkillAiming,
 } from './skills';
 import { tickTimedBattleEffects } from './timedBattleEffects';
+import { createTerrainRuntime } from './terrainDynamics';
 import { getTerrainSpec } from '@/data/terrainSpec';
 
 function key(p: Vec2): string {
@@ -71,6 +72,8 @@ function cloneUnits(units: UnitState[]): UnitState[] {
           return { kind: 'spdBonus' as const, addSpd: e.addSpd, roundsLeft: e.roundsLeft };
         case 'poison':
           return { kind: 'poison' as const, dmgPerRound: e.dmgPerRound, roundsLeft: e.roundsLeft };
+        case 'guard':
+          return { kind: 'guard' as const, reduceRatio: e.reduceRatio, roundsLeft: e.roundsLeft };
       }
     }),
   }));
@@ -237,6 +240,14 @@ export interface BattleSim {
   getUnits(): UnitState[];
   getUnit(uid: string): UnitState | undefined;
   /**
+   * 本场的**实时**地形（引擎私有副本的引用）。
+   *
+   * 视图层拿到的那份 `terrain` 入参是开战时的快照，地形烧起来之后就过期了。
+   * 威胁格、可达格这类要跟着地形变的计算必须读这个，否则「烧开一条路」之后
+   * 危险格高亮还按老地形算，玩家会照着一张错的图做决策。
+   */
+  getTerrain(): TerrainGrid;
+  /**
    * 本回合还没动到的单位（uid）。
    * 当前正在行动的人已被弹出，不在这里——UI 要自己把 current 拼到队首。
    */
@@ -252,11 +263,17 @@ export interface BattleSim {
 
 export function createBattleSim(
   initialUnits: UnitState[],
-  terrain: TerrainGrid,
+  initialTerrain: TerrainGrid,
   defs: Record<UnitKind, UnitArchetypeDef>,
   opts: BattleSimOptions = {},
 ): BattleSim {
   const units = cloneUnits(initialUnits);
+  /**
+   * 地形和单位一样要先拷贝再用（`createTerrainRuntime` 内部 `cloneTerrain`）。
+   * 关卡的 `terrain` 是模块级共享对象，被烧掉一格就永久留在关卡数据里了。
+   */
+  const terrainRt = createTerrainRuntime(initialTerrain);
+  const terrain = terrainRt.grid;
   const aiDifficulty = opts.aiDifficulty ?? 'normal';
   const mode: BattleMode = opts.mode ?? 'auto';
   const enableDrops = opts.enableDrops ?? false;
@@ -344,7 +361,7 @@ export function createBattleSim(
   function attackTargetsFrom(u: UnitState): string[] {
     const atkDef = effectiveUnitDef(u, defs);
     return units
-      .filter((t) => t.hp > 0 && t.faction !== u.faction && canAttackFrom(atkDef, u.pos, t))
+      .filter((t) => t.hp > 0 && t.faction !== u.faction && canAttackFrom(atkDef, u.pos, t, terrain))
       .map((t) => t.uid);
   }
 
@@ -381,6 +398,9 @@ export function createBattleSim(
         }
       }
     }
+    // 地形自己的状态推进要放在上面那轮掉血**之后**：燃烧标 2 回合，就该在 2 个轮首
+    // 各烧一次人再熄。放前面的话最后一个轮首会先变成焦土，实际只烧到 1 回合。
+    events.push(...terrainRt.tick());
     order = bySpeedOrder(units, defs).map((u) => u.uid);
     const evs = attachDrops(events);
     const w = checkWinner(units);
@@ -405,7 +425,7 @@ export function createBattleSim(
     if (resume?.moved) self.movedInTurn = true;
 
     if (canSkill) {
-      events.push(...trySkillBeforeMove(self, defs, units, terrain));
+      events.push(...trySkillBeforeMove(self, defs, units, terrain, terrainRt));
     }
     let w = checkWinner(units);
     if (w) return finish(w, events);
@@ -431,7 +451,7 @@ export function createBattleSim(
     }
 
     if (canSkill) {
-      events.push(...trySkillAfterMove(self, defs, units, terrain));
+      events.push(...trySkillAfterMove(self, defs, units, terrain, terrainRt));
     }
     w = checkWinner(units);
     if (w) return finish(w, events);
@@ -446,12 +466,13 @@ export function createBattleSim(
           self.pos,
           units.filter((u) => u.faction !== self.faction),
           defs,
+          terrain,
           self.faction === 'enemy' ? aiDifficulty : 'normal',
         );
     if (tgt && tgt.hp > 0) {
       const tLive = units.find((u) => u.uid === tgt.uid);
       // 目标可能已被技能击杀，或因位移脱战
-      if (tLive && tLive.hp > 0 && canAttackFrom(atkDef, self.pos, tLive)) {
+      if (tLive && tLive.hp > 0 && canAttackFrom(atkDef, self.pos, tLive, terrain)) {
         events.push(...basicAttack(self, tLive));
       }
     }
@@ -495,6 +516,7 @@ export function createBattleSim(
       // 高地 +25% 只体现为一个玩家无从比较的数字。
       atkTerrainNote: terrainAttackNote(terrain, self.pos) ?? undefined,
       defTerrainNote: terrainDefenseNote(terrain, target.pos) ?? undefined,
+      guardNote: guardNote(defT) ?? undefined,
     }];
     if (target.hp <= 0) events.push({ type: 'death', uid: target.uid });
     return events;
@@ -591,6 +613,12 @@ export function createBattleSim(
     // 还有移动/出手额度，或还能撤销走位时，都停下来等。
     // 走完若立刻收尾，玩家来不及点撤销；先技能后走位也不能出手完就掐掉移动。
     if (!v || (!v.canMove && !v.canSkill && !v.canAttack && !v.canUndoMove)) {
+      // 自动收尾等于待机：人还站在掉落格上就该捡，否则「走过去回合自己结束了」
+      // 会看起来像点了待机却没拿到药。
+      if (pendingTurn) {
+        const u = liveUnit(pendingTurn.uid);
+        if (u) evs.push(...tryPickup(u));
+      }
       pendingTurn = null;
     }
     allEvents.push(...evs);
@@ -641,7 +669,9 @@ export function createBattleSim(
     if (!cur) return noop();
     const v = pendingView();
     if (!v?.castableSlots.includes(slot)) return noop();
-    const events = castSkillManual(cur.u, defs, units, terrain, targetUid, slot, aimCell);
+    const events = castSkillManual(
+      cur.u, defs, units, terrain, targetUid, slot, aimCell, terrainRt,
+    );
     if (events.length === 0) return noop();
     cur.p.usedSkill = true;
     return settleAfterAction(events);
@@ -759,6 +789,7 @@ export function createBattleSim(
     runToEnd,
     getUnits: () => units,
     getUnit: (uid) => units.find((u) => u.uid === uid),
+    getTerrain: () => terrain,
     roundOrder: () => [...order],
     upcomingOrder: (limit, currentUid) => {
       const alive = units.filter((u) => u.hp > 0);

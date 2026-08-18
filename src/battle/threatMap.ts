@@ -43,7 +43,7 @@ export function attackableCellsFrom(
   const r = atkDef.range;
   for (let y = Math.max(0, from.y - r); y <= Math.min(h - 1, from.y + r); y++) {
     for (let x = Math.max(0, from.x - r); x <= Math.min(w - 1, from.x + r); x++) {
-      if (canAttackCell(atkDef, from, { x, y })) out.push({ x, y });
+      if (canAttackCell(atkDef, from, { x, y }, terrain)) out.push({ x, y });
     }
   }
   return out;
@@ -96,7 +96,7 @@ export function enemiesThreateningCell(
       reachableCells(e.pos, def.move, blockedExcept(units, e.uid), terrain),
     );
     for (const from of reach) {
-      if (canAttackCell(def, from, cell)) {
+      if (canAttackCell(def, from, cell, terrain)) {
         out.push(e);
         break;
       }

@@ -1,5 +1,5 @@
 import type { TerrainId } from '@/battle/types';
-import { STAGES_MVP, type StageDefMvp } from '@/data/stagesMvp';
+import { CHAPTER_STAGE_INDICES, STAGES_MVP, type StageDefMvp } from '@/data/stagesMvp';
 import { ENDLESS_DUNGEON, ENDLESS_DUNGEON_ID } from '@/data/endlessCatalog';
 import { getTerrainSpec } from '@/data/terrainSpec';
 
@@ -88,11 +88,11 @@ const POOL_GRASSLAND = r([
 ]);
 
 /**
- * 二章及以后暂时共用通用技能作临时技能。
+ * 三章及以后暂时共用通用技能作临时技能。
  *
  * **这是欠的账，不是设计**：临时技能本该一章一套，玩家进新章节应该从技能名上
- * 就读出场景变了。草原那套（`temp_gl_*`）是范本，其余四章照着补即可——
- * 机制都现成，只是数据和图标。先这样是因为只有第一章过了数值回归，
+ * 就读出场景变了。草原（`temp_gl_*`）和密林（`temp_fo_*`）是范本，其余三章照着补即可——
+ * 机制都现成，只是数据和图标。先这样是因为只有前两章过了数值回归，
  * 给还没调过的章节配专属内容，等于在会推翻的地基上堆东西。
  */
 const TEMP_GENERIC = r([
@@ -100,12 +100,22 @@ const TEMP_GENERIC = r([
   { category: 'tempSkill', skillId: 'field_bless', price: 8 },
 ]);
 
+/**
+ * 密林深处：卖森林券是这一章的关键一格。
+ *
+ * 森林在这一章既是掩体又是燃料，所以「买一片林子放下去」同时是防守手段和给
+ * 「松脂火把」备料——同一张券有两种用法，而它们还互相冲突（烧了就没掩体了），
+ * 这正是想要的那种决定。
+ */
 const POOL_FOREST = r([
   { category: 'terrain', terrainId: 'high', price: 4 },
   { category: 'terrain', terrainId: 'forest', price: 4 },
   { category: 'potion', potionId: 'heal', price: 5 },
   { category: 'potion', potionId: 'slow', price: 6 },
-  ...TEMP_GENERIC,
+  { category: 'tempSkill', skillId: 'temp_fo_torch', price: 8 },
+  { category: 'tempSkill', skillId: 'temp_fo_thorn', price: 7 },
+  { category: 'tempSkill', skillId: 'temp_fo_bark', price: 8 },
+  { category: 'tempSkill', skillId: 'temp_fo_warden', price: 7 },
 ]);
 
 const POOL_FORTRESS = r([
@@ -134,13 +144,32 @@ const POOL_DRAGON = r([
   ...TEMP_GENERIC,
 ]);
 
-/** 把一段连续战斗关卡按「打几场插一个商店、最后一关为 Boss」编排为节点序列 */
+/**
+ * 把一段连续战斗关卡按「打几场插一个商店、Boss 关收尾」编排为节点序列。
+ *
+ * Boss 由关卡自己的 `StageDefMvp.isBoss` 决定，不再按「数组最后一个」推。
+ * 那个字段以前写了却没人读——5 章的 Boss 关都标着 `isBoss: true`，而节点类型
+ * 是从位置推出来的，两套说法并存且谁也不校验谁。改成读字段之后它成了唯一来源：
+ * 新章漏标就会得到一章没有 Boss 节点，`stageIntegrity` 当场跑红，
+ * 而不是等到玩到最后一关发现没有 Boss 的 1.1 倍缩放和奖励。
+ */
+/**
+ * 第 n 章（1 起）的关卡下标。章节增删关卡时这里自动跟上。
+ *
+ * 越界直接抛：副本表比章节表多一章的话，`buildNodes([])` 会安静地产出一个
+ * 没有战斗节点的副本，玩家点进去就是空的。
+ */
+function chapterStages(n: number): number[] {
+  const idx = CHAPTER_STAGE_INDICES[n - 1];
+  if (!idx) throw new Error(`第 ${n} 章没有关卡数据（stagesMvp 的 CHAPTERS 只有 ${CHAPTER_STAGE_INDICES.length} 章）`);
+  return [...idx];
+}
+
 function buildNodes(stageIndices: number[]): NodeDef[] {
   const nodes: NodeDef[] = [];
-  const last = stageIndices.length - 1;
   stageIndices.forEach((si, i) => {
     const stage: StageDefMvp | undefined = STAGES_MVP[si];
-    const isBoss = i === last;
+    const isBoss = stage?.isBoss === true;
     nodes.push({
       kind: isBoss ? 'boss' : 'battle',
       name: stage?.name ?? `节点 ${i + 1}`,
@@ -160,7 +189,7 @@ export const DUNGEON_DEFS: DungeonDef[] = [
     id: 'dungeon_grassland',
     name: '草原战线',
     desc: '血牙部族入侵草原，新兵在此经受完整试炼。',
-    nodes: buildNodes([0, 1, 2, 3, 4, 5, 6]),
+    nodes: buildNodes(chapterStages(1)),
     roguelikePool: POOL_GRASSLAND,
     metaReward: 10,
     enemyScaleBase: 1.0,
@@ -173,7 +202,7 @@ export const DUNGEON_DEFS: DungeonDef[] = [
     id: 'dungeon_forest',
     name: '密林深处',
     desc: '林地伏击，远程与机动更危险。',
-    nodes: buildNodes([7, 8, 9, 10, 11]),
+    nodes: buildNodes(chapterStages(2)),
     roguelikePool: POOL_FOREST,
     metaReward: 12,
     enemyScaleBase: 1.05,
@@ -185,7 +214,7 @@ export const DUNGEON_DEFS: DungeonDef[] = [
     id: 'dungeon_fortress',
     name: '要塞攻防',
     desc: '城墙与高地纵横，正面强攻。',
-    nodes: buildNodes([12, 13, 14, 15, 16]),
+    nodes: buildNodes(chapterStages(3)),
     roguelikePool: POOL_FORTRESS,
     metaReward: 14,
     enemyScaleBase: 1.12,
@@ -197,7 +226,7 @@ export const DUNGEON_DEFS: DungeonDef[] = [
     id: 'dungeon_swamp',
     name: '毒沼泥潭',
     desc: '沼泽减速，阵地与控制为王。',
-    nodes: buildNodes([17, 18, 19, 20, 21]),
+    nodes: buildNodes(chapterStages(4)),
     roguelikePool: POOL_SWAMP,
     metaReward: 16,
     enemyScaleBase: 1.2,
@@ -209,7 +238,7 @@ export const DUNGEON_DEFS: DungeonDef[] = [
     id: 'dungeon_dragon',
     name: '龙岭绝巅',
     desc: '终焉之地，龙王与精锐镇守。',
-    nodes: buildNodes([22, 23, 24, 25, 26]),
+    nodes: buildNodes(chapterStages(5)),
     roguelikePool: POOL_DRAGON,
     metaReward: 20,
     enemyScaleBase: 1.3,

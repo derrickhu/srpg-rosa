@@ -1,4 +1,4 @@
-import type { SkillRole, SkillSpec } from './skillCatalog';
+import type { SkillCastTerrainEffect, SkillRole, SkillSpec } from './skillCatalog';
 
 /**
  * 技能定位的中文名。角色卡上的「定位」和技能的 `role` 必须是同一个词——
@@ -105,6 +105,7 @@ export function describeSkillSpec(spec: SkillSpec): string[] {
       case 'taunt': out.push(`自身嘲讽 ${e.rounds} 回合`); break;
       case 'atkBonus': out.push(`自身攻击 +${e.addAtk}，${e.rounds} 回合`); break;
       case 'spdBonus': out.push(`自身速度 +${e.addSpd}，${e.rounds} 回合`); break;
+      case 'guard': out.push(`自身受到伤害 -${pctOf(e.reduceRatio)}，${e.rounds} 回合`); break;
       default: exhausted(e);
     }
   }
@@ -121,10 +122,29 @@ export function describeSkillSpec(spec: SkillSpec): string[] {
       case 'atkBonus': out.push(`友方攻击 +${e.addAtk}，${e.rounds} 回合`); break;
       case 'spdBonus': out.push(`友方速度 +${e.addSpd}，${e.rounds} 回合`); break;
       case 'heal': out.push(`治疗友方 ${e.amount} 点生命`); break;
+      case 'guard': out.push(`友方受到伤害 -${pctOf(e.reduceRatio)}，${e.rounds} 回合`); break;
       default: exhausted(e);
     }
   }
+  // 地形效果也要出一行：`ignite` 不需要范围里有敌人就能生效，是玩家主动布置火场的
+  // 唯一手段。面板不写，「这招为什么对空地也能放」就只能靠试。
+  for (const e of spec.onCastTerrainEffects ?? []) {
+    out.push(TERRAIN_EFFECT_TEXT[e.kind]);
+  }
   return out;
+}
+
+/**
+ * 走查表而不是 `switch` + `exhausted`，是因为 `SkillCastTerrainEffect` 目前只有一个成员：
+ * 单成员「联合」并不是联合类型，`default` 分支里narrow不到 `never`，兜底函数就编译不过。
+ * `Record` 用键覆盖来保证同样的事——加了新种类而这里忘了写文案，`tsc` 会报缺键。
+ */
+const TERRAIN_EFFECT_TEXT: Record<SkillCastTerrainEffect['kind'], string> = {
+  ignite: '点燃范围内的可燃地形',
+};
+
+function pctOf(ratio: number): string {
+  return `${Math.round(ratio * 100)}%`;
 }
 
 /**

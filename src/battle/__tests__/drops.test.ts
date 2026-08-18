@@ -76,6 +76,15 @@ describe('无尽掉落与待机拾取', () => {
     expect(waited.events.some((e) => e.type === 'pickup')).toBe(false);
   });
 
+  it('走上去之后回合自动收尾，也算待机，会捡起来', () => {
+    const sim = setupDrops({ x: 1, y: 1 }, { x: 1, y: 0 });
+    stepUntilPending(sim);
+    sim.commandAttack('p1', 'e1');
+    const moved = sim.commandMove('p1', { x: 1, y: 0 });
+    expect(moved.events.some((e) => e.type === 'pickup' && e.potionId)).toBe(true);
+    expect(sim.pending()).toBeNull();
+  });
+
   it('主线不开掉落', () => {
     const sim = createBattleSim(
       [unit('p1', 'player', { x: 1, y: 1 }), unit('e1', 'enemy', { x: 1, y: 0 }, 1)],

@@ -146,10 +146,13 @@ const SETS = [
   //
   // `roar`：底层 savage_roar 的通用橙金冲击波（保留给未换皮的结算 id）。
   // `bloodfang_roar`：第一章 Boss 皮肤「血牙咆哮」——血红犬齿环，必须和 roar 形态可区分。
+  // `bloodfang_wildfire`：第二章 Boss 皮肤「燎原咒火」——一圈竖直火柱，靠「向上生长」
+  //   而不是「向外扩散」和上面两个环形区分（同部族两场 Boss 战，撞形态代价最大）。
   // `temp_gl_*`：第一章草原临时技能专属特效（缠足/敷治/蜂群/号角），形态互不撞车。
   ...[
     { id: 'roar', frames: 9, fps: 20 },
     { id: 'bloodfang_roar', frames: 9, fps: 20 },
+    { id: 'bloodfang_wildfire', frames: 9, fps: 20 },
     { id: 'whirl', frames: 9, fps: 20 },
     { id: 'quake', frames: 9, fps: 20 },
     { id: 'pierce', frames: 9, fps: 20 },

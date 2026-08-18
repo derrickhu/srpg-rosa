@@ -46,7 +46,18 @@ export type TimedBattleEffect =
   | { kind: 'atkBonus'; addAtk: number; roundsLeft: number }
   | { kind: 'atkDown'; subAtk: number; roundsLeft: number }
   | { kind: 'spdDown'; subSpd: number; roundsLeft: number }
-  | { kind: 'spdBonus'; addSpd: number; roundsLeft: number };
+  | { kind: 'spdBonus'; addSpd: number; roundsLeft: number }
+  /**
+   * 减伤：本次受到的攻击/技能伤害 ×(1 - `reduceRatio`)。
+   *
+   * 这是整套效果词汇里**唯一**的防御动词。在它之前，友方增益只有增攻、增速、
+   * 治疗三种——全是「打得更多」或「打完再补」，玩家没有任何「这一下我扛住」的手段。
+   * 而地形早就有 `defMul` 了，所以「减伤」这个概念对玩家并不新，只是技能侧一直缺。
+   *
+   * 用比例而不是固定减值：固定减值对小怪的一刀（15 点）和 Boss 的一刀（40 点）
+   * 效果差一个量级，抬到能扛住 Boss 就等于让小怪完全打不动。
+   */
+  | { kind: 'guard'; reduceRatio: number; roundsLeft: number };
 
 /** 普攻相关（射程、远程规则、普攻嘲讽）；与 `SkillSpec.shape` 无关 */
 export interface UnitStrikeBlock {
@@ -75,6 +86,18 @@ export interface UnitDef {
   isRanged: boolean;
   /** AI 索敌用：普攻 `strike.taunt` 或限时 `taunt` 效果，见 `effectiveUnitDef` */
   taunt: boolean;
+  /**
+   * 作为**目标**时的伤害倍率，由限时 `guard` 效果算出；无减伤时为 1。
+   *
+   * 必填而不是可选：这个面板只有 `effectiveUnitDef` 一个正经生产者，而它一旦漏算，
+   * 表现是减伤静默失效——技能放了、飘字有了、伤害没变。让编译器盯着，
+   * 比等玩家发现「这个盾好像没用」要好。
+   *
+   * 放在 `UnitDef` 而不是在结算时读 `UnitState`，是为了让 AI 的伤害预估自动跟上：
+   * AI 全程通过 `effectiveUnitDef` 看人，所以它会知道套了盾的目标更难杀，
+   * 从而改去打别人——不然玩家的减伤只是在数值上生效，在 AI 眼里根本不存在。
+   */
+  damageTakenMul: number;
   skill?: SkillDef;
   /** 第二技能槽，见 `UnitState.tempSkill` */
   tempSkill?: SkillDef;
@@ -134,7 +157,20 @@ export interface UnitState {
   timedBattleEffects?: TimedBattleEffect[];
 }
 
-export type TerrainId = 'plain' | 'high' | 'forest' | 'river' | 'swamp' | 'wall' | 'abyss';
+export type TerrainId =
+  | 'plain'
+  | 'high'
+  | 'forest'
+  | 'river'
+  | 'swamp'
+  | 'wall'
+  | 'abyss'
+  // 以下是战斗中由地形转移产生的**中间态**，关卡底图一般不直接摆（见 terrainSpec 的转移边）
+  | 'burning'
+  | 'scorched';
+
+/** 地形发生转移的原因，只用于回放飘字选词 */
+export type TerrainChangeReason = 'ignite' | 'burnout';
 
 export interface CellTerrain {
   terrain: TerrainId;
@@ -155,6 +191,8 @@ export type SkillHit = {
    * 它每次都生效，飘一行「锋锐」只是噪音。
    */
   modNote?: string;
+  /** 该目标身上限时减伤对这一下的影响，如「减伤 -25%」；逐目标记录，同 `defTerrainNote` */
+  guardNote?: string;
 };
 
 export type BattleEvent =
@@ -202,6 +240,14 @@ export type BattleEvent =
        */
       atkTerrainNote?: string;
       defTerrainNote?: string;
+      /**
+       * 目标身上限时减伤的归因文案（见 `damage.guardNote`）。
+       *
+       * 和地形减伤分开两个字段，因为两者会同时生效（森林里的人又套了盾），
+       * 合成一句就说不清少掉的伤害该记在哪一层——而玩家要判断的恰恰是
+       * 「这个盾值不值得占一次施放」。
+       */
+      guardNote?: string;
     }
   | { type: 'death'; uid: string }
   /** 敌人倒下时掉在死亡格上的药剂（无尽试炼） */
@@ -224,6 +270,21 @@ export type BattleEvent =
   | { type: 'statusNote'; target: string; text: string; tone: 'buff' | 'debuff' }
   /** 玩家在战斗中使用药剂（回放显示用） */
   | { type: 'potion'; potionId: string; name: string }
+  /**
+   * 一格地形变了（森林被点燃、燃烧烧尽成焦土……）。
+   *
+   * 走事件而不是让回放层去 diff 地形矩阵：自动模式下 `runToEnd` 会把整场跑完再逐条播，
+   * 那时候地形早就是终局状态了，diff 不出中间过程。而地形转移恰恰是要**看见因果**的
+   * ——玩家得看到自己那一发火点着了哪几格，否则「烧掉掩体」这件事和凭空掉血没区别。
+   */
+  | {
+      type: 'terrain';
+      x: number;
+      y: number;
+      from: TerrainId;
+      to: TerrainId;
+      reason: TerrainChangeReason;
+    }
   | { type: 'end'; winner: Faction };
 
 export interface BattleReport {

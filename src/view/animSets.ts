@@ -12,6 +12,7 @@ import bloodwolfManifest from '@/data/anim/bloodwolf.json';
 import rockshellManifest from '@/data/anim/rockshell.json';
 import roarManifest from '@/data/anim/roar.json';
 import bloodfangRoarManifest from '@/data/anim/bloodfang_roar.json';
+import bloodfangWildfireManifest from '@/data/anim/bloodfang_wildfire.json';
 import whirlManifest from '@/data/anim/whirl.json';
 import quakeManifest from '@/data/anim/quake.json';
 import pierceManifest from '@/data/anim/pierce.json';
@@ -97,6 +98,7 @@ const MANIFESTS: Record<string, AnimManifest> = {
   rockshell: rockshellManifest as AnimManifest,
   roar: roarManifest as AnimManifest,
   bloodfang_roar: bloodfangRoarManifest as AnimManifest,
+  bloodfang_wildfire: bloodfangWildfireManifest as AnimManifest,
   // 四职业普攻 + 默认技能特效，全部黑底 additive。取用见 src/data/vfxCatalog.ts
   whirl: whirlManifest as AnimManifest,
   quake: quakeManifest as AnimManifest,

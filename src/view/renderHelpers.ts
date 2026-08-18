@@ -95,6 +95,56 @@ export function terrainBadge(terrainId: TerrainId): TerrainBadge | null {
 }
 
 /**
+ * 这一格地形的完整说明，一行一条。给「点开来读」的信息卡用。
+ *
+ * 和 5 个字的角标是分工关系，不是重复：角标只出**站上去会怎样**里最重要的那一条，
+ * 因为它必须在扫一眼的时间里读完；这里可以把移动消耗、视线遮挡、以及地形之间的
+ * 转移边（可燃、会烧尽）都说清楚——玩家是主动点开的，愿意读。
+ *
+ * 视线遮挡尤其只能在这里说。它不给角标：要塞章节整片都是城墙，每格挂一个「挡视线」
+ * 会把棋盘糊成一片文字；而它在对局中本来就是可见的——选中弓手时，被挡住的敌人
+ * 不会出现在可攻击目标里。
+ *
+ * 全部从 `TerrainSpec` 现算，理由同 `terrainBadge`：手写一份文案，改了数值忘了改字，
+ * 玩家看到的说明和实际结算就会对不上，而这比没有说明更糟。
+ */
+export function terrainInfoLines(terrainId: TerrainId): string[] {
+  const spec = getTerrainSpec(terrainId);
+  const out: string[] = [];
+  out.push(spec.moveCost === Infinity ? '不可通行' : `移动消耗 ${spec.moveCost}`);
+  // 遮挡在棋盘上是看不见的（城墙和深渊都只是"过不去"的样子），这里是玩家唯一
+  // 查得到的地方。两种不可通行地形必须把这条差别说明白，否则「为什么这堵墙挡箭、
+  // 那道裂谷不挡」就成了一条只能靠试出来的隐藏规则。
+  if (spec.blocksSight) {
+    out.push('阻挡远程攻击的视线');
+  } else if (spec.moveCost === Infinity) {
+    out.push('不阻挡远程攻击');
+  }
+  if (spec.atkMul !== 1) {
+    out.push(`站在此处造成的伤害 ${pct(spec.atkMul)}`);
+  }
+  if (spec.defMul !== 1) {
+    out.push(`站在此处受到的伤害 ${pct(spec.defMul)}`);
+  }
+  if (spec.dotPerRound > 0) {
+    out.push(`每回合流失 ${spec.dotPerRound} 点生命`);
+  }
+  if (spec.ignitesTo) {
+    out.push(`会被火点燃，烧成${getTerrainSpec(spec.ignitesTo).name}`);
+  }
+  if (spec.decay) {
+    out.push(`${spec.decay.rounds} 回合后变成${getTerrainSpec(spec.decay.to).name}`);
+  }
+  if (out.length === 1 && spec.moveCost === 1) out.push('没有特殊效果');
+  return out;
+}
+
+function pct(mul: number): string {
+  const p = Math.round((mul - 1) * 100);
+  return `${p > 0 ? '+' : ''}${p}%`;
+}
+
+/**
  * 把地形角标画进一个 `cellSize` 的格子（左上角）。格子太小就不画：
  * 挤成一团的 6px 字读不出来，反而盖住了地形贴图本身这个更强的识别信号。
  */

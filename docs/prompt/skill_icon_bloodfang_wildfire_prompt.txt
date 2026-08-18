@@ -1,0 +1,51 @@
+技能图标 · 第二章 Boss 皮肤「燎原咒火」（当前使用中）
+产出 → images/ui/skill_bloodfang_wildfire.png
+生成器：Cursor 内置 GenerateImage，aspect_ratio 1:1
+
+切图（单图，只做去洋红边）：
+    python3 scripts/split-tile-sheet.py --input <sheet>.png --out-dir <tmp> --size 72 \
+        --grid 1x1 --names bloodfang_wildfire
+    python3 scripts/despill-magenta.py <tmp>
+
+这是**敌方技能皮肤**图标（src/data/enemySkillCatalog.ts 的 bloodfang_wildfire），
+底层实现是 wild_burn：邻格 AoE + 点燃林地。它不进玩家商店，也不在可学列表——
+所以配色不用迁就玩家技能那两批的分组规则，反而要**一眼看出不是玩家的招**。
+
+和第一章 Boss 皮肤「血牙咆哮」（skill_bloodfang_roar.png）是同一个部族的一组：
+那个是血红犬齿环，这个是咒火。两者都要比玩家技能更「凶」——更暗的底色、
+更强的红。共同点是血牙红（#8B0000 一带），区别是这个带火。
+
+关键约束：
+- 必须和玩家的「松脂火把」（skill_temp_fo_torch）区分得开。火把是暖橙 + 木柄，
+  是工具；这个是**诅咒的火**，要更冷更邪——暗红到紫红的火焰，不要橙黄篝火感。
+  两个图标会在同一场战斗里先后出现，撞脸会让玩家以为 Boss 在放自己那招。
+- 不要画火把、不要柄、不要手：这是凭空烧起来的咒火，不是谁举着的东西。
+
+---
+
+A SINGLE GAME UI ICON representing an enemy BOSS SKILL in a cartoon fantasy tactics mobile game. The skill is a cursed wildfire that erupts from the ground and sets the forest alight.
+
+CRITICAL BACKGROUND: the entire background around the icon must be 100% solid flat MAGENTA, hex #FF00FF. It is a chroma key and will be deleted. No white, no grey, no gradient, no drop shadows onto the background.
+
+CRITICAL SIZE CONSTRAINT — the most important rule: this icon is displayed at only 26 to 56 pixels in the game. It must be ONE bold, chunky, instantly readable silhouette that survives being shrunk to the size of a fingernail. Think of a chess piece, not an illustration. NO thin lines, NO small parts, NO fine detail, NO tiny sparkles, NO text, NO numbers. If an element would be less than a tenth of the icon's width, delete it.
+
+CRITICAL — THIS SITS ON A CREAM WHITE CARD (#FCFCF6). The icon needs a THICK near-black outline (#1A1410) all the way around it and a saturated fill inside, so it does not float on the pale card.
+
+STYLE — must match the game's characters, which are chunky cartoon figures with heavy black outlines and flat colours:
+- A SOLID FILLED SILHOUETTE with a thick near-black outline. Not a line icon, not an outline icon — the shape is filled in.
+- Flat saturated colour fills, at most 3 colours plus the outline, plus one simple lighter shade for a single cel-shaded highlight.
+- Chunky, rounded shapes. Slightly exaggerated and toy-like.
+- No gradients, no glow, no bevel, no gloss, no photographic detail, no pixel art, no thin strokes.
+- Drawn straight-on, upright and centred.
+
+CONTENTS — a CURSED FLAME erupting upward from a small chunky patch of scorched ground:
+- The FLAME is the dominant element and fills most of the icon: three or four thick, rounded, upward-licking tongues, deliberately asymmetric so it reads as fire and not as a leaf or a heart.
+- Colour the flame DARK CRIMSON (#8B0000) in its outer body with a hotter MAGENTA-RED (#C2185B) inner core and one small brighter pink-red highlight near the top. It must read as UNNATURAL, CURSED fire — deliberately NOT the warm orange-and-yellow of a campfire or a torch.
+- At the base, one short chunky band of BLACKENED, CHARRED GROUND (#2A1F1A) that the flame rises out of, no wider than the flame itself.
+- Absolutely NO torch handle, NO wooden shaft, NO hand, NO arm, NO candle, NO lantern, NO firewood — nothing is holding this fire.
+- NO skulls, NO faces, NO runes, NO circles or badges behind the flame.
+
+LAYOUT RULES:
+1. EXACTLY 1 icon, centred, filling about 75% of the image with a clear magenta margin on all four sides.
+2. NO borders, NO dividing lines, NO frames, NO circles or badges behind the icon.
+3. NO text, no labels, no captions, no letters, no numbers, no watermark anywhere in the image.
