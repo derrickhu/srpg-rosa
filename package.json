@@ -5,7 +5,8 @@
   "type": "module",
   "description": "无尽纹章 - 微信小游戏（Pixi + TypeScript + Vite）",
   "scripts": {
-    "build": "vite build",
+    "build": "vite build && node scripts/check-package-size.mjs",
+    "check:size": "node scripts/check-package-size.mjs",
     "anim:build": "node scripts/tres2pixi.mjs",
     "anim:build:sprite": "node scripts/sprite2anim.mjs && node scripts/anim2token.mjs",
     "anim:tokens": "node scripts/anim2token.mjs",

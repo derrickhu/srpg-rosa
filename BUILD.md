@@ -71,6 +71,17 @@ npm run dev
 6. **画面缩在左上角、大小不对**  
    多为 **canvas 用了物理像素（× DPR）而 UI 仍按逻辑像素排版**。当前工程已改为 **`windowWidth` × `windowHeight` 逻辑尺寸** 与 Pixi 一致；若日后要做 huahua 级高清 + 设计稿缩放，再单独加整 `stage` 缩放即可。
 
+7. **上传报 `source size … exceed max limit 4MB`**  
+   主包超限。跑 `npm run check:size` 看是谁占的（`npm run build` 末尾也会自动跑一遍）。
+
+   注意 `project.config.json` 的 `packOptions.ignore` 是**黑名单**：凡是没被显式排除的顶层目录都会进主包。
+   所以往仓库里放任何非运行时内容（软著材料、参考图、导出中间产物）都会静默进包，
+   直到上传才被拦下——而报错只给一个总字节数，不告诉你是谁撑爆的。
+   发生过一次：`softcopyright/`（32MB 软著 PDF 与截图）进了包，上传报 19951KB。
+
+   运行时**真正需要**的只有：`minigame/`、`game.js`、`game.json`、`images/`（部分子目录已排除）、
+   `audio/`、`fonts/`、`config/`。当前合计约 2.1MB。新加目录时要么加进 ignore，要么放到仓库外。
+
 ## 6. 与参考工程的关系
 
 微信 + Pixi 适配与构建链路与本地项目 **`game2D_huahua`** 对齐；复杂问题可对照其 `vite.config.ts` 与 `pixiUnsafeEvalPatch` 行为排查。

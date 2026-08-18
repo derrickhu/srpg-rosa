@@ -96,6 +96,14 @@
         "type": "folder"
       },
       {
+        "value": "softcopyright",
+        "type": "folder"
+      },
+      {
+        "value": "godot-cdn",
+        "type": "folder"
+      },
+      {
         "value": ".pilot",
         "type": "folder"
       },
