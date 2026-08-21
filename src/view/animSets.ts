@@ -48,7 +48,7 @@ import blessRaysManifest from '@/data/anim/bless_rays.json';
  *
  * 两条生产路线，产物格式相同（共用 scripts/lib/animAtlas.mjs）：
  *   - scripts/tres2pixi.mjs    Godot SpriteFrames(.tres) → 清单
- *   - scripts/sprite2anim.mjs  AI 生图 + generate2dsprite 后处理 → 清单
+ *   - scripts/sprite2anim.mjs  工具生图 + generate2dsprite 后处理 → 清单
  */
 export type AnimBlend = 'normal' | 'add';
 
@@ -185,7 +185,7 @@ const CORE_SET_IDS: readonly string[] = [
   'arrow_hit',
   'thrust',
   'bash_hit',
-  // 默认技能特效：一进第一关就会看到（AI 杂兵也放），合计 170KB
+  // 默认技能特效：一进第一关就会看到（敌方杂兵也放），合计 170KB
   'whirl',
   'pierce',
   'quake',

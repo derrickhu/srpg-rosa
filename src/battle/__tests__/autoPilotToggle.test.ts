@@ -50,7 +50,7 @@ describe('战斗中切托管', () => {
     expect(sim.pending()).not.toBeNull();
   });
 
-  it('切托管：手上这个单位当场由 AI 接手打完，不是被跳过', () => {
+  it('切托管：手上这个单位当场由程序决策接手打完，不是被跳过', () => {
     const sim = setup('manual');
     stepUntilPending(sim);
     const uid = sim.pending()!.uid;
@@ -71,7 +71,7 @@ describe('战斗中切托管', () => {
     const sim = setup('manual');
     stepUntilPending(sim);
     sim.setAuto(true);
-    // 托管态下 AI 会一路代打，不再有人等指令
+    // 托管态下程序决策会一路代打，不再有人等指令
     sim.stepTurn();
     expect(sim.pending()).toBeNull();
 
@@ -95,7 +95,7 @@ describe('战斗中切托管', () => {
     let flips = 0;
     for (let i = 0; i < 400 && !sim.isDone(); i += 1) {
       if (sim.pending()) {
-        // 每次轮到玩家就切一次托管，让 AI 代打这一个，然后立刻收回来
+        // 每次轮到玩家就切一次托管，让程序决策代打这一个，然后立刻收回来
         sim.setAuto(true);
         sim.setAuto(false);
         flips += 1;

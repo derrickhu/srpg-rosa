@@ -87,7 +87,7 @@ export interface UnitDef {
   move: number;
   range: number;
   isRanged: boolean;
-  /** AI 索敌用：普攻 `strike.taunt` 或限时 `taunt` 效果，见 `effectiveUnitDef` */
+  /** 自动索敌用：普攻 `strike.taunt` 或限时 `taunt` 效果，见 `effectiveUnitDef` */
   taunt: boolean;
   /**
    * 作为**目标**时的伤害倍率，由限时 `guard` 效果算出；无减伤时为 1。
@@ -211,7 +211,7 @@ export type BattleEvent =
    * 那个事件，于是「现在轮到谁」这件事时有时无——行动顺序条要靠它，缺一次就会指错人。
    */
   | { type: 'turnStart'; uid: string; faction: Faction }
-  /** 移动前：本回合单位可达格（与 AI 相同 BFS 规则） */
+  /** 移动前：本回合单位可达格（与程序决策相同 BFS 规则） */
   | { type: 'moveRange'; uid: string; cells: Vec2[] }
   | { type: 'moveStep'; uid: string; from: Vec2; to: Vec2 }
   | {

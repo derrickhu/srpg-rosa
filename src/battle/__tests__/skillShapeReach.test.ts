@@ -9,7 +9,7 @@ import { castSkillManual, trySkillAfterMove } from '../skills';
  * 形状 × `timing` 必须是两个自由维度，且 `reach` 要真的区分「正好 N 格」和「N 格内」。
  *
  * 两条都是踩过的坑：
- * - AI 的 afterMove 路径曾经硬写 `shape.type !== 'lineBestRayAllFoes' continue`，
+ * - 程序决策的 afterMove 路径曾经硬写 `shape.type !== 'lineBestRayAllFoes' continue`，
  *   于是 afterMove 技能一换形状，自动模式就**静默不放**（人工模式一切正常）。
  * - 选单体的形状原先只有「距离正好等于 N」一种，远程点杀没法表达：
  *   取 3 就变成「只能打正好 3 格外的」，被贴脸反而无解。
@@ -42,7 +42,7 @@ function castHits(self: UnitState, units: UnitState[]): string[] | null {
 }
 
 describe('afterMove 技能不限于射线形状', () => {
-  it('速射是 afterMove + 点名单体，AI 也要放得出来', () => {
+  it('速射是 afterMove + 点名单体，程序决策也要放得出来', () => {
     const spec = getSkillSpec('snap')!;
     // 前提写进断言：这个测试的意义全在「afterMove 配了一个非射线形状」上，
     // 哪天速射改回射线，这里该提醒改测试而不是安静地失去覆盖。
@@ -53,7 +53,7 @@ describe('afterMove 技能不限于射线形状', () => {
     const foe = unit('e1', 'sword', { x: 2, y: 3 }, 'enemy');
     const events = trySkillAfterMove(self, UNIT_DEFS, [self, foe], emptyTerrain(7, 7));
     const cast = events.find((e) => e.type === 'skillCast');
-    expect(cast?.type, 'AI 的 afterMove 路径漏掉了非射线形状').toBe('skillCast');
+    expect(cast?.type, '程序决策的 afterMove 路径漏掉了非射线形状').toBe('skillCast');
     expect(foe.hp).toBeLessThan(UNIT_DEFS.sword.base.maxHp);
   });
 

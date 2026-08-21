@@ -366,7 +366,7 @@ export class GameFlow {
    * 扫荡：**直接判胜**，不建模拟器、不进战斗页、不等图集。
    *
    * 前提是这一关以前赢过（`canSweep`），所以再模拟一遍没有信息价值——而且模拟会有
-   * 输的可能：同一支队伍同一关，玩家上次赢了、这次 AI 代打输了，对他来说就是
+   * 输的可能：同一支队伍同一关，玩家上次赢了、这次自动代打输了，对他来说就是
    * 「点了扫荡结果倒扣一次配额还没奖励」，无从解释。扫荡是兑现已有结果，不是重打。
    *
    * 奖励走和手打完全一样的 `applyVictory`：金币、三选一、通关魂晶一分不少。
@@ -408,10 +408,10 @@ export class GameFlow {
     const dungeon = currentDungeon(this.state);
     // 默认纯人工：走位、目标、技能全由玩家决定。
     //
-    // 上一版只把技能交给玩家，移动和目标仍归 AI。结果是那一下点击既选不了位置也选不了对象，
+    // 上一版只把技能交给玩家，移动和目标仍归程序决策。结果是那一下点击既选不了位置也选不了对象，
     // 而且要等到该单位下次行动才生效——玩家能感到自己在操作，却影响不了任何结果。
     // 战棋的策略全部长在「谁站哪儿」上，不交出走位就等于没有策略。
-    // 自动模式（扫荡）走同一个引擎的 AI 分支，不存在两套结算规则。
+    // 自动模式（扫荡）走同一个引擎的程序决策分支，不存在两套结算规则。
     const endless = isEndlessRun(this.state);
     const sim = createBattleSim(units, map, UNIT_DEFS, {
       aiDifficulty: endless ? endlessAiDifficulty(run.endless?.wave ?? 1) : stage.aiDifficulty,

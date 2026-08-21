@@ -43,7 +43,7 @@ describe('runBattle', () => {
     expect(report.winner).toBe('player');
   });
 
-  it('respects AI difficulty parameter', () => {
+  it('respects decision difficulty parameter', () => {
     const units: UnitState[] = [
       makeUnit('p1', 'shield', 'player', { x: 0, y: 2 }),
       makeUnit('e1', 'bow', 'enemy', { x: 2, y: 0 }),

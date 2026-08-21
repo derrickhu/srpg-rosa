@@ -139,7 +139,7 @@ describe('纯人工回合', () => {
     stepUntilPending(sim);
     sim.commandAttack('p1', 'e1');
     const afterAtk = sim.pending();
-    // 技能还在手上，且还没走——应能继续移动（与 AI 先技能再走位一致）
+    // 技能还在手上，且还没走——应能继续移动（与程序决策先技能再走位一致）
     expect(afterAtk).not.toBeNull();
     expect(afterAtk?.canMove).toBe(true);
     expect(afterAtk?.canUndoMove).toBe(false);
@@ -193,7 +193,7 @@ describe('纯人工回合', () => {
     expect(sim.getUnit('e1')!.hp).toBe(hpBefore);
   });
 
-  it('技能和普攻可以在同一回合都用（与 AI 的输出口径一致）', () => {
+  it('技能和普攻可以在同一回合都用（与程序决策的输出口径一致）', () => {
     const sim = setupAdjacent();
     stepUntilPending(sim);
     const skillEvents = sim.commandSkill('p1');
@@ -366,7 +366,7 @@ describe('自动模式与跳过', () => {
     expect(sim.isDone()).toBe(true);
   });
 
-  it('人工模式中途跳过：剩下的交给 AI 打完', () => {
+  it('人工模式中途跳过：剩下的交给程序决策打完', () => {
     const sim = setupAdjacent();
     stepUntilPending(sim);
     expect(sim.pending()).not.toBeNull();
@@ -379,7 +379,7 @@ describe('自动模式与跳过', () => {
     const sim = setupAdjacent();
     stepUntilPending(sim);
     const hpBefore = sim.getUnit('e1')!.hp;
-    // 玩家只走了位（这里原地不动），随即跳过 —— AI 应当替他把这一刀补上
+    // 玩家只走了位（这里原地不动），随即跳过 —— 程序决策应当替他把这一刀补上
     sim.runToEnd();
     expect(sim.getUnit('e1')!.hp).toBeLessThan(hpBefore);
   });
