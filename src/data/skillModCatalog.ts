@@ -162,7 +162,7 @@ function isAoE(spec: SkillSpec): boolean {
 
 /** 点名打一个敌人的形状（「溅射」把它变成小范围） */
 function isSingleFoePick(spec: SkillSpec): boolean {
-  return spec.shape.type === 'neighborPickLowest' || spec.shape.type === 'neighborPickFoe';
+  return spec.shape.type === 'neighborPickFoe';
 }
 
 /** 近战三职业的专属技（嘲讽类词条只在他们身上是正收益） */
@@ -765,6 +765,46 @@ const EXCLUSIVE_SEEDS: readonly ModSeed[] = [
         { kind: 'spdBonus', addSpd: 1, rounds: 2 },
       ),
   },
+  {
+    id: 'ex_ember_reap',
+    name: '燃尽',
+    rarity: 'rare',
+    maxStacks: 1,
+    only: ['ember'],
+    fits: () => true,
+    describe: () => '炎弹：目标血量低于 50% 时，伤害提升 80%',
+    apply: (spec) => withExecute(spec, 0.5, 1.8),
+  },
+  {
+    id: 'ex_flame_ignite',
+    name: '点燃',
+    rarity: 'rare',
+    maxStacks: 1,
+    only: ['flame_ring'],
+    fits: () => true,
+    describe: () => '炎环：命中后附加灼烧，每回合 -4 血（2 回合）',
+    apply: (spec) => mergeFoe(spec, { kind: 'poison', dmgPerRound: 4, rounds: 2 }),
+  },
+  {
+    id: 'ex_heal_spring',
+    name: '涌泉',
+    rarity: 'rare',
+    maxStacks: 1,
+    only: ['heal_touch'],
+    fits: () => true,
+    describe: () => '圣疗：治疗量提升 16，且目标速度 +2（2 回合）',
+    apply: (spec) => mergeAlly(boostHeal(spec, 16), { kind: 'spdBonus', addSpd: 2, rounds: 2 }),
+  },
+  {
+    id: 'ex_ward_aegis',
+    name: '圣盾',
+    rarity: 'rare',
+    maxStacks: 1,
+    only: ['ward_prayer'],
+    fits: () => true,
+    describe: () => '守护祷言：减伤改为 50%，持续 3 回合',
+    apply: (spec) => setAlly(spec, { kind: 'guard', reduceRatio: 0.5, rounds: 3 }),
+  },
 ];
 
 /**
@@ -798,7 +838,8 @@ function toDef(seed: ModSeed): SkillModDef {
 const BY_ID = new Map(DEFS.map((d) => [d.id, d]));
 
 export function getSkillMod(id: string): SkillModDef | undefined {
-  return BY_ID.get(id);
+  const remapped = id === 'ex_arcane_starfire' ? 'ex_flame_ignite' : id;
+  return BY_ID.get(remapped);
 }
 
 export function allSkillMods(): SkillModDef[] {
@@ -811,7 +852,8 @@ export function isExclusiveMod(def: SkillModDef): boolean {
 
 /** 这条技能有哪些专属词条（供测试与图鉴类界面用） */
 export function exclusiveModsForSkill(skillId: string): SkillModDef[] {
-  return DEFS.filter((d) => d.scope.kind === 'exclusive' && d.scope.skillIds.includes(skillId));
+  const id = skillId === 'arcane_pulse' ? 'flame_ring' : skillId;
+  return DEFS.filter((d) => d.scope.kind === 'exclusive' && d.scope.skillIds.includes(id));
 }
 
 /**

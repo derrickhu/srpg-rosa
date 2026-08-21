@@ -1,0 +1,72 @@
+# 祭司 v1 —— 杖击 2x2，每朝向一张（generate2dsprite --mode attack）
+#
+# 参考图：art/sprite-runs/healer/identity-ref-<朝向>.png（行走处理后的单帧）
+# 不要传 4x4 行走 sheet 当参考图。
+# 处理时 --scale-profile art/sprite-runs/healer/scale-profile.json
+#         --max-profile-scale-drift 0.6
+#
+# attack_right 由 attack_left 镜像，不出图。下面 <朝向段落> 三选一。
+# 动作是沿自身中线把太阳杖往前捅，不要横扫。
+
+CRITICAL BACKGROUND REQUIREMENT, THIS OVERRIDES EVERYTHING ELSE: the background of the
+image must be 100% solid flat MAGENTA, hex #FF00FF, bright pure pink-purple. NOT black. NOT
+white. NOT grey. NOT a gradient. Every single pixel that is not part of the character must be
+exactly magenta #FF00FF, including the areas between the cells. The background is a chroma
+key and a black background makes the whole image unusable.
+
+The attached reference image contains ONE SINGLE character frame. It defines only the
+CHARACTER IDENTITY and the ART STYLE. It does NOT define the layout of the image you must
+produce. Do NOT copy the reference's framing, and do NOT produce a walk cycle or a 4x4
+sheet — produce the 2x2 attack sheet described below.
+
+Match the reference exactly on: the same chibi boy priest, same cream-white robe, same gold
+collar band, same mint-green sash, same warm brown hair, same tan boots, same thick brown
+staff with a huge gold sun disc (circle plus six thick triangular rays), same thick
+near-black outlines, same flat fills with light cel shading, same 3/4 top-down camera,
+same giant-head-tiny-body proportions. Only the pose changes.
+
+A 2x2 sprite sheet: 4 frames of a single STAFF THRUST attack. <朝向段落>. He jabs the sun staff
+straight forward along his own centerline — NOT a wide horizontal sweep. The sun disc is the
+thing that moves; the change between frames must be obvious in silhouette.
+
+  朝下：the character FACING DOWN toward the camera the whole time. Face fully visible. He
+        thrusts the staff FORWARD toward the viewer, sun disc leading, staying on his vertical
+        centerline.
+  朝左：the character seen in LEFT SIDE PROFILE, facing LEFT the whole time and thrusting toward
+        the left. He stays in LEFT profile in all 4 frames — never turn him toward the camera,
+        never flip him to face right.
+  朝上：the character seen FROM BEHIND, facing UP and AWAY from the camera the whole time,
+        thrusting away from the viewer. His face is never visible. The huge gold sun disc must
+        still be plainly visible in every frame.
+
+FRAME ORDER, reading left-to-right then top-to-bottom:
+  Frame 1 (top-left):     WIND-UP. Staff pulled back beside his shoulder, sun disc near his
+                          head, knees bent, torso coiled.
+  Frame 2 (top-right):    THRUST. Staff driven forward, sun disc at about chest height in front
+                          of the body, torso leaning into the jab.
+  Frame 3 (bottom-left):  IMPACT. Full extension — the sun disc is rammed as far forward as it
+                          goes, arms stretched, leading foot planted, torso lunged. Strongest
+                          pose. Keep the staff on his own centerline; never let the sun reach
+                          sideways past his shoulders.
+  Frame 4 (bottom-right): RECOVERY. Staff lifted back to a neutral carry beside the body, sun
+                          up, torso straightening.
+
+ABSOLUTE RULES:
+1. Background is 100% solid flat magenta #FF00FF everywhere, including between the cells.
+   No gradient, no vignette, no ground shadow, no drop shadow, no black.
+2. EXACTLY 4 equal-size cells in a 2x2 grid. Every cell the same width and height.
+3. NO borders, NO dividing lines, NO gutters, NO frames between cells.
+4. IDENTICAL BODY SCALE and IDENTICAL camera distance in all 4 cells. Measure him from the
+   top of his hair to the soles of his boots, ignoring the staff: that height must be the
+   same in all 4 cells. Do not zoom in on the action.
+5. His BODY (hair-top to boots, staff excluded) fills only about 40% of the cell height,
+   centered in its cell, leaving a very wide empty magenta margin on all four sides.
+   Draw it small. A small character with a lot of empty margin is CORRECT.
+6. NOTHING may touch or cross a cell edge — not the sun rays, not a boot. Keep the staff
+   inside the character's own vertical column. If a pose does not fit, make the character smaller.
+7. Feet rest on the same horizontal baseline in every cell.
+8. Draw the CHARACTER BODY ONLY. NO motion-blur streaks, NO energy trail, NO holy VFX, NO
+   spell circle, NO impact flash, NO dust, NO sparks. The spell VFX is drawn separately.
+9. NO purple, magenta, pink, or violet anywhere on the character (the background magenta is
+   the key colour, not a costume colour).
+10. NO text of any kind anywhere in the image. No labels, no numbers, no arrows, no UI, no watermark.

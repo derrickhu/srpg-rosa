@@ -270,6 +270,14 @@ export function partyCharacters(state: MvpGameState): Character[] {
   return out;
 }
 
+/** 本场实际上场的角色（布阵格上有人）。战后词条只发给这些人。 */
+export function deployedCharacters(state: MvpGameState): Character[] {
+  const run = state.run;
+  if (!run) return [];
+  const on = new Set(run.placements.map((p) => p.rosterId));
+  return partyCharacters(state).filter((m) => on.has(m.rosterId));
+}
+
 /** 替补席：本局阵容中尚未上阵者 */
 export function benchCharacters(state: MvpGameState): Character[] {
   const run = state.run;

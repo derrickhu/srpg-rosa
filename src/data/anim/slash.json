@@ -1,6 +1,6 @@
 {
   "id": "slash",
-  "source": "godot/art/vfx/slash/slash_frames.tres",
+  "source": "art/vfx-runs/slash",
   "blend": "add",
   "image": "images/anim/slash.png",
   "meta": {
@@ -15,10 +15,10 @@
     "frameSize": 256,
     "subjectHeight": 256,
     "baselineY": 256,
-    "ref": "frames/slash_00.png"
+    "ref": "slash/slash-1.png"
   },
   "frames": {
-    "frames/slash_00.png": {
+    "slash/slash-1.png": {
       "frame": {
         "x": 2,
         "y": 2,
@@ -38,7 +38,7 @@
         "h": 256
       }
     },
-    "frames/slash_01.png": {
+    "slash/slash-2.png": {
       "frame": {
         "x": 260,
         "y": 2,
@@ -58,7 +58,7 @@
         "h": 256
       }
     },
-    "frames/slash_02.png": {
+    "slash/slash-3.png": {
       "frame": {
         "x": 518,
         "y": 2,
@@ -78,7 +78,7 @@
         "h": 256
       }
     },
-    "frames/slash_03.png": {
+    "slash/slash-4.png": {
       "frame": {
         "x": 2,
         "y": 260,
@@ -98,9 +98,29 @@
         "h": 256
       }
     },
-    "frames/slash_04.png": {
+    "slash/slash-5.png": {
       "frame": {
         "x": 260,
+        "y": 260,
+        "w": 256,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 256,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "slash/slash-6.png": {
+      "frame": {
+        "x": 518,
         "y": 260,
         "w": 256,
         "h": 256
@@ -122,13 +142,14 @@
   "animations": {
     "slash": {
       "loop": false,
-      "fps": 16,
+      "fps": 24,
       "frames": [
-        "frames/slash_00.png",
-        "frames/slash_01.png",
-        "frames/slash_02.png",
-        "frames/slash_03.png",
-        "frames/slash_04.png"
+        "slash/slash-1.png",
+        "slash/slash-2.png",
+        "slash/slash-3.png",
+        "slash/slash-4.png",
+        "slash/slash-5.png",
+        "slash/slash-6.png"
       ]
     }
   }

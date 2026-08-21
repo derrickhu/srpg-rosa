@@ -12,8 +12,7 @@ import { instantiateCharacter } from '@/game/characterFactory';
 import type { Character } from '@/game/characterTypes';
 import {
   createRunState,
-  getCharacter,
-  partyCharacters,
+  deployedCharacters,
   currentDungeon,
   currentNode,
   currentStage,
@@ -200,6 +199,9 @@ export function consumeSweep(state: MvpGameState): void {
  *   比不发还糟——那张牌摆在那儿只能弃掉，三选一变二选一。
  * - **加什么**：词条本身。
  *
+ * 池子只含**本场上场**的人（`deployedCharacters`）。替补没打仗，
+ * 给他发词条等于白嫖一轮强化，也让三选一的「给谁」失去取舍。
+ *
  * 尽量凑**三个不同的人**：三张卡都是同一个角色时，玩家的选择退化成
  * 「给雷恩挑哪条词条」，队伍层面的取舍就没了。凑不齐才允许重复。
  */
@@ -283,7 +285,7 @@ function drawFrom(pool: WeightedLoot[], avoid: ReadonlySet<string>, rng: LootRng
 export function rollLoot(state: MvpGameState, rng: LootRng = Math.random): LootOption[] {
   // 节点越深，稀有/史诗越常见。前几场就狂出史诗的话，后面的三选一只会越来越平淡。
   const depth = state.run?.endless?.wave ?? state.run?.nodeIndex ?? 0;
-  const byChar = shuffleWith(partyCharacters(state), rng).map((m) =>
+  const byChar = shuffleWith(deployedCharacters(state), rng).map((m) =>
     lootCandidatesFor(state, m, depth),
   );
 

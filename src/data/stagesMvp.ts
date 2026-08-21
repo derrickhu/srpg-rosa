@@ -1,4 +1,4 @@
-import type { TerrainId, UnitKind } from '@/battle/types';
+import type { TerrainId, TroopKind, UnitKind } from '@/battle/types';
 import { emptyTerrain, type TerrainGrid } from '@/battle/grid';
 import type { AiDifficulty } from '@/battle/ai';
 import { UNIT_DEFS } from '@/data/unitDefs';
@@ -111,7 +111,7 @@ function euid(): string {
 // 一章的杂兵不值得每只做四方向；精英和 Boss 才用完整图集。
 
 /** 第一章杂兵模板。无尽试炼复用同一套，不要各抄一份数字。 */
-export const CHAPTER1_ROOKIE: Record<UnitKind, { name: string; animSet: string; stats: StageEnemyStatOverride }> = {
+export const CHAPTER1_ROOKIE: Record<TroopKind, { name: string; animSet: string; stats: StageEnemyStatOverride }> = {
   sword: { name: '黏泥怪', animSet: 'slime', stats: { maxHp: 78, atk: 15 } },
   bow: { name: '孢子菇', animSet: 'sporecap', stats: { maxHp: 48, atk: 18 } },
   cavalry: { name: '血牙狼', animSet: 'bloodwolf', stats: { maxHp: 70, atk: 16 } },
@@ -120,7 +120,7 @@ export const CHAPTER1_ROOKIE: Record<UnitKind, { name: string; animSet: string; 
 
 const ROOKIE = CHAPTER1_ROOKIE;
 
-function rookie(defId: UnitKind, x: number, y: number): StageEnemySpawn {
+function rookie(defId: TroopKind, x: number, y: number): StageEnemySpawn {
   const r = ROOKIE[defId];
   return { defId, x, y, uid: euid(), name: r.name, animSet: r.animSet, stats: { ...r.stats } };
 }
@@ -298,14 +298,14 @@ const c1_7: StageBlueprint = {
  * 这里不写 `stats` 就是标准值。刻意不抄一份数字进来：抄了就会和
  * `UNIT_DEFS` 走岔，而走岔的表现只是「第二章怪莫名变软」，没人查得出来。
  */
-export const CHAPTER2_FOREST: Record<UnitKind, { name: string; animSet: string }> = {
+export const CHAPTER2_FOREST: Record<TroopKind, { name: string; animSet: string }> = {
   sword: { name: '树脂黏泥', animSet: 'slime' },
   bow: { name: '毒伞菇', animSet: 'sporecap' },
   cavalry: { name: '影林狼', animSet: 'bloodwolf' },
   shield: { name: '苔甲龟', animSet: 'rockshell' },
 };
 
-function forest(defId: UnitKind, x: number, y: number): StageEnemySpawn {
+function forest(defId: TroopKind, x: number, y: number): StageEnemySpawn {
   const f = CHAPTER2_FOREST[defId];
   return { defId, x, y, uid: euid(), name: f.name, animSet: f.animSet };
 }
@@ -324,7 +324,7 @@ const YOUNG_RATIO = 0.7;
  * 面板从 `UNIT_DEFS` 现算而不是手抄七折后的数字：抄下来就会和基准走岔，
  * 而走岔的表现只是「这只怪好像有点软」。
  */
-function forestYoung(defId: UnitKind, x: number, y: number): StageEnemySpawn {
+function forestYoung(defId: TroopKind, x: number, y: number): StageEnemySpawn {
   const f = CHAPTER2_FOREST[defId];
   const b = UNIT_DEFS[defId].base;
   return {
@@ -543,19 +543,19 @@ const c2_6: StageBlueprint = {
  * 不写 `animSet` 就是默认按兵种取图（敌方会自动加红 tint），
  * 所以这里只给名字。同样刻意不抄 `stats`——抄了就会和 `UNIT_DEFS` 走岔。
  */
-export const CHAPTER3_GARRISON: Record<UnitKind, { name: string }> = {
+export const CHAPTER3_GARRISON: Record<TroopKind, { name: string }> = {
   sword: { name: '血牙守卒' },
   bow: { name: '城头弓手' },
   cavalry: { name: '巡墙狼骑' },
   shield: { name: '闸门盾卫' },
 };
 
-function garrison(defId: UnitKind, x: number, y: number): StageEnemySpawn {
+function garrison(defId: TroopKind, x: number, y: number): StageEnemySpawn {
   return { defId, x, y, uid: euid(), name: CHAPTER3_GARRISON[defId].name };
 }
 
 /** 第三章的填充档位，同 `forestYoung`（七折面板），名字换成「新卒」 */
-function garrisonGreen(defId: UnitKind, x: number, y: number): StageEnemySpawn {
+function garrisonGreen(defId: TroopKind, x: number, y: number): StageEnemySpawn {
   const b = UNIT_DEFS[defId].base;
   return {
     defId, x, y, uid: euid(),

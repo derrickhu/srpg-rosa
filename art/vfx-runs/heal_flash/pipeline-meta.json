@@ -1,0 +1,65 @@
+{
+  "source": "scripts/vfx-sheet.py",
+  "input": "/Users/rosa/.cursor/projects/Users-rosa-rosa-games-srpg-rosa/assets/heal_flash_3x3.png",
+  "target": "vfx",
+  "mode": "vfx_sheet",
+  "rows": 3,
+  "cols": 3,
+  "cell_size": 256,
+  "threshold": 22,
+  "frame_labels": [
+    "heal_flash-1",
+    "heal_flash-2",
+    "heal_flash-3",
+    "heal_flash-4",
+    "heal_flash-5",
+    "heal_flash-6",
+    "heal_flash-7",
+    "heal_flash-8",
+    "heal_flash-9"
+  ],
+  "shared_crop_side": 295,
+  "crop_offsets": [
+    {
+      "x": 19,
+      "y": 34
+    },
+    {
+      "x": 22,
+      "y": 34
+    },
+    {
+      "x": 11,
+      "y": 35
+    },
+    {
+      "x": 20,
+      "y": 18
+    },
+    {
+      "x": 21,
+      "y": 18
+    },
+    {
+      "x": 11,
+      "y": 19
+    },
+    {
+      "x": 20,
+      "y": 0
+    },
+    {
+      "x": 20,
+      "y": 0
+    },
+    {
+      "x": 10,
+      "y": 0
+    }
+  ],
+  "empty_frames": [],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}

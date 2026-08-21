@@ -31,9 +31,8 @@ const ROOT = path.resolve(__dirname, '..');
  *            降采样对显示尺寸透明（仅清晰度变化）。棋盘单位显示约 100px，512 富余可降。
  */
 const SETS = [
-  // sword 已迁到 AI 管线（scripts/sprite2anim.mjs 的 SETS），Godot 手搭那版是旧配色旧比例。
-  // 两个脚本写同一个 src/data/anim 目录，同 id 会互相覆盖，所以这里必须删干净而不是留着。
-  { id: 'slash', tres: 'godot/art/vfx/slash/slash_frames.tres', blend: 'add', downscale: 1 },
+  // slash 已迁到 AI 管线（scripts/sprite2anim.mjs 的 art/vfx-runs/slash）。
+  // 两个脚本写同一个 src/data/anim 目录，同 id 会互相覆盖。
 ];
 
 function resToDisk(resPath) {

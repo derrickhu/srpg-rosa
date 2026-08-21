@@ -136,6 +136,64 @@ function _windowDispatchEvent(type, event) {
   }
 }
 GameGlobal.__windowDispatchEvent = _windowDispatchEvent;
+GameGlobal.__windowListenerWrapOk = false;
+
+/** 把 add/removeEventListener 装到 obj 上；只读时改 defineProperty / 原型。 */
+function _tryInstall(obj, name, fn) {
+  if (!obj) return false;
+  try {
+    obj[name] = fn;
+    if (obj[name] === fn) return true;
+  } catch (e) { /* 只读 */ }
+  try {
+    _origDefineProperty.call(Object, obj, name, {
+      configurable: true,
+      enumerable: true,
+      writable: true,
+      value: fn,
+    });
+    if (obj[name] === fn) return true;
+  } catch (e) { /* 不可配置 */ }
+  return false;
+}
+
+/**
+ * 包装 window 的监听器：注册时同时写入 _windowListeners，触摸桥才能喂到 Pixi。
+ * 返回是否包装成功。失败时不要当 fatal，TouchEvent 会走原生 dispatchEvent。
+ */
+function wrapWindowListeners(target) {
+  if (!target || typeof target.addEventListener !== 'function') return false;
+  var nativeAdd = target.addEventListener.bind(target);
+  var nativeRemove = typeof target.removeEventListener === 'function'
+    ? target.removeEventListener.bind(target)
+    : function () {};
+
+  function wrappedAdd(type, handler, options) {
+    _windowAddEventListener(type, handler, options);
+    try { return nativeAdd(type, handler, options); } catch (e) { /* 原生可能不认 pointer 事件 */ }
+  }
+  function wrappedRemove(type, handler, options) {
+    _windowRemoveEventListener(type, handler);
+    try { return nativeRemove(type, handler, options); } catch (e) { /* ignore */ }
+  }
+
+  var ok = _tryInstall(target, 'addEventListener', wrappedAdd)
+    && _tryInstall(target, 'removeEventListener', wrappedRemove);
+  // 模拟器的 Window 原型是宿主共享的，改原型会波及 IDE 自己的窗口，只改实例。
+  if (!ok && !isDevtools) {
+    var proto = Object.getPrototypeOf(target);
+    if (proto && proto !== Object.prototype) {
+      ok = _tryInstall(proto, 'addEventListener', wrappedAdd)
+        && _tryInstall(proto, 'removeEventListener', wrappedRemove);
+    }
+  }
+  if (ok) {
+    console.log('[pixi-adapter] window.addEventListener 已包装');
+  } else {
+    console.log('[pixi-adapter] window.addEventListener 只读，触摸改走原生 dispatchEvent');
+  }
+  return ok;
+}
 
 // ======== 事件构造函数 ========
 function _PointerEvent(type, opts) { this.type = type; Object.assign(this, opts || {}); }
@@ -193,25 +251,11 @@ if (isDevtools) {
     } catch (e) { /* 只读属性忽略 */ }
   }
 
-  // 关键修复：包装 window.addEventListener / removeEventListener
-  // PixiJS EventSystem 在 globalThis(window) 上注册 pointermove / pointerup，
-  // 但 adapter 通过 _windowListeners 分发触摸事件——两个系统完全隔离。
-  // 包装后 handler 会同时进入 _windowListeners，adapter 的 dispatchToWindow 就能触达 PixiJS。
-  try {
-    var _nativeWinAdd = _win.addEventListener.bind(_win);
-    var _nativeWinRemove = _win.removeEventListener.bind(_win);
-    _win.addEventListener = function(type, handler, options) {
-      _windowAddEventListener(type, handler, options);
-      return _nativeWinAdd(type, handler, options);
-    };
-    _win.removeEventListener = function(type, handler, options) {
-      _windowRemoveEventListener(type, handler);
-      return _nativeWinRemove(type, handler, options);
-    };
-    console.log('[pixi-adapter] 模拟器 window.addEventListener 已包装');
-  } catch (e) {
-    console.warn('[pixi-adapter] 包装 window.addEventListener 失败:', e);
-  }
+  // PixiJS EventSystem 在 window 上注册 pointermove / pointerup。
+  // 微信 3.15+ 模拟器把 window.addEventListener 做成只读，直接赋值会抛
+  // “Cannot assign to read only property”。能包就包进 _windowListeners；
+  // 包不上则标记失败，TouchEvent 改走原生 dispatchEvent。
+  GameGlobal.__windowListenerWrapOk = wrapWindowListeners(_win);
 
   // document 属性补充
   try {
@@ -247,17 +291,29 @@ if (isDevtools) {
     var force = _forceOverwrite.has(key);
     // 挂到真正的全局作用域
     if (force || typeof _realGlobal[key] === 'undefined') {
-      try { _realGlobal[key] = val; } catch (e) { /* 忽略 */ }
+      if (!_tryInstall(_realGlobal, key, val)) {
+        try { _realGlobal[key] = val; } catch (e) { /* 只读 */ }
+      }
     }
     // 同时挂到 GameGlobal
     if (force || typeof GameGlobal[key] === 'undefined') {
-      try { GameGlobal[key] = val; } catch (e) { /* 忽略 */ }
+      if (!_tryInstall(GameGlobal, key, val)) {
+        try { GameGlobal[key] = val; } catch (e) { /* 只读 */ }
+      }
     }
+  }
+
+  GameGlobal.__windowListenerWrapOk =
+    _realGlobal.addEventListener === _windowAddEventListener
+    || (_realGlobal.self && _realGlobal.self.addEventListener === _windowAddEventListener);
+  if (!GameGlobal.__windowListenerWrapOk) {
+    GameGlobal.__windowListenerWrapOk = wrapWindowListeners(_realGlobal);
   }
 
   // 确认事件系统已正确挂载
   console.log('[pixi-adapter] 真机事件系统检查:',
-    'globalThis.addEventListener === _windowAddEventListener:', _realGlobal.addEventListener === _windowAddEventListener,
+    'wrapOk:', GameGlobal.__windowListenerWrapOk,
+    ', globalThis.addEventListener === _windowAddEventListener:', _realGlobal.addEventListener === _windowAddEventListener,
     ', self.addEventListener === _windowAddEventListener:', (_realGlobal.self && _realGlobal.self.addEventListener === _windowAddEventListener));
 }
 

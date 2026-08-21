@@ -121,6 +121,25 @@ function registerTouchEvents() {
     if (typeof GameGlobal !== 'undefined' && GameGlobal.__windowDispatchEvent) {
       GameGlobal.__windowDispatchEvent(type, event);
     }
+    // 模拟器 window.addEventListener 只读、包装失败时，Pixi 听的是原生 window。
+    // 已包装成功就不要再原生派发，否则同一 handler 会进两次。
+    if (typeof GameGlobal !== 'undefined' && GameGlobal.__windowListenerWrapOk) return;
+    try {
+      var win = typeof window !== 'undefined' ? window : null;
+      if (!win || typeof win.dispatchEvent !== 'function') return;
+      var native = null;
+      if (typeof PointerEvent === 'function') {
+        native = new PointerEvent(type, event);
+      } else if (typeof Event === 'function') {
+        native = new Event(type, { bubbles: true, cancelable: true });
+        for (var k in event) {
+          if (typeof event[k] !== 'function') {
+            try { native[k] = event[k]; } catch (e) { /* 只读字段 */ }
+          }
+        }
+      }
+      if (native) win.dispatchEvent(native);
+    } catch (e) { /* 原生 Event 构造失败就忽略 */ }
   }
 
   // 诊断：3秒后输出已注册的 canvas 事件监听器类型

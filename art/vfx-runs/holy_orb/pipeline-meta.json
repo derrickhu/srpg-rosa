@@ -1,0 +1,19 @@
+{
+  "source": "shape-clarity-regen-2026-08",
+  "target": "vfx",
+  "mode": "vfx_frames",
+  "cell_size": 256,
+  "threshold": 22,
+  "frame_labels": [
+    "holy_orb-1",
+    "holy_orb-2",
+    "holy_orb-3",
+    "holy_orb-4",
+    "holy_orb-5",
+    "holy_orb-6"
+  ],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}

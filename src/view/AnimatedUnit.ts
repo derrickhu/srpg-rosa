@@ -9,6 +9,15 @@ import {
   sharesPlayerArt,
   type AnimManifest,
 } from '@/view/animSets';
+import {
+  HIT_FLASH_MS,
+  HIT_KNOCK_MS,
+  HIT_KNOCK_PX,
+  createHitFlashOverlay,
+  hitFlashLift,
+  hitKnockDisplacement,
+  syncHitFlashOverlay,
+} from '@/view/battle/hitFeel';
 
 /** 缺 metrics 的旧清单回退用的源尺寸基准（Godot 帧为 512px 方图） */
 const SOURCE_FRAME_SIZE = 512;
@@ -84,9 +93,13 @@ export interface AnimatedUnitHandle {
   playAttack(dx: number, dy: number): number;
   /**
    * 受击闪白。打击感里最便宜也最有效的一项：告诉玩家「就是这一下打到了他」。
-   * 敌人平时是染红的，闪白因此格外明显。
+   * 叠一张白色 ADD 层，不用 tint、也不用 Filter——微信小游戏的 FBO 经常是空的。
    */
   flashHit(ms: number): void;
+  /**
+   * 受击：闪白 + 沿 (nx, ny) 短震。方向是攻击者→受击者的单位向量。
+   */
+  playHit(nx: number, ny: number): void;
   destroy(): void;
 }
 
@@ -117,6 +130,7 @@ export function createAnimatedUnit(
   setId: string,
   faction: 'player' | 'enemy',
   cell: number,
+  ticker: PIXI.Ticker = PIXI.Ticker.shared,
 ): AnimatedUnitHandle | null {
   const manifest: AnimManifest | null = getAnimManifest(setId);
   if (!manifest || !animSetReady(setId)) return null;
@@ -180,19 +194,26 @@ export function createAnimatedUnit(
   let lungeT = -1;
   let lungeX = 0;
   let lungeY = 0;
+  let hitT = -1;
+  let hitNx = 1;
+  let hitNy = 0;
+  let flashT = -1;
+  let flashDur = HIT_FLASH_MS;
+  let flashOverlay: PIXI.Sprite | null = null;
 
-  // 呼吸和突刺都在写 sprite 的 scale/position，必须由同一个回调统一算完再写一次，
+  // 呼吸、突刺、受击短震都在写 sprite 的 scale/position，必须由同一个回调统一算完再写一次，
   // 否则两者会互相覆盖（突刺期间呼吸把 y 拉回去）。
   function tick(): void {
     // 切场景时整棵树被 destroy，存活单位的 handle.destroy 不会被逐个调用（只有阵亡才调），
     // 回调不自摘就会一直跑在已销毁的 sprite 上。同 updateSkillRings 的写法。
     if (sprite.destroyed) {
-      PIXI.Ticker.shared.remove(tick);
+      ticker.remove(tick);
       return;
     }
+    const dt = PIXI.Ticker.shared.deltaMS;
     let sy = 1;
     if (breathes) {
-      breathT += PIXI.Ticker.shared.deltaMS;
+      breathT += dt;
       sy = 1 + BREATH_AMP * Math.sin((breathT / BREATH_PERIOD_MS) * Math.PI * 2);
       // 竖向缩放的不动点是源帧中心，脚线会跟着飘；按当前倍率反算回同一条站立线
       sprite.scale.set(fit * (1 - (sy - 1) * BREATH_SQUASH), fit * sy);
@@ -200,7 +221,7 @@ export function createAnimatedUnit(
     let ox = 0;
     let oy = 0;
     if (lungeT >= 0) {
-      lungeT += PIXI.Ticker.shared.deltaMS;
+      lungeT += dt;
       if (lungeT >= LUNGE_MS) lungeT = -1;
       else {
         const d = Math.sin((lungeT / LUNGE_MS) * Math.PI) * cell * LUNGE_CELLS;
@@ -208,15 +229,34 @@ export function createAnimatedUnit(
         oy = lungeY * d;
       }
     }
+    if (hitT >= 0) {
+      hitT += dt;
+      if (hitT >= HIT_KNOCK_MS) hitT = -1;
+      else {
+        const d = hitKnockDisplacement(hitT / HIT_KNOCK_MS, HIT_KNOCK_PX);
+        ox += hitNx * d;
+        oy += hitNy * d;
+      }
+    }
+    if (flashT >= 0) {
+      flashT += dt;
+      const k = Math.min(1, flashT / flashDur);
+      if (!flashOverlay) flashOverlay = createHitFlashOverlay(sprite);
+      if (k >= 1) {
+        syncHitFlashOverlay(flashOverlay, sprite, 0);
+        flashT = -1;
+      } else {
+        syncHitFlashOverlay(flashOverlay, sprite, hitFlashLift(k));
+      }
+    }
     sprite.position.set(ox, standY - feetOffset * sy + oy);
   }
 
-  const animated = breathes || !hasAttackClip;
-  if (animated) PIXI.Ticker.shared.add(tick);
+  ticker.add(tick);
 
   /** 缺攻击动画时的替代出手，返回这一拍的时长(ms) */
   function startLunge(dx: number, dy: number): number {
-    if (!animated || (dx === 0 && dy === 0)) return 0;
+    if (hasAttackClip || (dx === 0 && dy === 0)) return 0;
     const horizontal = Math.abs(dx) >= Math.abs(dy);
     lungeX = horizontal ? Math.sign(dx) : 0;
     lungeY = horizontal ? 0 : Math.sign(dy);
@@ -253,18 +293,21 @@ export function createAnimatedUnit(
     return (textures.length / (clip.fps || 12)) * 1000;
   }
 
-  // 阵营染色在构造时定下就不再变，所以底色可以一次记住。
-  // 不能在 flashHit 里现取：连吃两下时第二次会把「白」当成底色存下来，闪完再也回不到红。
-  const baseTint = sprite.tint;
-  let flashTimer: ReturnType<typeof setTimeout> | undefined;
   function flashHit(ms: number): void {
     if (ms <= 0 || sprite.destroyed) return;
-    sprite.tint = 0xffffff;
-    if (flashTimer) clearTimeout(flashTimer);
-    flashTimer = setTimeout(() => {
-      flashTimer = undefined;
-      if (!sprite.destroyed) sprite.tint = baseTint;
-    }, ms);
+    flashDur = ms;
+    flashT = 0;
+    if (!flashOverlay) flashOverlay = createHitFlashOverlay(sprite);
+    syncHitFlashOverlay(flashOverlay, sprite, hitFlashLift(0));
+  }
+
+  function playHit(nx: number, ny: number): void {
+    if (sprite.destroyed) return;
+    const len = Math.hypot(nx, ny);
+    hitNx = len < 0.001 ? 1 : nx / len;
+    hitNy = len < 0.001 ? 0 : ny / len;
+    hitT = 0;
+    flashHit(HIT_FLASH_MS);
   }
 
   playIdle();
@@ -275,11 +318,14 @@ export function createAnimatedUnit(
     playWalk,
     playAttack,
     flashHit,
+    playHit,
     destroy(): void {
-      if (flashTimer) clearTimeout(flashTimer);
+      if (flashOverlay && !flashOverlay.destroyed) flashOverlay.visible = false;
       // 仅停止动画；view 作为 token 的子节点，由 token.destroy 统一回收。
+      // 闪白层也是 view 的子节点，交给这一次 destroy，不要自己再 destroy 一次
+      // （微信上对已摘掉的贴图调 off 会炸）。
       // ticker 挂在全局共享实例上，不摘会一直跑在已销毁的 sprite 上。
-      if (animated) PIXI.Ticker.shared.remove(tick);
+      ticker.remove(tick);
       sprite.stop();
       sprite.onComplete = undefined;
     },
@@ -303,6 +349,8 @@ export interface FxPlayOptions {
    * 素材不重生，运行时收一档。
    */
   alpha?: number;
+  /** 播放倍率。1 = 图集原速，小于 1 更慢、更能看清 */
+  playbackSpeed?: number;
 }
 
 /**
@@ -337,7 +385,8 @@ export function playFxAnimation(
   // 黑底发光特效用叠加混合，黑色不显示（对齐 Godot blend_mode=1）
   if (getAnimBlend(setId) === 'add') sprite.blendMode = PIXI.BLEND_MODES.ADD;
   sprite.loop = false;
-  sprite.animationSpeed = (clip.fps || 16) / 60;
+  const speed = opts.playbackSpeed ?? 1;
+  sprite.animationSpeed = ((clip.fps || 16) / 60) * speed;
   sprite.onComplete = () => {
     if (!sprite.destroyed) {
       layer.removeChild(sprite);
@@ -346,5 +395,5 @@ export function playFxAnimation(
   };
   layer.addChild(sprite);
   sprite.gotoAndPlay(0);
-  return (textures.length / (clip.fps || 16)) * 1000;
+  return (textures.length / ((clip.fps || 16) * speed)) * 1000;
 }

@@ -23,6 +23,12 @@ import {
 import { emitSparks } from '@/view/battle/vfxSparks';
 import { flyProjectile } from '@/view/battle/vfxProjectile';
 import {
+  playCastBurst,
+  playHitBurst,
+  playPathBeam,
+  playSlashSweep,
+} from '@/view/battle/vfxProcedural';
+import {
   spawnCombatFloat,
   spawnRoundBanner,
   spawnSkillNameTag,
@@ -45,6 +51,19 @@ import {
   unitHeadLocalY,
   type AnimatedUnitHandle,
 } from '@/view/AnimatedUnit';
+import {
+  HIT_FLASH_MS,
+  HIT_KNOCK_MS,
+  HIT_KNOCK_PX,
+  HIT_STOP_MS,
+  createHitFlashOverlay,
+  detachHitFlashOverlay,
+  firstSprite,
+  hitDirection,
+  hitFlashLift,
+  hitKnockDisplacement,
+  syncHitFlashOverlay,
+} from '@/view/battle/hitFeel';
 import { hasAnimSet } from '@/view/animSets';
 import {
   createManualTurnUi,
@@ -62,6 +81,7 @@ import {
 } from '@/battle/threatMap';
 import { battleUnitInfoModel } from '@/view/unitInfoModel';
 import { createUnitInfoOverlay } from '@/view/unitInfoPanel';
+import { getSafeAreaInsets } from '@/core/safeArea';
 import type { SkillDef } from '@/battle/types';
 
 export interface PlaybackScreen {
@@ -145,7 +165,7 @@ export function animSetsForUnits(units: readonly UnitState[]): string[] {
  * 战斗回放（边模拟边播）：
  * - 人工模式下轮到玩家单位就停下等指令，交互层见 `battle/manualTurnUi`；
  * - 自动模式全程播 AI 的行动；
- * - 两种模式共有：倍速 x1/x2、跳过、战斗中用药。
+ * - 两种模式共有：倍速 x1/x2、GM 跳过（直接判胜）、战斗中用药。
  */
 export function createBattlePlaybackView(
   app: PixiHost,
@@ -161,6 +181,7 @@ export function createBattlePlaybackView(
   const { cell, originX, originY } = computeBoardLayout(screen, GW, GH);
   const sw = screen.screenWidth;
   const sh = screen.screenHeight;
+  const inset = getSafeAreaInsets();
 
   // --- 回放控制状态 ---
   let speedMul = 1;
@@ -234,7 +255,8 @@ export function createBattlePlaybackView(
     settingsBtn.addChild(gear);
   }
   settingsBtn.x = 8;
-  settingsBtn.y = 6;
+  // 和胶囊同一行：左上角齿轮不能贴 y=0，否则会钻进刘海/状态栏
+  settingsBtn.y = Math.round(inset.menuRect.y + (inset.menuRect.height - settingsBtnSize) / 2);
   settingsBtn.eventMode = 'static';
   settingsBtn.cursor = 'pointer';
   settingsBtn.hitArea = new PIXI.Rectangle(0, 0, settingsBtnSize, settingsBtnSize);
@@ -249,7 +271,8 @@ export function createBattlePlaybackView(
   roundBg.drawRoundedRect(0, 0, roundLabelW, roundLabelH, 8);
   roundBg.endFill();
   roundBg.x = Math.floor((sw - roundLabelW) / 2);
-  roundBg.y = 8;
+  // 居中贴顶会撞上灵动岛；放到胶囊下沿之下
+  roundBg.y = inset.top + 6;
   root.addChild(roundBg);
   roundTx.x = roundBg.x + roundLabelW / 2;
   roundTx.y = roundBg.y + roundLabelH / 2;
@@ -263,8 +286,8 @@ export function createBattlePlaybackView(
   // 托管要让玩家知道方向盘随时拿得回来，否则他只会盯着一场自己插不上手的战斗。
   {
     const openingHint = sim.isAuto()
-      ? 'AI 代打中 · 右上角「接手」随时接管'
-      : '移动 / 技能 / 普攻各一次 · 右上角可切托管';
+      ? 'AI 代打中 · 底部「接手」随时接管'
+      : '移动 / 技能 / 普攻各一次 · 底部可切托管';
     const hintTx = makeText(openingHint, 'combatLabel', {
       fill: 0xffe08a, fontSize: 13,
       stroke: 0x000000, strokeThickness: 3,
@@ -314,9 +337,11 @@ export function createBattlePlaybackView(
     root.addChild(goldContainer);
   }
 
-  // --- 右上角：倍速 + 跳过 ---
+  // --- 右上：倍速 + 跳过。贴在胶囊**下方**右对齐，不要和微信 ···/⊙ 叠在一起 ---
   const speedBtnW = 46;
+  const skipBtnW = 54;
   const ctrlH = 30;
+  const topCtrlY = inset.top + 6;
   const speedBtn = new PIXI.Container();
   const speedBg = new PIXI.Graphics();
   const speedLbl = makeText('x1', 'uiStrong', { fill: 0xffffff });
@@ -334,8 +359,8 @@ export function createBattlePlaybackView(
   drawSpeedBtn();
   speedBtn.addChild(speedBg);
   speedBtn.addChild(speedLbl);
-  speedBtn.x = sw - speedBtnW - 66;
-  speedBtn.y = 8;
+  speedBtn.x = sw - skipBtnW - 8 - 6 - speedBtnW;
+  speedBtn.y = topCtrlY;
   speedBtn.eventMode = 'static';
   speedBtn.cursor = 'pointer';
   speedBtn.hitArea = new PIXI.Rectangle(0, 0, speedBtnW, ctrlH);
@@ -345,7 +370,6 @@ export function createBattlePlaybackView(
   });
   root.addChild(speedBtn);
 
-  const skipBtnW = 54;
   const skipBtn = new PIXI.Container();
   const skipBg = new PIXI.Graphics();
   skipBg.lineStyle(1.5, 0x888888, 1);
@@ -359,12 +383,11 @@ export function createBattlePlaybackView(
   skipLbl.y = ctrlH / 2;
   skipBtn.addChild(skipLbl);
   skipBtn.x = sw - skipBtnW - 8;
-  skipBtn.y = 8;
+  skipBtn.y = topCtrlY;
   skipBtn.eventMode = 'static';
   skipBtn.cursor = 'pointer';
   skipBtn.hitArea = new PIXI.Rectangle(0, 0, skipBtnW, ctrlH);
-  // 跳过 = 把剩下的交给 AI 打完（含当前正在等指令的那个单位，见 sim.runToEnd）。
-  // 人工模式下这也是「这局我不想打了，让它自己跑完」的出口。
+  // GM 跳过：当场判玩家胜。跑 AI 可能输，那就没调试价值。
   skipBtn.on('pointertap', () => {
     if (skipping || completed) return;
     skipping = true;
@@ -374,39 +397,48 @@ export function createBattlePlaybackView(
   });
   root.addChild(skipBtn);
 
-  // --- 托管开关：战斗中随时在「自己打」和「AI 代打」之间来回切 ---
-  //
-  // 摆在这里而不是只在开局选一次，是因为这两种玩法解决的是**同一局里不同段落**的问题：
-  // 前半场清杂兵没有任何决策，让 AI 走；Boss 起手或残局需要走位和集火时收回来自己打。
-  // 逼玩家开局二选一的话，他为了那三回合的关键操作，得把前面十几回合也一步步点完。
-  //
-  // 标签用动词写「点下去会发生什么」而不是当前状态：状态由配色表达（托管中高亮），
-  // 而写「自动/手动」时玩家永远要先猜这是当前值还是切换目标。
-  const pilotBtnW = 68;
+  /**
+   * 托管开关：战斗中随时在「自己打」和「AI 代打」之间来回切。
+   *
+   * 不在开局二选一，是因为这两种玩法解决的是**同一局里不同段落**的问题：
+   * 前半场清杂兵让 AI 走，Boss 残局收回来自己打。
+   *
+   * 按钮放药剂右边：右上角已经让给胶囊和跳过，托管是战斗中途会反复点的，
+   * 跟补给放在同一条操作带上，拇指不用离开底部。
+   * 标签写点下去会发生什么（托管 / 接手），状态由配色表达。
+   */
+  const pilotBtnW = 72;
+  const pilotH = 40;
   const pilotBtn = new PIXI.Container();
   const pilotBg = new PIXI.Graphics();
-  const pilotLbl = makeText('托管', 'ui', { fill: 0xffffff, fontSize: 13 });
+  const pilotLbl = makeText('托管', 'ui', { fill: 0xffffff, fontSize: 14 });
   pilotLbl.anchor.set(0.5);
   pilotLbl.x = pilotBtnW / 2;
-  pilotLbl.y = ctrlH / 2;
+  pilotLbl.y = pilotH / 2;
   function drawPilotBtn(): void {
     const auto = sim.isAuto();
     pilotBg.clear();
     pilotBg.lineStyle(1.5, auto ? 0x52c4dc : 0x888888, 1);
     pilotBg.beginFill(auto ? 0x2a7a8c : 0x000000, auto ? 0.85 : 0.4);
-    pilotBg.drawRoundedRect(0, 0, pilotBtnW, ctrlH, 10);
+    pilotBg.drawRoundedRect(0, 0, pilotBtnW, pilotH, 12);
     pilotBg.endFill();
     pilotLbl.text = auto ? '接手' : '托管';
   }
   drawPilotBtn();
   pilotBtn.addChild(pilotBg);
   pilotBtn.addChild(pilotLbl);
-  pilotBtn.x = sw - pilotBtnW - 8;
-  pilotBtn.y = skipBtn.y + ctrlH + 6;
+  // 位置在底部药剂栏排完之后再钉，见下方 HUD
   pilotBtn.eventMode = 'static';
   pilotBtn.cursor = 'pointer';
-  pilotBtn.hitArea = new PIXI.Rectangle(0, 0, pilotBtnW, ctrlH);
-  pilotBtn.on('pointertap', () => {
+  // 底部比按钮大一圈，避免点到边上看起来没反应
+  pilotBtn.hitArea = new PIXI.Rectangle(-8, -8, pilotBtnW + 16, pilotH + 16);
+  // 用 pointerdown：微信上 window.pointerup 经常丢，pointertap 就不会响。
+  // 防抖避免 down+tap 各切一次又切回去。
+  let lastPilotAt = 0;
+  const onPilotPress = (): void => {
+    const now = Date.now();
+    if (now - lastPilotAt < 280) return;
+    lastPilotAt = now;
     if (skipping || completed) return;
     const toAuto = !sim.isAuto();
     // 切到托管时引擎会当场把手上这个单位打完，事件交给主循环去播（见 run）。
@@ -418,8 +450,8 @@ export function createBattlePlaybackView(
       manualUi?.hide();
       manualUi?.abortWait();
     }
-  });
-  root.addChild(pilotBtn);
+  };
+  pilotBtn.on('pointerdown', onPilotPress);
 
   // --- 单位信息面板 ---
   //
@@ -653,7 +685,7 @@ export function createBattlePlaybackView(
     const ed = effectiveUnitDef(u, UNIT_DEFS);
     const c = new PIXI.Container();
     const setId = u.animSet ?? u.defId;
-    const animHandle = hasAnimSet(setId) ? createAnimatedUnit(setId, u.faction, cell) : null;
+    const animHandle = hasAnimSet(setId) ? createAnimatedUnit(setId, u.faction, cell, app.ticker) : null;
     if (animHandle) animByUid.set(u.uid, animHandle);
     const body = animHandle ? animHandle.view : createUnitToken(setId, u.faction, cell);
     body.y = Math.max(6, cell * 0.07);
@@ -820,7 +852,8 @@ export function createBattlePlaybackView(
     const dx = (to?.x ?? from.x) - from.x;
     const dy = (to?.y ?? from.y) - from.y;
     const aimRad = dx === 0 && dy === 0 ? 0 : Math.atan2(dy, dx);
-    const size = Math.max(cell * def.cells, 56);
+    const size = Math.max(cell * def.cells, 72);
+    const playbackSpeed = def.playbackSpeed ?? 0.72;
 
     let played = 0;
     if (def.mode === 'beam') {
@@ -830,11 +863,13 @@ export function createBattlePlaybackView(
         rotation: aimRad,
         lengthPx: len,
         alpha: def.alpha,
+        playbackSpeed,
       });
     } else {
       played = playFxAnimation(fxLayer, at.x, at.y, def.set, def.set, size, {
         rotation: def.mode === 'aimed' ? aimRad : 0,
         alpha: def.alpha,
+        playbackSpeed,
       });
     }
 
@@ -842,6 +877,13 @@ export function createBattlePlaybackView(
       // 火花从「挨打的那一端」冒出来，哪怕特效本体锚在施法者身上（自身 AoE 除外）
       const sp = def.anchor === 'caster' && def.mode === 'burst' ? at : (to ?? at);
       emitSparks(fxLayer, sp.x, sp.y, def.sparks, aimRad);
+    }
+
+    // 命中星爆不再叠在生图上——几何放射会把 ember_burst / slash 盖成同一张「程序星」。
+    // 没播出序列帧时才用代码爆裂兜底。
+    if (played <= 0 && def.hitBurst) {
+      const burstAt = def.anchor === 'caster' && def.mode === 'burst' ? at : (to ?? at);
+      playHitBurst(fxLayer, burstAt, def.hitBurst, cell);
     }
 
     // 图集还没下载完（首启进战、CDN 慢）时序列帧会返回 0，那就用老的静态贴图兜底，
@@ -903,13 +945,24 @@ export function createBattlePlaybackView(
   ): Promise<void> {
     if (skipping) return;
     if (recipe.cast) playFlash(recipe.cast, from, to);
+    else if (recipe.castBurst) playCastBurst(fxLayer, from, recipe.castBurst, cell);
+
+    if (recipe.slashSweep) {
+      const aim = to ?? { x: from.x, y: from.y + cell };
+      await playSlashSweep(fxLayer, from, aim, recipe.slashSweep, cell);
+      if (root.destroyed || skipping) return;
+    }
+
+    if (recipe.pathBeam && to && !recipe.travel) {
+      void playPathBeam(fxLayer, from, to, recipe.pathBeam);
+    }
 
     if (recipe.propBurst) {
       await playPropBurst(recipe.propBurst, from, to);
     }
 
     if (recipe.travel && recipe.travelPerTarget && (opts.onTargets?.length ?? 0) > 0) {
-      const size = Math.max(cell * recipe.travel.cells, 40);
+      const size = Math.max(cell * recipe.travel.cells, 56);
       await Promise.all(
         (opts.onTargets ?? []).map(async (p, i) => {
           if (i > 0) await awaitEase(dur(40 * i), () => {});
@@ -918,6 +971,7 @@ export function createBattlePlaybackView(
             speedScale: speedMul,
             onArrive: () => {
               if (recipe.impact) playFlash(recipe.impact, from, p.at);
+              if (recipe.hitBurst) playHitBurst(fxLayer, p.at, recipe.hitBurst, cell);
               p.run();
             },
           }).done;
@@ -927,7 +981,7 @@ export function createBattlePlaybackView(
     }
 
     if (recipe.travel && to) {
-      const size = Math.max(cell * recipe.travel.cells, 40);
+      const size = Math.max(cell * recipe.travel.cells, 56);
       const dist = Math.hypot(to.x - from.x, to.y - from.y) || 1;
       const waypoints = (opts.onPass ?? []).map((p) => ({
         atFraction: Math.min(0.98, Math.hypot(p.at.x - from.x, p.at.y - from.y) / dist),
@@ -950,22 +1004,53 @@ export function createBattlePlaybackView(
     }
 
     if (recipe.impact) playFlash(recipe.impact, from, to);
+    else if (recipe.hitBurst) playHitBurst(fxLayer, to ?? from, recipe.hitBurst, cell);
   }
 
-  function hitShake(target: PIXI.Container): void {
+  /**
+   * 受击手感：闪白 + 沿攻击方向短震。只动身体，血条不动。
+   * 有图集的单位走 AnimatedUnit.playHit；静态 token 在第一层身体上套同一套公式。
+   */
+  function applyHitFeel(targetUid: string, from?: { x: number; y: number }): void {
     if (skipping) return;
-    const origX = target.x;
+    const tok = tokens.get(targetUid);
+    if (!tok) return;
+    const dir = from ? hitDirection(from, { x: tok.x, y: tok.y }) : { x: 1, y: 0 };
+    const anim = animByUid.get(targetUid);
+    if (anim) {
+      anim.playHit(dir.x, dir.y);
+      return;
+    }
+    const body = tok.children[0];
+    if (!body) return;
+    const origX = body.x;
+    const origY = body.y;
+    const src = firstSprite(body);
+    const overlay = src ? createHitFlashOverlay(src) : null;
     void (async () => {
-      await awaitEase(dur(120), (k) => {
-        const shake = Math.sin(k * Math.PI * 4) * 3 * (1 - k);
-        target.x = origX + shake;
+      await awaitEase(dur(Math.max(HIT_FLASH_MS, HIT_KNOCK_MS)), (k) => {
+        if (body.destroyed) return;
+        const elapsed = k * Math.max(HIT_FLASH_MS, HIT_KNOCK_MS);
+        if (overlay && src && !src.destroyed) {
+          syncHitFlashOverlay(overlay, src, hitFlashLift(Math.min(1, elapsed / HIT_FLASH_MS)));
+        }
+        const d = hitKnockDisplacement(Math.min(1, elapsed / HIT_KNOCK_MS), HIT_KNOCK_PX);
+        body.x = origX + dir.x * d;
+        body.y = origY + dir.y * d;
       });
-      target.x = origX;
+      if (!body.destroyed) {
+        body.x = origX;
+        body.y = origY;
+      }
+      detachHitFlashOverlay(overlay);
     })();
   }
 
   // ============ 底部 HUD：药剂栏（人工操作条由 manualTurnUi 挂在同一层） ============
   const hudLayer = new PIXI.Container();
+  hudLayer.eventMode = 'passive';
+  hudLayer.interactiveChildren = true;
+  hudLayer.zIndex = 20;
   root.addChild(hudLayer);
 
   const potionBtns = new Map<string, { count: number; countLbl: PIXI.Text; container: PIXI.Container }>();
@@ -976,23 +1061,26 @@ export function createBattlePlaybackView(
     const btnR = 26;
     const gapX = 12;
     const hudH = btnR * 2 + 26;
-    const hudY = sh - hudH - 8;
+    const hudY = sh - hudH - Math.max(8, inset.bottom + 8);
     const potionIds = Object.keys(POTION_DEFS).filter((id) =>
       (gameState.potions[id] ?? 0) > 0 || !!gameState.onPickupPotion,
     );
 
-    if (potionIds.length > 0) {
-      potionTopY = hudY - 6;
-      const totalW = potionIds.length * (btnR * 2 + gapX) - gapX;
-      let bx = Math.max(8, Math.floor((sw - totalW) / 2));
+    const potionW = potionIds.length > 0
+      ? potionIds.length * (btnR * 2 + gapX) - gapX
+      : 0;
+    const clusterGap = potionW > 0 ? gapX : 0;
+    const clusterW = potionW + clusterGap + pilotBtnW;
+    let bx = Math.max(8, Math.floor((sw - clusterW) / 2));
+    potionTopY = hudY - 6;
 
-      const hudBg = new PIXI.Graphics();
-      hudBg.beginFill(0x000000, 0.4);
-      hudBg.drawRoundedRect(bx - 10, hudY - 6, totalW + 20, hudH + 8, 14);
-      hudBg.endFill();
-      hudLayer.addChild(hudBg);
+    const hudBg = new PIXI.Graphics();
+    hudBg.beginFill(0x000000, 0.4);
+    hudBg.drawRoundedRect(bx - 10, hudY - 6, clusterW + 20, hudH + 8, 14);
+    hudBg.endFill();
+    hudLayer.addChild(hudBg);
 
-      for (const pid of potionIds) {
+    for (const pid of potionIds) {
         const def = POTION_DEFS[pid]!;
         const c = new PIXI.Container();
         c.x = bx + btnR;
@@ -1040,6 +1128,7 @@ export function createBattlePlaybackView(
           gameState.onConsumePotion(pid);
           const evs = sim.usePotion(pid);
           renderPotionEvents(evs);
+          updateOrderStrip(sim.pending()?.uid ?? null);
         });
 
         const startCount = gameState.potions[pid] ?? 0;
@@ -1047,9 +1136,13 @@ export function createBattlePlaybackView(
         hudLayer.addChild(c);
         potionBtns.set(pid, { count: startCount, countLbl, container: c });
         bx += btnR * 2 + gapX;
-      }
-
     }
+
+    // 循环末尾已经多加了一段 gapX，bx 正好是下一个槽的左缘；没有药剂时 bx 就是簇的起点
+    pilotBtn.x = bx;
+    // 再抬一点，躲开微信底栏手势区；点下去才吃得到
+    pilotBtn.y = hudY + btnR - pilotH / 2 - 10;
+    hudLayer.addChild(pilotBtn);
   }
 
   // ============ 行动顺序条 ============
@@ -1427,7 +1520,7 @@ export function createBattlePlaybackView(
           if (tt) {
             // 纯 buff/debuff（damage:0）不飘「0」、不抖——那是号角/缠足一类，不是失手
             if (h.damage > 0) {
-              hitShake(tt);
+              applyHitFeel(h.target, { x: cx, y: cy });
               floatDamage(tt.x, tt.y, h.damage);
               floatTerrainNote(tt.x, tt.y, h.defTerrainNote, h.guardNote);
               floatModNote(tt.x, tt.y, h.modNote);
@@ -1481,7 +1574,7 @@ export function createBattlePlaybackView(
             { x: cx, y: cy },
             aimTok ? { x: aimTok.x, y: aimTok.y } : undefined,
           );
-          await awaitEase(dur(180), () => {});
+          await awaitEase(dur(HIT_STOP_MS), () => {});
           for (const h of ev.hits) applyHitFx(h);
           await awaitEase(dur(320), () => {});
         } else {
@@ -1512,7 +1605,8 @@ export function createBattlePlaybackView(
           // 冲锋光环挂在出手端，和飞/砍并行，不挡伤害时机
           if (ev.charged) void playRecipe(CHARGE_VFX, { x: a.x, y: a.y }, undefined);
           await playRecipe(ATTACK_VFX[kind ?? 'sword'], { x: a.x, y: a.y }, { x: t.x, y: t.y });
-          hitShake(t);
+          applyHitFeel(ev.target, { x: a.x, y: a.y });
+          await awaitEase(dur(HIT_STOP_MS), () => {});
           floatDamage(t.x, t.y, ev.damage);
           floatTerrainNote(t.x, t.y, ev.defTerrainNote, ev.guardNote);
           tokenOverheads.get(ev.target)?.updateHp(ev.hpLeft);
@@ -1632,25 +1726,24 @@ export function createBattlePlaybackView(
       takeOverStep = null;
       await playEvents(step.events);
       if (root.destroyed) return;
+      if (skipping) {
+        finishPlayback('player');
+        return;
+      }
       if (step.done) {
         finishPlayback(step.winner ?? 'enemy');
         return;
       }
-      // 轮到玩家单位：交互直到它的回合结束。跳过 / 托管时 pending 由 AI 接管
+      // 轮到玩家单位：交互直到它的回合结束。托管时 pending 由 AI 接管
       const pending = sim.pending();
-      if (pending && !skipping && !sim.isAuto()) {
+      if (pending && !sim.isAuto()) {
         await runPlayerTurn(pending.uid);
         if (root.destroyed) return;
+        if (skipping) {
+          finishPlayback('player');
+          return;
+        }
       }
-      if (skipping && !sim.isDone()) {
-        const report = sim.runToEnd();
-        manualUi?.hide();
-        updateOrderStrip(null);
-        finishPlayback(report.winner);
-        return;
-      }
-      // 跳过模式下让出一帧，避免长战斗卡死渲染线程
-      if (skipping) await new Promise((r) => requestAnimationFrame?.(r as () => void) ?? setTimeout(r, 0));
     }
   }
 
@@ -1679,6 +1772,8 @@ export function createBattlePlaybackView(
   });
   manualUi.hide();
 
+  // 再挂一次 HUD，保证压在棋盘/特效之上（addChild 已在树上的节点会挪到最前）
+  root.addChild(hudLayer);
   root.addChild(settingsBtn);
   root.addChild(settingsOverlay);
   // 信息面板压在设置之上：它是从棋盘点出来的，谁最后打开谁在上面

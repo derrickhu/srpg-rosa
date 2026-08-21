@@ -37,7 +37,7 @@ function mainSection(
 }
 
 /**
- * 临时技能段。**不套词条**——词条只强化主技能（见 `unitSkillSpec`），
+ * 临时技能段。**不套纹章**——纹章只强化主技能（见 `unitSkillSpec`），
  * 这里套上去面板会写出一个战斗里不会发生的数值。
  */
 function tempSection(specId: string, cooldownNote?: string): UnitInfoSkillSection | null {
@@ -53,7 +53,7 @@ function tempSection(specId: string, cooldownNote?: string): UnitInfoSkillSectio
     cooldownNote,
     // 不画范围格：两张格子图叠起来面板要滚动，而临时技能大多是贴脸的单体控制
     showRange: false,
-    extraDesc: [TEMP_SKILL_NOTE, '词条只强化主技能，不影响这一招'],
+    extraDesc: [TEMP_SKILL_NOTE, '纹章只强化主技能，不影响这一招'],
   };
 }
 

@@ -3,9 +3,13 @@ import { COUNTER_STRONG, COUNTER_WEAK } from './constants';
 import { getTerrainAt, type TerrainGrid } from './grid';
 import { getTerrainSpec } from '@/data/terrainSpec';
 
-/** 骑 → 剑 → 弓 → 骑；盾卫不参与 */
+/** 骑 → 剑 → 弓 → 骑；盾卫 / 法师 / 祭司不参与 */
+function inTriangle(kind: UnitKind): boolean {
+  return kind === 'sword' || kind === 'bow' || kind === 'cavalry';
+}
+
 export function counterMultiplier(attacker: UnitKind, target: UnitKind): number {
-  if (attacker === 'shield' || target === 'shield') return 1;
+  if (!inTriangle(attacker) || !inTriangle(target)) return 1;
   const strong = (
     (attacker === 'cavalry' && target === 'sword')
     || (attacker === 'sword' && target === 'bow')

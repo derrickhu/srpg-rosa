@@ -41,6 +41,9 @@ describe('counterMultiplier', () => {
   it('shield is always neutral', () => {
     expect(counterMultiplier('shield', 'sword')).toBe(1);
     expect(counterMultiplier('bow', 'shield')).toBe(1);
+    expect(counterMultiplier('mage', 'sword')).toBe(1);
+    expect(counterMultiplier('bow', 'healer')).toBe(1);
+    expect(counterMultiplier('mage', 'healer')).toBe(1);
   });
   it('same type is neutral', () => {
     expect(counterMultiplier('sword', 'sword')).toBe(1);

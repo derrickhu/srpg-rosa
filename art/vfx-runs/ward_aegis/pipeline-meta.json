@@ -1,0 +1,65 @@
+{
+  "source": "scripts/vfx-sheet.py",
+  "input": "/Users/rosa/.cursor/projects/Users-rosa-rosa-games-srpg-rosa/assets/ward_aegis_3x3.png",
+  "target": "vfx",
+  "mode": "vfx_sheet",
+  "rows": 3,
+  "cols": 3,
+  "cell_size": 256,
+  "threshold": 22,
+  "frame_labels": [
+    "ward_aegis-1",
+    "ward_aegis-2",
+    "ward_aegis-3",
+    "ward_aegis-4",
+    "ward_aegis-5",
+    "ward_aegis-6",
+    "ward_aegis-7",
+    "ward_aegis-8",
+    "ward_aegis-9"
+  ],
+  "shared_crop_side": 285,
+  "crop_offsets": [
+    {
+      "x": 28,
+      "y": 28
+    },
+    {
+      "x": 31,
+      "y": 23
+    },
+    {
+      "x": 27,
+      "y": 21
+    },
+    {
+      "x": 27,
+      "y": 4
+    },
+    {
+      "x": 28,
+      "y": 3
+    },
+    {
+      "x": 27,
+      "y": 2
+    },
+    {
+      "x": 25,
+      "y": 0
+    },
+    {
+      "x": 26,
+      "y": 0
+    },
+    {
+      "x": 32,
+      "y": 0
+    }
+  ],
+  "empty_frames": [],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}

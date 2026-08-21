@@ -1,5 +1,8 @@
-/** 兵种标识（盾卫不参与三角克制） */
-export type UnitKind = 'sword' | 'bow' | 'cavalry' | 'shield';
+/** 参与三角克制、出现在关卡刷怪表里的四兵种 */
+export type TroopKind = 'sword' | 'bow' | 'cavalry' | 'shield';
+
+/** 兵种标识。法师 / 祭司不参与三角克制，也不进关卡刷怪表 */
+export type UnitKind = TroopKind | 'mage' | 'healer';
 
 export type Faction = 'player' | 'enemy';
 

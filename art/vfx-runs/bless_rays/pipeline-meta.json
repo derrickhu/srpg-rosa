@@ -1,0 +1,65 @@
+{
+  "source": "scripts/vfx-sheet.py",
+  "input": "/Users/rosa/.cursor/projects/Users-rosa-rosa-games-srpg-rosa/assets/bless_rays_3x3.png",
+  "target": "vfx",
+  "mode": "vfx_sheet",
+  "rows": 3,
+  "cols": 3,
+  "cell_size": 256,
+  "threshold": 22,
+  "frame_labels": [
+    "bless_rays-1",
+    "bless_rays-2",
+    "bless_rays-3",
+    "bless_rays-4",
+    "bless_rays-5",
+    "bless_rays-6",
+    "bless_rays-7",
+    "bless_rays-8",
+    "bless_rays-9"
+  ],
+  "shared_crop_side": 257,
+  "crop_offsets": [
+    {
+      "x": 47,
+      "y": 49
+    },
+    {
+      "x": 41,
+      "y": 49
+    },
+    {
+      "x": 41,
+      "y": 49
+    },
+    {
+      "x": 46,
+      "y": 29
+    },
+    {
+      "x": 40,
+      "y": 28
+    },
+    {
+      "x": 40,
+      "y": 28
+    },
+    {
+      "x": 47,
+      "y": 13
+    },
+    {
+      "x": 40,
+      "y": 13
+    },
+    {
+      "x": 35,
+      "y": 8
+    }
+  ],
+  "empty_frames": [],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}

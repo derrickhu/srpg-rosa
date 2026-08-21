@@ -1,0 +1,19 @@
+{
+  "source": "shape-clarity-regen-2026-08",
+  "target": "vfx",
+  "mode": "vfx_frames",
+  "cell_size": 256,
+  "threshold": 22,
+  "frame_labels": [
+    "holy_bolt-1",
+    "holy_bolt-2",
+    "holy_bolt-3",
+    "holy_bolt-4",
+    "holy_bolt-5",
+    "holy_bolt-6"
+  ],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}

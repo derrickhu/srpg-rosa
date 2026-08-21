@@ -49,7 +49,7 @@ export function endlessTerrain(): TerrainGrid {
   return STAGES_MVP[0]!.terrain;
 }
 
-const KINDS: UnitKind[] = ['sword', 'bow', 'cavalry', 'shield'];
+const KINDS: UnitKind[] = ['sword', 'bow', 'cavalry', 'shield']; // 无尽不刷法师/祭司
 
 /** 第 `wave` 波出几只。从 2 只起，每两波加一只，封顶 6。 */
 export function endlessWaveCount(wave: number): number {

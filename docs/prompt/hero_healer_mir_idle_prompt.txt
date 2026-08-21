@@ -1,0 +1,29 @@
+祭司弥尔静止立绘（职业 token / idle 单帧）
+产出 → art/sprite-runs/healer/idle → images/anim/healer.png + images/units/healer.png
+生成器：Cursor 内置 GenerateImage，aspect_ratio 1:1
+
+后处理同法师奥莉（generate2dsprite process single + despill + sprite2anim / anim2token）。
+
+风格对齐 images/units/sword.png、bow.png。禁止紫色 / 品红 / 粉。祭司用乳白袍 + 金太阳杖区分剪影，不要画成绿袍弓手或蓝甲盾卫。
+
+---
+
+A single chibi tactics-game character sprite, 3/4 view from slightly above, full body, standing idle facing slightly left.
+
+CRITICAL BACKGROUND: 100% solid flat MAGENTA hex #FF00FF filling the entire image, including all space around the character. No white, no grey, no ground shadow, no drop shadow onto the background, no gradient.
+
+ART STYLE: hand-drawn cartoon game sprite matching an existing party of chunky chibi units (big round head, tiny body, short limbs). Thick near-black outline (#1A1410) all the way around every shape. Flat saturated fills, one cel-shade highlight, one shadow. No gradients, no texture, no painterly rendering, no photographic detail, no pixel art.
+
+CHARACTER — Mir the priest, male child-like chibi:
+- Huge round head, tiny torso, short arms and legs. Same proportions as a toy soldier.
+- Short neat brown hair, two round black-dot eyes, tiny mouth, calm kind expression. Small round ears.
+- Cream-white priest robe (#F5E6C8) with a thick gold (#E0B030) collar band and a mint-green (#5EC8A0) sash. Simple, chunky, no embroidery, no tiny crosses, no writing.
+- In his right hand (viewer's left): a short thick brown wooden staff with a fat gold SUN DISC on top (solid circle with 6 thick triangular rays, like a child's sun drawing). The sun disc is the silhouette signature. Keep the staff close to the body.
+- Simple round brown shoes.
+- NO purple, magenta, pink, or violet. NO green hood (that is the archer). NO blue armor (that is the shield knight).
+
+LAYOUT:
+- Full body visible, centered, feet near the lower third, head not touching the top.
+- Character fills about 70% of the image, generous magenta margin on all four sides.
+- Nothing touches the image edges.
+- NO text, numbers, watermark, UI, platform, or ground line.

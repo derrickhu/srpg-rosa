@@ -1,10 +1,7 @@
 {
-  "source": "scripts/vfx-sheet.py",
-  "input": ".tmp-gen/pierce_raw.png",
+  "source": "shape-clarity-regen-2026-08",
   "target": "vfx",
-  "mode": "vfx_sheet",
-  "rows": 3,
-  "cols": 3,
+  "mode": "vfx_frames",
   "cell_size": 256,
   "threshold": 22,
   "frame_labels": [
@@ -18,46 +15,6 @@
     "pierce-8",
     "pierce-9"
   ],
-  "shared_crop_side": 341,
-  "crop_offsets": [
-    {
-      "x": 0,
-      "y": 0
-    },
-    {
-      "x": 0,
-      "y": 0
-    },
-    {
-      "x": 0,
-      "y": 0
-    },
-    {
-      "x": 0,
-      "y": 0
-    },
-    {
-      "x": 0,
-      "y": 0
-    },
-    {
-      "x": 0,
-      "y": 0
-    },
-    {
-      "x": 0,
-      "y": 0
-    },
-    {
-      "x": 0,
-      "y": 0
-    },
-    {
-      "x": 0,
-      "y": 0
-    }
-  ],
-  "empty_frames": [],
   "qc_summary": {
     "body_scale_cv": 0.0,
     "anchor_y_std": 0.0

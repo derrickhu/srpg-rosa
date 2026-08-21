@@ -1,0 +1,11 @@
+2D mobile combat VFX sprite for a tactical SRPG. PURE BLACK background only (#000000).
+NO grey fog, NO bloom cloud, NO photographic glow haze, NO motion blur, NO smoke,
+NO character, NO weapon silhouette, NO floor, NO text, NO watermark.
+
+STYLE: cel-shaded energy STICKER, like a high-end mobile action-game skill
+(sword-wave / lightning bolt). Instantly readable silhouette. Hard outer edge in
+saturated color. Layered interior: tiny brilliant WHITE core, then mid-tone, then
+dark saturated rim. Outer halo is a THIN 4-8px fringe only — not a cloud filling
+the cell. The shape must still read if you threshold the image at 50% brightness.
+
+Effect occupies 55-65% of the square center. All remaining pixels are PURE BLACK.

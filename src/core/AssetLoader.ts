@@ -221,6 +221,25 @@ export async function resolveOrDownload(logicalPath: string): Promise<string> {
   });
 }
 
+/** 删掉某条 CDN 本地缓存，下次 resolveOrDownload 会重新拉。图集升级后旧 idle 图还占着同名路径时用。 */
+export function invalidateCache(logicalPath: string): void {
+  runtimeTempUrlCache.delete(logicalPath);
+  if (!CACHE_ROOT) return;
+  const cachePath = getCachePath(logicalPath);
+  localExistsCache.delete(cachePath);
+  if (!fs) return;
+  try {
+    fs.unlinkSync(cachePath);
+  } catch {
+    /* 没有缓存文件就算了 */
+  }
+  try {
+    fs.unlinkSync(`${cachePath}.meta`);
+  } catch {
+    /* ignore */
+  }
+}
+
 export function prefetchManifest(): Promise<void> {
   if (manifestReady) return Promise.resolve();
   if (!CDN_PUBLIC_BASE_URL) {
@@ -258,5 +277,6 @@ export const AssetLoader = {
   resolveAsset,
   resolveOrDownload,
   downloadAndNotify,
+  invalidateCache,
   prefetchManifest,
 };

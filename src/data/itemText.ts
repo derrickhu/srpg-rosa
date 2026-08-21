@@ -22,14 +22,10 @@ function briefShape(spec: SkillSpec): string {
       return shape.manhattan === 1 ? '邻格全体敌人' : `周围 ${shape.manhattan} 格全体敌人`;
     case 'discAoE':
       return shape.radius === 1 ? '邻格全体敌人' : `周围 ${shape.radius} 格全体敌人`;
-    case 'neighborPickLowest':
-      return `${describeReach(shape.manhattan, 'exact')}·选血最低敌人`;
     case 'neighborPickFoe':
-      return `${describeReach(shape.manhattan, shape.reach)}·选血${
-        shape.pick === 'lowestHp' ? '最低' : '最高'
-      }敌人`;
+      return `${describeReach(shape.manhattan, shape.reach)}·点一个敌人`;
     case 'neighborPickAlly':
-      return `周围 ${shape.manhattan} 格·选血${shape.pick === 'lowestHp' ? '最低' : '最高'}友军`;
+      return `${describeReach(shape.manhattan, shape.reach)}·点一个友军`;
     case 'lineBestRayAllFoes':
       return '直线穿透';
     case 'selfCast':

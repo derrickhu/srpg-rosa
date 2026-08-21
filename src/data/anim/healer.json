@@ -1,0 +1,706 @@
+{
+  "id": "healer",
+  "source": "art/sprite-runs/healer",
+  "blend": "normal",
+  "image": "images/anim/healer.png",
+  "meta": {
+    "size": {
+      "w": 2048,
+      "h": 1024
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 188,
+    "baselineY": 236,
+    "ref": "healer-walk/down-1.png"
+  },
+  "frames": {
+    "healer-walk/down-1.png": {
+      "frame": {
+        "x": 758,
+        "y": 2,
+        "w": 211,
+        "h": 215
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 22,
+        "y": 22,
+        "w": 211,
+        "h": 215
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "healer-walk/down-2.png": {
+      "frame": {
+        "x": 1136,
+        "y": 233,
+        "w": 201,
+        "h": 204
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 27,
+        "y": 33,
+        "w": 201,
+        "h": 204
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "healer-walk/down-4.png": {
+      "frame": {
+        "x": 1703,
+        "y": 233,
+        "w": 188,
+        "h": 200
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 34,
+        "y": 37,
+        "w": 188,
+        "h": 200
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "healer-walk/left-1.png": {
+      "frame": {
+        "x": 372,
+        "y": 2,
+        "w": 191,
+        "h": 217
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 32,
+        "y": 20,
+        "w": 191,
+        "h": 217
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "healer-walk/left-2.png": {
+      "frame": {
+        "x": 971,
+        "y": 2,
+        "w": 184,
+        "h": 211
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 36,
+        "y": 26,
+        "w": 184,
+        "h": 211
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "healer-walk/left-4.png": {
+      "frame": {
+        "x": 593,
+        "y": 233,
+        "w": 178,
+        "h": 208
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 39,
+        "y": 29,
+        "w": 178,
+        "h": 208
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "healer-walk/left-1-mirror.png": {
+      "frame": {
+        "x": 565,
+        "y": 2,
+        "w": 191,
+        "h": 217
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 33,
+        "y": 20,
+        "w": 191,
+        "h": 217
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "healer-walk/left-2-mirror.png": {
+      "frame": {
+        "x": 1157,
+        "y": 2,
+        "w": 184,
+        "h": 211
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 36,
+        "y": 26,
+        "w": 184,
+        "h": 211
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "healer-walk/left-4-mirror.png": {
+      "frame": {
+        "x": 773,
+        "y": 233,
+        "w": 178,
+        "h": 208
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 39,
+        "y": 29,
+        "w": 178,
+        "h": 208
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "healer-walk/up-1.png": {
+      "frame": {
+        "x": 953,
+        "y": 233,
+        "w": 181,
+        "h": 206
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 37,
+        "y": 31,
+        "w": 181,
+        "h": 206
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "healer-walk/up-2.png": {
+      "frame": {
+        "x": 1339,
+        "y": 233,
+        "w": 177,
+        "h": 204
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 39,
+        "y": 33,
+        "w": 177,
+        "h": 204
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "healer-walk/up-4.png": {
+      "frame": {
+        "x": 1518,
+        "y": 233,
+        "w": 183,
+        "h": 204
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 36,
+        "y": 33,
+        "w": 183,
+        "h": 204
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "healer-attack_down/attack-1.png": {
+      "frame": {
+        "x": 101,
+        "y": 444,
+        "w": 161,
+        "h": 183
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 47,
+        "y": 54,
+        "w": 161,
+        "h": 183
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "healer-attack_down/attack-2.png": {
+      "frame": {
+        "x": 2,
+        "y": 444,
+        "w": 97,
+        "h": 187
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 79,
+        "y": 50,
+        "w": 97,
+        "h": 187
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "healer-attack_down/attack-3.png": {
+      "frame": {
+        "x": 1893,
+        "y": 233,
+        "w": 107,
+        "h": 199
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 75,
+        "y": 38,
+        "w": 107,
+        "h": 199
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "healer-attack_down/attack-4.png": {
+      "frame": {
+        "x": 264,
+        "y": 444,
+        "w": 159,
+        "h": 183
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 48,
+        "y": 54,
+        "w": 159,
+        "h": 183
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "healer-attack_left/attack-1.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 183,
+        "h": 229
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 36,
+        "y": 8,
+        "w": 183,
+        "h": 229
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "healer-attack_left/attack-2.png": {
+      "frame": {
+        "x": 425,
+        "y": 444,
+        "w": 256,
+        "h": 177
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 60,
+        "w": 256,
+        "h": 177
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "healer-attack_left/attack-3.png": {
+      "frame": {
+        "x": 941,
+        "y": 444,
+        "w": 256,
+        "h": 164
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 73,
+        "w": 256,
+        "h": 164
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "healer-attack_left/attack-4.png": {
+      "frame": {
+        "x": 2,
+        "y": 233,
+        "w": 184,
+        "h": 209
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 35,
+        "y": 29,
+        "w": 184,
+        "h": 209
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "healer-attack_left/attack-1-mirror.png": {
+      "frame": {
+        "x": 187,
+        "y": 2,
+        "w": 183,
+        "h": 229
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 37,
+        "y": 8,
+        "w": 183,
+        "h": 229
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "healer-attack_left/attack-2-mirror.png": {
+      "frame": {
+        "x": 683,
+        "y": 444,
+        "w": 256,
+        "h": 177
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 60,
+        "w": 256,
+        "h": 177
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "healer-attack_left/attack-3-mirror.png": {
+      "frame": {
+        "x": 1199,
+        "y": 444,
+        "w": 256,
+        "h": 164
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 73,
+        "w": 256,
+        "h": 164
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "healer-attack_left/attack-4-mirror.png": {
+      "frame": {
+        "x": 188,
+        "y": 233,
+        "w": 184,
+        "h": 209
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 37,
+        "y": 29,
+        "w": 184,
+        "h": 209
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "healer-attack_up/attack-1.png": {
+      "frame": {
+        "x": 1343,
+        "y": 2,
+        "w": 185,
+        "h": 211
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 35,
+        "y": 26,
+        "w": 185,
+        "h": 211
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "healer-attack_up/attack-2.png": {
+      "frame": {
+        "x": 1530,
+        "y": 2,
+        "w": 215,
+        "h": 210
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 20,
+        "y": 27,
+        "w": 215,
+        "h": 210
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "healer-attack_up/attack-3.png": {
+      "frame": {
+        "x": 374,
+        "y": 233,
+        "w": 217,
+        "h": 209
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 19,
+        "y": 28,
+        "w": 217,
+        "h": 209
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "healer-attack_up/attack-4.png": {
+      "frame": {
+        "x": 1747,
+        "y": 2,
+        "w": 180,
+        "h": 210
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 38,
+        "y": 27,
+        "w": 180,
+        "h": 210
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "walk_down": {
+      "loop": true,
+      "fps": 10,
+      "frames": [
+        "healer-walk/down-1.png",
+        "healer-walk/down-2.png",
+        "healer-walk/down-1.png",
+        "healer-walk/down-4.png"
+      ]
+    },
+    "walk_left": {
+      "loop": true,
+      "fps": 10,
+      "frames": [
+        "healer-walk/left-1.png",
+        "healer-walk/left-2.png",
+        "healer-walk/left-1.png",
+        "healer-walk/left-4.png"
+      ]
+    },
+    "walk_right": {
+      "loop": true,
+      "fps": 10,
+      "frames": [
+        "healer-walk/left-1-mirror.png",
+        "healer-walk/left-2-mirror.png",
+        "healer-walk/left-1-mirror.png",
+        "healer-walk/left-4-mirror.png"
+      ]
+    },
+    "walk_up": {
+      "loop": true,
+      "fps": 10,
+      "frames": [
+        "healer-walk/up-1.png",
+        "healer-walk/up-2.png",
+        "healer-walk/up-1.png",
+        "healer-walk/up-4.png"
+      ]
+    },
+    "idle": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "healer-walk/up-1.png"
+      ]
+    },
+    "default": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "healer-walk/down-1.png"
+      ]
+    },
+    "idle_up": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "healer-walk/up-1.png"
+      ]
+    },
+    "idle_down": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "healer-walk/down-1.png"
+      ]
+    },
+    "idle_left": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "healer-walk/left-1.png"
+      ]
+    },
+    "idle_right": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "healer-walk/left-1-mirror.png"
+      ]
+    },
+    "attack_down": {
+      "loop": false,
+      "fps": 12,
+      "frames": [
+        "healer-attack_down/attack-1.png",
+        "healer-attack_down/attack-2.png",
+        "healer-attack_down/attack-3.png",
+        "healer-attack_down/attack-4.png"
+      ]
+    },
+    "attack_left": {
+      "loop": false,
+      "fps": 12,
+      "frames": [
+        "healer-attack_left/attack-1.png",
+        "healer-attack_left/attack-2.png",
+        "healer-attack_left/attack-3.png",
+        "healer-attack_left/attack-4.png"
+      ]
+    },
+    "attack_right": {
+      "loop": false,
+      "fps": 12,
+      "frames": [
+        "healer-attack_left/attack-1-mirror.png",
+        "healer-attack_left/attack-2-mirror.png",
+        "healer-attack_left/attack-3-mirror.png",
+        "healer-attack_left/attack-4-mirror.png"
+      ]
+    },
+    "attack_up": {
+      "loop": false,
+      "fps": 12,
+      "frames": [
+        "healer-attack_up/attack-1.png",
+        "healer-attack_up/attack-2.png",
+        "healer-attack_up/attack-3.png",
+        "healer-attack_up/attack-4.png"
+      ]
+    }
+  }
+}

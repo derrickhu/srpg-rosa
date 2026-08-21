@@ -1,0 +1,78 @@
+# 法师 v1 —— 杖击 2x2，每朝向一张（generate2dsprite --mode attack）
+#
+# 参考图：art/sprite-runs/mage/identity-ref-<朝向>.png（行走处理后的单帧）
+#   不要传 4x4 行走 sheet 当参考图：布局锚定会压过 2x2 指令。
+# 处理时 --scale-profile art/sprite-runs/mage/scale-profile.json
+#         --max-profile-scale-drift 0.6
+#
+# attack_right 由 attack_left 镜像，不出图。下面 <朝向段落> 三选一。
+# 动作是沿自身中线把火球杖往前捅，不要横扫——横扫会侵入相邻帧。
+
+CRITICAL BACKGROUND REQUIREMENT, THIS OVERRIDES EVERYTHING ELSE: the background of the
+image must be 100% solid flat MAGENTA, hex #FF00FF, bright pure pink-purple. NOT black. NOT
+white. NOT grey. NOT a gradient. Every single pixel that is not part of the character must be
+exactly magenta #FF00FF, including the areas between the cells. The background is a chroma
+key and a black background makes the whole image unusable.
+
+The attached reference image contains ONE SINGLE character frame. It defines only the
+CHARACTER IDENTITY and the ART STYLE. It does NOT define the layout of the image you must
+produce. Do NOT copy the reference's framing, and do NOT produce a walk cycle or a 4x4
+sheet — produce the 2x2 attack sheet described below.
+
+Match the reference exactly on: the same chibi girl mage, same deep-teal pointed hat, same
+deep-teal robe, same cream collar, same warm brown hair, same tan boots, same thick brown
+staff with a huge orange fire orb, same thick near-black outlines, same flat fills with
+light cel shading, same 3/4 top-down camera, same giant-head-tiny-body proportions.
+Only the pose changes.
+
+A 2x2 sprite sheet: 4 frames of a single STAFF THRUST attack. <朝向段落>. She jabs the fire-orb
+staff straight forward along her own centerline — NOT a wide horizontal sweep. The orb is the
+thing that moves; the change between frames must be obvious in silhouette.
+
+  朝下：the character FACING DOWN toward the camera the whole time. Face fully visible. She
+        thrusts the staff FORWARD toward the viewer, orb leading, staying on her vertical
+        centerline.
+  朝左：the character seen in LEFT SIDE PROFILE, facing LEFT the whole time and thrusting toward
+        the left. She stays in LEFT profile in all 4 frames — never turn her toward the camera,
+        never flip her to face right.
+  朝上：the character seen FROM BEHIND, facing UP and AWAY from the camera the whole time,
+        thrusting away from the viewer. Her face is never visible. The giant pointed hat AND the
+        orange orb must still be plainly visible in every frame.
+
+FRAME ORDER, reading left-to-right then top-to-bottom:
+  Frame 1 (top-left):     WIND-UP. Staff pulled back beside her shoulder, orb sitting near the
+                          hat brim, knees bent, torso coiled.
+  Frame 2 (top-right):    THRUST. Staff driven forward, orb at about chest height in front of
+                          the body, torso leaning into the jab.
+  Frame 3 (bottom-left):  IMPACT. Full extension — the orb is rammed as far forward as it goes,
+                          arms stretched, leading foot planted, torso lunged. Strongest, most
+                          extreme pose. Keep the staff on her own centerline; never let the orb
+                          reach sideways past her shoulders.
+  Frame 4 (bottom-right): RECOVERY. Staff lifted back to a neutral carry beside the body, orb
+                          up, torso straightening.
+
+ABSOLUTE RULES:
+1. Background is 100% solid flat magenta #FF00FF everywhere, including between the cells.
+   No gradient, no vignette, no ground shadow, no drop shadow, no black.
+2. EXACTLY 4 equal-size cells in a 2x2 grid. Every cell the same width and height.
+3. NO borders, NO dividing lines, NO gutters, NO frames between cells. Do not draw any line
+   where the cells meet. Cells are separated only by empty magenta background.
+4. IDENTICAL BODY SCALE and IDENTICAL camera distance in all 4 cells. Measure her from the
+   top of her hair to the soles of her boots, ignoring the hat cone and the staff: that height
+   must be the same in all 4 cells. Do not zoom in on the action.
+5. Her BODY (hair-top to boots, hat cone and staff excluded) fills only about 40% of the cell
+   height, centered in its cell, leaving a very wide empty magenta margin on all four sides.
+   Draw it small. A small character with a lot of empty margin is CORRECT.
+6. NOTHING may touch or cross a cell edge or the outer edge of the image — not the hat tip,
+   not the orb, not a boot. There must be clearly visible magenta between the hat tip / orb
+   and every edge in all 4 frames. Keep the staff inside the character's own vertical column.
+   If a pose does not fit, make the character smaller.
+7. Feet rest on the same horizontal baseline in every cell. The body may bob and lunge, but
+   do not let the character float or leave the ground.
+8. Draw the CHARACTER BODY ONLY. NO motion-blur streaks, NO energy trail, NO fire VFX, NO
+   spell circle, NO impact flash, NO dust, NO sparks. The spell VFX is drawn separately by
+   the engine.
+9. NO purple, magenta, pink, or violet anywhere on the character (the background magenta is
+   the key colour, not a costume colour).
+10. NO text of any kind anywhere in the image. Do NOT write the frame names, do NOT caption
+    the cells, no labels, no numbers, no arrows, no UI, no watermark.

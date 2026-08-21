@@ -1,0 +1,156 @@
+{
+  "id": "ember_burst",
+  "source": "art/vfx-runs/ember_burst",
+  "blend": "add",
+  "image": "images/anim/ember_burst.png",
+  "meta": {
+    "size": {
+      "w": 1024,
+      "h": 1024
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 256,
+    "baselineY": 256,
+    "ref": "ember_burst/ember_burst-1.png"
+  },
+  "frames": {
+    "ember_burst/ember_burst-1.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 256,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 256,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "ember_burst/ember_burst-2.png": {
+      "frame": {
+        "x": 260,
+        "y": 2,
+        "w": 256,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 256,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "ember_burst/ember_burst-3.png": {
+      "frame": {
+        "x": 518,
+        "y": 2,
+        "w": 256,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 256,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "ember_burst/ember_burst-4.png": {
+      "frame": {
+        "x": 2,
+        "y": 260,
+        "w": 256,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 256,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "ember_burst/ember_burst-5.png": {
+      "frame": {
+        "x": 260,
+        "y": 260,
+        "w": 256,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 256,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "ember_burst/ember_burst-6.png": {
+      "frame": {
+        "x": 518,
+        "y": 260,
+        "w": 256,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 256,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "ember_burst": {
+      "loop": false,
+      "fps": 24,
+      "frames": [
+        "ember_burst/ember_burst-1.png",
+        "ember_burst/ember_burst-2.png",
+        "ember_burst/ember_burst-3.png",
+        "ember_burst/ember_burst-4.png",
+        "ember_burst/ember_burst-5.png",
+        "ember_burst/ember_burst-6.png"
+      ]
+    }
+  }
+}

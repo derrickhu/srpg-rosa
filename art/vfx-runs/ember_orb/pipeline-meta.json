@@ -1,0 +1,19 @@
+{
+  "source": "shape-clarity-regen-2026-08",
+  "target": "vfx",
+  "mode": "vfx_frames",
+  "cell_size": 256,
+  "threshold": 22,
+  "frame_labels": [
+    "ember_orb-1",
+    "ember_orb-2",
+    "ember_orb-3",
+    "ember_orb-4",
+    "ember_orb-5",
+    "ember_orb-6"
+  ],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}

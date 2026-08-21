@@ -1,0 +1,65 @@
+{
+  "source": "scripts/vfx-sheet.py",
+  "input": "/tmp/flame_ring_raw.png",
+  "target": "vfx",
+  "mode": "vfx_sheet",
+  "rows": 3,
+  "cols": 3,
+  "cell_size": 256,
+  "threshold": 22,
+  "frame_labels": [
+    "flame_ring-1",
+    "flame_ring-2",
+    "flame_ring-3",
+    "flame_ring-4",
+    "flame_ring-5",
+    "flame_ring-6",
+    "flame_ring-7",
+    "flame_ring-8",
+    "flame_ring-9"
+  ],
+  "shared_crop_side": 318,
+  "crop_offsets": [
+    {
+      "x": 19,
+      "y": 13
+    },
+    {
+      "x": 10,
+      "y": 12
+    },
+    {
+      "x": 3,
+      "y": 13
+    },
+    {
+      "x": 17,
+      "y": 8
+    },
+    {
+      "x": 11,
+      "y": 8
+    },
+    {
+      "x": 3,
+      "y": 3
+    },
+    {
+      "x": 16,
+      "y": 0
+    },
+    {
+      "x": 5,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "empty_frames": [],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}

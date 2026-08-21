@@ -3,9 +3,11 @@ import {
   STARTER_CHARACTER_IDS,
   characterStatsAtLevel,
   getCharacterDef,
+  remapLegacyCharacterId,
   type CharacterDef,
 } from '@/data/characterCatalog';
 import { UNIT_DEFS } from '@/data/unitDefs';
+import { remapLegacySkillId } from '@/data/skillCatalog';
 import type { Character, CharacterBaseStats } from '@/game/characterTypes';
 
 /** 由固定角色定义生成运行时角色实例（1 级，初始仅默认技能） */
@@ -22,6 +24,43 @@ export function instantiateCharacter(def: CharacterDef): Character {
     ownedSkillIds: [def.defaultSkillId],
     activeSkillId: def.defaultSkillId,
   };
+}
+
+/**
+ * 老档里的凯尔 / 薇恩换成奥莉 / 弥尔。只保留等级，技能和词条不跟着走——
+ * 剑士招法师带不上，硬迁会让词条整批休眠。
+ */
+function remapCharacterSkills(m: Character): Character {
+  const ownedSkillIds = [...new Set(m.ownedSkillIds.map(remapLegacySkillId))];
+  return {
+    ...m,
+    ownedSkillIds,
+    activeSkillId: remapLegacySkillId(m.activeSkillId),
+  };
+}
+
+export function remapLegacyRosterMember(m: Character): Character {
+  const newId = remapLegacyCharacterId(m.rosterId);
+  if (newId !== m.rosterId) {
+    const def = getCharacterDef(newId);
+    if (!def) return remapCharacterSkills(m);
+    const inst = instantiateCharacter(def);
+    inst.level = Math.max(1, m.level);
+    return inst;
+  }
+  return remapCharacterSkills(m);
+}
+
+export function remapLegacyRoster(roster: Character[]): Character[] {
+  const seen = new Set<string>();
+  const out: Character[] = [];
+  for (const m of roster) {
+    const next = remapLegacyRosterMember(m);
+    if (seen.has(next.rosterId)) continue;
+    seen.add(next.rosterId);
+    out.push(next);
+  }
+  return out;
 }
 
 /** 开局名册：来自固定角色表中标记为 starter 的角色 */

@@ -71,8 +71,6 @@ export interface LootCard {
   /** 右下角的词条类型小标签图标；null = 不画 */
   modIconKey: string | null;
   desc: string;
-  /** 叠到第几层，画在卡片底部的小圆里 */
-  stacks: number;
   rarity: SkillModRarity;
   /**
    * 专属词条（只有这一招能出）。色条上加前缀点出来——
@@ -305,9 +303,11 @@ export function createRewardOverlay(opts: RewardOverlayOpts): PIXI.Container {
 
   // 奖励格排成一行，和图标同宽同高。做成网格而不是逐行文字，是为了让「这一场
   // 拿到 N 样东西」在一瞥之间就成立——数格子比读三行字快。
+  // 数量为 0 的不画：+0 看起来像漏发，而「这次没拿到」本来就不该占一格。
+  const entries = opts.entries.filter((e) => e.amount > 0);
   const cellSize = 62;
   const gap = 10;
-  const n = opts.entries.length;
+  const n = entries.length;
   const gridW = n * cellSize + Math.max(0, n - 1) * gap;
   const gridY = sub.y + 22;
 
@@ -324,7 +324,7 @@ export function createRewardOverlay(opts: RewardOverlayOpts): PIXI.Container {
     root.addChild(detail);
   };
 
-  opts.entries.forEach((e, i) => {
+  entries.forEach((e, i) => {
     const cell = new PIXI.Container();
     cell.x = cx - gridW / 2 + i * (cellSize + gap);
     cell.y = gridY;
@@ -358,18 +358,22 @@ export function createRewardOverlay(opts: RewardOverlayOpts): PIXI.Container {
     root.addChild(cell);
   });
 
-  const tapHint = makeText('点击奖励查看说明', 'caption', { fill: 0xb8b8a8, fontSize: 10 });
-  tapHint.anchor.set(0.5, 0);
-  tapHint.x = cx;
-  tapHint.y = gridY + cellSize + 8;
-  root.addChild(tapHint);
+  let btnY = gridY;
+  if (n > 0) {
+    const tapHint = makeText('点击奖励查看说明', 'caption', { fill: 0xb8b8a8, fontSize: 10 });
+    tapHint.anchor.set(0.5, 0);
+    tapHint.x = cx;
+    tapHint.y = gridY + cellSize + 8;
+    root.addChild(tapHint);
+    btnY = tapHint.y + 28;
+  }
 
   const btnW = Math.min(220, W - 80);
   const btn = makeButton(opts.confirmLabel, opts.onConfirm, {
     variant: 'primary', width: btnW, height: 48, fontSize: 17, radius: 14,
   });
   btn.x = cx - btnW / 2;
-  btn.y = tapHint.y + 28;
+  btn.y = btnY;
   root.addChild(btn);
 
   return root;
@@ -377,7 +381,7 @@ export function createRewardOverlay(opts: RewardOverlayOpts): PIXI.Container {
 
 /**
  * 单张强化卡的卡面。自上而下：稀有度色条 → 头像 + 角色名 → 技能大图标 → 技能名
- * → 词条名（带类型小标签）→ 效果说明 → 层数圆。
+ * → 词条名（带类型小标签）→ 效果说明。
  */
 function buildLootCard(card: LootCard, cardW: number, cardH: number): PIXI.Container {
   const cc = new PIXI.Container();
@@ -396,7 +400,7 @@ function buildLootCard(card: LootCard, cardW: number, cardH: number): PIXI.Conta
   strip.drawRect(0, 11, cardW, 11);
   strip.endFill();
   cc.addChild(strip);
-  const rarLabel = card.exclusive ? `专属 · ${RARITY_LABEL[card.rarity]}` : RARITY_LABEL[card.rarity];
+  const rarLabel = card.exclusive ? `专属纹章 · ${RARITY_LABEL[card.rarity]}` : RARITY_LABEL[card.rarity];
   const rar = makeText(rarLabel, 'caption', {
     fill: C.textOnDark, fontSize: 10, fontWeight: 'bold',
   });
@@ -487,32 +491,17 @@ function buildLootCard(card: LootCard, cardW: number, cardH: number): PIXI.Conta
   descTx.y = y;
   cc.addChild(descTx);
 
-  // 层数小圆压在卡片下沿。没有它的话，同一个词条第二次出现和第一次长得一模一样。
-  const badge = new PIXI.Graphics();
-  badge.lineStyle(2.5, C.ink, 1);
-  badge.beginFill(C.paper, 1);
-  badge.drawCircle(cardW / 2, cardH, 13);
-  badge.endFill();
-  cc.addChild(badge);
-  const bt = makeText(String(card.stacks), 'uiStrong', {
-    fill: accent, fontSize: 13,
-  });
-  bt.anchor.set(0.5);
-  bt.x = cardW / 2;
-  bt.y = cardH;
-  cc.addChild(bt);
-
   return cc;
 }
 
-/** 结算第二屏：三张强化卡竖着并排，点哪张选哪张 */
+/** 结算第二屏：三张纹章卡竖着并排，点哪张选哪张 */
 export function createLootOverlay(opts: LootOverlayOpts): PIXI.Container {
   const { screenW: W, screenH: H } = opts;
   const root = new PIXI.Container();
   root.addChild(createScrim(W, H));
 
   const cx = W / 2;
-  const title = makeText('请 选 择 强 化', 'title', {
+  const title = makeText('请 选 择 纹 章', 'title', {
     fill: C.primary, fontSize: 19,
     stroke: 0x2a2010, strokeThickness: 4,
   });
@@ -535,7 +524,7 @@ export function createLootOverlay(opts: LootOverlayOpts): PIXI.Container {
     cc.addChild(buildLootCard(card, cardW, cardH));
     cc.eventMode = 'static';
     cc.cursor = 'pointer';
-    cc.hitArea = new PIXI.Rectangle(0, 0, cardW, cardH + 16);
+    cc.hitArea = new PIXI.Rectangle(0, 0, cardW, cardH);
     cc.on('pointertap', () => opts.onPick(i));
     root.addChild(cc);
   });

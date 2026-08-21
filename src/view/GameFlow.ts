@@ -12,7 +12,7 @@ import {
   endlessAiDifficulty,
   isEndlessDungeon,
 } from '@/data/endlessCatalog';
-import { getSkillMod, isExclusiveMod, modStacks } from '@/data/skillModCatalog';
+import { getSkillMod, isExclusiveMod } from '@/data/skillModCatalog';
 import {
   createLootOverlay,
   createRewardOverlay,
@@ -80,8 +80,8 @@ function containerScene(container: PIXI.Container): Scene {
 /**
  * 战利品 → 三选一卡片的展示数据。
  *
- * 层数按「选了之后会变成第几层」算，不是当前层数：卡片上的数字要回答
- * 「我点这一下能拿到什么」，显示 0 或者显示已有层数都答非所问。
+ * 词条叠层写进 `desc`（`describe(下一层)`），卡面上不再单画一个数字：
+ * 第一次永远是 1，没有标签的「1」玩家读不出意思。
  */
 function lootToCard(state: MvpGameState, o: LootOption): LootCard {
   if (o.kind === 'potion') {
@@ -93,7 +93,6 @@ function lootToCard(state: MvpGameState, o: LootOption): LootCard {
       modName: o.name,
       modIconKey: null,
       desc: o.desc,
-      stacks: (state.run?.potions[o.potionId] ?? 0) + 1,
       rarity: 'common',
     };
   }
@@ -109,7 +108,6 @@ function lootToCard(state: MvpGameState, o: LootOption): LootCard {
     modName: mod?.name ?? '',
     modIconKey: mod?.icon ?? null,
     desc: o.desc,
-    stacks: modStacks(state.run?.skillMods[o.rosterId], o.modId) + 1,
     rarity: mod?.rarity ?? 'common',
     exclusive: mod ? isExclusiveMod(mod) : false,
   };
@@ -563,17 +561,18 @@ export class GameFlow {
           tint: C.gold,
         });
       }
-      entries.push({
-        iconKey: 'icon_soul',
-        name: '魂晶',
-        amount: v?.soul ?? 0,
-        quality: '永久',
-        desc: v?.firstClear
-          ? '带得出副本的永久货币，用来升级角色、学技能、招募同伴和解锁新章节。'
-          : '这个节点以前通过了，首通奖励只发一次。想要更多魂晶，往后面还没打过的节点推，或者整章通关。',
-        sources: ['战斗节点首通', '章节通关'],
-        tint: C.soul,
-      });
+      // 重复打已首通节点魂晶是 0。画一格 +0 会被读成漏发，所以只展示这次真正入账的。
+      if (v && v.soul > 0) {
+        entries.push({
+          iconKey: 'icon_soul',
+          name: '魂晶',
+          amount: v.soul,
+          quality: '永久',
+          desc: '带得出副本的永久货币，用来升级角色、学技能、招募同伴和解锁新章节。',
+          sources: ['战斗节点首通', '章节通关'],
+          tint: C.soul,
+        });
+      }
     }
 
     const hasLoot = !isRunFinal && (run.pendingLoot?.length ?? 0) > 0;
@@ -588,7 +587,7 @@ export class GameFlow {
         title: isRunFinal ? '通  关' : '胜  利',
         subtitle,
         entries,
-        confirmLabel: hasLoot ? '选择强化' : (isRunFinal ? (endless ? '离开试炼' : '返回大厅') : (endless ? '下一波' : '继续前进')),
+        confirmLabel: hasLoot ? '选择纹章' : (isRunFinal ? (endless ? '离开试炼' : '返回大厅') : (endless ? '下一波' : '继续前进')),
         onConfirm: () => {
           close();
           if (hasLoot) {
@@ -614,7 +613,7 @@ export class GameFlow {
     );
   }
 
-  /** 结算第二屏：技能词条三选一 */
+  /** 结算第二屏：纹章三选一 */
   private showLootOverlay(): void {
     const run = this.state.run!;
     const loot = run.pendingLoot ?? [];
@@ -630,7 +629,7 @@ export class GameFlow {
           close();
           this.advanceAfterVictory();
           this.showToast(
-            opt.kind === 'skillMod' ? `「${opt.name}」已生效` : `「${opt.name}」已放入背包`,
+            opt.kind === 'skillMod' ? `纹章已铭刻：${opt.name}` : `「${opt.name}」已放入背包`,
           );
         },
         onSkip: () => {

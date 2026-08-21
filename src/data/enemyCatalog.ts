@@ -19,6 +19,9 @@ export const ENEMY_DEFS: Record<UnitKind, { id: UnitKind; base: EnemyStatBlock }
   bow: { id: 'bow', base: { maxHp: 60, atk: 22, spd: 7, move: 2 } },
   cavalry: { id: 'cavalry', base: { maxHp: 90, atk: 20, spd: 8, move: 4 } },
   shield: { id: 'shield', base: { maxHp: 150, atk: 10, spd: 3, move: 2 } },
+  // 关卡不刷法师 / 祭司；表里留空档是因为 spawn 的 defId 类型是 UnitKind
+  mage: { id: 'mage', base: { maxHp: 52, atk: 24, spd: 6, move: 2 } },
+  healer: { id: 'healer', base: { maxHp: 72, atk: 12, spd: 4, move: 2 } },
 };
 
 export function enemyBaseStats(kind: UnitKind): EnemyStatBlock {

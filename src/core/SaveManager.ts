@@ -3,6 +3,9 @@ import type { MetaState, MvpGameState, RunState } from '@/game/state/GameState';
 import { createInitialMeta, createInitialState, META_VERSION } from '@/game/state/GameState';
 import { getDungeonDef } from '@/data/dungeonCatalog';
 import { isEndlessDungeon } from '@/data/endlessCatalog';
+import { LEGACY_CHARACTER_IDS, remapLegacyCharacterId } from '@/data/characterCatalog';
+import { remapLegacyRoster } from '@/game/characterFactory';
+import { remapLegacySkillId } from '@/data/skillCatalog';
 
 const META_KEY = 'srpg_meta_v3';
 // run v4：第一章扩为 7 关后关卡下标整体变更，v3 的局内进度直接作废（只损失一局）
@@ -58,22 +61,59 @@ function normalizeRun(run: RunState): RunState {
     offFieldStatByRosterId?: Record<string, unknown>;
     runSkillGrants?: Record<string, string[]>;
   };
-  const knownRoster = new Set(rest.partyRosterIds ?? []);
-  const skillMods = Object.fromEntries(
-    Object.entries(rest.skillMods ?? {}).filter(([k]) => knownRoster.has(k)),
-  );
+  const partyRosterIds = (rest.partyRosterIds ?? []).map(remapLegacyCharacterId);
+  const remappedAway = new Set<string>();
+  for (const [oldId, newId] of Object.entries(LEGACY_CHARACTER_IDS)) {
+    if ((rest.partyRosterIds ?? []).includes(oldId)) remappedAway.add(newId);
+  }
+  const knownRoster = new Set(partyRosterIds);
+  const remapKeyed = <T,>(rec: Record<string, T> | undefined): Record<string, T> =>
+    Object.fromEntries(
+      Object.entries(rec ?? {})
+        .map(([k, v]) => [remapLegacyCharacterId(k), v] as const)
+        .filter(([k]) => knownRoster.has(k) && !remappedAway.has(k)),
+    );
   return {
     ...rest,
+    partyRosterIds,
     lastVictory: rest.lastVictory ?? null,
-    skillMods,
-    runTempSkill: rest.runTempSkill ?? {},
-    // 老档的 placements 上挂着 statBonus，读进来会原样带着一个没人认识的字段。
-    placements: rest.placements.map((p) => ({ uid: p.uid, rosterId: p.rosterId, pos: p.pos })),
-    endless: rest.endless ?? (
-      isEndlessDungeon(rest.dungeonId)
-        ? { wave: 1, clearedCurrent: false, carry: null }
-        : undefined
+    skillMods: Object.fromEntries(
+      Object.entries(remapKeyed(rest.skillMods)).map(([k, mods]) => [
+        k,
+        (mods as string[]).map((id) => (id === 'ex_arcane_starfire' ? 'ex_flame_ignite' : id)),
+      ]),
     ),
+    runTempSkill: Object.fromEntries(
+      Object.entries(remapKeyed(rest.runTempSkill)).map(([k, v]) => [k, remapLegacySkillId(v)]),
+    ),
+    runEquip: remapKeyed(rest.runEquip),
+    // 老档的 placements 上挂着 statBonus，读进来会原样带着一个没人认识的字段。
+    placements: rest.placements.map((p) => ({
+      uid: p.uid,
+      rosterId: remapLegacyCharacterId(p.rosterId),
+      pos: p.pos,
+    })),
+    endless: rest.endless
+      ? {
+          ...rest.endless,
+          carry: rest.endless.carry
+            ? rest.endless.carry.map((c) => ({
+                ...c,
+                rosterId: remapLegacyCharacterId(c.rosterId),
+              }))
+            : rest.endless.carry,
+        }
+      : (
+        isEndlessDungeon(rest.dungeonId)
+          ? { wave: 1, clearedCurrent: false, carry: null }
+          : undefined
+      ),
+    pendingLoot:
+      rest.pendingLoot?.some(
+        (o) => o.kind === 'skillMod' && o.rosterId in LEGACY_CHARACTER_IDS,
+      )
+        ? null
+        : rest.pendingLoot ?? null,
   };
 }
 
@@ -90,6 +130,7 @@ function normalizeRun(run: RunState): RunState {
 function normalizeMeta(meta: MetaState): MetaState {
   return {
     ...meta,
+    roster: remapLegacyRoster(meta.roster),
     clearedNodesByDungeonId: meta.clearedNodesByDungeonId ?? {},
     sweepUsageByDungeonId: meta.sweepUsageByDungeonId ?? {},
   };

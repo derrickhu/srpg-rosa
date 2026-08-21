@@ -167,12 +167,16 @@ export function createShopView(
   }
 
   /**
-   * 主块 = 场景 + 详情 + 离开，紧凑叠在一起，再整体竖直居中。
-   * 以前把离开钉在屏底、商人在剩余带里「居中」，中间会扯出一大块空白。
+   * 主块 = 场景 + 详情 + 离开。
+   *
+   * 商人/摊的竖直位置必须和当前选中货的说明行数脱钩：详情板按固定槽位预留，
+   * 2 行药切到 3 行技能时只在槽里长，整块不再重新居中——否则摊会跟着跳。
+   * 槽按「标题 + 最多约 5 行说明」估；真溢出才把离开按钮往下挤，场景仍不动。
    */
   const leaveH = 44;
-  /** 详情板高度随文案变；离开按钮跟着重排 */
-  let detailH = 110;
+  const DETAIL_SLOT_H = 132;
+  /** 当前详情内容高度（可能大于槽）；画板和离开按钮用 max(槽, 这个值) */
+  let detailH = DETAIL_SLOT_H;
   const gapSceneDetail = 12;
   const gapDetailLeave = 10;
   const bottomSafe = 18;
@@ -331,11 +335,11 @@ export function createShopView(
 
   function layoutMainBlock(): void {
     detail.y = sceneH + gapSceneDetail;
-    leaveBtn.y = detail.y + detailH + gapDetailLeave;
-    const mainH = leaveBtn.y + leaveH;
+    leaveBtn.y = detail.y + Math.max(DETAIL_SLOT_H, detailH) + gapDetailLeave;
+    const reservedMainH = sceneH + gapSceneDetail + DETAIL_SLOT_H + gapDetailLeave + leaveH;
     const availH = H - bottomSafe - contentTop;
     // 偏下：让摊脚落在 shop_bg 的泥地空地上，而不是悬在半空草地
-    main.y = contentTop + Math.max(0, (availH - mainH) * 0.72);
+    main.y = contentTop + Math.max(0, (availH - reservedMainH) * 0.72);
   }
 
   function refreshDetail(): void {
@@ -343,11 +347,11 @@ export function createShopView(
     const panelW = W - PAD * 2;
 
     if (selected < 0 || !offers[selected]) {
-      detailH = 96;
+      detailH = DETAIL_SLOT_H;
       const panelBg = new PIXI.Graphics();
       panelBg.beginFill(C.paper, 0.92);
       panelBg.lineStyle(2, C.ink, 0.55);
-      panelBg.drawRoundedRect(0, 0, panelW, detailH, 12);
+      panelBg.drawRoundedRect(0, 0, panelW, DETAIL_SLOT_H, 12);
       panelBg.endFill();
       detail.addChild(panelBg);
       const empty = makeText(offers.length === 0 ? '货已售罄，可以继续前进了' : '点摊上的货物看看', 'body', {
@@ -355,7 +359,7 @@ export function createShopView(
       });
       empty.anchor.set(0.5);
       empty.x = panelW / 2;
-      empty.y = detailH / 2;
+      empty.y = DETAIL_SLOT_H / 2;
       detail.addChild(empty);
       layoutMainBlock();
       return;
@@ -382,7 +386,7 @@ export function createShopView(
     desc.y = 36;
     detail.addChild(desc);
 
-    detailH = Math.max(96, Math.ceil(desc.y + desc.height + 14));
+    detailH = Math.max(DETAIL_SLOT_H, Math.ceil(desc.y + desc.height + 14));
     const panelBg = new PIXI.Graphics();
     panelBg.beginFill(C.paper, 0.92);
     panelBg.lineStyle(2, C.ink, 0.55);

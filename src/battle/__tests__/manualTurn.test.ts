@@ -134,7 +134,7 @@ describe('纯人工回合', () => {
     expect(posOf(sim, 'p1')).toEqual(after);
   });
 
-  it('先出手后仍可移动；走过再出手则不能撤销', () => {
+  it('先出手后仍可移动；走完之后再出手才锁死撤销', () => {
     const sim = setupAdjacent();
     stepUntilPending(sim);
     sim.commandAttack('p1', 'e1');
@@ -147,14 +147,14 @@ describe('纯人工回合', () => {
     const dest = sim.legalMoveCells('p1')[0];
     expect(dest).toBeTruthy();
     sim.commandMove('p1', dest!);
-    // 出手在前、移动在后：撤销会改写已结算的站位关系，不允许
-    // （若技能/普攻也用尽，回合可能已收尾，此时同样不可撤销）
-    expect(sim.pending()?.canUndoMove ?? false).toBe(false);
+    // 出手在前、移动在后：走错了仍能撤，出手本身不回滚
+    expect(sim.pending()?.canUndoMove).toBe(true);
   });
 
-  it('先放技能再移动合法', () => {
+  it('先放技能再移动合法，走错了也能撤回来', () => {
     const sim = setupAdjacent();
     stepUntilPending(sim);
+    const start = posOf(sim, 'p1');
     const skillEvents = sim.commandSkill('p1');
     expect(skillEvents.events.some((e) => e.type === 'skillCast')).toBe(true);
     expect(sim.pending()?.canMove).toBe(true);
@@ -162,6 +162,26 @@ describe('纯人工回合', () => {
     expect(dest).toBeTruthy();
     const moved = sim.commandMove('p1', dest!);
     expect(moved.events.some((e) => e.type === 'moveStep')).toBe(true);
+    // 技能已经结算，但这一步走还能悔——以前这里会直接收回合
+    expect(sim.pending()).not.toBeNull();
+    expect(sim.pending()?.canUndoMove).toBe(true);
+
+    sim.commandUndoMove('p1');
+    expect(posOf(sim, 'p1')).toEqual(start);
+    expect(sim.pending()?.canMove).toBe(true);
+    expect(sim.pending()?.didSkill).toBe(true);
+  });
+
+  it('走完再出手则不能撤销：站位已经用来结算过了', () => {
+    const sim = setupAdjacent();
+    stepUntilPending(sim);
+    // 走到仍能普攻到敌人的格子，否则出手会 noop，撤销锁也就测不到
+    const dest = sim.legalMoveCells('p1').find((c) => Math.abs(c.x - 1) + Math.abs(c.y - 0) === 1);
+    expect(dest).toBeTruthy();
+    sim.commandMove('p1', dest!);
+    expect(sim.pending()?.canUndoMove).toBe(true);
+    sim.commandAttack('p1', 'e1');
+    expect(sim.pending()?.canUndoMove ?? false).toBe(false);
   });
 
   it('普攻只能打射程内的目标', () => {
@@ -184,7 +204,7 @@ describe('纯人工回合', () => {
     expect(atkEvents.events.some((e) => e.type === 'attack')).toBe(true);
   });
 
-  it('移动+技能+普攻都用完后自动结束该单位回合', () => {
+  it('技能和普攻都用完后，走完仍要停下来给撤销，点待机才收尾', () => {
     const sim = setupAdjacent();
     stepUntilPending(sim);
     sim.commandSkill('p1');
@@ -192,8 +212,11 @@ describe('纯人工回合', () => {
     // 出手完若还没走，应留下移动额度，不能直接收尾
     expect(sim.pending()?.canMove).toBe(true);
     const dest = sim.legalMoveCells('p1')[0];
-    if (dest) sim.commandMove('p1', dest);
-    else sim.commandWait('p1');
+    expect(dest).toBeTruthy();
+    sim.commandMove('p1', dest!);
+    expect(sim.pending()).not.toBeNull();
+    expect(sim.pending()?.canUndoMove).toBe(true);
+    sim.commandWait('p1');
     expect(sim.pending()).toBeNull();
   });
 
@@ -227,7 +250,7 @@ describe('纯人工回合', () => {
       unit('e1', 'sword', 'enemy', { x: 1, y: 0 }),
       unit('e2', 'sword', 'enemy', { x: 2, y: 2 }),
     ];
-    // 盾卫的震击是 neighborPickLowest（曼哈顿 1 环），需要选目标
+    // 盾卫的震击是邻格点杀，需要选目标
     units[0]!.battleSkill = skillDefForId('bash') ?? undefined;
     const sim = createBattleSim(units, emptyTerrain(3, 3), UNIT_DEFS, { mode: 'manual' });
     stepUntilPending(sim);

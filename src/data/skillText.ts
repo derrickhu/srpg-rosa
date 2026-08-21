@@ -38,16 +38,10 @@ export function describeSkillShape(spec: SkillSpec): string {
       return `周围 ${shape.manhattan} 格内所有敌人`;
     case 'discAoE':
       return `周围 ${shape.radius} 格全覆盖所有敌人`;
-    case 'neighborPickLowest':
-      return `${describeReach(shape.manhattan, 'exact')}选血量最低的敌人`;
-    case 'neighborPickFoe': {
-      const pick = shape.pick === 'lowestHp' ? '血量最低' : '血量最高';
-      return `${describeReach(shape.manhattan, shape.reach)}选${pick}的敌人`;
-    }
-    case 'neighborPickAlly': {
-      const pick = shape.pick === 'lowestHp' ? '血量最低' : '血量最高';
-      return `周围 ${shape.manhattan} 格选${pick}的友方`;
-    }
+    case 'neighborPickFoe':
+      return `${describeReach(shape.manhattan, shape.reach)}选一个敌人`;
+    case 'neighborPickAlly':
+      return `${describeReach(shape.manhattan, shape.reach)}选一个友方`;
     case 'lineBestRayAllFoes':
       return '四方向直线穿透所有敌人';
     case 'selfCast':

@@ -1,0 +1,119 @@
+# 单位 mage v1（法师职业 · 奥莉）—— 四方向行走 sheet（generate2dsprite player_sheet, 4x4）
+#
+# 取代 mage/idle 单帧捷径。风格、比例、键色一律对齐剑士/弓手 v3，不要再单独出一张精致立绘。
+#
+# 定色（美术风格圣经 §2.1）：
+#   主色 DEEP TEAL `#0E7A7A` H180 S79 L27。
+#   对剑士 H24 / 弓手 H90 / 骑兵 H42 色相差都 >80°；对盾卫 H210 差 30°（≥25°）。
+#   禁止紫/粉/品红——despill-magenta 会把它们当溢色压掉。橙火球是道具色，不是主色。
+#
+# 剪影一句话：一顶高过全身的三角尖帽扣在近正方形的短肢身体上，身旁一根头一样大的火球杖。
+# 唯一记忆点：那顶失真的大尖帽（形状，不是颜色）。火球杖是武器可读性，帽子才是 40px 下的身份。
+#
+# 键色：#FF00FF —— 主色青绿/棕/橙，与品红欧氏距离远。
+# 下游：generate2dsprite.py process --target player --mode player_sheet --align feet
+#       --shared-scale --component-mode largest --write-scale-profile
+# 参考图：art/sprite-runs/mage/identity-ref-down.png（单帧，只锁身份）
+
+A 4x4 sprite sheet showing a full 4-direction walk cycle for a top-down tactics RPG unit.
+Keep the character in the reference image: same face, same deep-teal pointed hat, same deep-teal
+robe, same cream collar, same warm brown hair, same huge orange fire-orb staff, same palette.
+Only the facing direction, the walk pose and how the staff sits change.
+
+HER POINTED HAT IS HER WHOLE IDENTITY — it must be huge.
+All of the following are mandatory:
+- A GIANT WITCH HAT, a tall sharp triangle. From brim to tip the hat is about as tall as the rest
+  of her body. The brim is a wide disc sitting on the head. At tiny size this triangle-on-a-square
+  is the only way to read "mage" — a small cute hat turns her into a generic child.
+- The hat tip rising well above her head is REQUIRED, not merely allowed. In game the character is
+  scaled by her body height only (hat excluded from bodySpan), so a huge hat costs her nothing.
+- Do not shrink the hat to fit the cell. Shrink the character instead.
+
+HER STAFF is the weapon, not the identity, but it must still read at 40px:
+- A thick brown wooden stick held close to the body, with a FAT ROUND ORANGE FIRE ORB on top
+  (bright #F08C2A with a cream highlight). The orb is about as big as her head. A thin stick with
+  a tiny gem becomes an unreadable line.
+- The orb may rise above the hat brim; that is fine. Keep the staff inside its own cell.
+
+PROPORTIONS — check against this, drawing her too tall is the most common failure:
+- Extreme super-deformed mascot. Her HEAD INCLUDING HAIR (not counting the hat cone) is about
+  HALF of her body height. Body, arms and legs together are the other half: short, stubby,
+  chunky, almost no neck.
+- Her BODY, from the top of her hair down to her boots and not counting the hat cone or staff,
+  fits in a roughly SQUARE box — about as wide as it is tall.
+- This is NOT a 2-head or 2.5-head chibi. Think 1.5-head mascot: giant head, tiny body.
+- She is a toy-soldier child, NOT a pretty teen, NOT a slim anime girl.
+
+CHARACTER: a young girl mage.
+- DEEP TEAL `#0E7A7A` is her identity colour and covers most of her body: the robe AND the hat.
+- A plain CREAM collar is her one light area, reading as near-white (#F0F0E0).
+- Simple warm brown hair in a short bob, two chunky bangs, warm tan boots.
+- No cape, no belt, no pouch, no stars, no moons, no runes, no sparkles on the clothes.
+
+SIMPLIFY — characterise her with a few bold strokes and colours, never by piling on detail.
+She displays about 48 pixels tall in game, where detail becomes noise:
+- Only 4 to 6 flat colours on the whole character: deep teal, cream, skin #EEC49A, warm brown,
+  orange orb, near-black outline.
+- NO belts, straps, buckles, pouches, rivets, seams, laces, stitching, patterns, stars or trim.
+- Face is minimal: two simple dark eyes, two eyebrows, at most a tiny mouth line. No nose,
+  no ear detail, no blush, no eyelashes, no pupils with highlight.
+- Arms and legs are simple rounded stubs; hands are mitten shapes with no fingers.
+- NO purple, magenta, pink, or violet anywhere on the character.
+
+ART STYLE (project style bible — do not deviate):
+hand-drawn cartoon game sprite, chibi / super-deformed proportions with a large head
+and short limbs, thick near-black outlines (pure black or very dark warm brown — never
+a mid-tone or colorful outline), flat saturated fills with light cel shading (one
+highlight tone, one shadow tone), no gradients, no texture noise, no painterly
+rendering, no photographic detail, 3/4 top-down camera matching a tactics grid.
+The sprite must stay readable at 40 pixels tall: silhouette first, exaggerate the
+weapon and the one signature feature, drop everything that needs zoom to appreciate.
+NO TEXT, no labels, no captions, no watermark anywhere in the image.
+
+BRIGHTNESS: bright saturated palette with a genuine near-white highlight on the cream collar
+and the fire orb. Never uniformly dark or muted. Avoid grey, dusty, chalky or desaturated colours.
+
+CAMERA: 3/4 top-down view from slightly above, consistent in all 16 cells. You can see the
+top of the hat, the shoulders, and the full body down to the boots.
+
+SHEET LAYOUT — rows are facing direction, columns are walk frames:
+  Row 1 (top):    facing DOWN, toward the camera, face fully visible
+  Row 2:          facing LEFT, left side profile
+  Row 3:          facing RIGHT, right side profile, mirrored from row 2
+  Row 4 (bottom): facing UP, away from the camera, back of the hat and robe visible.
+                  The giant pointed hat AND the orange orb must still be plainly visible in this
+                  row — a back view that is just a teal triangle has no weapon identity.
+WALK MOTION — the walk must be readable from the SILHOUETTE ALONE at 44 pixels tall.
+Columns 1 and 3 must look obviously different from columns 2 and 4 even with all interior
+detail removed. Understating this is the single most common failure:
+  Column 1: neutral. Both feet together directly under the body, legs straight, body at its
+            FULL standing height.
+  Column 2: LEFT foot planted far FORWARD, right foot trailing far BEHIND, with a clearly
+            VISIBLE GAP between the two feet — the stride is wide, not a shuffle. The whole
+            body drops noticeably, squashing down about one tenth of its height. Arms swing
+            opposite to the legs.
+  Column 3: neutral again, identical to column 1.
+  Column 4: mirror of column 2 — RIGHT foot far forward, left foot trailing behind, same
+            heavy body drop, arms swung the other way.
+Exaggerate far past realism. A subtle, realistic walk reads as a statue sliding across the
+board. If in doubt, make the stride wider and the body drop deeper.
+
+ABSOLUTE RULES:
+1. EXACTLY 16 equal-size cells in a 4x4 grid. Every cell the same width and height.
+2. NO borders, NO dividing lines, NO frames between cells. Cells are separated only by the
+   flat background color.
+3. Background is 100% solid flat magenta #FF00FF everywhere, including between the cells.
+   No gradient, no vignette, no ground shadow, no drop shadow under the character.
+4. IDENTICAL BODY SCALE in all 16 cells — this is the single most important consistency
+   rule. Measure her from the top of her hair to the soles of her boots, IGNORING the hat cone
+   and the staff: that height must be the same in all 16 cells. The hat and orb may change
+   apparent length with the pose, but the body must never change size. Do not shrink the body
+   in the cells where the hat happens to take up more room — let the hat run closer to the cell
+   edge instead. Same camera distance in every cell; never zoom in or out between cells.
+5. IDENTICAL character identity, costume, and palette in all 16 cells.
+6. Her BODY (hair-top to boots, hat cone and staff excluded) fills about 45% of the cell height
+   in EVERY cell. That 45% is fixed; the hat extends past it by whatever the pose needs.
+   Centered with magenta margin on all four sides.
+7. Nothing crosses a cell edge. The hat tip and the orb especially must stay clear of the edges.
+8. Feet rest on the same horizontal baseline in every cell.
+9. NO text, NO labels, NO numbers, NO arrows, NO UI, NO watermark anywhere in the image.

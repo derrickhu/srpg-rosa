@@ -1,0 +1,219 @@
+{
+  "id": "bless_rays",
+  "source": "art/vfx-runs/bless_rays",
+  "blend": "add",
+  "image": "images/anim/bless_rays.png",
+  "meta": {
+    "size": {
+      "w": 1024,
+      "h": 1024
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 256,
+    "baselineY": 256,
+    "ref": "bless_rays/bless_rays-1.png"
+  },
+  "frames": {
+    "bless_rays/bless_rays-1.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 256,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 256,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bless_rays/bless_rays-2.png": {
+      "frame": {
+        "x": 260,
+        "y": 2,
+        "w": 256,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 256,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bless_rays/bless_rays-3.png": {
+      "frame": {
+        "x": 518,
+        "y": 2,
+        "w": 256,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 256,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bless_rays/bless_rays-4.png": {
+      "frame": {
+        "x": 2,
+        "y": 260,
+        "w": 256,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 256,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bless_rays/bless_rays-5.png": {
+      "frame": {
+        "x": 260,
+        "y": 260,
+        "w": 256,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 256,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bless_rays/bless_rays-6.png": {
+      "frame": {
+        "x": 518,
+        "y": 260,
+        "w": 256,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 256,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bless_rays/bless_rays-7.png": {
+      "frame": {
+        "x": 2,
+        "y": 518,
+        "w": 256,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 256,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bless_rays/bless_rays-8.png": {
+      "frame": {
+        "x": 260,
+        "y": 518,
+        "w": 256,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 256,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bless_rays/bless_rays-9.png": {
+      "frame": {
+        "x": 518,
+        "y": 518,
+        "w": 256,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 256,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "bless_rays": {
+      "loop": false,
+      "fps": 20,
+      "frames": [
+        "bless_rays/bless_rays-1.png",
+        "bless_rays/bless_rays-2.png",
+        "bless_rays/bless_rays-3.png",
+        "bless_rays/bless_rays-4.png",
+        "bless_rays/bless_rays-5.png",
+        "bless_rays/bless_rays-6.png",
+        "bless_rays/bless_rays-7.png",
+        "bless_rays/bless_rays-8.png",
+        "bless_rays/bless_rays-9.png"
+      ]
+    }
+  }
+}

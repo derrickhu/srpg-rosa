@@ -128,20 +128,41 @@ function alliesAtManhattanExcludingSelf(self: UnitState, units: UnitState[], dis
   );
 }
 
-function pickFoeInRing(foes: UnitState[], pick: 'lowestHp' | 'highestHp'): UnitState | undefined {
-  if (foes.length === 0) return undefined;
-  if (pick === 'lowestHp') return foes.reduce((a, b) => (a.hp <= b.hp ? a : b));
-  return foes.reduce((a, b) => (a.hp >= b.hp ? a : b));
-}
-
-function pickAllyInRing(allies: UnitState[], pick: 'lowestHp' | 'highestHp'): UnitState | undefined {
-  if (allies.length === 0) return undefined;
-  if (pick === 'lowestHp') return allies.reduce((a, b) => (a.hp <= b.hp ? a : b));
-  return allies.reduce((a, b) => (a.hp >= b.hp ? a : b));
+function alliesWithinManhattanExcludingSelf(
+  self: UnitState,
+  units: UnitState[],
+  radius: number,
+): UnitState[] {
+  return livingAllies(self, units).filter((u) => {
+    if (u.uid === self.uid) return false;
+    const d = manhattan(u.pos, self.pos);
+    return d > 0 && d <= radius;
+  });
 }
 
 /**
- * 玩家指定的目标优先，否则退回自动挑选规则。
+ * 调用方没指定目标时的策略回退。点谁不是技能字段——玩家点谁打谁，
+ * AI 才按这条规则选。口径和普攻 normal 对齐：敌人打最低血；
+ * 治疗/护盾救最低血；纯增益给攻击最高的人。
+ */
+function fallbackSkillTarget(
+  spec: SkillSpec,
+  pool: UnitState[],
+  defs: Record<UnitKind, UnitArchetypeDef>,
+): UnitState | undefined {
+  if (pool.length === 0) return undefined;
+  if (spec.shape.type === 'neighborPickAlly') {
+    const protect = spec.onCastAllyEffects?.some((e) => e.kind === 'heal' || e.kind === 'guard');
+    if (protect) return pool.reduce((a, b) => (a.hp <= b.hp ? a : b));
+    return pool.reduce((a, b) =>
+      (effectiveUnitDef(a, defs).atk >= effectiveUnitDef(b, defs).atk ? a : b),
+    );
+  }
+  return pool.reduce((a, b) => (a.hp <= b.hp ? a : b));
+}
+
+/**
+ * 玩家指定的目标优先，否则退回 AI 策略。
  *
  * `chosenUid` 必须落在 `pool` 里才生效。校验放这里而不是信任调用方：pool 是「合法目标」的
  * 唯一定义（射程 + 阵营 + 存活），要是让一个不在其中的 uid 通过，技能就能隔着半张地图
@@ -453,43 +474,6 @@ function pushLifesteal(
   events.push({ type: 'heal', target: self.uid, amount: heal, hpLeft: self.hp });
 }
 
-function castNeighborPickLowest(
-  self: UnitState,
-  def: UnitDef,
-  spec: SkillSpec,
-  units: UnitState[],
-  terrain: TerrainGrid,
-  defs: Record<UnitKind, UnitArchetypeDef>,
-  dist: number,
-  chosenUid?: string,
-): BattleEvent[] {
-  const foes = foesAtManhattan(self, units, dist);
-  if (foes.length === 0) return [];
-  const tgt = resolveChoice(foes, chosenUid, () => foes.reduce((a, b) => (a.hp <= b.hp ? a : b)))!;
-  const hits = [
-    resolveHit(self, def, spec, tgt, terrain, defs),
-    ...resolveSplashHits(self, def, spec, tgt, units, terrain, defs),
-  ];
-  const events: BattleEvent[] = [
-    {
-      type: 'skillCast',
-      uid: self.uid,
-      skillId: spec.id,
-      skillName: skillCastName(self, spec),
-      kind: spec.displayKind,
-      rangeCells: cellsAtManhattan(self.pos, dist, terrain),
-      hits,
-      atkTerrainNote: terrainAttackNote(terrain, self.pos) ?? undefined,
-    },
-  ];
-  pushHitDeaths(events, units, hits);
-  applySkillCastFoeEffects(tgt, spec);
-  applySkillCastSelfEffects(self, spec);
-  pushAttrNotes(events, spec, { self, foes: [tgt] });
-  pushLifesteal(self, spec, hits, defs, events);
-  return events;
-}
-
 function castNeighborPickFoe(
   self: UnitState,
   def: UnitDef,
@@ -498,7 +482,6 @@ function castNeighborPickFoe(
   terrain: TerrainGrid,
   defs: Record<UnitKind, UnitArchetypeDef>,
   dist: number,
-  pick: 'lowestHp' | 'highestHp',
   chosenUid?: string,
   reach: 'exact' | 'within' = 'exact',
 ): BattleEvent[] {
@@ -506,7 +489,7 @@ function castNeighborPickFoe(
   const foes = within
     ? foesWithinManhattan(self, units, dist)
     : foesAtManhattan(self, units, dist);
-  const tgt = resolveChoice(foes, chosenUid, () => pickFoeInRing(foes, pick));
+  const tgt = resolveChoice(foes, chosenUid, () => fallbackSkillTarget(spec, foes, defs));
   if (!tgt) return [];
   // 纯 debuff（破甲/缠足）：保留 hit 供回放对准目标，但不走扣血
   const hits: SkillHit[] =
@@ -565,11 +548,14 @@ function castNeighborPickAlly(
   terrain: TerrainGrid,
   defs: Record<UnitKind, UnitArchetypeDef>,
   dist: number,
-  pick: 'lowestHp' | 'highestHp',
   chosenUid?: string,
+  reach?: 'exact' | 'within',
 ): BattleEvent[] {
-  const allies = alliesAtManhattanExcludingSelf(self, units, dist);
-  const tgt = resolveChoice(allies, chosenUid, () => pickAllyInRing(allies, pick));
+  const within = reach === 'within';
+  const allies = within
+    ? alliesWithinManhattanExcludingSelf(self, units, dist)
+    : alliesAtManhattanExcludingSelf(self, units, dist);
+  const tgt = resolveChoice(allies, chosenUid, () => fallbackSkillTarget(spec, allies, defs));
   if (!tgt) return [];
   // 友方治疗/buff：不要 resolveHit，否则无伤也会被当成「打了友军 0 点」
   const hits: SkillHit[] =
@@ -583,7 +569,9 @@ function castNeighborPickAlly(
       skillId: spec.id,
       skillName: skillCastName(self, spec),
       kind: spec.displayKind,
-      rangeCells: cellsAtManhattan(self.pos, dist, terrain),
+      rangeCells: within
+        ? cellsWithinManhattan(self.pos, dist, terrain)
+        : cellsAtManhattan(self.pos, dist, terrain),
       hits,
       atkTerrainNote: terrainAttackNote(terrain, self.pos) ?? undefined,
     },
@@ -743,7 +731,7 @@ function commitCast(
  * 这里是「真的放出去了」的唯一判定点，散到各个 `cast*` 里迟早会漏。
  *
  * 作用域取 `skillCast` 事件的 `rangeCells`。注意这只对 **AoE 形状**才等于真实作用域
- * ——单体点名形状的 `rangeCells` 是整个瞄准环（见 `castNeighborPickLowest`），
+ * ——单体点名形状的 `rangeCells` 是整个瞄准环（见 `castNeighborPickFoe`），
  * 拿它点燃会烧掉一整圈。所以改地形的词条在 `canApply` 里限定了只能挂 AoE 技能，
  * 这条规则才能一直是诚实的。
  */
@@ -885,9 +873,8 @@ export function skillAiming(
         autoTargets: foes.map((f) => f.uid),
       };
     }
-    case 'neighborPickLowest':
     case 'neighborPickFoe': {
-      const within = spec.shape.type === 'neighborPickFoe' && spec.shape.reach === 'within';
+      const within = spec.shape.reach === 'within';
       const d = spec.shape.manhattan;
       const foes = within ? foesWithinManhattan(self, units, d) : foesAtManhattan(self, units, d);
       if (foes.length === 0) return null;
@@ -901,11 +888,17 @@ export function skillAiming(
       };
     }
     case 'neighborPickAlly': {
-      const allies = alliesAtManhattanExcludingSelf(self, units, spec.shape.manhattan);
+      const within = spec.shape.reach === 'within';
+      const d = spec.shape.manhattan;
+      const allies = within
+        ? alliesWithinManhattanExcludingSelf(self, units, d)
+        : alliesAtManhattanExcludingSelf(self, units, d);
       if (allies.length === 0) return null;
       return {
         ...base,
-        rangeCells: cellsAtManhattan(self.pos, spec.shape.manhattan, terrain),
+        rangeCells: within
+          ? cellsWithinManhattan(self.pos, d, terrain)
+          : cellsAtManhattan(self.pos, d, terrain),
         candidates: allies.map((a) => a.uid),
         autoTargets: [],
       };
@@ -1020,18 +1013,15 @@ function castByShape(
         kind: 'disc',
         radius: spec.shape.radius,
       }, allowNoFoes);
-    case 'neighborPickLowest':
-      return castNeighborPickLowest(
-        self, def, spec, units, terrain, defs, spec.shape.manhattan, targetUid,
-      );
     case 'neighborPickFoe':
       return castNeighborPickFoe(
         self, def, spec, units, terrain, defs,
-        spec.shape.manhattan, spec.shape.pick, targetUid, spec.shape.reach,
+        spec.shape.manhattan, targetUid, spec.shape.reach,
       );
     case 'neighborPickAlly':
       return castNeighborPickAlly(
-        self, def, spec, units, terrain, defs, spec.shape.manhattan, spec.shape.pick, targetUid,
+        self, def, spec, units, terrain, defs,
+        spec.shape.manhattan, targetUid, spec.shape.reach,
       );
     case 'lineBestRayAllFoes':
       return castLineBestRay(self, def, spec, units, terrain, defs, targetUid, aimCell);

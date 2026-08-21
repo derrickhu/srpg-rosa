@@ -29,4 +29,16 @@ export const UNIT_DEFS: Record<UnitKind, UnitArchetypeDef> = {
     base: { maxHp: 150, atk: 10, spd: 3, move: 2 },
     strike: { range: 1, isRanged: false, taunt: true },
   },
+  mage: {
+    id: 'mage',
+    name: '法师',
+    base: { maxHp: 52, atk: 24, spd: 6, move: 2 },
+    strike: { range: 3, isRanged: true, taunt: false },
+  },
+  healer: {
+    id: 'healer',
+    name: '祭司',
+    base: { maxHp: 72, atk: 12, spd: 4, move: 2 },
+    strike: { range: 2, isRanged: true, taunt: false },
+  },
 };

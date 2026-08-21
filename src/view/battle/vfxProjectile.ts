@@ -3,6 +3,7 @@ import { AssetManager } from '@/core/AssetManager';
 import { getAnimTextures, getClip } from '@/view/animSets';
 import type { TravelDef } from '@/data/vfxCatalog';
 import { emitSparks } from '@/view/battle/vfxSparks';
+import { createGrowingBeam, createRibbon, stampGhost } from '@/view/battle/vfxProcedural';
 
 /**
  * 飞行弹体。远程技能的距离感和期待感全靠它——只在目标身上闪一下光，读起来是
@@ -15,6 +16,8 @@ import { emitSparks } from '@/view/battle/vfxSparks';
 
 /** 拖尾火花的补发间隔。太密会糊成一条实线，太疏会断成虚线 */
 const TRAIL_EMIT_MS = 26;
+/** 生图残影间隔。比火花稀，才能看出是火球/光球自己拖出来的 */
+const GHOST_EMIT_MS = 32;
 
 export interface ProjectileHandle {
   /** 飞完（或被销毁）后 resolve */
@@ -71,11 +74,13 @@ export function flyProjectile(
 ): ProjectileHandle {
   const dist = Math.hypot(to.x - from.x, to.y - from.y);
   const speedScale = opts.speedScale ?? 1;
-  const approachMs = Math.max(80, (dist / def.speedPxPerSec) * 1000) / speedScale;
+  const minMs = def.minMs ?? 240;
+  const approachMs = Math.max(minMs, (dist / def.speedPxPerSec) * 1000) / speedScale;
   const laps = def.orbitLaps ?? 0;
   const radius = Math.max(sizePx * 0.42, 22);
   const orbitMs = laps > 0 ? (Math.max(280, (2 * Math.PI * radius * laps) / Math.max(def.speedPxPerSec * 0.55, 80)) / speedScale) : 0;
-  const totalMs = approachMs + orbitMs;
+  const lingerMs = (def.lingerMs ?? 0) / speedScale;
+  const totalMs = approachMs + orbitMs + lingerMs;
   const waypoints = [...(opts.waypoints ?? [])].sort((a, b) => a.atFraction - b.atFraction);
 
   const sprite = projectileSprite(def, sizePx);
@@ -95,6 +100,11 @@ export function flyProjectile(
   if (!def.noRotate) sprite.rotation = aim;
   sprite.position.set(from.x, from.y);
   layer.addChild(sprite);
+
+  const ribbon = def.ribbon ? createRibbon(layer, def.ribbon) : null;
+  ribbon?.push(from.x, from.y);
+  const beamPath = def.path ? createGrowingBeam(layer, from, def.path) : null;
+  let jagSeed = 1;
 
   let beam: PIXI.AnimatedSprite | null = null;
   if (def.beamSet) {
@@ -116,6 +126,7 @@ export function flyProjectile(
     done: new Promise<void>((resolve) => {
       let elapsed = 0;
       let sinceTrail = 0;
+      let sinceGhost = GHOST_EMIT_MS;
       let nextWp = 0;
       let arrived = false;
       const nativeW = (beam?.textures[0] as PIXI.Texture | undefined)?.width ?? 1;
@@ -127,8 +138,12 @@ export function flyProjectile(
           opts.onArrive?.();
         }
         for (; nextWp < waypoints.length; nextWp++) waypoints[nextWp]!.run();
-        layer.removeChild(sprite);
-        sprite.destroy();
+        void ribbon?.persist();
+        void beamPath?.persist();
+        if (!sprite.destroyed) {
+          layer.removeChild(sprite);
+          sprite.destroy();
+        }
         if (beam && !beam.destroyed) {
           layer.removeChild(beam);
           beam.destroy();
@@ -139,6 +154,8 @@ export function flyProjectile(
       const tick = (): void => {
         if (sprite.destroyed || layer.destroyed) {
           PIXI.Ticker.shared.remove(tick);
+          ribbon?.destroy();
+          beamPath?.destroy();
           resolve();
           return;
         }
@@ -173,14 +190,36 @@ export function flyProjectile(
 
         sprite.position.set(x, y);
         if (laps > 0 || !def.noRotate) sprite.rotation = heading;
+        if (elapsed > approachMs + orbitMs && lingerMs > 0) {
+          const fade = 1 - (elapsed - approachMs - orbitMs) / lingerMs;
+          sprite.alpha = Math.max(0, fade);
+        }
         if (beam && !beam.destroyed) {
           beam.scale.set((Math.hypot(x - from.x, y - from.y) || 1) / nativeW, sizePx / nativeW);
+        }
+        ribbon?.push(x, y);
+        if (beamPath) {
+          if (def.path?.style === 'jagged') jagSeed += 1;
+          beamPath.update({ x, y }, jagSeed);
         }
 
         const pathK = Math.min(1, elapsed / Math.max(approachMs, 1));
         while (nextWp < waypoints.length && pathK >= waypoints[nextWp]!.atFraction) {
           waypoints[nextWp]!.run();
           nextWp++;
+        }
+
+        sinceGhost += PIXI.Ticker.shared.deltaMS;
+        if (sinceGhost >= GHOST_EMIT_MS) {
+          sinceGhost = 0;
+          const ghostTex = sprite.texture;
+          const ghostSize = Math.max(sprite.width, sprite.height);
+          const add = sprite.blendMode === PIXI.BLEND_MODES.ADD;
+          stampGhost(layer, ghostTex, x, y, sprite.rotation, ghostSize, {
+            lifeMs: 220,
+            alpha: add ? 0.38 : 0.32,
+            add,
+          });
         }
 
         if (def.trail) {

@@ -1,0 +1,19 @@
+{
+  "source": "shape-clarity-regen-2026-08",
+  "target": "vfx",
+  "mode": "vfx_frames",
+  "cell_size": 256,
+  "threshold": 22,
+  "frame_labels": [
+    "slash-1",
+    "slash-2",
+    "slash-3",
+    "slash-4",
+    "slash-5",
+    "slash-6"
+  ],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}

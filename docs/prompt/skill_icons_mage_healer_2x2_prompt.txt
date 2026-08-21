@@ -1,0 +1,58 @@
+技能图标 法师/祭司组 2x2
+产出 → images/ui/skill_{ember,flame_ring,heal_touch,ward_prayer}.png
+生成器：Cursor 内置 GenerateImage，aspect_ratio 1:1
+
+切图：
+    python3 scripts/split-tile-sheet.py --input <sheet>.png --out-dir <tmp> --size 72 \
+        --grid 2x2 --names ember flame_ring heal_touch ward_prayer
+    python3 scripts/despill-magenta.py <tmp>
+    再拷到 images/ui/skill_<name>.png
+
+约束同 A 组（见 skill_icons_a_3x3_prompt.txt）：品红底、粗近黑描边、指甲盖尺寸仍能认、坐在米白卡上。
+常规技能走锻造兵器/法器语言，不要画成临时技能那种自然物。
+
+四个技能的语义：
+    ember       炎弹      法师·3 格内点最高血
+    flame_ring  炎环      法师·正好 2 格外的火环
+    heal_touch  圣疗      祭司·2 格内点最低血友军治疗
+    ward_prayer 守护祷言  祭司·邻格点最高血 + 减伤
+
+同职业两招必须动作方向彻底不同：炎弹是向前飞的火球，炎环是一圈火舌。
+圣疗是手掌/十字光，祷言是盾，不要都画成太阳。
+奥莉是炎系法师，两招都是火，不要画成冰/奥术/紫光。
+禁止紫色/品红/粉（despill 会当溢色）。
+
+---
+
+A 2-column x 2-row grid of 4 GAME UI ICONS representing combat SKILLS in a cartoon fantasy tactics mobile game.
+
+CRITICAL BACKGROUND: the entire background, including all space between and around the icons, must be 100% solid flat MAGENTA, hex #FF00FF. It is a chroma key and will be deleted. No white, no grey, no gradient, no drop shadows onto the background.
+
+CRITICAL SIZE CONSTRAINT — the most important rule: these icons are displayed at only 26 to 56 pixels in the game. Every icon must be ONE bold, chunky, instantly readable silhouette that survives being shrunk to the size of a fingernail. Think of a chess piece, not an illustration. NO thin lines, NO small parts, NO fine detail, NO tiny sparkles, NO text, NO numbers. If an element would be less than a tenth of the icon's width, delete it.
+
+CRITICAL — THESE SIT ON A CREAM WHITE CARD (#FCFCF6). Every icon needs a THICK near-black outline (#1A1410) all the way around it and a saturated fill inside, so it does not float on the pale card.
+
+STYLE — must match the game's characters, which are chunky cartoon figures with heavy black outlines and flat colours:
+- SOLID FILLED SILHOUETTES with a thick near-black outline. These are not line icons and not outline icons — the shape is filled in.
+- Flat saturated colour fills, at most 3 colours per icon plus the outline, plus one simple lighter shade for a single cel-shaded highlight.
+- Chunky, rounded, friendly shapes. Slightly exaggerated and toy-like.
+- No gradients, no glow, no bevel, no gloss, no photographic detail, no pixel art, no thin strokes.
+- Each icon drawn straight-on, upright and centred in its cell.
+- NO purple, magenta, pink, or violet fills.
+
+Per-cell contents, left-to-right then top-to-bottom:
+
+Cell 1 (EMBER / mage, single fire bolt) — one fat round FIREBALL flying to the right, bright orange (#F08C2A) with a cream-white hot core, two short chunky flame tongues trailing left. It must read as a single projectile, not a campfire.
+
+Cell 2 (FLAME RING / mage, ring of fire at range 2) — a closed CIRCULAR RING OF FIRE, thick like a donut made of 6-8 chunky orange (#F08C2A) flame tongues pointing outward, with a cream-white hot inner edge. No center object. It must read as a ring of fire, clearly different from the single fireball. NO blue, NO purple, NO gold spikes.
+
+Cell 3 (HEAL TOUCH / healer, restore lowest-HP ally) — an open chunky HAND, palm toward us, cream-white (#F5E6C8) with a fat gold (#E0B030) plus-sign (cross) sitting in the palm. Simple mitten-like hand, three stubby fingers max. It must read as "heal".
+
+Cell 4 (WARD PRAYER / healer, guard the frontliner) — a chunky rounded kite SHIELD, cream-white with a thick gold rim and a fat gold sun-disc (circle plus 4 thick rays) in the centre. It must read as protection, clearly different from the healing hand.
+
+LAYOUT RULES:
+1. EXACTLY 4 icons in a clean 2x2 arrangement.
+2. NO borders, NO dividing lines, NO frames, NO circles or badges behind the icons — they are separated only by magenta.
+3. Each icon fills about 70% of its cell, leaving a clear magenta margin on all four sides. Nothing touches or crosses into a neighbouring cell.
+4. All four icons must feel like ONE set: same outline thickness, same level of simplification, same chunky proportions.
+5. NO text, no labels, no captions, no letters, no numbers, no watermark anywhere in the image.

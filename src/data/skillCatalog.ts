@@ -45,12 +45,10 @@ export type SkillShape =
    * 词条「横扫」要的是真的覆盖更多格，所以单开这个形状。
    */
   | { type: 'discAoE'; radius: number }
-  /** 同上环内选一个敌人（默认最低血量） */
-  | { type: 'neighborPickLowest'; manhattan: number }
-  /** 四向射线穿透，取「线上敌人总血量」最大的一条（弓系） */
+  /** 四向射线穿透；玩家点方向，AI 才按策略挑一条线 */
   | { type: 'lineBestRayAllFoes' }
   /**
-   * 选**一个**敌人。`manhattan` 配合 `reach` 决定够得着谁：
+   * 选**一个**敌人。点谁由玩家或 AI 决定，技能只规定够得着哪里。
    *
    * - `reach: 'exact'`（缺省）：距离**正好等于** d 的环上。近战突刺型要的就是这个——
    *   「长驱突刺」取 2 表示得隔着一格才捅得到，贴脸反而不行，这是它的代价。
@@ -63,11 +61,17 @@ export type SkillShape =
   | {
       type: 'neighborPickFoe';
       manhattan: number;
-      pick: 'lowestHp' | 'highestHp';
       reach?: 'exact' | 'within';
     }
-  /** 曼哈顿距离 = d 的环上选一个友方（不含自身），用于 buff */
-  | { type: 'neighborPickAlly'; manhattan: number; pick: 'lowestHp' | 'highestHp' }
+  /**
+   * 选**一个**友方（不含自身）。`reach` 和 `neighborPickFoe` 同口径：
+   * 缺省 `exact` 是环，`within` 是半径内整片（圣疗这类远程治疗要用）。
+   */
+  | {
+      type: 'neighborPickAlly';
+      manhattan: number;
+      reach?: 'exact' | 'within';
+    }
   /**
    * 只对自身生效（嘲讽 / 自 buff）。
    * 不要拿 `neighborAoE` + `damage: none` 冒充——那会逼玩家点敌人，还飘出 0 伤害。
@@ -271,11 +275,11 @@ const SPECS: Record<string, SkillSpec> = {
     timing: 'beforeMove',
     role: 'damage',
     displayKind: 'singleBash',
-    shape: { type: 'neighborPickLowest', manhattan: 1 },
+    shape: { type: 'neighborPickFoe', manhattan: 1 },
     damage: { kind: 'scaledAtk', atkMul: 0.7 },
     onCastFoeEffects: [{ kind: 'spdDown', subSpd: 2, rounds: 2 }],
   },
-  /** 剑士进阶：单体高倍率 + 削攻，打最高血目标（与 cleave 收割型区分） */
+  /** 剑士进阶：邻格单体高倍率 + 削攻，和重劈的纯伤害点杀分开 */
   blade_rush: {
     id: 'blade_rush',
     name: '破阵斩',
@@ -284,7 +288,7 @@ const SPECS: Record<string, SkillSpec> = {
     timing: 'beforeMove',
     role: 'damage',
     displayKind: 'singleBash',
-    shape: { type: 'neighborPickFoe', manhattan: 1, pick: 'highestHp' },
+    shape: { type: 'neighborPickFoe', manhattan: 1 },
     damage: { kind: 'scaledAtk', atkMul: 1.15 },
     shopPrice: 8,
     onCastFoeEffects: [{ kind: 'atkDown', subAtk: 4, rounds: 2 }],
@@ -298,7 +302,7 @@ const SPECS: Record<string, SkillSpec> = {
     timing: 'beforeMove',
     role: 'damage',
     displayKind: 'singleBash',
-    shape: { type: 'neighborPickFoe', manhattan: 2, pick: 'lowestHp' },
+    shape: { type: 'neighborPickFoe', manhattan: 2 },
     damage: { kind: 'scaledAtk', atkMul: 0.9 },
     shopPrice: 7,
   },
@@ -361,7 +365,7 @@ const SPECS: Record<string, SkillSpec> = {
     timing: 'beforeMove',
     role: 'damage',
     displayKind: 'singleBash',
-    shape: { type: 'neighborPickLowest', manhattan: 1 },
+    shape: { type: 'neighborPickFoe', manhattan: 1 },
     damage: { kind: 'scaledAtk', atkMul: 0.88 },
     shopPrice: 7,
   },
@@ -384,7 +388,7 @@ const SPECS: Record<string, SkillSpec> = {
     timing: 'afterMove',
     role: 'damage',
     displayKind: 'lineShot',
-    shape: { type: 'neighborPickFoe', manhattan: 3, pick: 'lowestHp', reach: 'within' },
+    shape: { type: 'neighborPickFoe', manhattan: 3, reach: 'within' },
     damage: { kind: 'scaledAtk', atkMul: 0.8 },
     shopPrice: 7,
   },
@@ -401,7 +405,7 @@ const SPECS: Record<string, SkillSpec> = {
     timing: 'beforeMove',
     role: 'damage',
     displayKind: 'singleBash',
-    shape: { type: 'neighborPickLowest', manhattan: 1 },
+    shape: { type: 'neighborPickFoe', manhattan: 1 },
     damage: { kind: 'scaledAtk', atkMul: 1.15 },
     shopPrice: 7,
     onCastFoeEffects: [{ kind: 'atkDown', subAtk: 4, rounds: 2 }],
@@ -438,7 +442,7 @@ const SPECS: Record<string, SkillSpec> = {
   },
   /**
    * 弓系：环上选一敌，纯 debuff。
-   * `reserved`：等一个控制路线的弓手角色。希尔 / 温都是输出路线（穿透箭 / 速射）。
+   * `reserved`：等一个控制路线的弓手角色。希尔是输出路线（穿透箭 / 速射）。
    */
   hex_mark: {
     id: 'hex_mark',
@@ -449,7 +453,7 @@ const SPECS: Record<string, SkillSpec> = {
     role: 'control',
     reserved: true,
     displayKind: 'lineShot',
-    shape: { type: 'neighborPickFoe', manhattan: 2, pick: 'lowestHp' },
+    shape: { type: 'neighborPickFoe', manhattan: 2 },
     damage: { kind: 'none' },
     shopPrice: 7,
     onCastFoeEffects: [{ kind: 'atkDown', subAtk: 5, rounds: 3 }],
@@ -483,7 +487,7 @@ const SPECS: Record<string, SkillSpec> = {
     // 邻格而不是 2 格环：`neighborPickFoe` 的距离是**正好等于**，取 2 的话
     // 贴到脸上的敌人反而缠不住，而那恰恰是最需要缠住的那个。
     // 已有的 lance_thrust / hex_mark 是 2 格环，那两个是「够得着远处」的定位，不一样。
-    shape: { type: 'neighborPickFoe', manhattan: 1, pick: 'highestHp' },
+    shape: { type: 'neighborPickFoe', manhattan: 1 },
     damage: { kind: 'none' },
     shopPrice: 6,
     onCastFoeEffects: [{ kind: 'spdDown', subSpd: 4, rounds: 2 }],
@@ -496,7 +500,7 @@ const SPECS: Record<string, SkillSpec> = {
     timing: 'beforeMove',
     role: 'support',
     displayKind: 'whirlwind',
-    shape: { type: 'neighborPickAlly', manhattan: 1, pick: 'lowestHp' },
+    shape: { type: 'neighborPickAlly', manhattan: 1 },
     damage: { kind: 'none' },
     shopPrice: 7,
     onCastAllyEffects: [{ kind: 'heal', amount: 14 }],
@@ -592,7 +596,7 @@ const SPECS: Record<string, SkillSpec> = {
     timing: 'beforeMove',
     role: 'support',
     displayKind: 'whirlwind',
-    shape: { type: 'neighborPickAlly', manhattan: 1, pick: 'lowestHp' },
+    shape: { type: 'neighborPickAlly', manhattan: 1 },
     damage: { kind: 'none' },
     shopPrice: 8,
     // 全游戏第一个减伤技能。挂在临时槽先跑一遍，是因为减伤这个动词的手感
@@ -664,14 +668,13 @@ const SPECS: Record<string, SkillSpec> = {
     role: 'control',
     displayKind: 'whirlwind',
     /**
-     * `reach: 'within'` + 取血最多的那个：要塞里最疼的是墙后的远程和盾卫，
-     * 而它们通常不在贴脸格。`within` 让这一招能隔着两格点名，
+     * `reach: 'within'`：要塞里最疼的是墙后的远程和盾卫，它们通常不在贴脸格。
      * 「正好 2 格」的环会在敌人贴上来之后失效——那时候更需要它。
      *
      * 削攻击是全游戏第一次把 `atkDown` 用在临时技能上。这一章的伤害压力
      * 主要来自「你在开门，他在射你」，减少挨的那一下比多打一下更解决问题。
      */
-    shape: { type: 'neighborPickFoe', manhattan: 2, pick: 'highestHp', reach: 'within' },
+    shape: { type: 'neighborPickFoe', manhattan: 2, reach: 'within' },
     damage: { kind: 'none' },
     shopPrice: 7,
     onCastFoeEffects: [{ kind: 'atkDown', subAtk: 6, rounds: 2 }],
@@ -691,7 +694,7 @@ const SPECS: Record<string, SkillSpec> = {
      * 加速比加攻重要：这一章的机关要押一个人一整回合，队伍等于少一个输出，
      * 光加攻补不回来；速度让另一个人在同一回合里既走得更远又更早动手。
      */
-    shape: { type: 'neighborPickAlly', manhattan: 1, pick: 'highestHp' },
+    shape: { type: 'neighborPickAlly', manhattan: 1 },
     damage: { kind: 'none' },
     shopPrice: 8,
     onCastAllyEffects: [
@@ -775,6 +778,78 @@ const SPECS: Record<string, SkillSpec> = {
     shape: { type: 'lineBestRayAllFoes' },
     damage: { kind: 'scaledAtk', atkMul: 0.65 },
   },
+  /**
+   * 法师默认：3 格内点杀。和弓手「速射」同形，差在职业和倍率；
+   * 点谁由玩家或 AI 决定，不写进技能。
+   */
+  ember: {
+    id: 'ember',
+    name: '炎弹',
+    cooldown: 2,
+    exclusiveProfession: 'mage',
+    timing: 'afterMove',
+    role: 'damage',
+    displayKind: 'lineShot',
+    shape: { type: 'neighborPickFoe', manhattan: 3, reach: 'within' },
+    damage: { kind: 'scaledAtk', atkMul: 0.75 },
+    shopPrice: 7,
+  },
+  /**
+   * 法师进阶：正好 2 格外的炎环。贴脸反而漏，和炎弹的「3 格内点名」互为另一头。
+   * 奥莉是炎系法师，两招都是火；冰系等以后另开角色，不要在她身上混元素。
+   */
+  flame_ring: {
+    id: 'flame_ring',
+    name: '炎环',
+    cooldown: 3,
+    exclusiveProfession: 'mage',
+    timing: 'beforeMove',
+    role: 'damage',
+    displayKind: 'whirlwind',
+    shape: { type: 'neighborAoE', manhattan: 2 },
+    damage: { kind: 'scaledAtk', atkMul: 0.5 },
+    shopPrice: 8,
+  },
+  /**
+   * 祭司默认：2 格内点一名友军，纯治疗。`reach: 'within'` 才能贴脸也救到人。
+   * 普攻仍是打敌人的弱远程，治疗只走这一招（有冷却），不会每回合白抬血。
+   */
+  heal_touch: {
+    id: 'heal_touch',
+    name: '圣疗',
+    cooldown: 2,
+    exclusiveProfession: 'healer',
+    timing: 'beforeMove',
+    role: 'support',
+    displayKind: 'whirlwind',
+    shape: { type: 'neighborPickAlly', manhattan: 2, reach: 'within' },
+    damage: { kind: 'none' },
+    shopPrice: 7,
+    onCastAllyEffects: [{ kind: 'heal', amount: 28 }],
+  },
+  /**
+   * 祭司进阶：邻格点一名友军，小治疗 + 减伤。
+   * 和圣疗的分工是「2 格内大抬」对「贴身护盾」，不是自动点谁。
+   */
+  ward_prayer: {
+    id: 'ward_prayer',
+    name: '守护祷言',
+    cooldown: 3,
+    exclusiveProfession: 'healer',
+    timing: 'beforeMove',
+    role: 'support',
+    displayKind: 'whirlwind',
+    shape: { type: 'neighborPickAlly', manhattan: 1 },
+    damage: { kind: 'none' },
+    shopPrice: 8,
+    onCastAllyEffects: [
+      { kind: 'heal', amount: 10 },
+      { kind: 'guard', reduceRatio: 0.3, rounds: 2 },
+    ],
+  },
+  /**
+   * 通用辅助：邻格点一名友军加攻加速。弥尔可学；仍在二至五章商店临时槽卖。
+   */
   field_bless: {
     id: 'field_bless',
     name: '战场祝福',
@@ -782,9 +857,8 @@ const SPECS: Record<string, SkillSpec> = {
     exclusiveProfession: null,
     timing: 'beforeMove',
     role: 'support',
-    reserved: true,
     displayKind: 'whirlwind',
-    shape: { type: 'neighborPickAlly', manhattan: 1, pick: 'lowestHp' },
+    shape: { type: 'neighborPickAlly', manhattan: 1 },
     damage: { kind: 'none' },
     shopPrice: 8,
     onCastAllyEffects: [
@@ -799,10 +873,21 @@ const DEFAULT_SKILL_ID_BY_KIND: Record<UnitKind, string> = {
   bow: 'pierce',
   cavalry: 'charge',
   shield: 'bash',
+  mage: 'ember',
+  healer: 'heal_touch',
 };
 
+/** 奥莉从「奥术脉冲」收成炎系「炎环」之前的存档 id */
+const LEGACY_SKILL_IDS: Record<string, string> = {
+  arcane_pulse: 'flame_ring',
+};
+
+export function remapLegacySkillId(id: string): string {
+  return LEGACY_SKILL_IDS[id] ?? id;
+}
+
 export function getSkillSpec(id: string): SkillSpec | undefined {
-  return SPECS[id];
+  return SPECS[remapLegacySkillId(id)];
 }
 
 /**
@@ -832,14 +917,14 @@ export function defaultSkillId(kind: UnitKind): string {
 }
 
 export function skillDefForId(id: string): SkillDef | undefined {
-  const s = SPECS[id];
+  const s = SPECS[remapLegacySkillId(id)];
   if (!s) return undefined;
   return { id: s.id, name: s.name, cooldown: s.cooldown, kind: s.displayKind };
 }
 
 /** 某职业是否允许学习/携带该技能（通用技 exclusiveProfession === null 恒为 true） */
 export function canProfessionEquipSkill(profession: UnitKind, skillId: string): boolean {
-  const s = SPECS[skillId];
+  const s = SPECS[remapLegacySkillId(skillId)];
   if (!s) return false;
   if (s.exclusiveProfession === null) return true;
   return s.exclusiveProfession === profession;

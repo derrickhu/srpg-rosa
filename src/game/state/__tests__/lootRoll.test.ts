@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { DUNGEON_DEFS } from '@/data/dungeonCatalog';
 import { allSkillMods, getSkillMod } from '@/data/skillModCatalog';
 import { rollLoot, startRun } from '../ProgressManager';
-import { createInitialState, partyCharacters, type MvpGameState } from '../GameState';
+import { playerDeployRowRange } from '@/battle/constants';
+import { createInitialState, currentStage, partyCharacters, type MvpGameState } from '../GameState';
 
 const DUNGEON_ID = DUNGEON_DEFS[0]!.id;
 
@@ -18,7 +19,20 @@ function seeded(seed: number): () => number {
 function newRun(): MvpGameState {
   const s = createInitialState();
   startRun(s, DUNGEON_ID, s.meta.roster.slice(0, 3).map((m) => m.rosterId));
+  deployParty(s);
   return s;
+}
+
+/** 战后抽卡看的是布阵，不是整队。测试默认全员上场，要测替补再自己改 placements。 */
+function deployParty(s: MvpGameState, rosterIds?: string[]): void {
+  const ids = rosterIds ?? partyCharacters(s).map((m) => m.rosterId);
+  const { h } = currentStage(s).terrain;
+  const [row] = playerDeployRowRange(h);
+  s.run!.placements = ids.map((rosterId, i) => ({
+    uid: `p${i}`,
+    rosterId,
+    pos: { x: i, y: row },
+  }));
 }
 
 describe('战后三选一的池子', () => {
@@ -94,6 +108,22 @@ describe('战后三选一的池子', () => {
     const picks = rollLoot(s, seeded(5));
     expect(picks).toHaveLength(3);
     expect(picks.every((p) => p.kind === 'potion')).toBe(true);
+  });
+
+  it('未上场的角色不进三选一', () => {
+    const s = newRun();
+    const party = partyCharacters(s);
+    expect(party.length).toBeGreaterThanOrEqual(3);
+    const bench = party[2]!;
+    deployParty(s, [party[0]!.rosterId, party[1]!.rosterId]);
+
+    const rng = seeded(88);
+    for (let i = 0; i < 80; i += 1) {
+      for (const p of rollLoot(s, rng)) {
+        if (p.kind !== 'skillMod') continue;
+        expect(p.rosterId, '替补不该出现在战后词条里').not.toBe(bench.rosterId);
+      }
+    }
   });
 
   it('尽量凑不同的角色，而不是把三张都发给同一个人', () => {

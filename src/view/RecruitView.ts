@@ -76,8 +76,8 @@ export function createRecruitView(
    * 一张角色卡。
    *
    * 招募页是玩家第一次见到这个角色的地方，所以卡上要够他做决定：定位 + 主技能 + 四维。
-   * 上一版只有名字和四维，于是「岚骑」和「凯尔」在玩家眼里就是两串数字的区别，
-   * 完全看不出一个是高机动突击、一个是耐战前排。
+   * 上一版只有名字和四维，于是「岚骑」和「奥莉」在玩家眼里就是两串数字的区别，
+   * 完全看不出一个是高机动突击、一个是远程法术。
    */
   function characterCard(def: CharacterDef, w: number, canBuy: boolean): PIXI.Container {
     const card = makeCard({ width: w, height: CARD_H, tone: canBuy ? 'normal' : 'locked' });

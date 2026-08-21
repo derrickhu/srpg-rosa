@@ -59,7 +59,7 @@ export const CHALLENGE_ENTRIES: readonly ChallengeEntry[] = [
     name: '草原围猎',
     desc: '限时活动：草原魔物成群出没，全程无补给点，一口气打完五场。',
     icon: 'tab_challenge',
-    reward: '魂晶 ×15 · 稀有词条保底 1 次',
+    reward: '魂晶 ×15 · 稀有纹章保底 1 次',
     window: '每周六 · 周日',
   },
   {

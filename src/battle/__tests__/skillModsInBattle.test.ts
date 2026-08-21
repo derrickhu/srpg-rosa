@@ -23,6 +23,8 @@ const DEFS: Record<UnitKind, UnitArchetypeDef> = {
   bow: archetype('bow', '弓手', { maxHp: 80, atk: 36, spd: 6, move: 3 }, { range: 3, isRanged: true, taunt: false }),
   cavalry: archetype('cavalry', '骑兵', { maxHp: 110, atk: 42, spd: 7, move: 4 }, { range: 1, isRanged: false, taunt: false }),
   shield: archetype('shield', '盾卫', { maxHp: 140, atk: 26, spd: 3, move: 2 }, { range: 1, isRanged: false, taunt: true }),
+  mage: archetype('mage', '法师', { maxHp: 52, atk: 40, spd: 6, move: 2 }, { range: 3, isRanged: true, taunt: false }),
+  healer: archetype('healer', '祭司', { maxHp: 80, atk: 20, spd: 4, move: 2 }, { range: 2, isRanged: true, taunt: false }),
 };
 
 /** 全平原，避免地形倍率混进断言 */

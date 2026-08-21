@@ -1,0 +1,38 @@
+法师奥莉静止立绘（职业 token / idle 单帧）
+产出 → art/sprite-runs/mage/idle → images/anim/mage.png + images/units/mage.png
+生成器：Cursor 内置 GenerateImage，aspect_ratio 1:1
+
+后处理：
+    python3 ~/.cursor/skills/generate2dsprite/scripts/generate2dsprite.py process \
+      --input <raw>.png --target player --mode single --rows 1 --cols 1 \
+      --output-dir art/sprite-runs/mage/idle \
+      --align feet --component-mode largest --label-prefix mage-idle \
+      --single-size 256
+    python3 scripts/despill-magenta.py art/sprite-runs/mage/idle
+    再跑 sprite2anim / anim2token
+
+风格对齐 images/units/sword.png、bow.png：超 Q 版大头短肢、粗近黑描边、平涂 + 一档高光阴影。
+禁止紫色 / 品红 / 粉（despill 会把它们当键色溢色压掉）。法师用深蓝袍 + 橙火法球区分剪影。
+
+---
+
+A single chibi tactics-game character sprite, 3/4 view from slightly above, full body, standing idle facing slightly left.
+
+CRITICAL BACKGROUND: 100% solid flat MAGENTA hex #FF00FF filling the entire image, including all space around the character. No white, no grey, no ground shadow, no drop shadow onto the background, no gradient.
+
+ART STYLE: hand-drawn cartoon game sprite matching an existing party of chunky chibi units (big round head, tiny body, short limbs). Thick near-black outline (#1A1410) all the way around every shape. Flat saturated fills, one cel-shade highlight, one shadow. No gradients, no texture, no painterly rendering, no photographic detail, no pixel art.
+
+CHARACTER — Aoli the mage, female child-like chibi:
+- Huge round head, tiny torso, short arms and legs. Same proportions as a toy soldier, not a realistic teen.
+- Short bob of warm brown hair, simple bangs, two round black-dot eyes, tiny orange-brown mouth, simple round nose. Friendly determined expression.
+- Deep navy-blue pointed wizard hat with a cream band and one chunky orange bead. Hat is the silhouette signature — keep it big and readable.
+- Deep navy-blue robe with a cream collar and a single orange-red sash. No busy patterns, no runes, no stars, no tiny trim.
+- In her right hand (viewer's left): a short brown wooden staff, thick, with a fat round ORANGE fire orb on top (bright #F08C2A with a cream highlight). The orb is the second silhouette signature. Keep the staff close to the body so it does not widen the bbox.
+- Simple round brown shoes.
+- NO purple, magenta, pink, or violet anywhere on the character.
+
+LAYOUT:
+- Full body visible, centered, feet near the lower third, head not touching the top.
+- Character fills about 70% of the image, generous magenta margin on all four sides.
+- Nothing touches the image edges.
+- NO text, numbers, watermark, UI, platform, or ground line.

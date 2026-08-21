@@ -26,6 +26,7 @@ export {
   requireRun,
   getCharacter,
   partyCharacters,
+  deployedCharacters,
   benchCharacters,
   currentDungeon,
   currentNode,

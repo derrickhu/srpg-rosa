@@ -52,8 +52,8 @@ export interface CharacterDef {
    *
    * **路线属于角色，不属于职业。** 同职业的两个角色可以是两条路线——
    * 「另一个战士，走的是控制」是合法且期待中的扩展方式，玩家玩的是角色。
-   * 第一章六个角色全是 `damage`，所以还看不出区别；控制 / 辅助路线的角色上线时
-   * 直接给他们配 `reserved` 的那几招（破甲咒 / 盾墙震慑 / 战场祝福）。
+   * 前四人是 `damage`，弥尔走 `support`（圣疗 / 守护祷言 / 战场祝福）。
+   * 控制路线的角色上线时再接 `reserved` 的那几招（破甲咒 / 盾墙震慑 / 战吼）。
    */
   skillRoute: SkillRole;
   /** 默认携带（且初始已解锁）的技能 */
@@ -114,28 +114,38 @@ export const CHARACTER_DEFS: CharacterDef[] = [
     unlock: { kind: 'meta', cost: 12 },
   },
   {
-    id: 'hero_sword_kael',
-    name: '凯尔',
-    profession: 'sword',
+    id: 'hero_mage_aoli',
+    name: '奥莉',
+    profession: 'mage',
     skillRoute: 'damage',
-    base: { maxHp: 105, atk: 20, spd: 5, move: 3 },
-    growth: { maxHp: 9, atk: 2, spd: 0, move: 0 },
-    defaultSkillId: sid('sword'),
-    unlockableSkillIds: ['cleave', 'blade_rush'],
+    base: { maxHp: 50, atk: 25, spd: 6, move: 2 },
+    growth: { maxHp: 4, atk: 3, spd: 0, move: 0 },
+    defaultSkillId: sid('mage'),
+    unlockableSkillIds: ['flame_ring'],
     unlock: { kind: 'clearDungeon', dungeonId: 'dungeon_grassland' },
   },
   {
-    id: 'hero_bow_wynn',
-    name: '薇恩',
-    profession: 'bow',
-    skillRoute: 'damage',
-    base: { maxHp: 62, atk: 24, spd: 7, move: 2 },
-    growth: { maxHp: 5, atk: 3, spd: 0, move: 0 },
-    defaultSkillId: sid('bow'),
-    unlockableSkillIds: ['snap'],
+    id: 'hero_healer_mir',
+    name: '弥尔',
+    profession: 'healer',
+    skillRoute: 'support',
+    base: { maxHp: 74, atk: 13, spd: 4, move: 2 },
+    growth: { maxHp: 6, atk: 1, spd: 0, move: 0 },
+    defaultSkillId: sid('healer'),
+    unlockableSkillIds: ['ward_prayer', 'field_bless'],
     unlock: { kind: 'clearDungeon', dungeonId: 'dungeon_forest' },
   },
 ];
+
+/** 老档里凯尔 / 薇恩换成法师奥莉 / 祭司弥尔 */
+export const LEGACY_CHARACTER_IDS: Readonly<Record<string, string>> = {
+  hero_sword_kael: 'hero_mage_aoli',
+  hero_bow_wynn: 'hero_healer_mir',
+};
+
+export function remapLegacyCharacterId(id: string): string {
+  return LEGACY_CHARACTER_IDS[id] ?? id;
+}
 
 const BY_ID: Record<string, CharacterDef> = Object.fromEntries(
   CHARACTER_DEFS.map((c) => [c.id, c]),

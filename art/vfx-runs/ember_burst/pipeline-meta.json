@@ -1,0 +1,19 @@
+{
+  "source": "shape-clarity-regen-2026-08",
+  "target": "vfx",
+  "mode": "vfx_frames",
+  "cell_size": 256,
+  "threshold": 22,
+  "frame_labels": [
+    "ember_burst-1",
+    "ember_burst-2",
+    "ember_burst-3",
+    "ember_burst-4",
+    "ember_burst-5",
+    "ember_burst-6"
+  ],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}

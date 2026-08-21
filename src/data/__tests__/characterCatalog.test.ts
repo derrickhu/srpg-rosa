@@ -91,12 +91,12 @@ describe('角色技能路线', () => {
  * 一个角色能带的招之间必须有**结构**差异，不能只差数值。
  *
  * 路线一致解决了「换招会废掉词条」，但顺手带来了反面风险：同定位的招很容易被写成
- * 同一招的两个数值档。「震击」和「铁锤」就这么并存过很久——同为邻格选血最低、
+ * 同一招的两个数值档。「震击」和「铁锤」就这么并存过很久——同为邻格点杀、
  * 同为 3 回合冷却、同样挂一个（对盾卫无效的）自嘲讽，区别只有 0.85 对 0.9 的倍率，
  * 价钱还一样。那不叫两个选择，叫一个升级；可学列表摆着它等于告诉玩家「买就对了」。
  * 「穿透箭」和「速射」也曾同为射线穿透，只差 0.03 倍率和一回合冷却。
  *
- * 所以差异必须落在**打法**上：形状、够得着哪里、点谁、什么时机、附带什么效果。
+ * 所以差异必须落在**打法**上：形状、够得着哪里、什么时机、附带什么效果。
  * 倍率和冷却是在打法差异之上调味用的，不能拿来充当唯一的区别——
  * 玩家换招时先感知到的是「这一招打的格子不一样」，而不是「这一招高 3 点伤害」。
  */
@@ -113,12 +113,10 @@ describe('同一路线内的技能要有实质差异', () => {
           return `ring:${shape.manhattan}`;
         case 'discAoE':
           return `disc:${shape.radius}`;
-        case 'neighborPickLowest':
-          return `pickLowest:${shape.manhattan}`;
         case 'neighborPickFoe':
-          return `pickFoe:${shape.manhattan}:${shape.reach ?? 'exact'}:${shape.pick}`;
+          return `pickFoe:${shape.manhattan}:${shape.reach ?? 'exact'}`;
         case 'neighborPickAlly':
-          return `pickAlly:${shape.manhattan}:${shape.pick}`;
+          return `pickAlly:${shape.manhattan}:${shape.reach ?? 'exact'}`;
         case 'lineBestRayAllFoes':
           return 'line';
         case 'selfCast':
@@ -165,11 +163,17 @@ describe('同一路线内的技能要有实质差异', () => {
 describe('带得动这一招吗（canCharacterUseSkill）', () => {
   const gron = CHARACTER_DEFS.find((c) => c.id === 'hero_shield_gron')!;
   const rein = CHARACTER_DEFS.find((c) => c.id === 'hero_sword_ray')!;
+  const mir = CHARACTER_DEFS.find((c) => c.id === 'hero_healer_mir')!;
+  const aoli = CHARACTER_DEFS.find((c) => c.id === 'hero_mage_aoli')!;
 
   it('自己路线内的技能可以带', () => {
     expect(canCharacterUseSkill(gron, 'bash')).toBe(true);
     expect(canCharacterUseSkill(gron, 'hammer')).toBe(true);
     expect(canCharacterUseSkill(rein, 'blade_rush')).toBe(true);
+    expect(canCharacterUseSkill(mir, 'heal_touch')).toBe(true);
+    expect(canCharacterUseSkill(mir, 'field_bless')).toBe(true);
+    expect(canCharacterUseSkill(aoli, 'ember')).toBe(true);
+    expect(canCharacterUseSkill(aoli, 'flame_ring')).toBe(true);
   });
 
   it('挡掉跨定位的技能：老档学过的战场祝福不能再装', () => {
@@ -186,5 +190,7 @@ describe('带得动这一招吗（canCharacterUseSkill）', () => {
   it('挡掉别的职业的技能', () => {
     expect(canCharacterUseSkill(gron, 'whirl')).toBe(false);
     expect(canCharacterUseSkill(rein, 'pierce')).toBe(false);
+    expect(canCharacterUseSkill(mir, 'ember')).toBe(false);
+    expect(canCharacterUseSkill(aoli, 'heal_touch')).toBe(false);
   });
 });

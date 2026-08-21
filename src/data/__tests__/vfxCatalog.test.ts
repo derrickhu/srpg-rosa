@@ -58,6 +58,12 @@ describe('特效登记表', () => {
         expect(m, `${label} 的发光弹体 ${recipe.travel.glowSet} 没注册`).not.toBeNull();
         expect(m!.blend).toBe('add');
       }
+      if (recipe.slashSweep?.set) {
+        expect(getAnimManifest(recipe.slashSweep.set), `${label} 扫斩图 ${recipe.slashSweep.set} 没注册`).not.toBeNull();
+      }
+      if (recipe.pathBeam?.set) {
+        expect(getAnimManifest(recipe.pathBeam.set), `${label} 路径图 ${recipe.pathBeam.set} 没注册`).not.toBeNull();
+      }
     }
   });
 
@@ -83,7 +89,7 @@ describe('特效登记表', () => {
     }
   });
 
-  it('四职业的普攻和默认技能都有专属配方', () => {
+  it('各职业的普攻和默认技能都有专属配方', () => {
     for (const k of KINDS) {
       expect(ATTACK_VFX[k], `${k} 没有普攻特效`).toBeDefined();
       const skillId = defaultSkillId(k);
@@ -92,15 +98,67 @@ describe('特效登记表', () => {
     }
   });
 
-  it('弓手普攻和穿透箭必须有飞行段——没有飞行段就只是「敌人身上闪一下」', () => {
+  it('远程配方必须有发出去的光轨，不能只靠弹体小图', () => {
+    const ranged = [
+      ['普攻:bow', ATTACK_VFX.bow],
+      ['普攻:mage', ATTACK_VFX.mage],
+      ['普攻:healer', ATTACK_VFX.healer],
+      ['技能:pierce', SKILL_VFX.pierce],
+      ['技能:ember', SKILL_VFX.ember],
+    ] as const;
+    for (const [label, recipe] of ranged) {
+      expect(recipe.travel, `${label} 丢了飞行段`).toBeDefined();
+      const hasBody = Boolean(recipe.travel!.glowSet || recipe.travel!.sprite || recipe.travel!.beamSet);
+      expect(hasBody, `${label} 飞行段没有生图弹体/光束`).toBe(true);
+      expect(recipe.travel!.speedPxPerSec, `${label} 飞太快`).toBeLessThanOrEqual(420);
+      expect(recipe.impact?.set, `${label} 命中要用生图，不要只靠几何星爆`).toBeTruthy();
+    }
+  });
+
+  it('近战普攻必须有扫斩或短路径，而且要挂生图', () => {
+    expect(ATTACK_VFX.sword.slashSweep?.set, '剑士扫斩没有斩击生图').toBe('slash');
+    expect(ATTACK_VFX.cavalry.pathBeam?.set, '骑兵路径没有突刺生图').toBe('thrust');
+    expect(ATTACK_VFX.shield.impact?.set, '盾卫普攻没有砸击生图').toBe('bash_hit');
+    expect(SKILL_VFX.whirl!.slashSweep?.set, '旋风斩扫斩没有刃的生图').toBe('whirl');
+    expect(SKILL_VFX.heal_touch!.pathBeam?.set, '圣疗光路没有生图').toBe('heal_flash');
+    expect(SKILL_VFX.ward_prayer!.pathBeam?.set, '守护祷言光路没有生图').toBe('ward_aegis');
+    expect(ATTACK_VFX.mage.travel?.glowSet, '法师普攻没有火球').toBe('ember_orb');
+    expect(ATTACK_VFX.mage.impact?.set, '法师普攻命中应是小球砸中，不是技能爆炸').toBe('ember_orb');
+    expect(SKILL_VFX.ember!.impact?.set, '炎弹技能命中应是爆炸').toBe('ember_burst');
+  });
+
+  it('远程普攻必须有飞行段——没有飞行段就只是「敌人身上闪一下」', () => {
     expect(ATTACK_VFX.bow.travel, '弓手普攻丢了飞行段').toBeDefined();
     expect(ATTACK_VFX.bow.travel!.sprite).toBe('proj_arrow');
     expect(ATTACK_VFX.bow.impact, '弓手普攻丢了命中闪光').toBeDefined();
+    expect(ATTACK_VFX.mage.travel, '法师普攻丢了飞行段').toBeDefined();
+    expect(ATTACK_VFX.healer.travel, '祭司普攻丢了飞行段').toBeDefined();
 
     expect(SKILL_VFX.pierce!.travel, '穿透箭丢了飞行段').toBeDefined();
     expect(SKILL_VFX.pierce!.impactPerHit, '穿透箭应按途经依次结算').toBe(true);
     // 穿透和普攻的视觉差就在这条尾迹
     expect(SKILL_VFX.pierce!.travel!.beamSet).toBe('pierce');
+    expect(SKILL_VFX.pierce!.impact!.set, '穿透命中不要复用普攻箭星').toBe('pierce');
+    expect(ATTACK_VFX.mage.travel!.glowSet).toBe('ember_orb');
+    expect(SKILL_VFX.ember!.travel!.glowSet).toBe('ember_orb');
+    expect(SKILL_VFX.ember!.impact!.set).toBe('ember_burst');
+    expect(SKILL_VFX.ember!.travel!.beamSet, '炎弹刀气应是火刃而不是弓手穿透').toBe('ember_wave');
+    expect(ATTACK_VFX.healer.travel!.beamSet, '祭司普攻应有清晰闪电路径').toBe('holy_bolt');
+    expect(ATTACK_VFX.healer.travel!.glowSet).toBe('holy_orb');
+    expect(SKILL_VFX.heal_touch!.impact!.set).toBe('heal_flash');
+    expect(SKILL_VFX.ward_prayer!.impact!.set).toBe('ward_aegis');
+    expect(SKILL_VFX.field_bless!.impact!.set).toBe('bless_rays');
+  });
+
+  it('默认技能的命中生图不能和普攻同一张', () => {
+    for (const k of KINDS) {
+      const skillId = defaultSkillId(k);
+      if (skillId === 'charge') continue;
+      const attackSet = ATTACK_VFX[k].impact?.set;
+      const skillSet = SKILL_VFX[skillId]?.impact?.set;
+      expect(skillSet, `${k} 的默认技能 ${skillId} 没有命中生图`).toBeTruthy();
+      expect(skillSet, `${k} 普攻和 ${skillId} 共用了命中图 ${attackSet}`).not.toBe(attackSet);
+    }
   });
 
   it('近战普攻没有飞行段——贴身砍飞一支箭会很怪', () => {
@@ -109,7 +167,7 @@ describe('特效登记表', () => {
     expect(ATTACK_VFX.shield.travel).toBeUndefined();
   });
 
-  it('四职业各自一套色相，普攻命中火花不撞车', () => {
+  it('各职业各自一套色相，普攻命中火花不撞车', () => {
     const firstColor = (kind: UnitKind): number => ATTACK_VFX[kind].impact!.sparks!.colors[1]!;
     const seen = new Map<number, UnitKind>();
     for (const k of KINDS) {

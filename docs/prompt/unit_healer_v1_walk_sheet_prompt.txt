@@ -1,0 +1,111 @@
+# 单位 healer v1（祭司职业 · 弥尔）—— 四方向行走 sheet（generate2dsprite player_sheet, 4x4）
+#
+# 取代 healer/idle 单帧捷径。风格、比例、键色对齐剑士/弓手 v3 / 法师 v1。
+#
+# 定色（美术风格圣经 §2.1）：
+#   主色 CREAM `#F5E6C8` H40 L90。对骑兵金 H42 色相几乎重叠，靠明度差 ≥20 和「人形 + 太阳杖」
+#   剪影分开（骑兵是金 + 白马）。薄荷绿腰带是点缀，不是主色，避免和法师青绿袍、弓手叶绿撞。
+#   禁止紫/粉/品红。禁止绿斗篷（弓手）、钢蓝甲（盾卫）、尖帽（法师）。
+#
+# 剪影一句话：乳白近正方形短肢身体，身旁一颗头那么大的儿童涂鸦太阳。
+# 唯一记忆点：那颗失真的大金太阳（圆盘 + 6 根粗三角芒），不是袍子上的花纹。
+#
+# 键色：#FF00FF —— 乳白/金/棕，与品红欧氏距离远。
+# 下游：generate2dsprite.py process --target player --mode player_sheet --align feet
+#       --shared-scale --component-mode largest --write-scale-profile
+# 参考图：art/sprite-runs/healer/identity-ref-down.png
+
+A 4x4 sprite sheet showing a full 4-direction walk cycle for a top-down tactics RPG unit.
+Keep the character in the reference image: same face, same cream-white priest robe, same gold
+collar band, same mint-green sash, same warm brown hair, same huge gold sun-disc staff, same
+palette. Only the facing direction, the walk pose and how the staff sits change.
+
+HIS SUN STAFF IS HIS WHOLE IDENTITY — it must be huge.
+All of the following are mandatory:
+- A FAT GOLD SUN DISC on a thick brown wooden staff. The disc is a SOLID circle about as big as
+  his head, with SIX THICK TRIANGULAR RAYS like a child's drawing of the sun. At tiny size the
+  circle-plus-rays is the only way to read "priest" — a tiny star on a stick turns him into a
+  generic child with a twig.
+- The sun disc rising well above his head is REQUIRED, not merely allowed. In game the character
+  is scaled by his body height only (staff excluded from bodySpan), so a huge sun costs him nothing.
+- Do not shrink the sun to fit the cell. Shrink the character instead.
+- Hold the staff close to the body so it does not widen the bbox more than needed.
+
+PROPORTIONS — check against this, drawing him too tall is the most common failure:
+- Extreme super-deformed mascot. His HEAD INCLUDING HAIR is about HALF of his body height.
+  Body, arms and legs together are the other half: short, stubby, chunky, almost no neck.
+- His BODY, from the top of his hair down to his boots and not counting the staff, fits in a
+  roughly SQUARE box — about as wide as it is tall.
+- This is NOT a 2-head or 2.5-head chibi. Think 1.5-head mascot: giant head, tiny body.
+- He is a toy-soldier child, NOT a pretty teen, NOT a slim anime boy.
+
+CHARACTER: a young boy priest.
+- CREAM-WHITE `#F5E6C8` is his identity colour and covers most of his robe.
+- A thick GOLD `#E0B030` collar band is his one metal accent.
+- A simple MINT-GREEN `#5EC8A0` sash across the middle — one flat stripe, no knot, no trim.
+- Simple warm brown hair, short and neat, warm tan boots, skin #EEC49A.
+- No cape, no hood, no hat, no belt buckle, no embroidery, no tiny crosses, no writing.
+
+SIMPLIFY — characterise him with a few bold strokes and colours, never by piling on detail.
+He displays about 48 pixels tall in game, where detail becomes noise:
+- Only 4 to 6 flat colours: cream, gold, mint sash, skin, warm brown, near-black outline.
+- NO belts, straps, buckles, pouches, rivets, seams, laces, stitching, patterns or trim.
+- Face is minimal: two simple dark eyes, two eyebrows, at most a tiny mouth line. No nose,
+  no ear detail, no blush, no eyelashes.
+- Arms and legs are simple rounded stubs; hands are mitten shapes with no fingers.
+- NO purple, magenta, pink, or violet anywhere on the character.
+- NO green hood, NO blue armour, NO pointed wizard hat.
+
+ART STYLE (project style bible — do not deviate):
+hand-drawn cartoon game sprite, chibi / super-deformed proportions with a large head
+and short limbs, thick near-black outlines (pure black or very dark warm brown — never
+a mid-tone or colorful outline), flat saturated fills with light cel shading (one
+highlight tone, one shadow tone), no gradients, no texture noise, no painterly
+rendering, no photographic detail, 3/4 top-down camera matching a tactics grid.
+The sprite must stay readable at 40 pixels tall: silhouette first, exaggerate the
+weapon and the one signature feature, drop everything that needs zoom to appreciate.
+NO TEXT, no labels, no captions, no watermark anywhere in the image.
+
+BRIGHTNESS: bright saturated palette with a genuine near-white cream robe. Never uniformly
+dark or muted. Avoid grey, dusty, chalky or desaturated colours.
+
+CAMERA: 3/4 top-down view from slightly above, consistent in all 16 cells. You can see the
+top of the head, the shoulders, and the full body down to the boots.
+
+SHEET LAYOUT — rows are facing direction, columns are walk frames:
+  Row 1 (top):    facing DOWN, toward the camera, face fully visible
+  Row 2:          facing LEFT, left side profile
+  Row 3:          facing RIGHT, right side profile, mirrored from row 2
+  Row 4 (bottom): facing UP, away from the camera, back of the head and robe visible.
+                  The huge gold sun disc must still be plainly visible in this row —
+                  a back view that is just a cream blob has no identity.
+WALK MOTION — the walk must be readable from the SILHOUETTE ALONE at 44 pixels tall.
+Columns 1 and 3 must look obviously different from columns 2 and 4 even with all interior
+detail removed. Understating this is the single most common failure:
+  Column 1: neutral. Both feet together directly under the body, legs straight, body at its
+            FULL standing height.
+  Column 2: LEFT foot planted far FORWARD, right foot trailing far BEHIND, with a clearly
+            VISIBLE GAP between the two feet — the stride is wide, not a shuffle. The whole
+            body drops noticeably, squashing down about one tenth of its height. Arms swing
+            opposite to the legs.
+  Column 3: neutral again, identical to column 1.
+  Column 4: mirror of column 2 — RIGHT foot far forward, left foot trailing behind, same
+            heavy body drop, arms swung the other way.
+Exaggerate far past realism. A subtle, realistic walk reads as a statue sliding across the
+board. If in doubt, make the stride wider and the body drop deeper.
+
+ABSOLUTE RULES:
+1. EXACTLY 16 equal-size cells in a 4x4 grid. Every cell the same width and height.
+2. NO borders, NO dividing lines, NO frames between cells. Cells are separated only by the
+   flat background color.
+3. Background is 100% solid flat magenta #FF00FF everywhere, including between the cells.
+   No gradient, no vignette, no ground shadow, no drop shadow under the character.
+4. IDENTICAL BODY SCALE in all 16 cells. Measure him from the top of his hair to the soles of
+   his boots, IGNORING the staff: that height must be the same in all 16 cells. Do not shrink
+   the body in the cells where the sun happens to take up more room.
+5. IDENTICAL character identity, costume, and palette in all 16 cells.
+6. His BODY (hair-top to boots, staff excluded) fills about 45% of the cell height in EVERY
+   cell. Centered with magenta margin on all four sides.
+7. Nothing crosses a cell edge. The sun rays especially must stay clear of the edges.
+8. Feet rest on the same horizontal baseline in every cell.
+9. NO text, NO labels, NO numbers, NO arrows, NO UI, NO watermark anywhere in the image.

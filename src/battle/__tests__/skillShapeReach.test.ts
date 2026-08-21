@@ -56,6 +56,19 @@ describe('afterMove 技能不限于射线形状', () => {
     expect(cast?.type, 'AI 的 afterMove 路径漏掉了非射线形状').toBe('skillCast');
     expect(foe.hp).toBeLessThan(UNIT_DEFS.sword.base.maxHp);
   });
+
+  it('AI 点杀按策略打最低血，不读技能里的选血字段', () => {
+    // 炎弹曾经写 pick: highestHp。两个敌人都在 3 格内时，AI 应打残血那个。
+    const self = unit('p1', 'mage', { x: 0, y: 3 }, 'player', 'ember');
+    const tank = unit('e1', 'shield', { x: 2, y: 3 }, 'enemy');
+    const low = unit('e2', 'bow', { x: 1, y: 3 }, 'enemy');
+    low.hp = 8;
+    const events = trySkillAfterMove(self, UNIT_DEFS, [self, tank, low], emptyTerrain(7, 7));
+    const cast = events.find((e) => e.type === 'skillCast');
+    expect(cast?.type).toBe('skillCast');
+    if (cast?.type !== 'skillCast') return;
+    expect(cast.hits[0]?.target).toBe('e2');
+  });
 });
 
 describe("reach: 'within' 是一片射程，不是一圈环", () => {

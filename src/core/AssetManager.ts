@@ -122,6 +122,20 @@ export const AssetManager = {
     return loadedBundles.has(bundleName);
   },
 
+  evict(bundle: string, name: string): void {
+    const key = bundleKey(bundle, name);
+    const tex = textureCache.get(key);
+    if (tex) {
+      if (tex !== PIXI.Texture.WHITE) tex.destroy(true);
+      textureCache.delete(key);
+    }
+    const prefix = `${bundle}::`;
+    for (const k of textureCache.keys()) {
+      if (k.startsWith(prefix)) return;
+    }
+    loadedBundles.delete(bundle);
+  },
+
   unloadBundle(bundleName: string): void {
     const prefix = `${bundleName}::`;
     for (const [k, tex] of textureCache) {

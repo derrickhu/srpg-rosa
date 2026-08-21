@@ -107,7 +107,7 @@ describe('技能表形状与效果口径一致', () => {
       // 纯敌方 debuff（无伤）→ 必须点敌，不能挂 AoE 假装
       if (hasFoe && !hasAlly && noDmg && !hasSelf) {
         expect(
-          ['neighborPickFoe', 'neighborPickLowest'].includes(spec.shape.type),
+          spec.shape.type === 'neighborPickFoe',
           `${spec.id} 纯敌方无伤应点敌`,
         ).toBe(true);
       }

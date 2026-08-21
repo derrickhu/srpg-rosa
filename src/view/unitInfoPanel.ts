@@ -32,7 +32,7 @@ export interface UnitInfoSkillSection {
   /** 画范围格子图。临时技能不画，否则面板长到要滚动 */
   showRange: boolean;
   extraDesc?: string[];
-  /** 「本局加成」清单挂在这一段的格子图旁边；只给主技能段 */
+  /** 「本局纹章」清单挂在这一段的格子图旁边；只给主技能段 */
   modIds?: readonly string[];
 }
 
@@ -67,7 +67,7 @@ const MOD_TEXT_COLOR: Record<SkillModRarity, number> = {
 };
 
 /**
- * 「本局加成」清单：图标 + 名称×层数 + 这一层的实际效果。
+ * 「本局纹章」清单：图标 + 名称×层数 + 这一层的实际效果。
  *
  * 只写名字不够——「锋锐×2」到底是 +25% 还是 +50%，玩家没法从名字里读出来，
  * 而这正是他决定要不要再叠一层的依据，所以每条都带上按层数算好的描述。
@@ -85,7 +85,7 @@ function buildRunModList(
   for (const id of modIds) counted.set(id, (counted.get(id) ?? 0) + 1);
 
   const box = new PIXI.Container();
-  const title = makeText('本局加成', 'caption', { fill: 0x6b4c2a, fontSize: 10, fontWeight: 'bold' });
+  const title = makeText('本局纹章', 'caption', { fill: 0x6b4c2a, fontSize: 10, fontWeight: 'bold' });
   box.addChild(title);
   let y = title.height + 4;
 
@@ -107,7 +107,7 @@ function buildRunModList(
     const textX = icon ? 18 : 0;
 
     // 专属词条标出来：它换个技能就再也拿不到，玩家换招前得知道自己会丢什么
-    const label = isExclusiveMod(mod) ? `${mod.name}（专属）` : n > 1 ? `${mod.name}×${n}` : mod.name;
+    const label = isExclusiveMod(mod) ? `${mod.name}（专属纹章）` : n > 1 ? `${mod.name}×${n}` : mod.name;
     const name = makeText(label, 'caption', {
       fill: live ? MOD_TEXT_COLOR[mod.rarity] : 0x8a8a7a,
       fontSize: 10,
@@ -136,7 +136,7 @@ function buildRunModList(
 
 type CellKind = 'empty' | 'center' | 'hit' | 'ray';
 
-/** 技能范围示意格 + 右侧的本局加成 + 下方的范围说明与图例 */
+/** 技能范围示意格 + 右侧的本局纹章 + 下方的范围说明与图例 */
 function buildRangeRow(
   spec: SkillSpec,
   modIds: readonly string[] | undefined,
@@ -159,17 +159,12 @@ function buildRangeRow(
     // 词条改了形状却画老图的话，玩家会照着错的范围走位。
     gridR = shape.radius + 1;
     rangeDesc = `周围${shape.radius}格全覆盖\n命中所有敌人`;
-  } else if (shape.type === 'neighborPickLowest') {
-    gridR = shape.manhattan + 1;
-    rangeDesc = `${describeReach(shape.manhattan, 'exact')}\n选中血量最低的敌人`;
   } else if (shape.type === 'neighborPickFoe') {
     gridR = shape.manhattan + 1;
-    const pickLabel = shape.pick === 'lowestHp' ? '血量最低' : '血量最高';
-    rangeDesc = `${describeReach(shape.manhattan, shape.reach)}\n选中${pickLabel}的敌人`;
+    rangeDesc = `${describeReach(shape.manhattan, shape.reach)}\n点选一个敌人`;
   } else if (shape.type === 'neighborPickAlly') {
     gridR = shape.manhattan + 1;
-    const pickLabel = shape.pick === 'lowestHp' ? '血量最低' : '血量最高';
-    rangeDesc = `周围${shape.manhattan}格范围\n选中${pickLabel}的友方`;
+    rangeDesc = `${describeReach(shape.manhattan, shape.reach)}\n点选一个友方`;
   } else if (shape.type === 'selfCast') {
     gridR = 1;
     rangeDesc = '对自己释放\n无需选择目标';
@@ -186,7 +181,7 @@ function buildRangeRow(
   }
   cells[gridR]![gridR] = 'center';
 
-  if (shape.type === 'neighborAoE' || shape.type === 'neighborPickLowest'
+  if (shape.type === 'neighborAoE'
       || shape.type === 'neighborPickFoe' || shape.type === 'neighborPickAlly'
       || shape.type === 'discAoE') {
     const md = shape.type === 'discAoE' ? shape.radius : shape.manhattan;

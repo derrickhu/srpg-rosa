@@ -108,6 +108,27 @@ const SETS = [
       { dir: 'sword/attack_up', preset: 'attack', facing: 'up', fps: 12 },
     ],
   },
+  // 法师：仍是 idle 单帧，四向走/攻击后补。
+  {
+    id: 'mage',
+    blend: 'normal',
+    downscale: 1,
+    runs: [{ dir: 'mage/idle', preset: 'single', label: 'mage-idle-1' }],
+  },
+  // 祭司 v1：prompt 见 docs/prompt/unit_healer_v1_*.txt。右向由左向镜像。
+  {
+    id: 'healer',
+    blend: 'normal',
+    downscale: 1,
+    runs: [
+      { dir: 'healer/walk', preset: 'player_sheet', fps: 10, mirrorRight: true },
+      { dir: 'healer/walk', preset: 'idle_from_walk', mirrorRight: true },
+      { dir: 'healer/attack_down', preset: 'attack', facing: 'down', fps: 12 },
+      { dir: 'healer/attack_left', preset: 'attack', facing: 'left', fps: 12 },
+      { dir: 'healer/attack_left', preset: 'attack', facing: 'right', fps: 12, mirror: true },
+      { dir: 'healer/attack_up', preset: 'attack', facing: 'up', fps: 12 },
+    ],
+  },
   // 第一章 Boss 血牙酋长：stagesMvp 关 7 的 animSet: 'bloodfang'
   // attack_up 没单独生成，AnimatedUnit.playAttack 缺动画时会回退到 attack_right
   {
@@ -164,6 +185,17 @@ const SETS = [
     { id: 'temp_gl_salve', frames: 9, fps: 20 },
     { id: 'temp_gl_swarm', frames: 9, fps: 20 },
     { id: 'temp_gl_horn', frames: 9, fps: 20 },
+    { id: 'ember_orb', frames: 6, fps: 16 },
+    { id: 'ember_burst', frames: 6, fps: 24 },
+    { id: 'ember_wave', frames: 6, fps: 20 },
+    { id: 'flame_ring', frames: 9, fps: 20 },
+    { id: 'holy_orb', frames: 6, fps: 16 },
+    { id: 'holy_burst', frames: 6, fps: 24 },
+    { id: 'holy_bolt', frames: 6, fps: 20 },
+    { id: 'slash', frames: 6, fps: 24 },
+    { id: 'heal_flash', frames: 9, fps: 20 },
+    { id: 'ward_aegis', frames: 9, fps: 20 },
+    { id: 'bless_rays', frames: 9, fps: 20 },
   ].map(({ id, frames, fps }) => ({
     id,
     vfx: true,

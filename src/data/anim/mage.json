@@ -1,0 +1,86 @@
+{
+  "id": "mage",
+  "source": "art/sprite-runs/mage",
+  "blend": "normal",
+  "image": "images/anim/mage.png",
+  "meta": {
+    "size": {
+      "w": 256,
+      "h": 256
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 211,
+    "baselineY": 231,
+    "ref": "mage-idle/mage-idle-1.png"
+  },
+  "frames": {
+    "mage-idle/mage-idle-1.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 165,
+        "h": 217
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 45,
+        "y": 20,
+        "w": 165,
+        "h": 217
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "idle": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mage-idle/mage-idle-1.png"
+      ]
+    },
+    "default": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mage-idle/mage-idle-1.png"
+      ]
+    },
+    "idle_up": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mage-idle/mage-idle-1.png"
+      ]
+    },
+    "idle_down": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mage-idle/mage-idle-1.png"
+      ]
+    },
+    "idle_left": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mage-idle/mage-idle-1.png"
+      ]
+    },
+    "idle_right": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mage-idle/mage-idle-1.png"
+      ]
+    }
+  }
+}

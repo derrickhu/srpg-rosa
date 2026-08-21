@@ -44,7 +44,7 @@ const MOOK_SETS = new Set(['slime', 'sporecap', 'bloodwolf', 'rockshell']);
  * 杂兵按 MOOK_HEIGHT 烤进去——同框里人矮一截，运行时按高度撑满时自然就是小怪体型。
  */
 const TOKEN_SETS = [
-  'sword', 'bow', 'shield', 'cavalry',
+  'sword', 'bow', 'shield', 'cavalry', 'mage', 'healer',
   'slime', 'sporecap', 'bloodwolf', 'rockshell',
   'bloodfang',
 ];

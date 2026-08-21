@@ -144,6 +144,11 @@ interface MutablePending {
   moved: boolean;
   usedSkill: boolean;
   attacked: boolean;
+  /**
+   * 走完之后又放过技能或普攻。撤销只回滚移动，出手不回滚；
+   * 所以「走完再出手」锁死这一步，「先出手再走」走错了仍能撤回来。
+   */
+  actedAfterMove: boolean;
   startPos: Vec2;
 }
 
@@ -179,7 +184,7 @@ export interface PendingTurn {
   castableSlots: SkillSlot[];
   /** 还能普攻 */
   canAttack: boolean;
-  /** 已经移动过、但还没出手，可以撤销回原位 */
+  /** 已经移动过、且走完之后还没再出手，可以撤销回原位 */
   canUndoMove: boolean;
   didMove: boolean;
   didSkill: boolean;
@@ -207,7 +212,7 @@ export interface BattleSim {
   skillAiming(uid: string, slot?: SkillSlot): SkillAiming | null;
   /** 移动到指定格（必须在 `legalMoveCells` 内，否则原地不动返回空事件） */
   commandMove(uid: string, cell: Vec2): BattleStep;
-  /** 撤销本回合的移动（仅在还没出手时可用） */
+  /** 撤销本回合的移动（走完之后还没再出手时可用，与先技能还是先走无关） */
   commandUndoMove(uid: string): BattleStep;
   /**
    * 放技能。
@@ -255,6 +260,8 @@ export interface BattleSim {
   /**
    * 出手顺序预览：当前行动者（可选）+ 本回合剩余 + 按速度预估的后续回合，
    * 凑满 `limit` 个。顺序条要靠这条做跨回合规划，不能只看本回合尾巴。
+   *
+   * 本回合剩余按**当前**有效速度排（降速/加速会立刻改条），不含已经出手的人。
    */
   upcomingOrder(limit: number, currentUid?: string | null): string[];
   getRound(): number;
@@ -433,6 +440,20 @@ export function createBattleSim(
   }
 
   /**
+   * 把本回合还没出手的人按**当前**有效速度重排。
+   *
+   * 出手队列在轮首按速度排一次就冻住。降速/加速如果只改 `timedBattleEffects`
+   * 和飘字，条上的顺序仍是开回合那一版——玩家会以为「速-2」没效果。
+   * 已经出手的人（含当前正在行动的）不在 `order` 里，不会被插回队里。
+   */
+  function resyncRoundOrder(): void {
+    const remaining = new Set(order);
+    order = bySpeedOrder(units, defs)
+      .map((u) => u.uid)
+      .filter((uid) => remaining.has(uid));
+  }
+
+  /**
    * AI 打完一个单位的整个回合。
    *
    * `resume` 是人工模式下按了跳过时传进来的进度：该单位可能已经走过、或已经放过技能。
@@ -449,6 +470,7 @@ export function createBattleSim(
 
     if (canSkill) {
       events.push(...trySkillBeforeMove(self, defs, units, terrain, terrainRt));
+      resyncRoundOrder();
     }
     let w = checkWinner(units);
     if (w) return finish(w, events);
@@ -475,6 +497,7 @@ export function createBattleSim(
 
     if (canSkill) {
       events.push(...trySkillAfterMove(self, defs, units, terrain, terrainRt));
+      resyncRoundOrder();
     }
     w = checkWinner(units);
     if (w) return finish(w, events);
@@ -568,6 +591,7 @@ export function createBattleSim(
           moved: false,
           usedSkill: false,
           attacked: false,
+          actedAfterMove: false,
           startPos: { ...self.pos },
         };
         allEvents.push(turnStart);
@@ -594,18 +618,18 @@ export function createBattleSim(
     if (!pendingTurn) return null;
     const u = liveUnit(pendingTurn.uid);
     if (!u) return null;
-    const acted = pendingTurn.usedSkill || pendingTurn.attacked;
     const castable = castableSlotsFor(u);
     return {
       uid: pendingTurn.uid,
       // 移动与出手顺序不限：AI 是先技能再走位再普攻的（见 `actTurn`），
       // 人工若「先放技能就锁死移动」，玩家永远学不会那套起手，也会白白丢掉走位。
-      // 撤招只在「走过且还没出手」时开放——出手后再撤等于改写已经结算的伤害。
+      // 撤销只回滚移动。先出手再走，走错了仍能撤；走完再出手才锁死这一步，
+      // 否则等于看着伤害数字再改站位。
       canMove: !pendingTurn.moved,
       canSkill: castable.length > 0,
       castableSlots: castable,
       canAttack: !pendingTurn.attacked && attackTargetsFrom(u).length > 0,
-      canUndoMove: pendingTurn.moved && !acted,
+      canUndoMove: pendingTurn.moved && !pendingTurn.actedAfterMove,
       didMove: pendingTurn.moved,
       didSkill: pendingTurn.usedSkill,
       didAttack: pendingTurn.attacked,
@@ -661,7 +685,8 @@ export function createBattleSim(
     const events = moveAlong(cur.u, cell);
     if (events.length === 0) return noop();
     cur.p.moved = true;
-    // 走完若技能/普攻也没了，settle 会自动收尾；还有出手额度则继续等
+    cur.p.actedAfterMove = false;
+    // 走完先停一下：哪怕技能/普攻都用过了，也要留出撤销。真要收尾点待机。
     return settleAfterAction(events);
   }
 
@@ -674,6 +699,7 @@ export function createBattleSim(
     cur.u.pos = { ...cur.p.startPos };
     cur.u.movedInTurn = false;
     cur.p.moved = false;
+    cur.p.actedAfterMove = false;
     // 用一步 moveStep 直接跳回原位，回放层按普通移动播即可
     const events: BattleEvent[] = [
       { type: 'moveStep', uid, from, to: { ...cur.p.startPos } },
@@ -697,6 +723,8 @@ export function createBattleSim(
     );
     if (events.length === 0) return noop();
     cur.p.usedSkill = true;
+    if (cur.p.moved) cur.p.actedAfterMove = true;
+    resyncRoundOrder();
     return settleAfterAction(events);
   }
 
@@ -709,6 +737,7 @@ export function createBattleSim(
     const target = liveUnit(targetUid);
     if (!target) return noop();
     cur.p.attacked = true;
+    if (cur.p.moved) cur.p.actedAfterMove = true;
     return settleAfterAction(basicAttack(cur.u, target));
   }
 
@@ -763,6 +792,7 @@ export function createBattleSim(
           tone: 'debuff',
         });
       }
+      resyncRoundOrder();
     }
     allEvents.push(...events);
     return events;
