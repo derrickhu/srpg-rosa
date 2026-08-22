@@ -67,13 +67,16 @@ import { makeText } from '@/theme/typography';
 import { SceneManager } from '@/scene/SceneManager';
 import type { Scene } from '@/scene/Scene';
 import { makeButton } from '@/ui/Button';
+import { PersistService } from '@/core/PersistService';
 import { SaveManager } from '@/core/SaveManager';
+import { CloudSyncManager } from '@/managers/CloudSyncManager';
 import { AssetManager } from '@/core/AssetManager';
 import { ALL_BUNDLES, LOADING_BUNDLE, UI_BUNDLE } from '@/core/assetBundles';
 import { animSetReady, ensureAnimSets, loadAnimSets } from '@/view/animSets';
 import { createBackground, createUiIcon, createUnitToken } from '@/view/renderHelpers';
-import { getCharacter } from '@/game/state/GameState';
+import { createInitialState, getCharacter } from '@/game/state/GameState';
 import { getSkillSpec } from '@/data/skillCatalog';
+import { Platform } from '@/platform/wxPlatform';
 
 function containerScene(container: PIXI.Container): Scene {
   return { root: container, enter() {}, exit() {} };
@@ -133,12 +136,29 @@ export class GameFlow {
   /** 刚结束那场战斗的单位快照，无尽用来把血量和站位带进下一波 */
   private lastBattleUnits: UnitState[] = [];
   private loading: LoadingView | null = null;
+  /** 启动云同步完成、大厅已可渲染后才接受下行覆盖 */
+  private started = false;
 
   constructor(private readonly app: PixiHost) {
     this.scenes = new SceneManager(app.stage);
-    this.state = SaveManager.loadOrCreate();
+    this.state = createInitialState();
+    this.bindCloudLifecycle();
     this.showLoading();
     void this.loadAssetsAndStart();
+  }
+
+  private bindCloudLifecycle(): void {
+    CloudSyncManager.prewarm();
+    PersistService.subscribeCloudImport((info) => {
+      if (!this.started || info.changedKeys.length === 0) return;
+      const loaded = SaveManager.load();
+      if (!loaded) return;
+      this.state = loaded;
+      if (this.state.phase === 'hub') this.renderShell();
+    });
+    Platform.onHide(() => {
+      void CloudSyncManager.flushNow('app-hide');
+    });
   }
 
   private showLoading(): void {
@@ -187,6 +207,11 @@ export class GameFlow {
 
     // 动画图集走 CDN、约 2MB，不能挡主页。resolveBattle 进战前会等本场要用的那几个。
     loadAnimSets();
+    setP(0.96);
+    const sync = await CloudSyncManager.awaitStartupSync();
+    console.log(`[GameFlow] 云同步启动: ${sync.status} (${sync.reason})`);
+    this.state = SaveManager.loadOrCreate();
+    this.started = true;
     setP(1);
     this.loading = null;
     this.renderShell();

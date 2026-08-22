@@ -72,6 +72,10 @@
         "type": "folder"
       },
       {
+        "value": "cloudfunctions",
+        "type": "folder"
+      },
+      {
         "value": "tools",
         "type": "folder"
       },

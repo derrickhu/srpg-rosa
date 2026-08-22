@@ -92,14 +92,44 @@ import { GAME_KEY } from '@/config/gameKey';
 
 接入 `@gp/analytics-sdk` 或轻量 adapter 时，**不要**在业务代码里硬编码字符串，统一从 `gameKey.ts` 导入。
 
-## CloudBase 后端（后续接入）
+## CloudBase 后端（云存档）
 
-参考 `xiao_chu/cloudfunctions/xiaochu-api/` 与 [`xiao_chu/docs/cloudbase-xiaochu.md`](../../xiao_chu/docs/cloudbase-xiaochu.md)：
+对齐花花妙屋 `game2D_huahua/cloudfunctions/huahua-api`，本游戏不接礼物通道。
 
-1. 新建云函数 `wujin-wenzhang-api`（路径用连字符）
-2. 环境变量 `GAME_KEY=wujin_wenzhang` + `WUJIN_WENZHANG_*` 前缀
-3. HTTP 访问服务挂载 `/wujin-wenzhang-api`
-4. 客户端 `API_PREFIX` + `CLOUDBASE_API_BASE_URL` 已在 `gameKey.ts` 派生
+| 项 | 值 |
+|---|---|
+| GameKey | `wujin_wenzhang` |
+| 云函数 / HTTP 前缀 | `wujin-wenzhang-api` / `/wujin-wenzhang-api` |
+| 集合 | `wujin_wenzhang_playerData` |
+| JWT | `{ sub, plt, gk: "wujin_wenzhang" }`，密钥环境变量 `WUJIN_WENZHANG_JWT_SECRET` |
+| 微信 code2session | `WUJIN_WENZHANG_WX_APPID` / `WUJIN_WENZHANG_WX_SECRET`（不要用裸 `WX_APPID`，会被脱敏清空） |
+| payload | `Record<string, string>`，按 key 合并；冲突 409 `STALE_UPDATE` |
+| 白名单 | `srpg_meta_v3`、`srpg_run_v4`（token / anonId / cloud_meta 不上云） |
+| userId | `wx:{openid}` / `anon:{id}` |
+
+源码：
+
+| 位置 | 作用 |
+|------|------|
+| [`cloudfunctions/wujin-wenzhang-api/`](../cloudfunctions/wujin-wenzhang-api/) | login + save/pull + save/push + health |
+| [`src/config/CloudConfig.ts`](../src/config/CloudConfig.ts) | 路径 / 白名单 / 超时，全部从 `gameKey` 派生 |
+| [`src/core/BackendService.ts`](../src/core/BackendService.ts) | JWT 登录与 pull/push |
+| [`src/core/PersistService.ts`](../src/core/PersistService.ts) | 本地读写 + dirty + 云快照 |
+| [`src/managers/CloudSyncManager.ts`](../src/managers/CloudSyncManager.ts) | 启动拉取、防抖上行、409 下行 |
+
+启动：Loading 末尾 `awaitStartupSync`（超时 2.5s 不挡进游戏）→ 再 `SaveManager.loadOrCreate`。本地每次存档标 dirty，1.5s 防抖 push；切后台 `flushNow`。
+
+云端尚无文档时**保留本地并上行播种**（本游戏已有本地玩家，不能按花花「云端权威清空」处理）。
+
+本地联调：
+
+```bash
+npm run cloud:mock
+```
+
+微信公众平台需把 request 合法域名加上：
+
+`https://rosa-env-d7grf78r5dbd37323.service.tcloudbase.com`
 
 ## 与 xiao_chu 的差异
 
@@ -119,3 +149,5 @@ CloudBase 环境与 COS 桶与 xiao_chu **共用**（`rosa-env-d7grf78r5dbd37323
 - [ ] 大图放 `cdnDirs`，首屏 UI 放 `bundledDirs`
 - [ ] 改资源后跑 `npm run upload:cdn`
 - [ ] 经分 / 云函数接入时使用同一 GameKey
+- [ ] 云函数 `wujin-wenzhang-api` 已挂 `/wujin-wenzhang-api`，环境变量用 `WUJIN_WENZHANG_*`
+- [ ] 微信后台 request 合法域名与花花一致：CDN + `*.service.tcloudbase.com`

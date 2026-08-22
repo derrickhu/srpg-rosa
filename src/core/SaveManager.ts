@@ -1,3 +1,5 @@
+import { SAVE_META_KEY, SAVE_RUN_KEY } from '@/config/CloudConfig';
+import { PersistService } from '@/core/PersistService';
 import { safeStorageGet, safeStorageSet } from '@/platform/wxPlatform';
 import type { MetaState, MvpGameState, RunState } from '@/game/state/GameState';
 import { createInitialMeta, createInitialState, META_VERSION } from '@/game/state/GameState';
@@ -7,13 +9,25 @@ import { LEGACY_CHARACTER_IDS, remapLegacyCharacterId } from '@/data/characterCa
 import { remapLegacyRoster } from '@/game/characterFactory';
 import { remapLegacySkillId } from '@/data/skillCatalog';
 
-const META_KEY = 'srpg_meta_v3';
+const META_KEY = SAVE_META_KEY;
 // run v4：第一章扩为 7 关后关卡下标整体变更，v3 的局内进度直接作废（只损失一局）
-const RUN_KEY = 'srpg_run_v4';
+const RUN_KEY = SAVE_RUN_KEY;
 const LEGACY_META_KEY_V2 = 'srpg_meta_v2';
 const LEGACY_RUN_KEY_V2 = 'srpg_run_v2';
 const LEGACY_RUN_KEY_V3 = 'srpg_run_v3';
 const LEGACY_KEY_V1 = 'srpg_save_v1';
+
+function persistGet(key: string): string | null {
+  return PersistService.readRaw(key);
+}
+
+function persistSet(key: string, value: string): void {
+  if (!value) {
+    PersistService.remove(key);
+    return;
+  }
+  PersistService.writeRaw(key, value);
+}
 
 interface MetaPayload {
   version: typeof META_VERSION;
@@ -175,7 +189,7 @@ export const SaveManager = {
   saveMeta(meta: MetaState): boolean {
     try {
       const payload: MetaPayload = { version: META_VERSION, meta, savedAt: Date.now() };
-      safeStorageSet(META_KEY, JSON.stringify(payload));
+      persistSet(META_KEY, JSON.stringify(payload));
       return true;
     } catch (e) {
       console.warn('[SaveManager] saveMeta failed:', e);
@@ -186,11 +200,11 @@ export const SaveManager = {
   saveRun(run: RunState | null): boolean {
     try {
       if (!run) {
-        safeStorageSet(RUN_KEY, '');
+        persistSet(RUN_KEY, '');
         return true;
       }
       const payload: RunPayload = { version: META_VERSION, run, savedAt: Date.now() };
-      safeStorageSet(RUN_KEY, JSON.stringify(payload));
+      persistSet(RUN_KEY, JSON.stringify(payload));
       return true;
     } catch (e) {
       console.warn('[SaveManager] saveRun failed:', e);
@@ -207,7 +221,7 @@ export const SaveManager = {
 
   loadMeta(): MetaState | null {
     try {
-      const raw = safeStorageGet(META_KEY);
+      const raw = persistGet(META_KEY);
       if (!raw) return null;
       const payload: MetaPayload = JSON.parse(raw);
       if (payload.version !== META_VERSION || !payload.meta) return null;
@@ -221,7 +235,7 @@ export const SaveManager = {
 
   loadRun(): RunState | null {
     try {
-      const raw = safeStorageGet(RUN_KEY);
+      const raw = persistGet(RUN_KEY);
       if (!raw) return null;
       const payload: RunPayload = JSON.parse(raw);
       if (payload.version !== META_VERSION || !payload.run) return null;
@@ -247,13 +261,13 @@ export const SaveManager = {
   },
 
   clearRun(): void {
-    safeStorageSet(RUN_KEY, '');
+    persistSet(RUN_KEY, '');
   },
 
   /** 整体重置：清除 meta 与 run */
   clear(): void {
-    safeStorageSet(META_KEY, '');
-    safeStorageSet(RUN_KEY, '');
+    persistSet(META_KEY, '');
+    persistSet(RUN_KEY, '');
   },
 
   loadOrCreate(): MvpGameState {

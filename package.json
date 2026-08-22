@@ -16,6 +16,7 @@
     "upload:cdn": "node scripts/upload_cdn.cjs",
     "upload:cdn:dry": "node scripts/upload_cdn.cjs --dry-run",
     "test": "vitest run",
+    "cloud:mock": "node cloudfunctions/wujin-wenzhang-api/scripts/mock.js",
     "test:watch": "vitest",
     "font:subset": "python3 scripts/subset-pixi-fonts.py"
   },

@@ -15,7 +15,7 @@ export const GAME_KEY_HYPHEN = GAME_KEY.replace(/_/g, '-');
 /** 统一后端 API 前缀，例如 /wujin-wenzhang-api */
 export const API_PREFIX = `/${GAME_KEY_HYPHEN}-api`;
 
-/** CloudBase HTTP 访问服务根域名（后续 wujin-wenzhang-api 云函数挂在此域名下） */
+/** CloudBase HTTP 访问服务根域名（wujin-wenzhang-api 挂在此域名下） */
 export const CLOUDBASE_API_BASE_URL = gameConfig.cloudbaseApiBaseUrl;
 
 /** 集合名前缀，例如 wujin_wenzhang_playerData */

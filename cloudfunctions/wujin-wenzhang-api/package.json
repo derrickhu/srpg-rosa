@@ -1,0 +1,16 @@
+{
+  "name": "wujin-wenzhang-api",
+  "version": "1.0.0",
+  "description": "无尽纹章统一 HTTP 后端：login + save/pull + save/push",
+  "main": "index.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "mock": "node scripts/mock.js"
+  },
+  "dependencies": {
+    "@cloudbase/node-sdk": "^3.5.0",
+    "jsonwebtoken": "^9.0.2"
+  }
+}
