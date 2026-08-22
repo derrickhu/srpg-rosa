@@ -37,11 +37,26 @@ describe('词条折进技能规格', () => {
     expect(atkMul(many)).toBeCloseTo(base * 1.75, 6);
   });
 
-  it('横扫把「正好 1 格外的环」摊成「2 格以内全覆盖」', () => {
-    // 直接把 manhattan 从 1 加到 2 会漏掉贴脸的敌人，那是位移不是扩大。
-    expect(whirl().shape).toEqual({ type: 'neighborAoE', manhattan: 1 });
+  it('横扫把邻格整片摊成「2 格以内全覆盖」', () => {
+    // 旋风斩本身是 `squareAoE radius:1`（贴身八格含斜角，因为它的特效画的是
+    // 盖满 3×3 的刃环，见 skillCatalog.whirl 的说明）。注意**不能**写成
+    // `discAoE radius:1`：那个半径量的是曼哈顿距离，打到的和正交四格的环一模一样。
+    expect(whirl().shape).toEqual({ type: 'squareAoE', radius: 1 });
+    // 横扫摊开后退回曼哈顿整片圆（12 格）而不是更大的方形（24 格，半张图）。
+    // 这也保证换尺子没有顺手改掉词条本身的强度——这一行的结果和改形状之前一致。
     const s = effectiveSkillSpec(whirl(), ['wide_swing']);
     expect(s.shape).toEqual({ type: 'discAoE', radius: 2 });
+  });
+
+  it('横扫对环形 AoE 仍是「摊成整片」而不是把环往外推', () => {
+    // `neighborAoE` 这条路径还有炎环在走（正好 2 格外的一圈）。
+    // 直接把 manhattan 从 2 加到 3 会漏掉近处的敌人，那是位移不是扩大。
+    const ring = getSkillSpec('flame_ring')!;
+    expect(ring.shape).toEqual({ type: 'neighborAoE', manhattan: 2 });
+    expect(effectiveSkillSpec(ring, ['wide_swing']).shape).toEqual({
+      type: 'discAoE',
+      radius: 3,
+    });
   });
 
   it('淬毒挂上中毒效果，且层数只体现在每回合伤害上', () => {

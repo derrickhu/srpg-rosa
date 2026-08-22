@@ -1,0 +1,219 @@
+{
+  "id": "temp_fo_thorn",
+  "source": "art/vfx-runs/temp_fo_thorn",
+  "blend": "normal",
+  "image": "images/anim/temp_fo_thorn.png",
+  "meta": {
+    "size": {
+      "w": 1024,
+      "h": 512
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 245,
+    "baselineY": 248,
+    "ref": "temp_fo_thorn/temp_fo_thorn-1.png"
+  },
+  "frames": {
+    "temp_fo_thorn/temp_fo_thorn-1.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 249,
+        "h": 249
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 5,
+        "y": 1,
+        "w": 249,
+        "h": 249
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_fo_thorn/temp_fo_thorn-2.png": {
+      "frame": {
+        "x": 253,
+        "y": 2,
+        "w": 241,
+        "h": 245
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 8,
+        "y": 4,
+        "w": 241,
+        "h": 245
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_fo_thorn/temp_fo_thorn-3.png": {
+      "frame": {
+        "x": 496,
+        "y": 2,
+        "w": 248,
+        "h": 245
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 3,
+        "y": 4,
+        "w": 248,
+        "h": 245
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_fo_thorn/temp_fo_thorn-4.png": {
+      "frame": {
+        "x": 2,
+        "y": 253,
+        "w": 243,
+        "h": 230
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 9,
+        "y": 14,
+        "w": 243,
+        "h": 230
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_fo_thorn/temp_fo_thorn-5.png": {
+      "frame": {
+        "x": 746,
+        "y": 2,
+        "w": 237,
+        "h": 233
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 8,
+        "y": 14,
+        "w": 237,
+        "h": 233
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_fo_thorn/temp_fo_thorn-6.png": {
+      "frame": {
+        "x": 247,
+        "y": 253,
+        "w": 242,
+        "h": 230
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 3,
+        "y": 14,
+        "w": 242,
+        "h": 230
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_fo_thorn/temp_fo_thorn-7.png": {
+      "frame": {
+        "x": 491,
+        "y": 253,
+        "w": 235,
+        "h": 230
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 10,
+        "y": 9,
+        "w": 235,
+        "h": 230
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_fo_thorn/temp_fo_thorn-8.png": {
+      "frame": {
+        "x": 728,
+        "y": 253,
+        "w": 199,
+        "h": 219
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 30,
+        "y": 14,
+        "w": 199,
+        "h": 219
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_fo_thorn/temp_fo_thorn-9.png": {
+      "frame": {
+        "x": 929,
+        "y": 253,
+        "w": 38,
+        "h": 42
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 57,
+        "y": 153,
+        "w": 38,
+        "h": 42
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "temp_fo_thorn": {
+      "loop": false,
+      "fps": 18,
+      "frames": [
+        "temp_fo_thorn/temp_fo_thorn-1.png",
+        "temp_fo_thorn/temp_fo_thorn-2.png",
+        "temp_fo_thorn/temp_fo_thorn-3.png",
+        "temp_fo_thorn/temp_fo_thorn-4.png",
+        "temp_fo_thorn/temp_fo_thorn-5.png",
+        "temp_fo_thorn/temp_fo_thorn-6.png",
+        "temp_fo_thorn/temp_fo_thorn-7.png",
+        "temp_fo_thorn/temp_fo_thorn-8.png",
+        "temp_fo_thorn/temp_fo_thorn-9.png"
+      ]
+    }
+  }
+}

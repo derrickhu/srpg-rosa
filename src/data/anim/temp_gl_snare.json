@@ -1,7 +1,7 @@
 {
   "id": "temp_gl_snare",
   "source": "art/vfx-runs/temp_gl_snare",
-  "blend": "add",
+  "blend": "normal",
   "image": "images/anim/temp_gl_snare.png",
   "meta": {
     "size": {
@@ -13,25 +13,25 @@
   },
   "metrics": {
     "frameSize": 256,
-    "subjectHeight": 256,
-    "baselineY": 256,
+    "subjectHeight": 169,
+    "baselineY": 214,
     "ref": "temp_gl_snare/temp_gl_snare-1.png"
   },
   "frames": {
     "temp_gl_snare/temp_gl_snare-1.png": {
       "frame": {
-        "x": 2,
-        "y": 2,
-        "w": 256,
-        "h": 256
+        "x": 708,
+        "y": 217,
+        "w": 194,
+        "h": 184
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 28,
+        "y": 37,
+        "w": 194,
+        "h": 184
       },
       "sourceSize": {
         "w": 256,
@@ -40,18 +40,18 @@
     },
     "temp_gl_snare/temp_gl_snare-2.png": {
       "frame": {
-        "x": 260,
+        "x": 217,
         "y": 2,
-        "w": 256,
-        "h": 256
+        "w": 209,
+        "h": 207
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 20,
+        "y": 18,
+        "w": 209,
+        "h": 207
       },
       "sourceSize": {
         "w": 256,
@@ -60,18 +60,18 @@
     },
     "temp_gl_snare/temp_gl_snare-3.png": {
       "frame": {
-        "x": 518,
+        "x": 2,
         "y": 2,
-        "w": 256,
-        "h": 256
+        "w": 213,
+        "h": 213
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 17,
+        "y": 20,
+        "w": 213,
+        "h": 213
       },
       "sourceSize": {
         "w": 256,
@@ -80,18 +80,18 @@
     },
     "temp_gl_snare/temp_gl_snare-4.png": {
       "frame": {
-        "x": 2,
-        "y": 260,
-        "w": 256,
-        "h": 256
+        "x": 428,
+        "y": 2,
+        "w": 213,
+        "h": 206
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 19,
+        "y": 15,
+        "w": 213,
+        "h": 206
       },
       "sourceSize": {
         "w": 256,
@@ -100,18 +100,18 @@
     },
     "temp_gl_snare/temp_gl_snare-5.png": {
       "frame": {
-        "x": 260,
-        "y": 260,
-        "w": 256,
-        "h": 256
+        "x": 643,
+        "y": 2,
+        "w": 209,
+        "h": 201
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 16,
+        "y": 18,
+        "w": 209,
+        "h": 201
       },
       "sourceSize": {
         "w": 256,
@@ -120,18 +120,18 @@
     },
     "temp_gl_snare/temp_gl_snare-6.png": {
       "frame": {
-        "x": 518,
-        "y": 260,
-        "w": 256,
-        "h": 256
+        "x": 225,
+        "y": 217,
+        "w": 248,
+        "h": 199
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
         "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "y": 27,
+        "w": 248,
+        "h": 199
       },
       "sourceSize": {
         "w": 256,
@@ -141,17 +141,17 @@
     "temp_gl_snare/temp_gl_snare-7.png": {
       "frame": {
         "x": 2,
-        "y": 518,
-        "w": 256,
-        "h": 256
+        "y": 217,
+        "w": 221,
+        "h": 201
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 11,
+        "y": 7,
+        "w": 221,
+        "h": 201
       },
       "sourceSize": {
         "w": 256,
@@ -160,18 +160,18 @@
     },
     "temp_gl_snare/temp_gl_snare-8.png": {
       "frame": {
-        "x": 260,
-        "y": 518,
-        "w": 256,
-        "h": 256
+        "x": 475,
+        "y": 217,
+        "w": 231,
+        "h": 186
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 1,
+        "y": 25,
+        "w": 231,
+        "h": 186
       },
       "sourceSize": {
         "w": 256,
@@ -180,18 +180,18 @@
     },
     "temp_gl_snare/temp_gl_snare-9.png": {
       "frame": {
-        "x": 518,
-        "y": 518,
-        "w": 256,
-        "h": 256
+        "x": 2,
+        "y": 420,
+        "w": 213,
+        "h": 182
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 8,
+        "y": 24,
+        "w": 213,
+        "h": 182
       },
       "sourceSize": {
         "w": 256,

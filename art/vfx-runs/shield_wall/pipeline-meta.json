@@ -1,0 +1,67 @@
+{
+  "source": "scripts/vfx-sheet.py",
+  "input": "/Users/rosa/rosa_games/srpg-rosa/art/vfx-runs/shield_wall/raw-sheet.png",
+  "target": "vfx",
+  "mode": "vfx_sheet",
+  "rows": 3,
+  "cols": 3,
+  "cell_size": 256,
+  "threshold": 22,
+  "frame_labels": [
+    "shield_wall-1",
+    "shield_wall-2",
+    "shield_wall-3",
+    "shield_wall-4",
+    "shield_wall-5",
+    "shield_wall-6",
+    "shield_wall-7",
+    "shield_wall-8",
+    "shield_wall-9"
+  ],
+  "align": "center",
+  "alpha_gamma": 2.0,
+  "shared_crop_side": 317,
+  "crop_offsets": [
+    {
+      "x": 12,
+      "y": 12
+    },
+    {
+      "x": 12,
+      "y": 12
+    },
+    {
+      "x": 12,
+      "y": 12
+    },
+    {
+      "x": 12,
+      "y": 12
+    },
+    {
+      "x": 12,
+      "y": 12
+    },
+    {
+      "x": 12,
+      "y": 12
+    },
+    {
+      "x": 12,
+      "y": 12
+    },
+    {
+      "x": 12,
+      "y": 12
+    },
+    {
+      "x": 12,
+      "y": 12
+    }
+  ],
+  "empty_frames": [],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}

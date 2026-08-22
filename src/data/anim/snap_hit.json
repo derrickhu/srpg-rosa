@@ -1,0 +1,219 @@
+{
+  "id": "snap_hit",
+  "source": "art/vfx-runs/snap_hit",
+  "blend": "add",
+  "image": "images/anim/snap_hit.png",
+  "meta": {
+    "size": {
+      "w": 512,
+      "h": 512
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 17,
+    "baselineY": 142,
+    "ref": "snap_hit/snap_hit-1.png"
+  },
+  "frames": {
+    "snap_hit/snap_hit-1.png": {
+      "frame": {
+        "x": 214,
+        "y": 220,
+        "w": 61,
+        "h": 18
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 152,
+        "y": 125,
+        "w": 61,
+        "h": 18
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "snap_hit/snap_hit-2.png": {
+      "frame": {
+        "x": 241,
+        "y": 2,
+        "w": 188,
+        "h": 79
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 36,
+        "y": 95,
+        "w": 188,
+        "h": 79
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "snap_hit/snap_hit-3.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 237,
+        "h": 82
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 3,
+        "y": 92,
+        "w": 237,
+        "h": 82
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "snap_hit/snap_hit-4.png": {
+      "frame": {
+        "x": 2,
+        "y": 86,
+        "w": 238,
+        "h": 76
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 89,
+        "w": 238,
+        "h": 76
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "snap_hit/snap_hit-5.png": {
+      "frame": {
+        "x": 242,
+        "y": 86,
+        "w": 233,
+        "h": 62
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 1,
+        "y": 95,
+        "w": 233,
+        "h": 62
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "snap_hit/snap_hit-6.png": {
+      "frame": {
+        "x": 2,
+        "y": 164,
+        "w": 240,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 99,
+        "w": 240,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "snap_hit/snap_hit-7.png": {
+      "frame": {
+        "x": 244,
+        "y": 164,
+        "w": 221,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 13,
+        "y": 98,
+        "w": 221,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "snap_hit/snap_hit-8.png": {
+      "frame": {
+        "x": 2,
+        "y": 220,
+        "w": 210,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 16,
+        "y": 109,
+        "w": 210,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "snap_hit/snap_hit-9.png": {
+      "frame": {
+        "x": 277,
+        "y": 220,
+        "w": 108,
+        "h": 13
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 86,
+        "y": 124,
+        "w": 108,
+        "h": 13
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "snap_hit": {
+      "loop": false,
+      "fps": 24,
+      "frames": [
+        "snap_hit/snap_hit-1.png",
+        "snap_hit/snap_hit-2.png",
+        "snap_hit/snap_hit-3.png",
+        "snap_hit/snap_hit-4.png",
+        "snap_hit/snap_hit-5.png",
+        "snap_hit/snap_hit-6.png",
+        "snap_hit/snap_hit-7.png",
+        "snap_hit/snap_hit-8.png",
+        "snap_hit/snap_hit-9.png"
+      ]
+    }
+  }
+}

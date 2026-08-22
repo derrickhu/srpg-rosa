@@ -1,0 +1,219 @@
+{
+  "id": "temp_fo_bark",
+  "source": "art/vfx-runs/temp_fo_bark",
+  "blend": "normal",
+  "image": "images/anim/temp_fo_bark.png",
+  "meta": {
+    "size": {
+      "w": 1024,
+      "h": 1024
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 214,
+    "baselineY": 221,
+    "ref": "temp_fo_bark/temp_fo_bark-1.png"
+  },
+  "frames": {
+    "temp_fo_bark/temp_fo_bark-1.png": {
+      "frame": {
+        "x": 447,
+        "y": 236,
+        "w": 221,
+        "h": 220
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 5,
+        "y": 3,
+        "w": 221,
+        "h": 220
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_fo_bark/temp_fo_bark-2.png": {
+      "frame": {
+        "x": 702,
+        "y": 2,
+        "w": 249,
+        "h": 223
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 2,
+        "y": 1,
+        "w": 249,
+        "h": 223
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_fo_bark/temp_fo_bark-3.png": {
+      "frame": {
+        "x": 235,
+        "y": 2,
+        "w": 221,
+        "h": 226
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 18,
+        "y": 2,
+        "w": 221,
+        "h": 226
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_fo_bark/temp_fo_bark-4.png": {
+      "frame": {
+        "x": 2,
+        "y": 236,
+        "w": 231,
+        "h": 222
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 6,
+        "y": 9,
+        "w": 231,
+        "h": 222
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_fo_bark/temp_fo_bark-5.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 231,
+        "h": 232
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 6,
+        "y": 5,
+        "w": 231,
+        "h": 232
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_fo_bark/temp_fo_bark-6.png": {
+      "frame": {
+        "x": 458,
+        "y": 2,
+        "w": 242,
+        "h": 224
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 9,
+        "y": 9,
+        "w": 242,
+        "h": 224
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_fo_bark/temp_fo_bark-7.png": {
+      "frame": {
+        "x": 670,
+        "y": 236,
+        "w": 222,
+        "h": 218
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 12,
+        "y": 13,
+        "w": 222,
+        "h": 218
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_fo_bark/temp_fo_bark-8.png": {
+      "frame": {
+        "x": 235,
+        "y": 236,
+        "w": 210,
+        "h": 221
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 17,
+        "y": 10,
+        "w": 210,
+        "h": 221
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_fo_bark/temp_fo_bark-9.png": {
+      "frame": {
+        "x": 2,
+        "y": 460,
+        "w": 197,
+        "h": 209
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 28,
+        "y": 14,
+        "w": 197,
+        "h": 209
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "temp_fo_bark": {
+      "loop": false,
+      "fps": 20,
+      "frames": [
+        "temp_fo_bark/temp_fo_bark-1.png",
+        "temp_fo_bark/temp_fo_bark-2.png",
+        "temp_fo_bark/temp_fo_bark-3.png",
+        "temp_fo_bark/temp_fo_bark-4.png",
+        "temp_fo_bark/temp_fo_bark-5.png",
+        "temp_fo_bark/temp_fo_bark-6.png",
+        "temp_fo_bark/temp_fo_bark-7.png",
+        "temp_fo_bark/temp_fo_bark-8.png",
+        "temp_fo_bark/temp_fo_bark-9.png"
+      ]
+    }
+  }
+}

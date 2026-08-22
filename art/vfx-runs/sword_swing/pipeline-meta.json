@@ -1,0 +1,67 @@
+{
+  "source": "scripts/vfx-sheet.py",
+  "input": "art/vfx-runs/sword_swing/raw-sheet.png",
+  "target": "vfx",
+  "mode": "vfx_sheet",
+  "rows": 3,
+  "cols": 3,
+  "cell_size": 256,
+  "threshold": 20,
+  "frame_labels": [
+    "sword_swing-1",
+    "sword_swing-2",
+    "sword_swing-3",
+    "sword_swing-4",
+    "sword_swing-5",
+    "sword_swing-6",
+    "sword_swing-7",
+    "sword_swing-8",
+    "sword_swing-9"
+  ],
+  "align": "center",
+  "alpha_gamma": 2.0,
+  "shared_crop_side": 341,
+  "crop_offsets": [
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "empty_frames": [],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}

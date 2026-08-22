@@ -47,6 +47,7 @@ export {
   placeCharacter,
   removePlacement,
   cycleSkillForRoster,
+  cycleTempSkillForRoster,
   effectiveOwnedSkillIds,
   activeSkillIdForRun,
   tempSkillIdForRoster,
@@ -102,3 +103,10 @@ export {
   unlockDungeonWithMeta,
   isDungeonUnlocked,
 } from './state/MetaManager';
+
+export {
+  gmUnlockAllCharacters,
+  gmAddSoul,
+  gmLearnAllSkills,
+  gmPrepareSandboxRoster,
+} from './state/gmCheats';

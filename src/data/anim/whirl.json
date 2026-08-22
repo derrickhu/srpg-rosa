@@ -6,32 +6,32 @@
   "meta": {
     "size": {
       "w": 1024,
-      "h": 1024
+      "h": 512
     },
     "scale": "1",
     "format": "RGBA8888"
   },
   "metrics": {
     "frameSize": 256,
-    "subjectHeight": 256,
-    "baselineY": 256,
+    "subjectHeight": 112,
+    "baselineY": 177,
     "ref": "whirl/whirl-1.png"
   },
   "frames": {
     "whirl/whirl-1.png": {
       "frame": {
-        "x": 2,
-        "y": 2,
-        "w": 256,
-        "h": 256
+        "x": 825,
+        "y": 236,
+        "w": 124,
+        "h": 122
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 69,
+        "y": 62,
+        "w": 124,
+        "h": 122
       },
       "sourceSize": {
         "w": 256,
@@ -40,18 +40,18 @@
     },
     "whirl/whirl-2.png": {
       "frame": {
-        "x": 260,
-        "y": 2,
-        "w": 256,
-        "h": 256
+        "x": 659,
+        "y": 236,
+        "w": 164,
+        "h": 165
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 46,
+        "y": 40,
+        "w": 164,
+        "h": 165
       },
       "sourceSize": {
         "w": 256,
@@ -60,18 +60,18 @@
     },
     "whirl/whirl-3.png": {
       "frame": {
-        "x": 518,
-        "y": 2,
-        "w": 256,
-        "h": 256
+        "x": 222,
+        "y": 236,
+        "w": 223,
+        "h": 219
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 16,
+        "y": 12,
+        "w": 223,
+        "h": 219
       },
       "sourceSize": {
         "w": 256,
@@ -80,18 +80,18 @@
     },
     "whirl/whirl-4.png": {
       "frame": {
-        "x": 2,
-        "y": 260,
-        "w": 256,
-        "h": 256
+        "x": 447,
+        "y": 236,
+        "w": 210,
+        "h": 218
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 27,
+        "y": 13,
+        "w": 210,
+        "h": 218
       },
       "sourceSize": {
         "w": 256,
@@ -100,18 +100,18 @@
     },
     "whirl/whirl-5.png": {
       "frame": {
-        "x": 260,
-        "y": 260,
-        "w": 256,
-        "h": 256
+        "x": 239,
+        "y": 2,
+        "w": 222,
+        "h": 230
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 21,
+        "y": 8,
+        "w": 222,
+        "h": 230
       },
       "sourceSize": {
         "w": 256,
@@ -120,18 +120,18 @@
     },
     "whirl/whirl-6.png": {
       "frame": {
-        "x": 518,
-        "y": 260,
-        "w": 256,
-        "h": 256
+        "x": 2,
+        "y": 2,
+        "w": 235,
+        "h": 232
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 16,
+        "y": 11,
+        "w": 235,
+        "h": 232
       },
       "sourceSize": {
         "w": 256,
@@ -140,18 +140,18 @@
     },
     "whirl/whirl-7.png": {
       "frame": {
-        "x": 2,
-        "y": 518,
-        "w": 256,
-        "h": 256
+        "x": 703,
+        "y": 2,
+        "w": 241,
+        "h": 226
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 13,
+        "y": 25,
+        "w": 241,
+        "h": 226
       },
       "sourceSize": {
         "w": 256,
@@ -160,18 +160,18 @@
     },
     "whirl/whirl-8.png": {
       "frame": {
-        "x": 260,
-        "y": 518,
-        "w": 256,
-        "h": 256
+        "x": 463,
+        "y": 2,
+        "w": 238,
+        "h": 229
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 18,
+        "y": 25,
+        "w": 238,
+        "h": 229
       },
       "sourceSize": {
         "w": 256,
@@ -180,18 +180,18 @@
     },
     "whirl/whirl-9.png": {
       "frame": {
-        "x": 518,
-        "y": 518,
-        "w": 256,
-        "h": 256
+        "x": 2,
+        "y": 236,
+        "w": 218,
+        "h": 223
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 21,
+        "y": 30,
+        "w": 218,
+        "h": 223
       },
       "sourceSize": {
         "w": 256,

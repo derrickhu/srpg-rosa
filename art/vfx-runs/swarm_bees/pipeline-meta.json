@@ -1,0 +1,53 @@
+{
+  "source": "scripts/vfx-sheet.py",
+  "input": "art/vfx-runs/temp_gl_swarm/raw-sheet.png",
+  "target": "vfx",
+  "mode": "vfx_sheet",
+  "rows": 2,
+  "cols": 3,
+  "cell_size": 192,
+  "threshold": 22,
+  "frame_labels": [
+    "swarm_bees-1",
+    "swarm_bees-2",
+    "swarm_bees-3",
+    "swarm_bees-4",
+    "swarm_bees-5",
+    "swarm_bees-6"
+  ],
+  "align": "centroid",
+  "key": "green",
+  "alpha_gamma": 0,
+  "shared_crop_side": 341,
+  "crop_offsets": [
+    {
+      "x": 7,
+      "y": 119
+    },
+    {
+      "x": 4,
+      "y": 106
+    },
+    {
+      "x": -2,
+      "y": 123
+    },
+    {
+      "x": 14,
+      "y": 50
+    },
+    {
+      "x": -1,
+      "y": 51
+    },
+    {
+      "x": 3,
+      "y": 54
+    }
+  ],
+  "empty_frames": [],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}

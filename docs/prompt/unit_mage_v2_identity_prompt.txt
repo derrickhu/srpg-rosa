@@ -1,0 +1,27 @@
+法师奥莉 v2 身份锁帧（朝下待机）。体型和画风必须对齐祭司/弓手，不要再画成更幼更小的 Q 版。
+
+参考：images/units/healer.png、images/units/bow.png 的头身比、粗描边、短肢厚度。
+定色：深青绿 `#0E7A7A` 袍+尖帽，米色领 `#F0F0E0`，肤色 `#EEC49A`，暖棕短发，橙火球杖 `#F08C2A`。
+禁止紫/粉/品红。
+
+---
+
+A single chibi tactics-game character sprite, 3/4 view from slightly above, facing DOWN toward the camera.
+
+CRITICAL BACKGROUND: 100% solid flat MAGENTA #FF00FF. No ground, no shadow, no gradient.
+
+PROPORTIONS — match the attached healer/archer, NOT a toddler:
+- About 2 heads tall. Head is large but the torso is a chunky rounded rectangle, not a tiny pea.
+- Short thick arms and legs like the archer. Mitten hands, stubby tan boots.
+- Thick near-black outline on every shape. Flat fills, one highlight, one shadow.
+- Determined face: two black-dot eyes, thick angled brows, tiny mouth. No nose, no blush.
+
+CHARACTER:
+- Deep teal (#0E7A7A) pointed wizard hat, brim wide, tip tall — the hat is EXTRA height above the head, do not shrink the body to make room for it.
+- Deep teal robe, cream Peter-Pan collar, no cape, no runes, no stars.
+- Warm brown bob hair with chunky bangs.
+- Thick brown staff held close to the body, FAT round orange fire orb on top about as big as her head.
+- Same visual mass as the healer: if you cover the hat cone, her body should look as big as the priest.
+
+LAYOUT: full body centered, feet in the lower third, generous magenta margin, nothing touches edges.
+NO TEXT, no labels, no watermark.

@@ -1,6 +1,6 @@
 {
   "source": "scripts/vfx-sheet.py",
-  "input": ".tmp-gen/arrow_hit_raw.png",
+  "input": "/Users/rosa/rosa_games/srpg-rosa/art/vfx-runs/arrow_hit/raw-sheet.png",
   "target": "vfx",
   "mode": "vfx_sheet",
   "rows": 2,
@@ -15,6 +15,8 @@
     "arrow_hit-5",
     "arrow_hit-6"
   ],
+  "align": "centroid",
+  "alpha_gamma": 2.0,
   "shared_crop_side": 337,
   "crop_offsets": [
     {

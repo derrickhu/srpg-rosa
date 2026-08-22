@@ -10,7 +10,13 @@ import {
   type MvpGameState,
   type ShopOffer,
 } from '@/game/MvpState';
-import { createBackground, createCurrencyPill, createUiIcon } from '@/view/renderHelpers';
+import {
+  createBackground,
+  createCurrencyPill,
+  createUiIcon,
+  RUN_GOLD_X,
+  RUN_GOLD_Y_STANDALONE,
+} from '@/view/renderHelpers';
 import { AssetManager } from '@/core/AssetManager';
 import { makeButton } from '@/ui/Button';
 import { makeSpeechBubble } from '@/ui/SpeechBubble';
@@ -111,8 +117,8 @@ export function createShopView(
 
   // --- 顶栏：金币 + 轻标题 ---
   const goldPill = createCurrencyPill('icon_gold', `${state.run!.gold}`);
-  goldPill.x = 8;
-  goldPill.y = 46;
+  goldPill.x = RUN_GOLD_X;
+  goldPill.y = RUN_GOLD_Y_STANDALONE;
   root.addChild(goldPill);
 
   const titleText = makeText('补给点', 'title', { fill: C.textOnDark, fontSize: 16 });

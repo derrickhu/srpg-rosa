@@ -155,9 +155,13 @@ function isActive(spec: SkillSpec): boolean {
   return spec.timing !== 'passive';
 }
 
-/** 环形/圆形 AoE（「横扫」类词条只对这两种有意义） */
+/** 环形/圆形/方形 AoE（「横扫」类词条只对这几种有意义） */
 function isAoE(spec: SkillSpec): boolean {
-  return spec.shape.type === 'neighborAoE' || spec.shape.type === 'discAoE';
+  return (
+    spec.shape.type === 'neighborAoE' ||
+    spec.shape.type === 'discAoE' ||
+    spec.shape.type === 'squareAoE'
+  );
 }
 
 /** 点名打一个敌人的形状（「溅射」把它变成小范围） */
@@ -231,6 +235,15 @@ function widenAoE(spec: SkillSpec, plus: number): SkillSpec {
     return { ...spec, shape: { type: 'discAoE', radius: s.manhattan + plus } };
   }
   if (s.type === 'discAoE') {
+    return { ...spec, shape: { type: 'discAoE', radius: s.radius + plus } };
+  }
+  /*
+   * 方形摊开后退回**曼哈顿**整片圆，而不是更大的方形：方形 radius 2 是 24 格，
+   * 半张图，「横扫」不该是这个量级。曼哈顿 radius 2（12 格）完整包含方形 radius 1，
+   * 所以这仍是严格扩大，而且和旋风斩改形状之前吃「横扫」的结果一模一样——
+   * 换尺子只该修好斜角，不该顺手动到词条的平衡。
+   */
+  if (s.type === 'squareAoE') {
     return { ...spec, shape: { type: 'discAoE', radius: s.radius + plus } };
   }
   return spec;

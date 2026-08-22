@@ -6,32 +6,32 @@
   "meta": {
     "size": {
       "w": 1024,
-      "h": 1024
+      "h": 512
     },
     "scale": "1",
     "format": "RGBA8888"
   },
   "metrics": {
     "frameSize": 256,
-    "subjectHeight": 256,
-    "baselineY": 256,
+    "subjectHeight": 58,
+    "baselineY": 156,
     "ref": "heal_flash/heal_flash-1.png"
   },
   "frames": {
     "heal_flash/heal_flash-1.png": {
       "frame": {
-        "x": 2,
-        "y": 2,
-        "w": 256,
-        "h": 256
+        "x": 477,
+        "y": 246,
+        "w": 59,
+        "h": 61
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 99,
+        "y": 97,
+        "w": 59,
+        "h": 61
       },
       "sourceSize": {
         "w": 256,
@@ -40,18 +40,18 @@
     },
     "heal_flash/heal_flash-2.png": {
       "frame": {
-        "x": 260,
+        "x": 246,
         "y": 2,
-        "w": 256,
-        "h": 256
+        "w": 209,
+        "h": 211
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 24,
+        "y": 23,
+        "w": 209,
+        "h": 211
       },
       "sourceSize": {
         "w": 256,
@@ -60,18 +60,18 @@
     },
     "heal_flash/heal_flash-3.png": {
       "frame": {
-        "x": 518,
+        "x": 2,
         "y": 2,
-        "w": 256,
-        "h": 256
+        "w": 242,
+        "h": 242
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 7,
+        "y": 7,
+        "w": 242,
+        "h": 242
       },
       "sourceSize": {
         "w": 256,
@@ -80,18 +80,18 @@
     },
     "heal_flash/heal_flash-4.png": {
       "frame": {
-        "x": 2,
-        "y": 260,
-        "w": 256,
-        "h": 256
+        "x": 457,
+        "y": 2,
+        "w": 190,
+        "h": 188
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 33,
+        "y": 34,
+        "w": 190,
+        "h": 188
       },
       "sourceSize": {
         "w": 256,
@@ -100,18 +100,18 @@
     },
     "heal_flash/heal_flash-5.png": {
       "frame": {
-        "x": 260,
-        "y": 260,
-        "w": 256,
-        "h": 256
+        "x": 649,
+        "y": 2,
+        "w": 183,
+        "h": 184
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 36,
+        "y": 37,
+        "w": 183,
+        "h": 184
       },
       "sourceSize": {
         "w": 256,
@@ -120,18 +120,18 @@
     },
     "heal_flash/heal_flash-6.png": {
       "frame": {
-        "x": 518,
-        "y": 260,
-        "w": 256,
-        "h": 256
+        "x": 834,
+        "y": 2,
+        "w": 182,
+        "h": 183
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 37,
+        "y": 36,
+        "w": 182,
+        "h": 183
       },
       "sourceSize": {
         "w": 256,
@@ -141,17 +141,17 @@
     "heal_flash/heal_flash-7.png": {
       "frame": {
         "x": 2,
-        "y": 518,
-        "w": 256,
-        "h": 256
+        "y": 246,
+        "w": 175,
+        "h": 172
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 40,
+        "y": 41,
+        "w": 175,
+        "h": 172
       },
       "sourceSize": {
         "w": 256,
@@ -160,18 +160,18 @@
     },
     "heal_flash/heal_flash-8.png": {
       "frame": {
-        "x": 260,
-        "y": 518,
-        "w": 256,
-        "h": 256
+        "x": 179,
+        "y": 246,
+        "w": 152,
+        "h": 151
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 53,
+        "y": 51,
+        "w": 152,
+        "h": 151
       },
       "sourceSize": {
         "w": 256,
@@ -180,18 +180,18 @@
     },
     "heal_flash/heal_flash-9.png": {
       "frame": {
-        "x": 518,
-        "y": 518,
-        "w": 256,
-        "h": 256
+        "x": 333,
+        "y": 246,
+        "w": 142,
+        "h": 143
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 56,
+        "y": 55,
+        "w": 142,
+        "h": 143
       },
       "sourceSize": {
         "w": 256,

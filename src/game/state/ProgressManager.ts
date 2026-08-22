@@ -29,6 +29,7 @@ import {
   ENDLESS_WAVE_SOUL,
   isEndlessDungeon,
 } from '@/data/endlessCatalog';
+import { isSandboxDungeon } from '@/data/sandboxLab';
 import type { UnitState } from '@/battle/types';
 
 /**
@@ -68,8 +69,21 @@ export function startRun(state: MvpGameState, dungeonId: string, partyRosterIds:
  * 两类奖励刻意分开发、分开显示：金币是**局内**的（下一个补给点花掉），
  * 魂晶是**局外**的（回大厅升级）。以前它们挤在同一行字里，玩家分不清哪个带得走。
  */
+/**
+ * 把本关金币拆到每次击杀上，总额仍等于 `goldReward`。
+ * 敌人比金币多时，前面的击杀掉 1，后面的掉 0。
+ */
+export function splitStageGold(total: number, killCount: number): number[] {
+  const n = Math.max(0, killCount);
+  const shares = Array.from({ length: n }, () => 0);
+  const pot = Math.max(0, Math.floor(total));
+  for (let i = 0; i < pot && n > 0; i++) shares[i % n] += 1;
+  return shares;
+}
+
 export function applyVictory(state: MvpGameState): void {
   const run = requireRun(state);
+  if (isSandboxDungeon(run.dungeonId)) return;
   const node = currentNode(state);
   if (node.kind === 'shop') return;
 
@@ -163,7 +177,7 @@ export function canSweep(state: MvpGameState): boolean {
   const run = state.run;
   if (!run) return false;
   // 无尽每波敌人落点都是现抽的，不存在「这关我赢过了」可以兑现
-  if (isEndlessDungeon(run.dungeonId)) return false;
+  if (isEndlessDungeon(run.dungeonId) || isSandboxDungeon(run.dungeonId)) return false;
   return nodeClearedBefore(state) && sweepLeftToday(state.meta, run.dungeonId) > 0;
 }
 
@@ -176,7 +190,7 @@ export function canSweep(state: MvpGameState): boolean {
 export function nodeClearedBefore(state: MvpGameState): boolean {
   const run = state.run;
   if (!run) return false;
-  if (isEndlessDungeon(run.dungeonId)) return false;
+  if (isEndlessDungeon(run.dungeonId) || isSandboxDungeon(run.dungeonId)) return false;
   if (currentNode(state).kind === 'shop') return false;
   return run.nodeIndex < (state.meta.clearedNodesByDungeonId[run.dungeonId] ?? 0);
 }
@@ -450,6 +464,11 @@ export function advanceNode(state: MvpGameState): void {
  * 返回本次入账的魂晶供结算界面显示。
  */
 export function finishRunVictory(state: MvpGameState): number {
+  if (state.run && isSandboxDungeon(state.run.dungeonId)) {
+    state.run = null;
+    state.phase = 'hub';
+    return 0;
+  }
   const d = currentDungeon(state);
   // 判首通要在 `applyDungeonClearUnlocks` 之前——它会把 id 写进 clearedDungeonIds
   const firstClear = !state.meta.clearedDungeonIds.includes(d.id);

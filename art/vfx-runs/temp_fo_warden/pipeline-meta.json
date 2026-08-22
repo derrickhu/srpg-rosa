@@ -1,0 +1,68 @@
+{
+  "source": "scripts/vfx-sheet.py",
+  "input": "art/vfx-runs/temp_fo_warden/raw-sheet.png",
+  "target": "vfx",
+  "mode": "vfx_sheet",
+  "rows": 3,
+  "cols": 3,
+  "cell_size": 256,
+  "threshold": 22,
+  "frame_labels": [
+    "temp_fo_warden-1",
+    "temp_fo_warden-2",
+    "temp_fo_warden-3",
+    "temp_fo_warden-4",
+    "temp_fo_warden-5",
+    "temp_fo_warden-6",
+    "temp_fo_warden-7",
+    "temp_fo_warden-8",
+    "temp_fo_warden-9"
+  ],
+  "align": "center",
+  "key": "magenta",
+  "alpha_gamma": 0,
+  "shared_crop_side": 341,
+  "crop_offsets": [
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "empty_frames": [],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}

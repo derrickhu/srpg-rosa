@@ -13,25 +13,25 @@
   },
   "metrics": {
     "frameSize": 256,
-    "subjectHeight": 256,
-    "baselineY": 256,
+    "subjectHeight": 99,
+    "baselineY": 173,
     "ref": "charge_aura/charge_aura-1.png"
   },
   "frames": {
     "charge_aura/charge_aura-1.png": {
       "frame": {
-        "x": 2,
-        "y": 2,
-        "w": 256,
-        "h": 256
+        "x": 208,
+        "y": 260,
+        "w": 100,
+        "h": 121
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 85,
+        "y": 68,
+        "w": 100,
+        "h": 121
       },
       "sourceSize": {
         "w": 256,
@@ -40,18 +40,18 @@
     },
     "charge_aura/charge_aura-2.png": {
       "frame": {
-        "x": 260,
-        "y": 2,
-        "w": 256,
-        "h": 256
+        "x": 2,
+        "y": 260,
+        "w": 204,
+        "h": 254
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
+        "x": 21,
         "y": 0,
-        "w": 256,
-        "h": 256
+        "w": 204,
+        "h": 254
       },
       "sourceSize": {
         "w": 256,
@@ -60,17 +60,17 @@
     },
     "charge_aura/charge_aura-3.png": {
       "frame": {
-        "x": 518,
+        "x": 2,
         "y": 2,
-        "w": 256,
+        "w": 233,
         "h": 256
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
+        "x": 4,
         "y": 0,
-        "w": 256,
+        "w": 233,
         "h": 256
       },
       "sourceSize": {
@@ -80,17 +80,17 @@
     },
     "charge_aura/charge_aura-4.png": {
       "frame": {
-        "x": 2,
-        "y": 260,
-        "w": 256,
+        "x": 237,
+        "y": 2,
+        "w": 230,
         "h": 256
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
+        "x": 19,
         "y": 0,
-        "w": 256,
+        "w": 230,
         "h": 256
       },
       "sourceSize": {
@@ -100,17 +100,17 @@
     },
     "charge_aura/charge_aura-5.png": {
       "frame": {
-        "x": 260,
-        "y": 260,
-        "w": 256,
+        "x": 469,
+        "y": 2,
+        "w": 224,
         "h": 256
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
+        "x": 14,
         "y": 0,
-        "w": 256,
+        "w": 224,
         "h": 256
       },
       "sourceSize": {
@@ -120,17 +120,17 @@
     },
     "charge_aura/charge_aura-6.png": {
       "frame": {
-        "x": 518,
-        "y": 260,
-        "w": 256,
+        "x": 695,
+        "y": 2,
+        "w": 226,
         "h": 256
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
+        "x": 5,
         "y": 0,
-        "w": 256,
+        "w": 226,
         "h": 256
       },
       "sourceSize": {

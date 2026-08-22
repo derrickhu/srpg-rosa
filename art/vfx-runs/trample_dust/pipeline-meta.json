@@ -1,0 +1,67 @@
+{
+  "source": "scripts/vfx-sheet.py",
+  "input": "/Users/rosa/rosa_games/srpg-rosa/art/vfx-runs/trample_dust/raw-sheet.png",
+  "target": "vfx",
+  "mode": "vfx_sheet",
+  "rows": 3,
+  "cols": 3,
+  "cell_size": 256,
+  "threshold": 22,
+  "frame_labels": [
+    "trample_dust-1",
+    "trample_dust-2",
+    "trample_dust-3",
+    "trample_dust-4",
+    "trample_dust-5",
+    "trample_dust-6",
+    "trample_dust-7",
+    "trample_dust-8",
+    "trample_dust-9"
+  ],
+  "align": "centroid",
+  "alpha_gamma": 2.0,
+  "shared_crop_side": 341,
+  "crop_offsets": [
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "empty_frames": [],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}

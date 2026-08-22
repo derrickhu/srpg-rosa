@@ -235,6 +235,17 @@ export function drawChevron(dir: -1 | 1, r: number, color = 0xffffff): PIXI.Grap
   return g;
 }
 
+/** 局内金币栏左缘。布阵 / 战斗 / 补给点共用，玩家认的是同一个角。 */
+export const RUN_GOLD_X = 8;
+/** 金币栏相对设置齿轮的下间距。比贴着齿轮稍低一点，避开微信胶囊和云层。 */
+export const RUN_GOLD_BELOW_GAP = 12;
+/** 补给点没有齿轮时，对齐「齿轮下沿 + 间距」那条线（齿轮默认 y=6、高 36）。 */
+export const RUN_GOLD_Y_STANDALONE = 6 + 36 + RUN_GOLD_BELOW_GAP;
+
+export function runGoldYBelow(anchorY: number, anchorH: number): number {
+  return anchorY + anchorH + RUN_GOLD_BELOW_GAP;
+}
+
 /**
  * 顶栏货币条：深色圆角底 + 图标 + 数值。冒险 / 局外商店 / 角色三个 Tab 页都要显示魂晶，
  * 之前是三份逐字相同的手写代码，图标就是在这种复制里漏掉的——统一走这里。

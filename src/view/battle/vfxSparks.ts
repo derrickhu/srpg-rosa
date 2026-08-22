@@ -1,5 +1,6 @@
 import * as PIXI from 'pixi.js';
 import type { SparkSpec } from '@/data/vfxCatalog';
+import { isDisplayLive } from '@/view/pixiLive';
 
 /**
  * 叠加混合的火花粒子层。
@@ -64,7 +65,7 @@ export function emitSparks(
 
   const tick = (): void => {
     // 场景可能被整棵拆掉（战斗结束、跳过），ticker 得自己发现并摘掉自己
-    if (g.destroyed) {
+    if (!isDisplayLive(g)) {
       PIXI.Ticker.shared.remove(tick);
       return;
     }
@@ -81,7 +82,7 @@ export function emitSparks(
       s.y += s.vy * dt;
       const k = 1 - s.ageMs / s.lifeMs;
       // 半径也跟着收：只掉不透明度的话，火花会像一颗恒星那样淡出去，读不出「熄灭」
-      g.beginFill(s.color, k);
+      g.beginFill(s.color, k * 0.55);
       g.drawCircle(s.x, s.y, s.r * (0.35 + 0.65 * k));
       g.endFill();
     }

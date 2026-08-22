@@ -1,0 +1,69 @@
+{
+  "source": "scripts/vfx-sheet.py",
+  "input": "/Users/rosa/rosa_games/srpg-rosa/art/vfx-runs/snap_hit/raw-sheet.png",
+  "target": "vfx",
+  "mode": "vfx_sheet",
+  "rows": 3,
+  "cols": 3,
+  "cell_size": 256,
+  "threshold": 22,
+  "frame_labels": [
+    "snap_hit-1",
+    "snap_hit-2",
+    "snap_hit-3",
+    "snap_hit-4",
+    "snap_hit-5",
+    "snap_hit-6",
+    "snap_hit-7",
+    "snap_hit-8",
+    "snap_hit-9"
+  ],
+  "align": "centroid",
+  "alpha_gamma": 2.0,
+  "shared_crop_side": 321,
+  "crop_offsets": [
+    {
+      "x": 20,
+      "y": 20
+    },
+    {
+      "x": 11,
+      "y": 20
+    },
+    {
+      "x": 10,
+      "y": 20
+    },
+    {
+      "x": 20,
+      "y": 16
+    },
+    {
+      "x": 20,
+      "y": 17
+    },
+    {
+      "x": 20,
+      "y": 17
+    },
+    {
+      "x": 20,
+      "y": 9
+    },
+    {
+      "x": 20,
+      "y": 9
+    },
+    {
+      "x": 20,
+      "y": 10
+    }
+  ],
+  "empty_frames": [
+    "snap_hit-9"
+  ],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}

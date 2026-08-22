@@ -126,6 +126,11 @@ export interface BattleSimOptions {
   /** 掉落掷点，测试传入固定序列 */
   dropRng?: () => number;
   dropChance?: number;
+  /**
+   * 特效试炼：技能冷却立刻清零，同一单位本回合可连放。
+   * 只作用于玩家指令，AI 仍是每回合一发，避免木桩怪在自己回合里死循环。
+   */
+  sandboxFreeCast?: boolean;
 }
 
 /**
@@ -266,6 +271,8 @@ export interface BattleSim {
   upcomingOrder(limit: number, currentUid?: string | null): string[];
   getRound(): number;
   isDone(): boolean;
+  /** 试炼 GM：当场清掉所有单位的技能冷却 */
+  clearSkillCds(): void;
 }
 
 export function createBattleSim(
@@ -412,6 +419,10 @@ export function createBattleSim(
       u.movedInTurn = false;
       if (u.skillCd > 0) u.skillCd -= 1;
       if ((u.tempSkillCd ?? 0) > 0) u.tempSkillCd = (u.tempSkillCd ?? 0) - 1;
+      if (opts.sandboxFreeCast) {
+        u.skillCd = 0;
+        u.tempSkillCd = 0;
+      }
       const tSpec = getTerrainSpec(getTerrainAt(terrain, u.pos));
       if (tSpec.dotPerRound > 0) {
         u.hp -= tSpec.dotPerRound;
@@ -576,7 +587,7 @@ export function createBattleSim(
     if (order.length === 0) {
       const w0 = checkWinner(units);
       if (w0) return finish(w0, []);
-      if (rounds >= MAX_BATTLE_ROUNDS) return finish('enemy', []);
+      if (rounds >= MAX_BATTLE_ROUNDS && !opts.sandboxFreeCast) return finish('enemy', []);
       return startRound();
     }
     // 弹出下一个存活行动者
@@ -724,6 +735,11 @@ export function createBattleSim(
     if (events.length === 0) return noop();
     cur.p.usedSkill = true;
     if (cur.p.moved) cur.p.actedAfterMove = true;
+    if (opts.sandboxFreeCast) {
+      cur.u.skillCd = 0;
+      cur.u.tempSkillCd = 0;
+      cur.p.usedSkill = false;
+    }
     resyncRoundOrder();
     return settleAfterAction(events);
   }
@@ -738,6 +754,7 @@ export function createBattleSim(
     if (!target) return noop();
     cur.p.attacked = true;
     if (cur.p.moved) cur.p.actedAfterMove = true;
+    if (opts.sandboxFreeCast) cur.p.attacked = false;
     return settleAfterAction(basicAttack(cur.u, target));
   }
 
@@ -868,6 +885,14 @@ export function createBattleSim(
     },
     getRound: () => rounds,
     isDone: () => done,
+    clearSkillCds: () => {
+      for (const u of units) {
+        if (u.hp <= 0) continue;
+        u.skillCd = 0;
+        u.tempSkillCd = 0;
+      }
+      if (pendingTurn) pendingTurn.usedSkill = false;
+    },
   };
 }
 

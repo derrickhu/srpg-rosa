@@ -1,0 +1,219 @@
+{
+  "id": "blade_x",
+  "source": "art/vfx-runs/blade_x",
+  "blend": "add",
+  "image": "images/anim/blade_x.png",
+  "meta": {
+    "size": {
+      "w": 1024,
+      "h": 512
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 138,
+    "baselineY": 213,
+    "ref": "blade_x/blade_x-1.png"
+  },
+  "frames": {
+    "blade_x/blade_x-1.png": {
+      "frame": {
+        "x": 213,
+        "y": 246,
+        "w": 213,
+        "h": 215
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 21,
+        "y": 21,
+        "w": 213,
+        "h": 215
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "blade_x/blade_x-2.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 241,
+        "h": 242
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 8,
+        "y": 7,
+        "w": 241,
+        "h": 242
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "blade_x/blade_x-3.png": {
+      "frame": {
+        "x": 245,
+        "y": 2,
+        "w": 237,
+        "h": 238
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 10,
+        "y": 10,
+        "w": 237,
+        "h": 238
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "blade_x/blade_x-4.png": {
+      "frame": {
+        "x": 484,
+        "y": 2,
+        "w": 230,
+        "h": 235
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 14,
+        "y": 11,
+        "w": 230,
+        "h": 235
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "blade_x/blade_x-5.png": {
+      "frame": {
+        "x": 716,
+        "y": 2,
+        "w": 214,
+        "h": 220
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 21,
+        "y": 18,
+        "w": 214,
+        "h": 220
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "blade_x/blade_x-6.png": {
+      "frame": {
+        "x": 2,
+        "y": 246,
+        "w": 209,
+        "h": 216
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 23,
+        "y": 22,
+        "w": 209,
+        "h": 216
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "blade_x/blade_x-7.png": {
+      "frame": {
+        "x": 428,
+        "y": 246,
+        "w": 196,
+        "h": 204
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 29,
+        "y": 26,
+        "w": 196,
+        "h": 204
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "blade_x/blade_x-8.png": {
+      "frame": {
+        "x": 626,
+        "y": 246,
+        "w": 164,
+        "h": 167
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 48,
+        "y": 46,
+        "w": 164,
+        "h": 167
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "blade_x/blade_x-9.png": {
+      "frame": {
+        "x": 792,
+        "y": 246,
+        "w": 155,
+        "h": 157
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 56,
+        "y": 54,
+        "w": 155,
+        "h": 157
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "blade_x": {
+      "loop": false,
+      "fps": 22,
+      "frames": [
+        "blade_x/blade_x-1.png",
+        "blade_x/blade_x-2.png",
+        "blade_x/blade_x-3.png",
+        "blade_x/blade_x-4.png",
+        "blade_x/blade_x-5.png",
+        "blade_x/blade_x-6.png",
+        "blade_x/blade_x-7.png",
+        "blade_x/blade_x-8.png",
+        "blade_x/blade_x-9.png"
+      ]
+    }
+  }
+}

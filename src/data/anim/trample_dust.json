@@ -1,0 +1,219 @@
+{
+  "id": "trample_dust",
+  "source": "art/vfx-runs/trample_dust",
+  "blend": "add",
+  "image": "images/anim/trample_dust.png",
+  "meta": {
+    "size": {
+      "w": 1024,
+      "h": 512
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 107,
+    "baselineY": 172,
+    "ref": "trample_dust/trample_dust-1.png"
+  },
+  "frames": {
+    "trample_dust/trample_dust-1.png": {
+      "frame": {
+        "x": 597,
+        "y": 232,
+        "w": 68,
+        "h": 108
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 142,
+        "y": 65,
+        "w": 68,
+        "h": 108
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "trample_dust/trample_dust-2.png": {
+      "frame": {
+        "x": 216,
+        "y": 232,
+        "w": 189,
+        "h": 188
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 33,
+        "y": 42,
+        "w": 189,
+        "h": 188
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "trample_dust/trample_dust-3.png": {
+      "frame": {
+        "x": 710,
+        "y": 2,
+        "w": 206,
+        "h": 199
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 22,
+        "y": 35,
+        "w": 206,
+        "h": 199
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "trample_dust/trample_dust-4.png": {
+      "frame": {
+        "x": 2,
+        "y": 232,
+        "w": 212,
+        "h": 198
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 22,
+        "y": 29,
+        "w": 212,
+        "h": 198
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "trample_dust/trample_dust-5.png": {
+      "frame": {
+        "x": 487,
+        "y": 2,
+        "w": 221,
+        "h": 221
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 13,
+        "y": 15,
+        "w": 221,
+        "h": 221
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "trample_dust/trample_dust-6.png": {
+      "frame": {
+        "x": 249,
+        "y": 2,
+        "w": 236,
+        "h": 227
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 6,
+        "y": 15,
+        "w": 236,
+        "h": 227
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "trample_dust/trample_dust-7.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 245,
+        "h": 228
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 5,
+        "y": 10,
+        "w": 245,
+        "h": 228
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "trample_dust/trample_dust-8.png": {
+      "frame": {
+        "x": 407,
+        "y": 232,
+        "w": 112,
+        "h": 127
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 68,
+        "y": 62,
+        "w": 112,
+        "h": 127
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "trample_dust/trample_dust-9.png": {
+      "frame": {
+        "x": 521,
+        "y": 232,
+        "w": 74,
+        "h": 126
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 107,
+        "y": 63,
+        "w": 74,
+        "h": 126
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "trample_dust": {
+      "loop": false,
+      "fps": 20,
+      "frames": [
+        "trample_dust/trample_dust-1.png",
+        "trample_dust/trample_dust-2.png",
+        "trample_dust/trample_dust-3.png",
+        "trample_dust/trample_dust-4.png",
+        "trample_dust/trample_dust-5.png",
+        "trample_dust/trample_dust-6.png",
+        "trample_dust/trample_dust-7.png",
+        "trample_dust/trample_dust-8.png",
+        "trample_dust/trample_dust-9.png"
+      ]
+    }
+  }
+}

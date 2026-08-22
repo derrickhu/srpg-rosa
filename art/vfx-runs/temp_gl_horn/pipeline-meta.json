@@ -1,6 +1,6 @@
 {
   "source": "scripts/vfx-sheet.py",
-  "input": ".tmp-gen/temp_gl_horn_raw.png",
+  "input": "/Users/rosa/rosa_games/srpg-rosa/art/vfx-runs/temp_gl_horn/raw-sheet.png",
   "target": "vfx",
   "mode": "vfx_sheet",
   "rows": 3,
@@ -18,6 +18,8 @@
     "temp_gl_horn-8",
     "temp_gl_horn-9"
   ],
+  "align": "centroid",
+  "alpha_gamma": 2.0,
   "shared_crop_side": 267,
   "crop_offsets": [
     {

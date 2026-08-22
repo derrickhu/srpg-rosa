@@ -1,6 +1,7 @@
 import type { TerrainId, TimedBattleEffect, UnitKind, Vec2 } from '@/battle/types';
 import type { StageDefMvp } from '@/data/stagesMvp';
 import { STAGES_MVP } from '@/data/stagesMvp';
+import { isSandboxDungeon, SANDBOX_STAGE } from '@/data/sandboxLab';
 import {
   DEFAULT_DUNGEON_IDS,
   getDungeonDef,
@@ -316,6 +317,8 @@ export function nodesUntilBoss(state: MvpGameState): number | null {
 
 /** 当前战斗节点的关卡蓝图（仅战斗/Boss 节点有效） */
 export function currentStage(state: MvpGameState): StageDefMvp {
+  const run = requireRun(state);
+  if (isSandboxDungeon(run.dungeonId)) return SANDBOX_STAGE;
   const node = currentNode(state);
   const si = node.stageIndex ?? 0;
   return STAGES_MVP[si]!;

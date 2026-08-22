@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import { isDisplayLive } from '@/view/pixiLive';
 
 /**
  * 受击手感（业内 2D 战棋 / 动作游戏的最小有效组合）：
@@ -17,6 +18,14 @@ export const HIT_KNOCK_MS = 180;
 export const HIT_STOP_MS = 48;
 /** 击退振幅（像素）。格子约 72 时 ≈ 0.16 格 */
 export const HIT_KNOCK_PX = 12;
+/**
+ * AoE 多目标之间的错帧间隔。
+ *
+ * 同一帧里四个人一起闪白、四个伤害数字一起跳，读起来是「场地效果结算了」；
+ * 隔开 70ms 依次中招，同一份特效就变成「我扫过去挨个打到」。
+ * 再大就散成四次独立攻击，回合也拖长。
+ */
+export const AOE_STAGGER_MS = 70;
 
 /** k∈[0,1] → 沿击退方向的位移。约 2.5 次来回，越来越小。 */
 export function hitKnockDisplacement(k: number, amp: number): number {
@@ -69,7 +78,7 @@ export function createHitFlashOverlay(source: PIXI.Sprite): PIXI.Sprite {
 
 /** 同步闪白层到当前姿态。alpha≤0 时只隐藏，不改 texture，避免微信里对空贴图调 off。 */
 export function syncHitFlashOverlay(overlay: PIXI.Sprite, source: PIXI.Sprite, alpha: number): void {
-  if (overlay.destroyed || source.destroyed) return;
+  if (!isDisplayLive(overlay) || !isDisplayLive(source)) return;
   if (alpha <= 0.02) {
     overlay.visible = false;
     overlay.alpha = 0;

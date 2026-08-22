@@ -6,15 +6,15 @@
   "meta": {
     "size": {
       "w": 1024,
-      "h": 1024
+      "h": 512
     },
     "scale": "1",
     "format": "RGBA8888"
   },
   "metrics": {
     "frameSize": 256,
-    "subjectHeight": 256,
-    "baselineY": 256,
+    "subjectHeight": 207,
+    "baselineY": 233,
     "ref": "holy_bolt/holy_bolt-1.png"
   },
   "frames": {
@@ -22,16 +22,16 @@
       "frame": {
         "x": 2,
         "y": 2,
-        "w": 256,
-        "h": 256
+        "w": 228,
+        "h": 231
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 14,
+        "y": 12,
+        "w": 228,
+        "h": 231
       },
       "sourceSize": {
         "w": 256,
@@ -40,18 +40,18 @@
     },
     "holy_bolt/holy_bolt-2.png": {
       "frame": {
-        "x": 260,
+        "x": 232,
         "y": 2,
-        "w": 256,
-        "h": 256
+        "w": 228,
+        "h": 231
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 14,
+        "y": 12,
+        "w": 228,
+        "h": 231
       },
       "sourceSize": {
         "w": 256,
@@ -60,18 +60,18 @@
     },
     "holy_bolt/holy_bolt-3.png": {
       "frame": {
-        "x": 518,
+        "x": 462,
         "y": 2,
-        "w": 256,
-        "h": 256
+        "w": 228,
+        "h": 231
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 14,
+        "y": 12,
+        "w": 228,
+        "h": 231
       },
       "sourceSize": {
         "w": 256,
@@ -80,18 +80,18 @@
     },
     "holy_bolt/holy_bolt-4.png": {
       "frame": {
-        "x": 2,
-        "y": 260,
-        "w": 256,
-        "h": 256
+        "x": 692,
+        "y": 2,
+        "w": 183,
+        "h": 230
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 36,
+        "y": 13,
+        "w": 183,
+        "h": 230
       },
       "sourceSize": {
         "w": 256,
@@ -100,18 +100,18 @@
     },
     "holy_bolt/holy_bolt-5.png": {
       "frame": {
-        "x": 260,
-        "y": 260,
-        "w": 256,
-        "h": 256
+        "x": 2,
+        "y": 235,
+        "w": 183,
+        "h": 230
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 36,
+        "y": 13,
+        "w": 183,
+        "h": 230
       },
       "sourceSize": {
         "w": 256,
@@ -120,18 +120,18 @@
     },
     "holy_bolt/holy_bolt-6.png": {
       "frame": {
-        "x": 518,
-        "y": 260,
-        "w": 256,
-        "h": 256
+        "x": 187,
+        "y": 235,
+        "w": 183,
+        "h": 230
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 36,
+        "y": 13,
+        "w": 183,
+        "h": 230
       },
       "sourceSize": {
         "w": 256,

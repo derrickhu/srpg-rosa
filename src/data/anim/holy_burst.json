@@ -5,7 +5,7 @@
   "image": "images/anim/holy_burst.png",
   "meta": {
     "size": {
-      "w": 1024,
+      "w": 512,
       "h": 1024
     },
     "scale": "1",
@@ -13,8 +13,8 @@
   },
   "metrics": {
     "frameSize": 256,
-    "subjectHeight": 256,
-    "baselineY": 256,
+    "subjectHeight": 120,
+    "baselineY": 184,
     "ref": "holy_burst/holy_burst-1.png"
   },
   "frames": {
@@ -22,16 +22,16 @@
       "frame": {
         "x": 2,
         "y": 2,
-        "w": 256,
-        "h": 256
+        "w": 230,
+        "h": 216
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 13,
+        "y": 20,
+        "w": 230,
+        "h": 216
       },
       "sourceSize": {
         "w": 256,
@@ -40,18 +40,18 @@
     },
     "holy_burst/holy_burst-2.png": {
       "frame": {
-        "x": 260,
+        "x": 234,
         "y": 2,
-        "w": 256,
-        "h": 256
+        "w": 230,
+        "h": 216
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 13,
+        "y": 20,
+        "w": 230,
+        "h": 216
       },
       "sourceSize": {
         "w": 256,
@@ -60,18 +60,18 @@
     },
     "holy_burst/holy_burst-3.png": {
       "frame": {
-        "x": 518,
-        "y": 2,
-        "w": 256,
-        "h": 256
+        "x": 2,
+        "y": 220,
+        "w": 230,
+        "h": 216
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 13,
+        "y": 20,
+        "w": 230,
+        "h": 216
       },
       "sourceSize": {
         "w": 256,
@@ -80,18 +80,18 @@
     },
     "holy_burst/holy_burst-4.png": {
       "frame": {
-        "x": 2,
-        "y": 260,
-        "w": 256,
-        "h": 256
+        "x": 234,
+        "y": 220,
+        "w": 195,
+        "h": 183
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 30,
+        "y": 36,
+        "w": 195,
+        "h": 183
       },
       "sourceSize": {
         "w": 256,
@@ -100,18 +100,18 @@
     },
     "holy_burst/holy_burst-5.png": {
       "frame": {
-        "x": 260,
-        "y": 260,
-        "w": 256,
-        "h": 256
+        "x": 2,
+        "y": 438,
+        "w": 141,
+        "h": 132
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 57,
+        "y": 62,
+        "w": 141,
+        "h": 132
       },
       "sourceSize": {
         "w": 256,
@@ -120,18 +120,18 @@
     },
     "holy_burst/holy_burst-6.png": {
       "frame": {
-        "x": 518,
-        "y": 260,
-        "w": 256,
-        "h": 256
+        "x": 145,
+        "y": 438,
+        "w": 90,
+        "h": 84
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 83,
+        "y": 86,
+        "w": 90,
+        "h": 84
       },
       "sourceSize": {
         "w": 256,

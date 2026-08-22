@@ -1,0 +1,219 @@
+{
+  "id": "shield_wall",
+  "source": "art/vfx-runs/shield_wall",
+  "blend": "add",
+  "image": "images/anim/shield_wall.png",
+  "meta": {
+    "size": {
+      "w": 1024,
+      "h": 512
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 89,
+    "baselineY": 178,
+    "ref": "shield_wall/shield_wall-1.png"
+  },
+  "frames": {
+    "shield_wall/shield_wall-1.png": {
+      "frame": {
+        "x": 785,
+        "y": 243,
+        "w": 83,
+        "h": 94
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 90,
+        "y": 89,
+        "w": 83,
+        "h": 94
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "shield_wall/shield_wall-2.png": {
+      "frame": {
+        "x": 622,
+        "y": 243,
+        "w": 161,
+        "h": 188
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 48,
+        "y": 44,
+        "w": 161,
+        "h": 188
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "shield_wall/shield_wall-3.png": {
+      "frame": {
+        "x": 425,
+        "y": 243,
+        "w": 195,
+        "h": 214
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 27,
+        "y": 29,
+        "w": 195,
+        "h": 214
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "shield_wall/shield_wall-4.png": {
+      "frame": {
+        "x": 218,
+        "y": 243,
+        "w": 205,
+        "h": 224
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 28,
+        "y": 15,
+        "w": 205,
+        "h": 224
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "shield_wall/shield_wall-5.png": {
+      "frame": {
+        "x": 2,
+        "y": 243,
+        "w": 214,
+        "h": 231
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 21,
+        "y": 12,
+        "w": 214,
+        "h": 231
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "shield_wall/shield_wall-6.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 218,
+        "h": 239
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 15,
+        "y": 8,
+        "w": 218,
+        "h": 239
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "shield_wall/shield_wall-7.png": {
+      "frame": {
+        "x": 436,
+        "y": 2,
+        "w": 220,
+        "h": 235
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 20,
+        "y": 0,
+        "w": 220,
+        "h": 235
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "shield_wall/shield_wall-8.png": {
+      "frame": {
+        "x": 658,
+        "y": 2,
+        "w": 216,
+        "h": 233
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 20,
+        "y": 0,
+        "w": 216,
+        "h": 233
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "shield_wall/shield_wall-9.png": {
+      "frame": {
+        "x": 222,
+        "y": 2,
+        "w": 212,
+        "h": 237
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 18,
+        "y": 0,
+        "w": 212,
+        "h": 237
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "shield_wall": {
+      "loop": false,
+      "fps": 16,
+      "frames": [
+        "shield_wall/shield_wall-1.png",
+        "shield_wall/shield_wall-2.png",
+        "shield_wall/shield_wall-3.png",
+        "shield_wall/shield_wall-4.png",
+        "shield_wall/shield_wall-5.png",
+        "shield_wall/shield_wall-6.png",
+        "shield_wall/shield_wall-7.png",
+        "shield_wall/shield_wall-8.png",
+        "shield_wall/shield_wall-9.png"
+      ]
+    }
+  }
+}

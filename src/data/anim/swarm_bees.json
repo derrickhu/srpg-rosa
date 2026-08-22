@@ -1,0 +1,156 @@
+{
+  "id": "swarm_bees",
+  "source": "art/vfx-runs/swarm_bees",
+  "blend": "normal",
+  "image": "images/anim/swarm_bees.png",
+  "meta": {
+    "size": {
+      "w": 512,
+      "h": 512
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 192,
+    "subjectHeight": 97,
+    "baselineY": 139,
+    "ref": "swarm_bees/swarm_bees-1.png"
+  },
+  "frames": {
+    "swarm_bees/swarm_bees-1.png": {
+      "frame": {
+        "x": 2,
+        "y": 298,
+        "w": 163,
+        "h": 107
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 7,
+        "y": 39,
+        "w": 163,
+        "h": 107
+      },
+      "sourceSize": {
+        "w": 192,
+        "h": 192
+      }
+    },
+    "swarm_bees/swarm_bees-2.png": {
+      "frame": {
+        "x": 2,
+        "y": 163,
+        "w": 189,
+        "h": 133
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 3,
+        "y": 26,
+        "w": 189,
+        "h": 133
+      },
+      "sourceSize": {
+        "w": 192,
+        "h": 192
+      }
+    },
+    "swarm_bees/swarm_bees-3.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 179,
+        "h": 159
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 1,
+        "y": 14,
+        "w": 179,
+        "h": 159
+      },
+      "sourceSize": {
+        "w": 192,
+        "h": 192
+      }
+    },
+    "swarm_bees/swarm_bees-4.png": {
+      "frame": {
+        "x": 193,
+        "y": 163,
+        "w": 165,
+        "h": 117
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 4,
+        "y": 33,
+        "w": 165,
+        "h": 117
+      },
+      "sourceSize": {
+        "w": 192,
+        "h": 192
+      }
+    },
+    "swarm_bees/swarm_bees-5.png": {
+      "frame": {
+        "x": 167,
+        "y": 298,
+        "w": 163,
+        "h": 106
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 8,
+        "y": 38,
+        "w": 163,
+        "h": 106
+      },
+      "sourceSize": {
+        "w": 192,
+        "h": 192
+      }
+    },
+    "swarm_bees/swarm_bees-6.png": {
+      "frame": {
+        "x": 183,
+        "y": 2,
+        "w": 171,
+        "h": 142
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 18,
+        "w": 171,
+        "h": 142
+      },
+      "sourceSize": {
+        "w": 192,
+        "h": 192
+      }
+    }
+  },
+  "animations": {
+    "swarm_bees": {
+      "loop": false,
+      "fps": 14,
+      "frames": [
+        "swarm_bees/swarm_bees-1.png",
+        "swarm_bees/swarm_bees-2.png",
+        "swarm_bees/swarm_bees-3.png",
+        "swarm_bees/swarm_bees-4.png",
+        "swarm_bees/swarm_bees-5.png",
+        "swarm_bees/swarm_bees-6.png"
+      ]
+    }
+  }
+}

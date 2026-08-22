@@ -5,33 +5,33 @@
   "image": "images/anim/thrust.png",
   "meta": {
     "size": {
-      "w": 1024,
-      "h": 1024
+      "w": 512,
+      "h": 512
     },
     "scale": "1",
     "format": "RGBA8888"
   },
   "metrics": {
     "frameSize": 256,
-    "subjectHeight": 256,
-    "baselineY": 256,
+    "subjectHeight": 59,
+    "baselineY": 158,
     "ref": "thrust/thrust-1.png"
   },
   "frames": {
     "thrust/thrust-1.png": {
       "frame": {
         "x": 2,
-        "y": 2,
-        "w": 256,
-        "h": 256
+        "y": 114,
+        "w": 213,
+        "h": 74
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 43,
+        "y": 90,
+        "w": 213,
+        "h": 74
       },
       "sourceSize": {
         "w": 256,
@@ -40,18 +40,18 @@
     },
     "thrust/thrust-2.png": {
       "frame": {
-        "x": 260,
+        "x": 2,
         "y": 2,
-        "w": 256,
-        "h": 256
+        "w": 243,
+        "h": 110
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
         "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "y": 73,
+        "w": 243,
+        "h": 110
       },
       "sourceSize": {
         "w": 256,
@@ -60,18 +60,18 @@
     },
     "thrust/thrust-3.png": {
       "frame": {
-        "x": 518,
-        "y": 2,
-        "w": 256,
-        "h": 256
+        "x": 2,
+        "y": 190,
+        "w": 231,
+        "h": 66
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
         "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "y": 95,
+        "w": 231,
+        "h": 66
       },
       "sourceSize": {
         "w": 256,
@@ -80,18 +80,18 @@
     },
     "thrust/thrust-4.png": {
       "frame": {
-        "x": 2,
-        "y": 260,
-        "w": 256,
-        "h": 256
+        "x": 247,
+        "y": 2,
+        "w": 238,
+        "h": 81
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 12,
+        "y": 88,
+        "w": 238,
+        "h": 81
       },
       "sourceSize": {
         "w": 256,
@@ -100,18 +100,18 @@
     },
     "thrust/thrust-5.png": {
       "frame": {
-        "x": 260,
-        "y": 260,
-        "w": 256,
-        "h": 256
+        "x": 217,
+        "y": 114,
+        "w": 218,
+        "h": 71
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 29,
+        "y": 93,
+        "w": 218,
+        "h": 71
       },
       "sourceSize": {
         "w": 256,
@@ -120,18 +120,18 @@
     },
     "thrust/thrust-6.png": {
       "frame": {
-        "x": 518,
-        "y": 260,
-        "w": 256,
-        "h": 256
+        "x": 235,
+        "y": 190,
+        "w": 151,
+        "h": 40
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 50,
+        "y": 111,
+        "w": 151,
+        "h": 40
       },
       "sourceSize": {
         "w": 256,

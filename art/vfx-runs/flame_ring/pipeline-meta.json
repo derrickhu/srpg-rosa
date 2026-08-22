@@ -1,6 +1,6 @@
 {
   "source": "scripts/vfx-sheet.py",
-  "input": "/tmp/flame_ring_raw.png",
+  "input": "/Users/rosa/rosa_games/srpg-rosa/art/vfx-runs/flame_ring/raw-sheet.png",
   "target": "vfx",
   "mode": "vfx_sheet",
   "rows": 3,
@@ -18,6 +18,8 @@
     "flame_ring-8",
     "flame_ring-9"
   ],
+  "align": "centroid",
+  "alpha_gamma": 2.0,
   "shared_crop_side": 318,
   "crop_offsets": [
     {

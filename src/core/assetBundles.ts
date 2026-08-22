@@ -150,11 +150,36 @@ export const FX_BUNDLE: AssetBundleDef = {
     shield_bash: 'images/fx/shield_bash.png',
     whirlwind: 'images/fx/whirlwind.png',
     // 飞行弹体 / 实体道具：抠图 + 普通混合，靠剪影认是什么。发光拖尾/命中另走 additive
-    proj_arrow: 'images/fx/proj_arrow.png',
-    proj_spear: 'images/fx/proj_spear.png',
-    proj_bees: 'images/fx/proj_bees.png',
+    //
+    // 弓手三招各有一支箭。原先三招共用一张 `proj_arrow`，只靠命中闪光区分，
+    // 而弹体在屏幕上停留的时间比命中闪光长得多，所以玩家看到的其实是「同一支箭飞三次」。
+    // 弹体是这类技能最显眼的部件，一支箭一副样子比换命中特效划算。
+    /** 普攻：短小的木猎箭。最弱的一下就该看起来最朴素 */
+    proj_arrow_wood: 'images/fx/proj_arrow_wood.png',
+    /** 穿透箭：加长破甲重箭，长锥箭镞 + 杆上一道冷青能量，读作「扎穿一条线」 */
+    proj_arrow_heavy: 'images/fx/proj_arrow_heavy.png',
+    /** 速射：极短的轻镖箭，后掠箭羽表达速度 */
+    proj_arrow_snap: 'images/fx/proj_arrow_snap.png',
+    proj_holy: 'images/fx/proj_holy.png',
+    /**
+     * 实体道具。这一族的存在理由是玩家自己给的：号角「比较有特点」，
+     * 而特点来自那支**看得见的号**，不是它那圈光环——
+     * 一个能叫出名字的东西比一团抽象的光好认得多，也天然和技能名对得上。
+     * 所以第二、三章的招牌临时技能都按这条配方补了道具。
+     *
+     * `fx` 是整包加载（`loadBundle`），所以这里的每一条都实打实占下载量。
+     * 删掉的两条正是被这一轮取代的死条目：
+     * `proj_bees` 一张静图（换成 `swarm_bees` 六帧扰动动画）、
+     * `proj_spear` 一根矛（撞城槌不是刺的，换成 `prop_ram`）。
+     */
     prop_horn: 'images/fx/prop_horn.png',
     prop_salve: 'images/fx/prop_salve.png',
+    /** 松脂火把：斜举的树脂火把，柄上缠布、顶端燃烧 */
+    prop_torch: 'images/fx/prop_torch.png',
+    /** 撞城槌：横置槌身 + 三道铁箍 + 钝槌头朝右。钝，不是尖的 */
+    prop_ram: 'images/fx/prop_ram.png',
+    /** 攻城战旗：旗杆插地、旗面朝右展开、燕尾撕口 */
+    prop_banner: 'images/fx/prop_banner.png',
   },
 };
 

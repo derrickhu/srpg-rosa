@@ -4,6 +4,8 @@ import type { Faction, UnitState } from '@/battle/types';
 import { createBattleSim, type BattleMode } from '@/battle/engine';
 import { UNIT_DEFS } from '@/data/unitDefs';
 import { DUNGEON_DEFS } from '@/data/dungeonCatalog';
+import { isSandboxDungeon } from '@/data/sandboxLab';
+import { gmPrepareSandboxRoster } from '@/game/state/gmCheats';
 import {
   ENDLESS_CLEAR_BONUS,
   ENDLESS_DUNGEON_ID,
@@ -268,12 +270,19 @@ export class GameFlow {
     }
   }
 
-  /** DUNGEON_DEFS 顺序即章节顺序；AdventureView 内部同样按下标定位 */
+  /** DUNGEON_DEFS 顺序即章节顺序；试炼卡接在最后 */
   private dungeonChapterIndex(dungeonId: string): number {
-    return DUNGEON_DEFS.findIndex((d) => d.id === dungeonId);
+    const i = DUNGEON_DEFS.findIndex((d) => d.id === dungeonId);
+    if (i >= 0) return i;
+    if (isSandboxDungeon(dungeonId)) return DUNGEON_DEFS.length;
+    return 0;
   }
 
   private startRunAndEnter(dungeonId: string, party: string[]): void {
+    if (isSandboxDungeon(dungeonId)) {
+      gmPrepareSandboxRoster(this.state);
+      party = this.state.meta.roster.map((m) => m.rosterId);
+    }
     startRun(this.state, dungeonId, party);
     this.shopOffers = null;
     SaveManager.save(this.state);
@@ -384,9 +393,8 @@ export class GameFlow {
     applyVictory(this.state);
     const last = isRunComplete(this.state);
     SaveManager.save(this.state);
-    // 弹层盖在布阵页上（`showRewardOverlay` 用 pushOverlay），不换场景：
-    // 扫荡的卖点就是不离开当前这一屏，切页会把「快」这件事又变慢。
-    this.showRewardOverlay(last);
+    // 扫荡也不弹中途胜利：金币已入账，直接三选一；通关才出魂精面板。
+    this.presentBattleWin(last);
   }
 
   private async resolveBattle(mode: BattleMode = 'manual'): Promise<void> {
@@ -413,10 +421,12 @@ export class GameFlow {
     // 战棋的策略全部长在「谁站哪儿」上，不交出走位就等于没有策略。
     // 自动模式（扫荡）走同一个引擎的 AI 分支，不存在两套结算规则。
     const endless = isEndlessRun(this.state);
+    const sandbox = isSandboxDungeon(run.dungeonId);
     const sim = createBattleSim(units, map, UNIT_DEFS, {
       aiDifficulty: endless ? endlessAiDifficulty(run.endless?.wave ?? 1) : stage.aiDifficulty,
       mode,
       enableDrops: endless,
+      sandboxFreeCast: sandbox,
     });
     this.state.phase = 'battle';
     const container = createBattlePlaybackView(
@@ -442,10 +452,14 @@ export class GameFlow {
         },
       },
       {
-        nodeLabel: endless
-          ? `${dungeon.name} ${run.endless?.wave ?? 1}/${ENDLESS_MAX_WAVES}`
-          : `${dungeon.name} ${run.nodeIndex + 1}/${dungeon.nodes.length}`,
+        nodeLabel: sandbox
+          ? '特效试炼 · 木桩场'
+          : endless
+            ? `${dungeon.name} ${run.endless?.wave ?? 1}/${ENDLESS_MAX_WAVES}`
+            : `${dungeon.name} ${run.nodeIndex + 1}/${dungeon.nodes.length}`,
+        sandbox,
         gold: run.gold,
+        goldReward: endless ? 0 : currentStage(this.state).goldReward,
         potions: run.potions,
         allowReturnDeploy: !endless || (run.endless?.wave ?? 1) === 1,
         onConsumePotion: (potionId: string) => {
@@ -462,6 +476,12 @@ export class GameFlow {
   }
 
   private finishBattleAfterPlayback(winner: Faction): void {
+    if (this.state.run && isSandboxDungeon(this.state.run.dungeonId)) {
+      SaveManager.save(this.state);
+      this.showToast(winner === 'player' ? '试炼不记进度，可换技能再打' : '回布阵再来');
+      this.renderDeploy();
+      return;
+    }
     const win = winner === 'player';
     if (!win) {
       SaveManager.save(this.state);
@@ -478,7 +498,21 @@ export class GameFlow {
     }
     const last = isRunComplete(this.state);
     SaveManager.save(this.state);
-    this.showRewardOverlay(last);
+    this.presentBattleWin(last);
+  }
+
+  /**
+   * 普通场次：金币已经在击杀时飞进栏里，不再弹「胜利 + 奖励」。
+   * 直接三选一纹章。整章通关才出胜利面板，只展示魂精。
+   */
+  private presentBattleWin(isRunFinal: boolean): void {
+    if (isRunFinal) {
+      this.showRewardOverlay(true);
+      return;
+    }
+    const loot = this.state.run?.pendingLoot ?? [];
+    if (loot.length > 0) this.showLootOverlay();
+    else this.advanceAfterVictory();
   }
 
   /** 无尽战后弹层的底板。不能直接盖在已销毁的战场上，也不该把人送回布阵改站位 */
@@ -505,7 +539,7 @@ export class GameFlow {
     };
   }
 
-  /** 结算第一屏：这一场已经到手的固定奖励 */
+  /** 通关结算：只展示魂精。中途胜利不再走这里。 */
   private showRewardOverlay(isRunFinal: boolean): void {
     const run = this.state.run!;
     const dungeon = currentDungeon(this.state);

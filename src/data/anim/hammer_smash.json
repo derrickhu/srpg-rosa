@@ -1,0 +1,219 @@
+{
+  "id": "hammer_smash",
+  "source": "art/vfx-runs/hammer_smash",
+  "blend": "add",
+  "image": "images/anim/hammer_smash.png",
+  "meta": {
+    "size": {
+      "w": 512,
+      "h": 512
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 82,
+    "baselineY": 194,
+    "ref": "hammer_smash/hammer_smash-1.png"
+  },
+  "frames": {
+    "hammer_smash/hammer_smash-1.png": {
+      "frame": {
+        "x": 2,
+        "y": 301,
+        "w": 78,
+        "h": 83
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 92,
+        "y": 112,
+        "w": 78,
+        "h": 83
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "hammer_smash/hammer_smash-2.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 162,
+        "h": 105
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 47,
+        "y": 102,
+        "w": 162,
+        "h": 105
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "hammer_smash/hammer_smash-3.png": {
+      "frame": {
+        "x": 248,
+        "y": 109,
+        "w": 225,
+        "h": 96
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 7,
+        "y": 117,
+        "w": 225,
+        "h": 96
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "hammer_smash/hammer_smash-4.png": {
+      "frame": {
+        "x": 166,
+        "y": 2,
+        "w": 237,
+        "h": 100
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 10,
+        "y": 94,
+        "w": 237,
+        "h": 100
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "hammer_smash/hammer_smash-5.png": {
+      "frame": {
+        "x": 2,
+        "y": 109,
+        "w": 244,
+        "h": 97
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 6,
+        "y": 96,
+        "w": 244,
+        "h": 97
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "hammer_smash/hammer_smash-6.png": {
+      "frame": {
+        "x": 247,
+        "y": 208,
+        "w": 248,
+        "h": 90
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 1,
+        "y": 101,
+        "w": 248,
+        "h": 90
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "hammer_smash/hammer_smash-7.png": {
+      "frame": {
+        "x": 2,
+        "y": 208,
+        "w": 243,
+        "h": 91
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 6,
+        "y": 87,
+        "w": 243,
+        "h": 91
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "hammer_smash/hammer_smash-8.png": {
+      "frame": {
+        "x": 82,
+        "y": 301,
+        "w": 235,
+        "h": 81
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 11,
+        "y": 95,
+        "w": 235,
+        "h": 81
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "hammer_smash/hammer_smash-9.png": {
+      "frame": {
+        "x": 2,
+        "y": 386,
+        "w": 228,
+        "h": 71
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 12,
+        "y": 99,
+        "w": 228,
+        "h": 71
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "hammer_smash": {
+      "loop": false,
+      "fps": 20,
+      "frames": [
+        "hammer_smash/hammer_smash-1.png",
+        "hammer_smash/hammer_smash-2.png",
+        "hammer_smash/hammer_smash-3.png",
+        "hammer_smash/hammer_smash-4.png",
+        "hammer_smash/hammer_smash-5.png",
+        "hammer_smash/hammer_smash-6.png",
+        "hammer_smash/hammer_smash-7.png",
+        "hammer_smash/hammer_smash-8.png",
+        "hammer_smash/hammer_smash-9.png"
+      ]
+    }
+  }
+}

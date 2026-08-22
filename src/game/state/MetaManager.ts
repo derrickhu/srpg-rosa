@@ -5,6 +5,7 @@ import {
   type CharacterDef,
 } from '@/data/characterCatalog';
 import { getDungeonDef } from '@/data/dungeonCatalog';
+import { isSandboxDungeon } from '@/data/sandboxLab';
 import { instantiateCharacter } from '@/game/characterFactory';
 import type { Character } from '@/game/characterTypes';
 import type { MetaState, MvpGameState } from './GameState';
@@ -98,5 +99,6 @@ export function unlockDungeonWithMeta(state: MvpGameState, dungeonId: string): b
 }
 
 export function isDungeonUnlocked(meta: MetaState, dungeonId: string): boolean {
+  if (isSandboxDungeon(dungeonId)) return true;
   return meta.unlockedDungeonIds.includes(dungeonId);
 }

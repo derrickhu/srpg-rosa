@@ -1,0 +1,68 @@
+{
+  "source": "scripts/vfx-sheet.py",
+  "input": "art/vfx-runs/temp_ft_ram/raw-sheet.png",
+  "target": "vfx",
+  "mode": "vfx_sheet",
+  "rows": 3,
+  "cols": 3,
+  "cell_size": 256,
+  "threshold": 22,
+  "frame_labels": [
+    "temp_ft_ram-1",
+    "temp_ft_ram-2",
+    "temp_ft_ram-3",
+    "temp_ft_ram-4",
+    "temp_ft_ram-5",
+    "temp_ft_ram-6",
+    "temp_ft_ram-7",
+    "temp_ft_ram-8",
+    "temp_ft_ram-9"
+  ],
+  "align": "center",
+  "key": "black",
+  "alpha_gamma": 2.0,
+  "shared_crop_side": 306,
+  "crop_offsets": [
+    {
+      "x": 17,
+      "y": 17
+    },
+    {
+      "x": 17,
+      "y": 17
+    },
+    {
+      "x": 17,
+      "y": 17
+    },
+    {
+      "x": 17,
+      "y": 17
+    },
+    {
+      "x": 17,
+      "y": 17
+    },
+    {
+      "x": 17,
+      "y": 17
+    },
+    {
+      "x": 17,
+      "y": 17
+    },
+    {
+      "x": 17,
+      "y": 17
+    },
+    {
+      "x": 17,
+      "y": 17
+    }
+  ],
+  "empty_frames": [],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}

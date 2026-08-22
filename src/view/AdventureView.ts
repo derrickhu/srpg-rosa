@@ -2,7 +2,14 @@ import * as PIXI from 'pixi.js';
 import { makeText } from '@/theme/typography';
 import { DUNGEON_DEFS, getDungeonDef, type DungeonDef } from '@/data/dungeonCatalog';
 import {
+  adventureChapterList,
+  isSandboxDungeon,
+} from '@/data/sandboxLab';
+import {
   dungeonClearSoul,
+  gmAddSoul,
+  gmLearnAllSkills,
+  gmUnlockAllCharacters,
   isDungeonUnlocked,
   unlockDungeonWithMeta,
   type MvpGameState,
@@ -18,6 +25,7 @@ import {
 import { createHubHeader } from '@/view/hubHeader';
 import { C, shade } from '@/view/mvpTheme';
 import { createNodeStrip } from '@/view/NodeStrip';
+import { isDisplayLive } from '@/view/pixiLive';
 import { makeButton } from '@/ui/Button';
 
 export interface AdventureCallbacks {
@@ -105,7 +113,8 @@ export function createAdventureView(
   const root = new PIXI.Container();
   root.addChild(createBackground(W, H));
 
-  let chapter = Math.max(0, Math.min(chapterIndex, DUNGEON_DEFS.length - 1));
+  const chapters = adventureChapterList(DUNGEON_DEFS);
+  let chapter = Math.max(0, Math.min(chapterIndex, chapters.length - 1));
 
   // 顶栏走四页共用的那一份，胶囊避让在它内部处理。
   // 这一页不出「冒险」标题：章节绶带本身就是标题，再写一行只是把卡片往下挤。
@@ -123,7 +132,7 @@ export function createAdventureView(
   root.addChild(actionLayer);
 
   function currentDef(): DungeonDef {
-    return DUNGEON_DEFS[chapter]!;
+    return chapters[chapter]!;
   }
 
   function buildChapterCard(d: DungeonDef): PIXI.Container {
@@ -155,9 +164,11 @@ export function createAdventureView(
     c.addChild(border);
 
     // 章节标题绶带
-    const title = makeText(`第 ${chapter + 1} 章 · ${d.name}`, 'title', {
-      fill: C.paper, fontSize: 19,
-    });
+    const title = makeText(
+      isSandboxDungeon(d.id) ? `测试 · ${d.name}` : `第 ${chapter + 1} 章 · ${d.name}`,
+      'title',
+      { fill: C.paper, fontSize: 19 },
+    );
     title.anchor.set(0.5);
     const ribbonW = title.width + (cleared ? 76 : 48);
     const ribbon = new PIXI.Graphics();
@@ -202,20 +213,22 @@ export function createAdventureView(
       desc.y = cardY + cardH * 0.66;
       c.addChild(desc);
 
-      // 奖励行带上魂晶图标：顶栏 pill 和这里用同一个符号，玩家才能把图标和「魂晶」对上号
-      const reward = makeText(`通关奖励 +${d.metaReward}`, 'body', { fill: C.soulText });
-      const RI = 16;
-      const rewardW = RI + 4 + reward.width;
-      const rewardY = cardY + cardH * 0.66 + desc.height + 8;
-      const rIcon = createUiIcon('icon_soul', RI);
-      if (rIcon) {
-        rIcon.x = W / 2 - rewardW / 2;
-        rIcon.y = rewardY - 2;
-        c.addChild(rIcon);
+      if (!isSandboxDungeon(d.id)) {
+        // 奖励行带上魂晶图标：顶栏 pill 和这里用同一个符号，玩家才能把图标和「魂晶」对上号
+        const reward = makeText(`通关奖励 +${d.metaReward}`, 'body', { fill: C.soulText });
+        const RI = 16;
+        const rewardW = RI + 4 + reward.width;
+        const rewardY = cardY + cardH * 0.66 + desc.height + 8;
+        const rIcon = createUiIcon('icon_soul', RI);
+        if (rIcon) {
+          rIcon.x = W / 2 - rewardW / 2;
+          rIcon.y = rewardY - 2;
+          c.addChild(rIcon);
+        }
+        reward.x = W / 2 - rewardW / 2 + RI + 4;
+        reward.y = rewardY;
+        c.addChild(reward);
       }
-      reward.x = W / 2 - rewardW / 2 + RI + 4;
-      reward.y = rewardY;
-      c.addChild(reward);
     } else {
       const LOCK = 48;
       const lock = createUiIcon('icon_lock', LOCK);
@@ -273,7 +286,7 @@ export function createAdventureView(
     // 左右切章箭头。裸尖角压在亮绿草地上看不清，套一个深色圆钮既提对比也点明这里能点
     const mkArrow = (dir: -1 | 1): void => {
       const target = chapter + dir;
-      if (target < 0 || target >= DUNGEON_DEFS.length) return;
+      if (target < 0 || target >= chapters.length) return;
       const a = new PIXI.Container();
       const knob = new PIXI.Graphics();
       knob.lineStyle(2, C.ink, 1, 0);
@@ -314,6 +327,32 @@ export function createAdventureView(
     }
 
     if (!unlocked) return;
+
+    if (isSandboxDungeon(d.id)) {
+      const gmW = Math.floor((W - 96 - 16) / 3);
+      const gmH = 34;
+      const gmY = btnY - 46;
+      const row = [
+        { label: '解锁全角色', run: () => gmUnlockAllCharacters(state) },
+        { label: '魂晶 +99', run: () => gmAddSoul(state, 99) },
+        { label: '学满技能', run: () => gmLearnAllSkills(state) },
+      ];
+      row.forEach((item, i) => {
+        const b = makeButton(item.label, () => {
+          item.run();
+          cb.onChanged();
+        }, { variant: 'secondary', width: gmW, height: gmH, fontSize: 12, radius: 8 });
+        b.x = 48 + i * (gmW + 8);
+        b.y = gmY;
+        actionLayer.addChild(b);
+      });
+      const btn = makeButton('进入试炼', () => cb.onStartRun(d.id, state.meta.roster.map((m) => m.rosterId)), {
+        variant: 'primary', width: W - 96, height: 48, fontSize: 18, radius: 14,
+      });
+      btn.x = 48; btn.y = btnY;
+      actionLayer.addChild(btn);
+      return;
+    }
 
     // 开打前先说清这一趟能拿到什么永久收益。
     //
@@ -367,6 +406,11 @@ export function createAdventureView(
       acc += PIXI.Ticker.shared.deltaMS;
       const k = Math.min(1, acc / durMs);
       const e = 1 - (1 - k) ** 2;
+      if (!isDisplayLive(oldCard) || !isDisplayLive(nextCard)) {
+        PIXI.Ticker.shared.remove(step);
+        sliding = false;
+        return;
+      }
       oldCard.x = -dir * W * e;
       nextCard.x = dir * W * (1 - e);
       if (k >= 1) {

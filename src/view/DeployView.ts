@@ -6,6 +6,7 @@ import type { TerrainId } from '@/battle/types';
 import { UNIT_DEFS } from '@/data/unitDefs';
 import { skillDefForId } from '@/data/skillCatalog';
 import { PLACEABLE_TERRAIN_IDS, terrainTicketName } from '@/data/dungeonCatalog';
+import { isSandboxDungeon } from '@/data/sandboxLab';
 import type { Character } from '@/game/characterTypes';
 import { characterEffectiveStats } from '@/game/characterFactory';
 import type { BattleMode } from '@/battle/engine';
@@ -22,7 +23,9 @@ import {
   currentEnemyScale,
   currentStage,
   cycleSkillForRoster,
+  cycleTempSkillForRoster,
   effectiveOwnedSkillIds,
+  tempSkillIdForRoster,
   getMaxDeploy,
   getCharacter,
   placeCharacter,
@@ -43,6 +46,8 @@ import {
   createUnitToken,
   createBackground,
   createUiIcon,
+  RUN_GOLD_X,
+  runGoldYBelow,
 } from '@/view/renderHelpers';
 import { ENDLESS_MAX_WAVES, isEndlessDungeon } from '@/data/endlessCatalog';
 import { createNodeStrip } from '@/view/NodeStrip';
@@ -240,8 +245,8 @@ export function createDeployView(
   const goldBgH = Math.max(goldIconSize, goldValueTx.height) + goldPadY * 2;
 
   const goldContainer = new PIXI.Container();
-  goldContainer.x = 8;
-  goldContainer.y = settingsBtn.y + settingsBtnSize + 4;
+  goldContainer.x = RUN_GOLD_X;
+  goldContainer.y = runGoldYBelow(settingsBtn.y, settingsBtnSize);
 
   const goldBg = new PIXI.Graphics();
   goldBg.beginFill(0x000000, 0.4);
@@ -262,7 +267,8 @@ export function createDeployView(
 
   // --- 副本名（与金币同一行，居中显示）+ 节点进度链 ---
   const dungeon0 = currentDungeon(state);
-  const stageText = dungeon0.name;
+  const sandbox = isSandboxDungeon(run.dungeonId);
+  const stageText = sandbox ? '特效试炼 · 点角色切技能' : dungeon0.name;
   const stageTx = makeText(stageText, 'uiStrong', { fill: 0xffffff });
   stageTx.anchor.set(0.5, 0.5);
   const stagePadX = 16;
@@ -734,6 +740,22 @@ export function createDeployView(
         chip.y = sy;
         sx += 82;
         toolbarLayer.addChild(chip);
+        if (sandbox) {
+          const tid = tempSkillIdForRoster(state, m.rosterId);
+          const tn = tid ? (skillDefForId(tid)?.name ?? tid) : '无';
+          const tempChip = makeToolChip(
+            `临时:${tn}`,
+            false,
+            () => {
+              cycleTempSkillForRoster(state, selectedRosterId!);
+              redrawToolbar();
+            },
+          );
+          tempChip.x = sx;
+          tempChip.y = sy;
+          sx += 82;
+          toolbarLayer.addChild(tempChip);
+        }
       }
     }
   }

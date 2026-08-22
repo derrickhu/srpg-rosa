@@ -5,33 +5,33 @@
   "image": "images/anim/ember_wave.png",
   "meta": {
     "size": {
-      "w": 1024,
-      "h": 1024
+      "w": 512,
+      "h": 256
     },
     "scale": "1",
     "format": "RGBA8888"
   },
   "metrics": {
     "frameSize": 256,
-    "subjectHeight": 256,
-    "baselineY": 256,
+    "subjectHeight": 39,
+    "baselineY": 148,
     "ref": "ember_wave/ember_wave-1.png"
   },
   "frames": {
     "ember_wave/ember_wave-1.png": {
       "frame": {
-        "x": 2,
-        "y": 2,
-        "w": 256,
-        "h": 256
+        "x": 234,
+        "y": 61,
+        "w": 230,
+        "h": 48
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 13,
+        "y": 104,
+        "w": 230,
+        "h": 48
       },
       "sourceSize": {
         "w": 256,
@@ -40,18 +40,18 @@
     },
     "ember_wave/ember_wave-2.png": {
       "frame": {
-        "x": 260,
+        "x": 2,
         "y": 2,
-        "w": 256,
-        "h": 256
+        "w": 230,
+        "h": 57
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 13,
+        "y": 99,
+        "w": 230,
+        "h": 57
       },
       "sourceSize": {
         "w": 256,
@@ -60,18 +60,18 @@
     },
     "ember_wave/ember_wave-3.png": {
       "frame": {
-        "x": 518,
+        "x": 234,
         "y": 2,
-        "w": 256,
-        "h": 256
+        "w": 230,
+        "h": 57
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 13,
+        "y": 99,
+        "w": 230,
+        "h": 57
       },
       "sourceSize": {
         "w": 256,
@@ -81,17 +81,17 @@
     "ember_wave/ember_wave-4.png": {
       "frame": {
         "x": 2,
-        "y": 260,
-        "w": 256,
-        "h": 256
+        "y": 61,
+        "w": 230,
+        "h": 57
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 13,
+        "y": 99,
+        "w": 230,
+        "h": 57
       },
       "sourceSize": {
         "w": 256,
@@ -100,18 +100,18 @@
     },
     "ember_wave/ember_wave-5.png": {
       "frame": {
-        "x": 260,
-        "y": 260,
-        "w": 256,
-        "h": 256
+        "x": 2,
+        "y": 120,
+        "w": 230,
+        "h": 24
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 13,
+        "y": 116,
+        "w": 230,
+        "h": 24
       },
       "sourceSize": {
         "w": 256,
@@ -120,18 +120,18 @@
     },
     "ember_wave/ember_wave-6.png": {
       "frame": {
-        "x": 518,
-        "y": 260,
-        "w": 256,
-        "h": 256
+        "x": 234,
+        "y": 120,
+        "w": 230,
+        "h": 24
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 13,
+        "y": 116,
+        "w": 230,
+        "h": 24
       },
       "sourceSize": {
         "w": 256,

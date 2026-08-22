@@ -107,3 +107,59 @@ describe("reach: 'within' 是一片射程，不是一圈环", () => {
     expect(castHits(far, [far, unit('e2', 'sword', { x: 2, y: 3 }, 'enemy')])).toEqual(['e2']);
   });
 });
+
+/**
+ * `squareAoE` 存在的唯一理由就是**打得到斜角**，而这件事极容易静默退回去：
+ * 把形状改成 `discAoE radius:1` 看着像个等价重构（都叫「半径 1 的整片」），
+ * 实际上那个半径量的是曼哈顿距离，斜角邻居的曼哈顿距离是 2，于是一改就漏。
+ * 漏掉之后没有任何报错——只是玩家躲在斜角上不再被旋风斩打到，
+ * 而特效照旧画满 3×3。所以这一组断言必须显式对比三种形状。
+ */
+describe('squareAoE 打得到斜角，环形和曼哈顿圆打不到', () => {
+  /** 四个斜角 + 四个正交，全部贴身 */
+  const RING8 = [
+    { x: 2, y: 2 }, { x: 3, y: 2 }, { x: 4, y: 2 },
+    { x: 2, y: 3 }, /* 施法者 (3,3) */ { x: 4, y: 3 },
+    { x: 2, y: 4 }, { x: 3, y: 4 }, { x: 4, y: 4 },
+  ];
+
+  function castAgainstRing(
+    skillId: string,
+    kind: UnitKind = 'sword',
+  ): { hits: string[]; cells: string[] } {
+    // 兵种要和技能的 exclusiveProfession 对得上，否则施放校验直接拒掉
+    const self = unit('p1', kind, { x: 3, y: 3 }, 'player', skillId);
+    const foes = RING8.map((p, i) => unit(`e${i}`, 'sword', p, 'enemy'));
+    const events = castSkillManual(self, UNIT_DEFS, [self, ...foes], emptyTerrain(7, 7));
+    const cast = events.find((e) => e.type === 'skillCast');
+    if (cast?.type !== 'skillCast') throw new Error(`${skillId} 没放出来`);
+    return {
+      hits: cast.hits.map((h) => h.target).sort(),
+      cells: (cast.rangeCells ?? []).map((c) => `${c.x},${c.y}`).sort(),
+    };
+  }
+
+  it('旋风斩打满贴身八格，四个斜角一个都不漏', () => {
+    expect(getSkillSpec('whirl')!.shape).toEqual({ type: 'squareAoE', radius: 1 });
+    const { hits, cells } = castAgainstRing('whirl');
+    expect(hits.length, '八格里有人没被打到').toBe(8);
+    // 斜角是 e0/e2/e5/e7（RING8 的四角）
+    for (const uid of ['e0', 'e2', 'e5', 'e7']) {
+      expect(hits, `斜角 ${uid} 没被打到`).toContain(uid);
+    }
+    // 高亮范围必须和实际命中一致，否则玩家照着高亮走位会被骗
+    expect(cells.length).toBe(8);
+    expect(cells).toContain('2,2');
+    expect(cells).toContain('4,4');
+    // 施法者自己那一格不高亮
+    expect(cells).not.toContain('3,3');
+  });
+
+  it('炎环那类 neighborAoE 仍只打正交，斜角本来就不该被它打到', () => {
+    // 盾墙震慑是 `neighborAoE manhattan:1`：形态是同心环但**没有**改成方形，
+    // 因为它的特效画的就是环，不是盖满 3×3 的刃圈
+    expect(getSkillSpec('shield_wall')!.shape).toEqual({ type: 'neighborAoE', manhattan: 1 });
+    const { hits } = castAgainstRing('shield_wall', 'shield');
+    expect(hits.sort()).toEqual(['e1', 'e3', 'e4', 'e6']);
+  });
+});

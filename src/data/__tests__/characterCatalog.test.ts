@@ -113,6 +113,9 @@ describe('同一路线内的技能要有实质差异', () => {
           return `ring:${shape.manhattan}`;
         case 'discAoE':
           return `disc:${shape.radius}`;
+        // 方形和同半径的环/圆是**不同**指纹：只有它打得到斜角
+        case 'squareAoE':
+          return `square:${shape.radius}`;
         case 'neighborPickFoe':
           return `pickFoe:${shape.manhattan}:${shape.reach ?? 'exact'}`;
         case 'neighborPickAlly':

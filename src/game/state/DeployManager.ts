@@ -4,6 +4,8 @@ import { gridSize, inBounds } from '@/battle/grid';
 import { enemyBaseStats } from '@/data/enemyCatalog';
 import type { StageEnemySpawn } from '@/data/stagesMvp';
 import { canCharacterUseSkill, getCharacterDef } from '@/data/characterCatalog';
+import { isSandboxDungeon } from '@/data/sandboxLab';
+import { allPlayerSkillSpecs } from '@/data/skillCatalog';
 import { canProfessionEquipSkill, defaultSkillId, skillDefForId } from '@/data/skillCatalog';
 import { resolveEnemyBattleSkill } from '@/data/enemySkillCatalog';
 import { characterEffectiveStats } from '@/game/characterFactory';
@@ -117,7 +119,10 @@ export function removePlacement(state: MvpGameState, pos: Vec2): void {
  */
 export function effectiveOwnedSkillIds(_state: MvpGameState, m: Character): string[] {
   const def = getCharacterDef(m.catalogId ?? m.rosterId);
-  const all = [...new Set(m.ownedSkillIds)];
+  const sandbox = isSandboxDungeon(_state.run?.dungeonId);
+  const all = sandbox && def
+    ? [...new Set([def.defaultSkillId, ...def.unlockableSkillIds])]
+    : [...new Set(m.ownedSkillIds)];
   if (!def) return all;
   return all.filter((id) => canCharacterUseSkill(def, id));
 }
@@ -156,6 +161,24 @@ export function resolveBattleSkillIdForCharacter(state: MvpGameState, m: Charact
   );
   if (firstValid) return firstValid;
   return defaultSkillId(m.profession);
+}
+
+/** 试炼里给临时槽轮换的通用技（商店那批，不挑职业） */
+export function sandboxTempSkillIds(): string[] {
+  return allPlayerSkillSpecs()
+    .filter((s) => s.exclusiveProfession === null && !s.reserved && !s.enemyOnly)
+    .map((s) => s.id);
+}
+
+export function cycleTempSkillForRoster(state: MvpGameState, rosterId: string): void {
+  const run = requireRun(state);
+  if (!isSandboxDungeon(run.dungeonId)) return;
+  const ids = sandboxTempSkillIds();
+  if (ids.length === 0) return;
+  const cur = run.runTempSkill[rosterId];
+  const i = cur ? ids.indexOf(cur) : -1;
+  const next = ids[(i + 1) % ids.length]!;
+  run.runTempSkill[rosterId] = next;
 }
 
 export function cycleSkillForRoster(state: MvpGameState, rosterId: string): void {

@@ -22,6 +22,8 @@ function briefShape(spec: SkillSpec): string {
       return shape.manhattan === 1 ? '邻格全体敌人' : `周围 ${shape.manhattan} 格全体敌人`;
     case 'discAoE':
       return shape.radius === 1 ? '邻格全体敌人' : `周围 ${shape.radius} 格全体敌人`;
+    case 'squareAoE':
+      return shape.radius === 1 ? '贴身八格·含斜角' : `${shape.radius} 格方形·含斜角`;
     case 'neighborPickFoe':
       return `${describeReach(shape.manhattan, shape.reach)}·点一个敌人`;
     case 'neighborPickAlly':

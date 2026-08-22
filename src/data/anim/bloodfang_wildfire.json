@@ -6,32 +6,32 @@
   "meta": {
     "size": {
       "w": 1024,
-      "h": 1024
+      "h": 512
     },
     "scale": "1",
     "format": "RGBA8888"
   },
   "metrics": {
     "frameSize": 256,
-    "subjectHeight": 256,
-    "baselineY": 256,
+    "subjectHeight": 73,
+    "baselineY": 208,
     "ref": "bloodfang_wildfire/bloodfang_wildfire-1.png"
   },
   "frames": {
     "bloodfang_wildfire/bloodfang_wildfire-1.png": {
       "frame": {
-        "x": 2,
-        "y": 2,
-        "w": 256,
-        "h": 256
+        "x": 355,
+        "y": 220,
+        "w": 170,
+        "h": 84
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 43,
+        "y": 126,
+        "w": 170,
+        "h": 84
       },
       "sourceSize": {
         "w": 256,
@@ -40,18 +40,18 @@
     },
     "bloodfang_wildfire/bloodfang_wildfire-2.png": {
       "frame": {
-        "x": 260,
+        "x": 807,
         "y": 2,
-        "w": 256,
-        "h": 256
+        "w": 181,
+        "h": 151
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 38,
+        "y": 62,
+        "w": 181,
+        "h": 151
       },
       "sourceSize": {
         "w": 256,
@@ -60,18 +60,18 @@
     },
     "bloodfang_wildfire/bloodfang_wildfire-3.png": {
       "frame": {
-        "x": 518,
+        "x": 210,
         "y": 2,
-        "w": 256,
-        "h": 256
+        "w": 205,
+        "h": 211
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 27,
+        "y": 5,
+        "w": 205,
+        "h": 211
       },
       "sourceSize": {
         "w": 256,
@@ -81,17 +81,17 @@
     "bloodfang_wildfire/bloodfang_wildfire-4.png": {
       "frame": {
         "x": 2,
-        "y": 260,
-        "w": 256,
-        "h": 256
+        "y": 2,
+        "w": 206,
+        "h": 216
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
+        "x": 26,
         "y": 0,
-        "w": 256,
-        "h": 256
+        "w": 206,
+        "h": 216
       },
       "sourceSize": {
         "w": 256,
@@ -100,18 +100,18 @@
     },
     "bloodfang_wildfire/bloodfang_wildfire-5.png": {
       "frame": {
-        "x": 260,
-        "y": 260,
-        "w": 256,
-        "h": 256
+        "x": 417,
+        "y": 2,
+        "w": 196,
+        "h": 206
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 30,
+        "y": 1,
+        "w": 196,
+        "h": 206
       },
       "sourceSize": {
         "w": 256,
@@ -120,18 +120,18 @@
     },
     "bloodfang_wildfire/bloodfang_wildfire-6.png": {
       "frame": {
-        "x": 518,
-        "y": 260,
-        "w": 256,
-        "h": 256
+        "x": 615,
+        "y": 2,
+        "w": 190,
+        "h": 167
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 39,
+        "y": 37,
+        "w": 190,
+        "h": 167
       },
       "sourceSize": {
         "w": 256,
@@ -141,17 +141,17 @@
     "bloodfang_wildfire/bloodfang_wildfire-7.png": {
       "frame": {
         "x": 2,
-        "y": 518,
-        "w": 256,
-        "h": 256
+        "y": 220,
+        "w": 181,
+        "h": 136
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 42,
+        "y": 62,
+        "w": 181,
+        "h": 136
       },
       "sourceSize": {
         "w": 256,
@@ -160,18 +160,18 @@
     },
     "bloodfang_wildfire/bloodfang_wildfire-8.png": {
       "frame": {
-        "x": 260,
-        "y": 518,
-        "w": 256,
-        "h": 256
+        "x": 185,
+        "y": 220,
+        "w": 168,
+        "h": 97
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 50,
+        "y": 97,
+        "w": 168,
+        "h": 97
       },
       "sourceSize": {
         "w": 256,
@@ -180,18 +180,18 @@
     },
     "bloodfang_wildfire/bloodfang_wildfire-9.png": {
       "frame": {
-        "x": 518,
-        "y": 518,
-        "w": 256,
-        "h": 256
+        "x": 527,
+        "y": 220,
+        "w": 150,
+        "h": 69
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 54,
+        "y": 122,
+        "w": 150,
+        "h": 69
       },
       "sourceSize": {
         "w": 256,

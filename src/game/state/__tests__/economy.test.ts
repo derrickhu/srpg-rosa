@@ -6,6 +6,7 @@ import {
   applyVictory,
   finishRunVictory,
   isRunComplete,
+  splitStageGold,
   startRun,
   DUNGEON_REPEAT_SOUL,
   NODE_FIRST_CLEAR_SOUL,
@@ -36,6 +37,15 @@ function clearWholeDungeon(state: MvpGameState): number {
   applyVictory(state);
   return finishRunVictory(state);
 }
+
+describe('击杀拆金币', () => {
+  it('总额不变，按击杀份数摊开', () => {
+    expect(splitStageGold(8, 3).reduce((a, b) => a + b, 0)).toBe(8);
+    expect(splitStageGold(8, 3)).toEqual([3, 3, 2]);
+    expect(splitStageGold(8, 10)).toEqual([1, 1, 1, 1, 1, 1, 1, 1, 0, 0]);
+    expect(splitStageGold(5, 0)).toEqual([]);
+  });
+});
 
 describe('魂晶只按首通发放', () => {
   it('第一次通过某个节点给魂晶，重复打同一节点不再给', () => {

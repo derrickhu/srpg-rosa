@@ -1,0 +1,219 @@
+{
+  "id": "hex_mark",
+  "source": "art/vfx-runs/hex_mark",
+  "blend": "add",
+  "image": "images/anim/hex_mark.png",
+  "meta": {
+    "size": {
+      "w": 1024,
+      "h": 512
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 145,
+    "baselineY": 227,
+    "ref": "hex_mark/hex_mark-1.png"
+  },
+  "frames": {
+    "hex_mark/hex_mark-1.png": {
+      "frame": {
+        "x": 391,
+        "y": 237,
+        "w": 123,
+        "h": 156
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 71,
+        "y": 77,
+        "w": 123,
+        "h": 156
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "hex_mark/hex_mark-2.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 191,
+        "h": 233
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 33,
+        "y": 23,
+        "w": 191,
+        "h": 233
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "hex_mark/hex_mark-3.png": {
+      "frame": {
+        "x": 195,
+        "y": 2,
+        "w": 160,
+        "h": 210
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 47,
+        "y": 46,
+        "w": 160,
+        "h": 210
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "hex_mark/hex_mark-4.png": {
+      "frame": {
+        "x": 357,
+        "y": 2,
+        "w": 154,
+        "h": 206
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 57,
+        "y": 26,
+        "w": 154,
+        "h": 206
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "hex_mark/hex_mark-5.png": {
+      "frame": {
+        "x": 513,
+        "y": 2,
+        "w": 160,
+        "h": 197
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 48,
+        "y": 29,
+        "w": 160,
+        "h": 197
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "hex_mark/hex_mark-6.png": {
+      "frame": {
+        "x": 675,
+        "y": 2,
+        "w": 196,
+        "h": 187
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 33,
+        "y": 38,
+        "w": 196,
+        "h": 187
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "hex_mark/hex_mark-7.png": {
+      "frame": {
+        "x": 2,
+        "y": 237,
+        "w": 196,
+        "h": 174
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 37,
+        "y": 14,
+        "w": 196,
+        "h": 174
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "hex_mark/hex_mark-8.png": {
+      "frame": {
+        "x": 200,
+        "y": 237,
+        "w": 189,
+        "h": 161
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 36,
+        "y": 26,
+        "w": 189,
+        "h": 161
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "hex_mark/hex_mark-9.png": {
+      "frame": {
+        "x": 516,
+        "y": 237,
+        "w": 151,
+        "h": 114
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 42,
+        "y": 52,
+        "w": 151,
+        "h": 114
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "hex_mark": {
+      "loop": false,
+      "fps": 16,
+      "frames": [
+        "hex_mark/hex_mark-1.png",
+        "hex_mark/hex_mark-2.png",
+        "hex_mark/hex_mark-3.png",
+        "hex_mark/hex_mark-4.png",
+        "hex_mark/hex_mark-5.png",
+        "hex_mark/hex_mark-6.png",
+        "hex_mark/hex_mark-7.png",
+        "hex_mark/hex_mark-8.png",
+        "hex_mark/hex_mark-9.png"
+      ]
+    }
+  }
+}

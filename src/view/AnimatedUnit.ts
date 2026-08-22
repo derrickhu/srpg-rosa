@@ -18,6 +18,8 @@ import {
   hitKnockDisplacement,
   syncHitFlashOverlay,
 } from '@/view/battle/hitFeel';
+import { isDisplayLive } from '@/view/pixiLive';
+import { attachCorePass } from '@/view/vfxBlend';
 
 /** 缺 metrics 的旧清单回退用的源尺寸基准（Godot 帧为 512px 方图） */
 const SOURCE_FRAME_SIZE = 512;
@@ -206,7 +208,7 @@ export function createAnimatedUnit(
   function tick(): void {
     // 切场景时整棵树被 destroy，存活单位的 handle.destroy 不会被逐个调用（只有阵亡才调），
     // 回调不自摘就会一直跑在已销毁的 sprite 上。同 updateSkillRings 的写法。
-    if (sprite.destroyed) {
+    if (!isDisplayLive(sprite) || !isDisplayLive(view)) {
       ticker.remove(tick);
       return;
     }
@@ -294,7 +296,7 @@ export function createAnimatedUnit(
   }
 
   function flashHit(ms: number): void {
-    if (ms <= 0 || sprite.destroyed) return;
+    if (ms <= 0 || !isDisplayLive(sprite)) return;
     flashDur = ms;
     flashT = 0;
     if (!flashOverlay) flashOverlay = createHitFlashOverlay(sprite);
@@ -302,7 +304,7 @@ export function createAnimatedUnit(
   }
 
   function playHit(nx: number, ny: number): void {
-    if (sprite.destroyed) return;
+    if (!isDisplayLive(sprite)) return;
     const len = Math.hypot(nx, ny);
     hitNx = len < 0.001 ? 1 : nx / len;
     hitNy = len < 0.001 ? 0 : ny / len;
@@ -344,14 +346,18 @@ export interface FxPlayOptions {
    */
   lengthPx?: number;
   /**
-   * 亮度闸门。生图给的亮度是不可控的——同一套 prompt 出来的素材，有的峰值亮区
-   * 只占 20%，有的能到 54%，后者叠加上去会把挨打的人整个糊白，玩家看不出是谁中招。
-   * 素材不重生，运行时收一档。
+   * 整体不透明度（0–1，缺省 1）。两段都乘它。
+   *
+   * 这个字段原先是「亮度闸门」，用来压住纯 additive 叠上去把挨打的人糊白的问题；
+   * 现在亮度由两段式混合本身管住了（见 `playFxAnimation`），它退回它本来的语义：
+   * **这个特效该有多透**。想让单位从特效里透出来（盾、光环）才调低它，
+   * 不要再拿它当亮度旋钮——调低亮度的代价是连形体一起变淡。
    */
   alpha?: number;
   /** 播放倍率。1 = 图集原速，小于 1 更慢、更能看清 */
   playbackSpeed?: number;
 }
+
 
 /**
  * 一次性序列帧特效（如挥砍）。播完自毁。返回时长(ms)。
@@ -369,28 +375,36 @@ export function playFxAnimation(
   const textures = getAnimTextures(setId, animName);
   if (!clip || textures.length === 0) return 0;
 
-  const sprite = new PIXI.AnimatedSprite(textures);
+  const isAdd = getAnimBlend(setId) === 'add';
+  const opacity = opts.alpha ?? 1;
   const native = textures[0]!.width || sizePx;
-  if (opts.lengthPx !== undefined) {
-    // 左端对齐施法者，横向拉到射程；纵向仍按 sizePx，否则细长射线会被一起拉粗
-    sprite.anchor.set(0, 0.5);
-    sprite.scale.set(opts.lengthPx / native, sizePx / native);
-  } else {
-    sprite.anchor.set(0.5);
-    sprite.scale.set(sizePx / native);
-  }
-  sprite.position.set(x, y);
-  sprite.rotation = opts.rotation ?? 0;
-  if (opts.alpha !== undefined) sprite.alpha = opts.alpha;
-  // 黑底发光特效用叠加混合，黑色不显示（对齐 Godot blend_mode=1）
-  if (getAnimBlend(setId) === 'add') sprite.blendMode = PIXI.BLEND_MODES.ADD;
-  sprite.loop = false;
+  const place = (sp: PIXI.AnimatedSprite): void => {
+    if (opts.lengthPx !== undefined) {
+      // 左端对齐施法者，横向拉到射程；纵向仍按 sizePx，否则细长射线会被一起拉粗
+      sp.anchor.set(0, 0.5);
+      sp.scale.set(opts.lengthPx / native, sizePx / native);
+    } else {
+      sp.anchor.set(0.5);
+      sp.scale.set(sizePx / native);
+    }
+    sp.position.set(x, y);
+    sp.rotation = opts.rotation ?? 0;
+    sp.loop = false;
+  };
+
+  const sprite = new PIXI.AnimatedSprite(textures);
+  place(sprite);
+  // 黑底特效走两段式（形体 + 核心），理由见 vfxBlend
+  if (isAdd) attachCorePass(sprite, textures, opacity);
+  else sprite.alpha = opacity;
+
   const speed = opts.playbackSpeed ?? 1;
   sprite.animationSpeed = ((clip.fps || 16) / 60) * speed;
   sprite.onComplete = () => {
     if (!sprite.destroyed) {
       layer.removeChild(sprite);
-      sprite.destroy();
+      // 核心层是子节点，跟着一起回收
+      sprite.destroy({ children: true });
     }
   };
   layer.addChild(sprite);

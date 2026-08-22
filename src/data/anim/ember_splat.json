@@ -1,0 +1,156 @@
+{
+  "id": "ember_splat",
+  "source": "art/vfx-runs/ember_splat",
+  "blend": "add",
+  "image": "images/anim/ember_splat.png",
+  "meta": {
+    "size": {
+      "w": 512,
+      "h": 512
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 49,
+    "baselineY": 147,
+    "ref": "ember_splat/ember_splat-1.png"
+  },
+  "frames": {
+    "ember_splat/ember_splat-1.png": {
+      "frame": {
+        "x": 375,
+        "y": 175,
+        "w": 121,
+        "h": 73
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 69,
+        "y": 78,
+        "w": 121,
+        "h": 73
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "ember_splat/ember_splat-2.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 216,
+        "h": 171
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 19,
+        "y": 0,
+        "w": 216,
+        "h": 171
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "ember_splat/ember_splat-3.png": {
+      "frame": {
+        "x": 220,
+        "y": 2,
+        "w": 217,
+        "h": 165
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 30,
+        "y": 0,
+        "w": 217,
+        "h": 165
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "ember_splat/ember_splat-4.png": {
+      "frame": {
+        "x": 2,
+        "y": 175,
+        "w": 196,
+        "h": 148
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 29,
+        "y": 5,
+        "w": 196,
+        "h": 148
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "ember_splat/ember_splat-5.png": {
+      "frame": {
+        "x": 200,
+        "y": 175,
+        "w": 173,
+        "h": 106
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 45,
+        "y": 38,
+        "w": 173,
+        "h": 106
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "ember_splat/ember_splat-6.png": {
+      "frame": {
+        "x": 2,
+        "y": 325,
+        "w": 148,
+        "h": 67
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 47,
+        "y": 71,
+        "w": 148,
+        "h": 67
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "ember_splat": {
+      "loop": false,
+      "fps": 24,
+      "frames": [
+        "ember_splat/ember_splat-1.png",
+        "ember_splat/ember_splat-2.png",
+        "ember_splat/ember_splat-3.png",
+        "ember_splat/ember_splat-4.png",
+        "ember_splat/ember_splat-5.png",
+        "ember_splat/ember_splat-6.png"
+      ]
+    }
+  }
+}

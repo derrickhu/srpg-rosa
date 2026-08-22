@@ -1,5 +1,6 @@
 import * as PIXI from 'pixi.js';
 import { makeText, type TextRole } from '@/theme/typography';
+import { isDisplayLive } from '@/view/pixiLive';
 
 /**
  * 战斗飘字——打击反馈的文字层。
@@ -198,6 +199,7 @@ export function spawnCombatFloat(
     const startY = t.y;
     const startScale = t.scale.x;
     await host.awaitEase(host.dur(st.durationMs), (k) => {
+      if (!isDisplayLive(t)) return;
       t.y = startY - st.risePx * k;
       if (k < 0.12) {
         t.alpha = 1;
@@ -253,6 +255,7 @@ export function spawnSkillNameTag(
   void (async () => {
     const startY = y;
     await host.awaitEase(host.dur(620), (k) => {
+      if (!isDisplayLive(tx)) return;
       if (k < 0.16) {
         const u = k / 0.16;
         tx.alpha = u;
@@ -311,6 +314,7 @@ export async function spawnRoundBanner(
   host.layer.addChild(banner);
 
   await host.awaitEase(host.dur(900), (k) => {
+    if (!isDisplayLive(banner)) return;
     if (k < 0.18) {
       const u = k / 0.18;
       banner.alpha = u;

@@ -6,32 +6,32 @@
   "meta": {
     "size": {
       "w": 1024,
-      "h": 1024
+      "h": 512
     },
     "scale": "1",
     "format": "RGBA8888"
   },
   "metrics": {
     "frameSize": 256,
-    "subjectHeight": 256,
-    "baselineY": 256,
+    "subjectHeight": 49,
+    "baselineY": 145,
     "ref": "bloodfang_roar/bloodfang_roar-1.png"
   },
   "frames": {
     "bloodfang_roar/bloodfang_roar-1.png": {
       "frame": {
-        "x": 2,
-        "y": 2,
-        "w": 256,
-        "h": 256
+        "x": 772,
+        "y": 260,
+        "w": 64,
+        "h": 63
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 101,
+        "y": 89,
+        "w": 64,
+        "h": 63
       },
       "sourceSize": {
         "w": 256,
@@ -40,18 +40,18 @@
     },
     "bloodfang_roar/bloodfang_roar-2.png": {
       "frame": {
-        "x": 260,
-        "y": 2,
-        "w": 256,
-        "h": 256
+        "x": 645,
+        "y": 260,
+        "w": 125,
+        "h": 197
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 66,
+        "y": 59,
+        "w": 125,
+        "h": 197
       },
       "sourceSize": {
         "w": 256,
@@ -60,18 +60,18 @@
     },
     "bloodfang_roar/bloodfang_roar-3.png": {
       "frame": {
-        "x": 518,
-        "y": 2,
-        "w": 256,
-        "h": 256
+        "x": 2,
+        "y": 260,
+        "w": 181,
+        "h": 227
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 32,
+        "y": 29,
+        "w": 181,
+        "h": 227
       },
       "sourceSize": {
         "w": 256,
@@ -80,18 +80,18 @@
     },
     "bloodfang_roar/bloodfang_roar-4.png": {
       "frame": {
-        "x": 2,
-        "y": 260,
-        "w": 256,
-        "h": 256
+        "x": 471,
+        "y": 2,
+        "w": 213,
+        "h": 254
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 24,
+        "y": 2,
+        "w": 213,
+        "h": 254
       },
       "sourceSize": {
         "w": 256,
@@ -100,17 +100,17 @@
     },
     "bloodfang_roar/bloodfang_roar-5.png": {
       "frame": {
-        "x": 260,
-        "y": 260,
-        "w": 256,
+        "x": 2,
+        "y": 2,
+        "w": 231,
         "h": 256
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
+        "x": 12,
         "y": 0,
-        "w": 256,
+        "w": 231,
         "h": 256
       },
       "sourceSize": {
@@ -120,17 +120,17 @@
     },
     "bloodfang_roar/bloodfang_roar-6.png": {
       "frame": {
-        "x": 518,
-        "y": 260,
-        "w": 256,
+        "x": 235,
+        "y": 2,
+        "w": 234,
         "h": 256
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
+        "x": 6,
         "y": 0,
-        "w": 256,
+        "w": 234,
         "h": 256
       },
       "sourceSize": {
@@ -140,18 +140,18 @@
     },
     "bloodfang_roar/bloodfang_roar-7.png": {
       "frame": {
-        "x": 2,
-        "y": 518,
-        "w": 256,
-        "h": 256
+        "x": 686,
+        "y": 2,
+        "w": 241,
+        "h": 230
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
+        "x": 11,
         "y": 0,
-        "w": 256,
-        "h": 256
+        "w": 241,
+        "h": 230
       },
       "sourceSize": {
         "w": 256,
@@ -160,18 +160,18 @@
     },
     "bloodfang_roar/bloodfang_roar-8.png": {
       "frame": {
-        "x": 260,
-        "y": 518,
-        "w": 256,
-        "h": 256
+        "x": 185,
+        "y": 260,
+        "w": 231,
+        "h": 224
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
+        "x": 12,
         "y": 0,
-        "w": 256,
-        "h": 256
+        "w": 231,
+        "h": 224
       },
       "sourceSize": {
         "w": 256,
@@ -180,18 +180,18 @@
     },
     "bloodfang_roar/bloodfang_roar-9.png": {
       "frame": {
-        "x": 518,
-        "y": 518,
-        "w": 256,
-        "h": 256
+        "x": 418,
+        "y": 260,
+        "w": 225,
+        "h": 222
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
+        "x": 10,
         "y": 0,
-        "w": 256,
-        "h": 256
+        "w": 225,
+        "h": 222
       },
       "sourceSize": {
         "w": 256,

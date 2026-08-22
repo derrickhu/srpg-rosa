@@ -1,37 +1,37 @@
 {
   "id": "temp_gl_swarm",
   "source": "art/vfx-runs/temp_gl_swarm",
-  "blend": "add",
+  "blend": "normal",
   "image": "images/anim/temp_gl_swarm.png",
   "meta": {
     "size": {
       "w": 1024,
-      "h": 1024
+      "h": 512
     },
     "scale": "1",
     "format": "RGBA8888"
   },
   "metrics": {
     "frameSize": 256,
-    "subjectHeight": 256,
-    "baselineY": 256,
+    "subjectHeight": 88,
+    "baselineY": 166,
     "ref": "temp_gl_swarm/temp_gl_swarm-1.png"
   },
   "frames": {
     "temp_gl_swarm/temp_gl_swarm-1.png": {
       "frame": {
-        "x": 2,
-        "y": 2,
-        "w": 256,
-        "h": 256
+        "x": 776,
+        "y": 219,
+        "w": 99,
+        "h": 96
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 79,
+        "y": 75,
+        "w": 99,
+        "h": 96
       },
       "sourceSize": {
         "w": 256,
@@ -40,18 +40,18 @@
     },
     "temp_gl_swarm/temp_gl_swarm-2.png": {
       "frame": {
-        "x": 260,
-        "y": 2,
-        "w": 256,
-        "h": 256
+        "x": 608,
+        "y": 219,
+        "w": 166,
+        "h": 157
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 42,
+        "y": 48,
+        "w": 166,
+        "h": 157
       },
       "sourceSize": {
         "w": 256,
@@ -60,18 +60,18 @@
     },
     "temp_gl_swarm/temp_gl_swarm-3.png": {
       "frame": {
-        "x": 518,
-        "y": 2,
-        "w": 256,
-        "h": 256
+        "x": 412,
+        "y": 219,
+        "w": 194,
+        "h": 186
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 25,
+        "y": 30,
+        "w": 194,
+        "h": 186
       },
       "sourceSize": {
         "w": 256,
@@ -81,17 +81,17 @@
     "temp_gl_swarm/temp_gl_swarm-4.png": {
       "frame": {
         "x": 2,
-        "y": 260,
-        "w": 256,
-        "h": 256
+        "y": 219,
+        "w": 220,
+        "h": 202
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 18,
+        "y": 19,
+        "w": 220,
+        "h": 202
       },
       "sourceSize": {
         "w": 256,
@@ -100,18 +100,18 @@
     },
     "temp_gl_swarm/temp_gl_swarm-5.png": {
       "frame": {
-        "x": 260,
-        "y": 260,
-        "w": 256,
-        "h": 256
+        "x": 721,
+        "y": 2,
+        "w": 234,
+        "h": 209
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 7,
+        "y": 14,
+        "w": 234,
+        "h": 209
       },
       "sourceSize": {
         "w": 256,
@@ -120,18 +120,18 @@
     },
     "temp_gl_swarm/temp_gl_swarm-6.png": {
       "frame": {
-        "x": 518,
-        "y": 260,
-        "w": 256,
-        "h": 256
+        "x": 238,
+        "y": 2,
+        "w": 249,
+        "h": 212
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
         "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "y": 7,
+        "w": 249,
+        "h": 212
       },
       "sourceSize": {
         "w": 256,
@@ -140,18 +140,18 @@
     },
     "temp_gl_swarm/temp_gl_swarm-7.png": {
       "frame": {
-        "x": 2,
-        "y": 518,
-        "w": 256,
-        "h": 256
+        "x": 489,
+        "y": 2,
+        "w": 230,
+        "h": 210
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 17,
+        "y": 3,
+        "w": 230,
+        "h": 210
       },
       "sourceSize": {
         "w": 256,
@@ -160,18 +160,18 @@
     },
     "temp_gl_swarm/temp_gl_swarm-8.png": {
       "frame": {
-        "x": 260,
-        "y": 518,
-        "w": 256,
-        "h": 256
+        "x": 2,
+        "y": 2,
+        "w": 234,
+        "h": 215
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 11,
+        "y": 3,
+        "w": 234,
+        "h": 215
       },
       "sourceSize": {
         "w": 256,
@@ -180,18 +180,18 @@
     },
     "temp_gl_swarm/temp_gl_swarm-9.png": {
       "frame": {
-        "x": 518,
-        "y": 518,
-        "w": 256,
-        "h": 256
+        "x": 224,
+        "y": 219,
+        "w": 186,
+        "h": 198
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 41,
+        "y": 14,
+        "w": 186,
+        "h": 198
       },
       "sourceSize": {
         "w": 256,

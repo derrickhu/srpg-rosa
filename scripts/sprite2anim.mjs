@@ -108,12 +108,19 @@ const SETS = [
       { dir: 'sword/attack_up', preset: 'attack', facing: 'up', fps: 12 },
     ],
   },
-  // 法师：仍是 idle 单帧，四向走/攻击后补。
+  // 法师 v2：四向走 + 杖击。prompt 见 docs/prompt/unit_mage_v2_*.txt。右向由左向镜像。
   {
     id: 'mage',
     blend: 'normal',
     downscale: 1,
-    runs: [{ dir: 'mage/idle', preset: 'single', label: 'mage-idle-1' }],
+    runs: [
+      { dir: 'mage/walk', preset: 'player_sheet', fps: 10, mirrorRight: true },
+      { dir: 'mage/walk', preset: 'idle_from_walk', mirrorRight: true },
+      { dir: 'mage/attack_down', preset: 'attack', facing: 'down', fps: 12 },
+      { dir: 'mage/attack_left', preset: 'attack', facing: 'left', fps: 12 },
+      { dir: 'mage/attack_left', preset: 'attack', facing: 'right', fps: 12, mirror: true },
+      { dir: 'mage/attack_up', preset: 'attack', facing: 'up', fps: 12 },
+    ],
   },
   // 祭司 v1：prompt 见 docs/prompt/unit_healer_v1_*.txt。右向由左向镜像。
   {
@@ -181,12 +188,10 @@ const SETS = [
     { id: 'thrust', frames: 6, fps: 24 },
     { id: 'bash_hit', frames: 6, fps: 24 },
     { id: 'charge_aura', frames: 6, fps: 24 },
-    { id: 'temp_gl_snare', frames: 9, fps: 20 },
     { id: 'temp_gl_salve', frames: 9, fps: 20 },
-    { id: 'temp_gl_swarm', frames: 9, fps: 20 },
-    { id: 'temp_gl_horn', frames: 9, fps: 20 },
     { id: 'ember_orb', frames: 6, fps: 16 },
     { id: 'ember_burst', frames: 6, fps: 24 },
+    { id: 'ember_splat', frames: 6, fps: 24 },
     { id: 'ember_wave', frames: 6, fps: 20 },
     { id: 'flame_ring', frames: 9, fps: 20 },
     { id: 'holy_orb', frames: 6, fps: 16 },
@@ -196,10 +201,71 @@ const SETS = [
     { id: 'heal_flash', frames: 9, fps: 20 },
     { id: 'ward_aegis', frames: 9, fps: 20 },
     { id: 'bless_rays', frames: 9, fps: 20 },
+    // 补齐原先「没有配方、退回静态贴图」的六招。形态各自唯一，见 docs/特效圣经 §7：
+    // 重劈=垂直劈裂、破阵斩=交叉双斩、速射=前向穿刺、铁锤=扁平砸地波、
+    // 长驱突刺=螺旋钻刺、践踏=离散蹄印环（全库唯一一个不是环的 AoE）
+    { id: 'cleave_slam', frames: 9, fps: 20 },
+    { id: 'blade_x', frames: 9, fps: 22 },
+    { id: 'snap_hit', frames: 9, fps: 24 },
+    { id: 'hammer_smash', frames: 9, fps: 20 },
+    { id: 'lance_pierce', frames: 9, fps: 20 },
+    { id: 'trample_dust', frames: 9, fps: 20 },
+    // 商店在卖但一直没有配方的两招。fps 都压到 16：
+    // 盾墙震慑要让三层环推得看得清，破甲咒是零伤害技能（回放里连数字都不飘），
+    // 必须让符印在敌人身上停住一会儿再裂，否则玩家以为这一发放空了
+    { id: 'shield_wall', frames: 9, fps: 16 },
+    { id: 'hex_mark', frames: 9, fps: 16 },
+    // 18 帧/秒：挥砍要「快得像一刀」但又得让人看清刀身扫过的角度。
+    // 再快刀身就糊了，等于回到单图运动
+    { id: 'sword_swing', frames: 9, fps: 18 },
+    // 第二、三章临时技能专属图。这两组原先全是借的（火把借法师炎环、绞缠借第一章缠足、
+    // 庇护和守林人共用祭司的圣光盾、撞城槌的尾迹居然是火系的 ember_wave、
+    // 压制借狂暴战吼、战旗借祭司祝福、钩索借骑兵冲锋光环），
+    // 于是「每章的专属第二技能」在屏幕上全是别人的招。形态各自唯一，见 docs/特效圣经 §7：
+    // 火把=四簇离散火苗（不是环）、绞缠=带刺藤蔓向内收网（全库唯一向内的）、
+    // 庇护=木甲片自下包裹、守林人=脚下生根+头顶展冠（唯一的上下双段构图）、
+    // 撞城槌=钝力新月向前推+石屑、压制=人字向下压（唯一向下的）、钩索=钩爪甩出+绳索绷紧
+    { id: 'temp_fo_torch', frames: 9, fps: 18 },
+    { id: 'temp_ft_ram', frames: 9, fps: 22 },
+    { id: 'temp_ft_suppress', frames: 9, fps: 18 },
   ].map(({ id, frames, fps }) => ({
     id,
     vfx: true,
     blend: 'add',
+    downscale: 1,
+    runs: [{ dir: id, preset: 'vfx', as: id, frames, fps }],
+  })),
+  // ── 抠图**实体**特效：普通混合，不叠 additive 核心层 ────────────────────
+  //
+  // 和上面那一批的区别不是风格偏好，是**物理性质**：additive 的前提是「暗部即透明」，
+  // 而这一批的东西本身不发光——藤蔓、树皮、根须、蜜蜂、铁钩都是物质。
+  //
+  // 走错这条路会同时坏两件事，两件都被量到过：
+  // 1. 质感丢了。蜜蜂身上最有辨识度的是黑条纹，additive 把条纹整个吃掉，
+  //    剩一团发光的黄雾。
+  // 2. **在草地上根本看不见。** 战场草地是 RGB(202,225,54)、亮度 199，
+  //    而 additive 管线按亮度烘 alpha，暗部一律变透明——于是 additive 素材
+  //    只有亮部能显示，亮的绿又正好和草地重合。实测「自身像素中和草地色差 <60
+  //    的比例」：野草缠足 64%、树皮庇护 63%、荆棘绞缠 53%、蜂群命中 52%、
+  //    守林人 50%。同一个指标下走抠图的蜂群弹体是 4%。
+  //    结论不是「画亮一点」（那正是玩家抱怨的太亮），是这些零件本来就该走抠图，
+  //    让**深色**的实体去和亮草地拉开明度差。
+  //
+  // 键底按主体色相挑，见 scripts/chroma.py：偏绿的（藤蔓、树皮、根须）用洋红，
+  // 偏暖的（蜜蜂）用绿幕。蜜蜂拿洋红键过一次，模型直接把粉画进了翅膀，
+  // 13.6% 的可见像素是粉的；换绿幕后同一判据降到 0.06%。
+  ...[
+    { id: 'swarm_bees', frames: 6, fps: 14 },
+    { id: 'temp_gl_snare', frames: 9, fps: 20 },
+    { id: 'temp_gl_swarm', frames: 9, fps: 20 },
+    { id: 'temp_fo_thorn', frames: 9, fps: 18 },
+    { id: 'temp_fo_bark', frames: 9, fps: 20 },
+    { id: 'temp_fo_warden', frames: 9, fps: 20 },
+    { id: 'temp_ft_grapple', frames: 9, fps: 20 },
+  ].map(({ id, frames, fps }) => ({
+    id,
+    vfx: true,
+    blend: 'normal',
     downscale: 1,
     runs: [{ dir: id, preset: 'vfx', as: id, frames, fps }],
   })),

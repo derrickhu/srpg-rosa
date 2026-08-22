@@ -1,6 +1,6 @@
 {
   "source": "scripts/vfx-sheet.py",
-  "input": ".tmp-gen/thrust_raw.png",
+  "input": "/Users/rosa/rosa_games/srpg-rosa/art/vfx-runs/thrust/raw-sheet.png",
   "target": "vfx",
   "mode": "vfx_sheet",
   "rows": 2,
@@ -15,6 +15,8 @@
     "thrust-5",
     "thrust-6"
   ],
+  "align": "centroid",
+  "alpha_gamma": 2.0,
   "shared_crop_side": 321,
   "crop_offsets": [
     {

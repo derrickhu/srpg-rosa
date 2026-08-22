@@ -6,32 +6,32 @@
   "meta": {
     "size": {
       "w": 1024,
-      "h": 1024
+      "h": 512
     },
     "scale": "1",
     "format": "RGBA8888"
   },
   "metrics": {
     "frameSize": 256,
-    "subjectHeight": 256,
-    "baselineY": 256,
+    "subjectHeight": 65,
+    "baselineY": 158,
     "ref": "flame_ring/flame_ring-1.png"
   },
   "frames": {
     "flame_ring/flame_ring-1.png": {
       "frame": {
-        "x": 2,
-        "y": 2,
-        "w": 256,
-        "h": 256
+        "x": 830,
+        "y": 247,
+        "w": 66,
+        "h": 72
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 96,
+        "y": 92,
+        "w": 66,
+        "h": 72
       },
       "sourceSize": {
         "w": 256,
@@ -40,18 +40,18 @@
     },
     "flame_ring/flame_ring-2.png": {
       "frame": {
-        "x": 260,
-        "y": 2,
-        "w": 256,
-        "h": 256
+        "x": 681,
+        "y": 247,
+        "w": 147,
+        "h": 150
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 57,
+        "y": 53,
+        "w": 147,
+        "h": 150
       },
       "sourceSize": {
         "w": 256,
@@ -60,18 +60,18 @@
     },
     "flame_ring/flame_ring-3.png": {
       "frame": {
-        "x": 518,
-        "y": 2,
-        "w": 256,
-        "h": 256
+        "x": 462,
+        "y": 247,
+        "w": 217,
+        "h": 215
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 22,
+        "y": 20,
+        "w": 217,
+        "h": 215
       },
       "sourceSize": {
         "w": 256,
@@ -81,17 +81,17 @@
     "flame_ring/flame_ring-4.png": {
       "frame": {
         "x": 2,
-        "y": 260,
-        "w": 256,
-        "h": 256
+        "y": 247,
+        "w": 225,
+        "h": 226
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 18,
+        "y": 14,
+        "w": 225,
+        "h": 226
       },
       "sourceSize": {
         "w": 256,
@@ -100,18 +100,18 @@
     },
     "flame_ring/flame_ring-5.png": {
       "frame": {
-        "x": 260,
-        "y": 260,
-        "w": 256,
-        "h": 256
+        "x": 229,
+        "y": 247,
+        "w": 231,
+        "h": 226
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 16,
+        "y": 13,
+        "w": 231,
+        "h": 226
       },
       "sourceSize": {
         "w": 256,
@@ -120,18 +120,18 @@
     },
     "flame_ring/flame_ring-6.png": {
       "frame": {
-        "x": 518,
-        "y": 260,
-        "w": 256,
-        "h": 256
+        "x": 248,
+        "y": 2,
+        "w": 239,
+        "h": 237
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 13,
+        "y": 10,
+        "w": 239,
+        "h": 237
       },
       "sourceSize": {
         "w": 256,
@@ -141,17 +141,17 @@
     "flame_ring/flame_ring-7.png": {
       "frame": {
         "x": 2,
-        "y": 518,
-        "w": 256,
-        "h": 256
+        "y": 2,
+        "w": 244,
+        "h": 243
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 11,
+        "y": 5,
+        "w": 244,
+        "h": 243
       },
       "sourceSize": {
         "w": 256,
@@ -160,18 +160,18 @@
     },
     "flame_ring/flame_ring-8.png": {
       "frame": {
-        "x": 260,
-        "y": 518,
-        "w": 256,
-        "h": 256
+        "x": 489,
+        "y": 2,
+        "w": 235,
+        "h": 237
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 15,
+        "y": 7,
+        "w": 235,
+        "h": 237
       },
       "sourceSize": {
         "w": 256,
@@ -180,18 +180,18 @@
     },
     "flame_ring/flame_ring-9.png": {
       "frame": {
-        "x": 518,
-        "y": 518,
-        "w": 256,
-        "h": 256
+        "x": 726,
+        "y": 2,
+        "w": 227,
+        "h": 227
       },
       "rotated": false,
-      "trimmed": false,
+      "trimmed": true,
       "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 256,
-        "h": 256
+        "x": 18,
+        "y": 15,
+        "w": 227,
+        "h": 227
       },
       "sourceSize": {
         "w": 256,

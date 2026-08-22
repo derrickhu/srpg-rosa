@@ -26,9 +26,9 @@ import chargeAuraManifest from '@/data/anim/charge_aura.json';
 import tempGlSnareManifest from '@/data/anim/temp_gl_snare.json';
 import tempGlSalveManifest from '@/data/anim/temp_gl_salve.json';
 import tempGlSwarmManifest from '@/data/anim/temp_gl_swarm.json';
-import tempGlHornManifest from '@/data/anim/temp_gl_horn.json';
 import emberOrbManifest from '@/data/anim/ember_orb.json';
 import emberBurstManifest from '@/data/anim/ember_burst.json';
+import emberSplatManifest from '@/data/anim/ember_splat.json';
 import emberWaveManifest from '@/data/anim/ember_wave.json';
 import flameRingManifest from '@/data/anim/flame_ring.json';
 import holyOrbManifest from '@/data/anim/holy_orb.json';
@@ -37,6 +37,28 @@ import holyBoltManifest from '@/data/anim/holy_bolt.json';
 import healFlashManifest from '@/data/anim/heal_flash.json';
 import wardAegisManifest from '@/data/anim/ward_aegis.json';
 import blessRaysManifest from '@/data/anim/bless_rays.json';
+// 补齐原先没有配方、只能退回静态贴图的六招（重劈 / 破阵斩 / 速射 / 铁锤 / 长驱突刺 / 践踏）
+import cleaveSlamManifest from '@/data/anim/cleave_slam.json';
+import bladeXManifest from '@/data/anim/blade_x.json';
+import snapHitManifest from '@/data/anim/snap_hit.json';
+import hammerSmashManifest from '@/data/anim/hammer_smash.json';
+import lancePierceManifest from '@/data/anim/lance_pierce.json';
+import trampleDustManifest from '@/data/anim/trample_dust.json';
+import shieldWallManifest from '@/data/anim/shield_wall.json';
+import hexMarkManifest from '@/data/anim/hex_mark.json';
+import swordSwingManifest from '@/data/anim/sword_swing.json';
+// 第二、三章临时技能专属图。这两组原先全是借角色技能的图（见 docs/特效圣经 §7.1），
+// 于是「每章的专属第二技能」在屏幕上全是别人的招
+import tempFoTorchManifest from '@/data/anim/temp_fo_torch.json';
+import tempFoThornManifest from '@/data/anim/temp_fo_thorn.json';
+import tempFoBarkManifest from '@/data/anim/temp_fo_bark.json';
+import tempFoWardenManifest from '@/data/anim/temp_fo_warden.json';
+import tempFtRamManifest from '@/data/anim/temp_ft_ram.json';
+import tempFtSuppressManifest from '@/data/anim/temp_ft_suppress.json';
+import tempFtGrappleManifest from '@/data/anim/temp_ft_grapple.json';
+// 蜂群弹体：唯一一个走**普通混合**的多帧弹体。蜜蜂是实体不是光，
+// additive 会把黑条纹吃掉、只剩一团发光的黄雾
+import swarmBeesManifest from '@/data/anim/swarm_bees.json';
 
 /**
  * 「图集 + 动画清单」，每个集合一张图集 PNG（images/anim/<id>.png）+ TexturePacker-Hash
@@ -121,13 +143,21 @@ const MANIFESTS: Record<string, AnimManifest> = {
   temp_gl_snare: tempGlSnareManifest as AnimManifest,
   temp_gl_salve: tempGlSalveManifest as AnimManifest,
   temp_gl_swarm: tempGlSwarmManifest as AnimManifest,
-  temp_gl_horn: tempGlHornManifest as AnimManifest,
+  swarm_bees: swarmBeesManifest as AnimManifest,
+  temp_fo_torch: tempFoTorchManifest as AnimManifest,
+  temp_fo_thorn: tempFoThornManifest as AnimManifest,
+  temp_fo_bark: tempFoBarkManifest as AnimManifest,
+  temp_fo_warden: tempFoWardenManifest as AnimManifest,
+  temp_ft_ram: tempFtRamManifest as AnimManifest,
+  temp_ft_suppress: tempFtSuppressManifest as AnimManifest,
+  temp_ft_grapple: tempFtGrappleManifest as AnimManifest,
   arrow_hit: arrowHitManifest as AnimManifest,
   thrust: thrustManifest as AnimManifest,
   bash_hit: bashHitManifest as AnimManifest,
   charge_aura: chargeAuraManifest as AnimManifest,
   ember_orb: emberOrbManifest as AnimManifest,
   ember_burst: emberBurstManifest as AnimManifest,
+  ember_splat: emberSplatManifest as AnimManifest,
   ember_wave: emberWaveManifest as AnimManifest,
   flame_ring: flameRingManifest as AnimManifest,
   holy_orb: holyOrbManifest as AnimManifest,
@@ -136,6 +166,15 @@ const MANIFESTS: Record<string, AnimManifest> = {
   heal_flash: healFlashManifest as AnimManifest,
   ward_aegis: wardAegisManifest as AnimManifest,
   bless_rays: blessRaysManifest as AnimManifest,
+  cleave_slam: cleaveSlamManifest as AnimManifest,
+  blade_x: bladeXManifest as AnimManifest,
+  snap_hit: snapHitManifest as AnimManifest,
+  hammer_smash: hammerSmashManifest as AnimManifest,
+  lance_pierce: lancePierceManifest as AnimManifest,
+  trample_dust: trampleDustManifest as AnimManifest,
+  shield_wall: shieldWallManifest as AnimManifest,
+  hex_mark: hexMarkManifest as AnimManifest,
+  sword_swing: swordSwingManifest as AnimManifest,
 };
 
 /**
@@ -182,17 +221,31 @@ const CORE_SET_IDS: readonly string[] = [
   // 职业普攻特效：每场必用。少一张的表现是那个职业的普攻悄悄
   // 退回剑士的挥砍，而这种降级没人会当成 bug 报上来，所以宁可排进优先段
   'slash',
+  // 剑士普攻的挥砍逐帧图。它取代了「拿一张剑的抠图沿弧线旋转钉下去」，
+  // 是每场必用的部件，缺了普攻就只剩命中闪光、看不见挥
+  'sword_swing',
   'arrow_hit',
   'thrust',
   'bash_hit',
-  // 默认技能特效：一进第一关就会看到（AI 杂兵也放），合计 170KB
+  // 法师普攻的命中溅射。缺了它法师普攻就只剩火球飞过去、打上没有反应
+  'ember_splat',
+  // 默认技能特效：一进第一关就会看到（AI 杂兵也放），合计 170KB。
+  // 优先段的意义是「第一关就要就位」，排错位置等于让首关多等一份别处才用的图集。
+  //
+  // `ember_wave` 曾经排在这里，被移出的理由当时写成「它只给撞城槌用」，两处都不准：
+  // 撞城槌在**第三章**（不是第四章），而且它现在也不用 `ember_wave` 了——
+  // 那是一张火系素材，挂在攻城器械上完全不搭，当时塞进去只为救活一个死资产。
+  // 所以 `ember_wave` 现在**没有任何配方引用**，是明确的待用状态。
+  //
+  // 顺带修正一个我自己用错过的口径：优先段之外的图集是**按需**加载的，
+  // 所以一个没人引用的 anim set 并不「照样占下载量」，它只占清单 JSON 那几百字节。
+  // 真正会因为死条目白掉流量的是 `FX_BUNDLE`——那个是 `loadBundle` 整包拉的。
   'whirl',
   'pierce',
   'quake',
   'charge_aura',
   'ember_orb',
   'ember_burst',
-  'ember_wave',
   'flame_ring',
   'holy_orb',
   'holy_burst',

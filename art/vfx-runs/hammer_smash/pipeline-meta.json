@@ -1,0 +1,67 @@
+{
+  "source": "scripts/vfx-sheet.py",
+  "input": "/Users/rosa/rosa_games/srpg-rosa/art/vfx-runs/hammer_smash/raw-sheet.png",
+  "target": "vfx",
+  "mode": "vfx_sheet",
+  "rows": 3,
+  "cols": 3,
+  "cell_size": 256,
+  "threshold": 22,
+  "frame_labels": [
+    "hammer_smash-1",
+    "hammer_smash-2",
+    "hammer_smash-3",
+    "hammer_smash-4",
+    "hammer_smash-5",
+    "hammer_smash-6",
+    "hammer_smash-7",
+    "hammer_smash-8",
+    "hammer_smash-9"
+  ],
+  "align": "centroid",
+  "alpha_gamma": 2.0,
+  "shared_crop_side": 341,
+  "crop_offsets": [
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "empty_frames": [],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}

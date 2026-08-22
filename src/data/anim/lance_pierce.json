@@ -1,0 +1,219 @@
+{
+  "id": "lance_pierce",
+  "source": "art/vfx-runs/lance_pierce",
+  "blend": "add",
+  "image": "images/anim/lance_pierce.png",
+  "meta": {
+    "size": {
+      "w": 512,
+      "h": 1024
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 102,
+    "baselineY": 202,
+    "ref": "lance_pierce/lance_pierce-1.png"
+  },
+  "frames": {
+    "lance_pierce/lance_pierce-1.png": {
+      "frame": {
+        "x": 256,
+        "y": 2,
+        "w": 239,
+        "h": 126
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 17,
+        "y": 95,
+        "w": 239,
+        "h": 126
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "lance_pierce/lance_pierce-2.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 252,
+        "h": 140
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 3,
+        "y": 85,
+        "w": 252,
+        "h": 140
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "lance_pierce/lance_pierce-3.png": {
+      "frame": {
+        "x": 2,
+        "y": 144,
+        "w": 243,
+        "h": 114
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 4,
+        "y": 99,
+        "w": 243,
+        "h": 114
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "lance_pierce/lance_pierce-4.png": {
+      "frame": {
+        "x": 247,
+        "y": 144,
+        "w": 227,
+        "h": 106
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 18,
+        "y": 76,
+        "w": 227,
+        "h": 106
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "lance_pierce/lance_pierce-5.png": {
+      "frame": {
+        "x": 2,
+        "y": 260,
+        "w": 223,
+        "h": 100
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 16,
+        "y": 79,
+        "w": 223,
+        "h": 100
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "lance_pierce/lance_pierce-6.png": {
+      "frame": {
+        "x": 227,
+        "y": 260,
+        "w": 217,
+        "h": 92
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 15,
+        "y": 84,
+        "w": 217,
+        "h": 92
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "lance_pierce/lance_pierce-7.png": {
+      "frame": {
+        "x": 2,
+        "y": 362,
+        "w": 209,
+        "h": 91
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 24,
+        "y": 61,
+        "w": 209,
+        "h": 91
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "lance_pierce/lance_pierce-8.png": {
+      "frame": {
+        "x": 213,
+        "y": 362,
+        "w": 195,
+        "h": 86
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 27,
+        "y": 63,
+        "w": 195,
+        "h": 86
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "lance_pierce/lance_pierce-9.png": {
+      "frame": {
+        "x": 2,
+        "y": 455,
+        "w": 180,
+        "h": 74
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 34,
+        "y": 73,
+        "w": 180,
+        "h": 74
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "lance_pierce": {
+      "loop": false,
+      "fps": 20,
+      "frames": [
+        "lance_pierce/lance_pierce-1.png",
+        "lance_pierce/lance_pierce-2.png",
+        "lance_pierce/lance_pierce-3.png",
+        "lance_pierce/lance_pierce-4.png",
+        "lance_pierce/lance_pierce-5.png",
+        "lance_pierce/lance_pierce-6.png",
+        "lance_pierce/lance_pierce-7.png",
+        "lance_pierce/lance_pierce-8.png",
+        "lance_pierce/lance_pierce-9.png"
+      ]
+    }
+  }
+}

@@ -1,0 +1,219 @@
+{
+  "id": "temp_ft_ram",
+  "source": "art/vfx-runs/temp_ft_ram",
+  "blend": "add",
+  "image": "images/anim/temp_ft_ram.png",
+  "meta": {
+    "size": {
+      "w": 1024,
+      "h": 512
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 81,
+    "baselineY": 165,
+    "ref": "temp_ft_ram/temp_ft_ram-1.png"
+  },
+  "frames": {
+    "temp_ft_ram/temp_ft_ram-1.png": {
+      "frame": {
+        "x": 511,
+        "y": 208,
+        "w": 66,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 64,
+        "y": 73,
+        "w": 66,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_ft_ram/temp_ft_ram-2.png": {
+      "frame": {
+        "x": 2,
+        "y": 208,
+        "w": 156,
+        "h": 172
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 28,
+        "y": 51,
+        "w": 156,
+        "h": 172
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_ft_ram/temp_ft_ram-3.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 233,
+        "h": 204
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 33,
+        "w": 233,
+        "h": 204
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_ft_ram/temp_ft_ram-4.png": {
+      "frame": {
+        "x": 237,
+        "y": 2,
+        "w": 237,
+        "h": 185
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 16,
+        "y": 23,
+        "w": 237,
+        "h": 185
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_ft_ram/temp_ft_ram-5.png": {
+      "frame": {
+        "x": 476,
+        "y": 2,
+        "w": 224,
+        "h": 181
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 17,
+        "y": 24,
+        "w": 224,
+        "h": 181
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_ft_ram/temp_ft_ram-6.png": {
+      "frame": {
+        "x": 702,
+        "y": 2,
+        "w": 231,
+        "h": 175
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 19,
+        "y": 29,
+        "w": 231,
+        "h": 175
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_ft_ram/temp_ft_ram-7.png": {
+      "frame": {
+        "x": 160,
+        "y": 208,
+        "w": 205,
+        "h": 170
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 42,
+        "y": 15,
+        "w": 205,
+        "h": 170
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_ft_ram/temp_ft_ram-8.png": {
+      "frame": {
+        "x": 367,
+        "y": 208,
+        "w": 142,
+        "h": 159
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 52,
+        "y": 25,
+        "w": 142,
+        "h": 159
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_ft_ram/temp_ft_ram-9.png": {
+      "frame": {
+        "x": 579,
+        "y": 208,
+        "w": 130,
+        "h": 124
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 51,
+        "y": 48,
+        "w": 130,
+        "h": 124
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "temp_ft_ram": {
+      "loop": false,
+      "fps": 22,
+      "frames": [
+        "temp_ft_ram/temp_ft_ram-1.png",
+        "temp_ft_ram/temp_ft_ram-2.png",
+        "temp_ft_ram/temp_ft_ram-3.png",
+        "temp_ft_ram/temp_ft_ram-4.png",
+        "temp_ft_ram/temp_ft_ram-5.png",
+        "temp_ft_ram/temp_ft_ram-6.png",
+        "temp_ft_ram/temp_ft_ram-7.png",
+        "temp_ft_ram/temp_ft_ram-8.png",
+        "temp_ft_ram/temp_ft_ram-9.png"
+      ]
+    }
+  }
+}

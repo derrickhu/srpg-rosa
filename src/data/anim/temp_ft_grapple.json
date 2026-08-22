@@ -1,0 +1,219 @@
+{
+  "id": "temp_ft_grapple",
+  "source": "art/vfx-runs/temp_ft_grapple",
+  "blend": "normal",
+  "image": "images/anim/temp_ft_grapple.png",
+  "meta": {
+    "size": {
+      "w": 512,
+      "h": 512
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 56,
+    "baselineY": 151,
+    "ref": "temp_ft_grapple/temp_ft_grapple-1.png"
+  },
+  "frames": {
+    "temp_ft_grapple/temp_ft_grapple-1.png": {
+      "frame": {
+        "x": 117,
+        "y": 363,
+        "w": 138,
+        "h": 63
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 93,
+        "w": 138,
+        "h": 63
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_ft_grapple/temp_ft_grapple-2.png": {
+      "frame": {
+        "x": 297,
+        "y": 2,
+        "w": 143,
+        "h": 157
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 45,
+        "w": 143,
+        "h": 157
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_ft_grapple/temp_ft_grapple-3.png": {
+      "frame": {
+        "x": 170,
+        "y": 2,
+        "w": 125,
+        "h": 200
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 22,
+        "w": 125,
+        "h": 200
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_ft_grapple/temp_ft_grapple-4.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 166,
+        "h": 214
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 166,
+        "h": 214
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_ft_grapple/temp_ft_grapple-5.png": {
+      "frame": {
+        "x": 2,
+        "y": 218,
+        "w": 156,
+        "h": 143
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 40,
+        "w": 156,
+        "h": 143
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_ft_grapple/temp_ft_grapple-6.png": {
+      "frame": {
+        "x": 160,
+        "y": 218,
+        "w": 163,
+        "h": 135
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 42,
+        "w": 163,
+        "h": 135
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_ft_grapple/temp_ft_grapple-7.png": {
+      "frame": {
+        "x": 325,
+        "y": 218,
+        "w": 147,
+        "h": 118
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 40,
+        "w": 147,
+        "h": 118
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_ft_grapple/temp_ft_grapple-8.png": {
+      "frame": {
+        "x": 2,
+        "y": 363,
+        "w": 113,
+        "h": 111
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 53,
+        "w": 113,
+        "h": 111
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_ft_grapple/temp_ft_grapple-9.png": {
+      "frame": {
+        "x": 257,
+        "y": 363,
+        "w": 43,
+        "h": 46
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 87,
+        "w": 43,
+        "h": 46
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "temp_ft_grapple": {
+      "loop": false,
+      "fps": 20,
+      "frames": [
+        "temp_ft_grapple/temp_ft_grapple-1.png",
+        "temp_ft_grapple/temp_ft_grapple-2.png",
+        "temp_ft_grapple/temp_ft_grapple-3.png",
+        "temp_ft_grapple/temp_ft_grapple-4.png",
+        "temp_ft_grapple/temp_ft_grapple-5.png",
+        "temp_ft_grapple/temp_ft_grapple-6.png",
+        "temp_ft_grapple/temp_ft_grapple-7.png",
+        "temp_ft_grapple/temp_ft_grapple-8.png",
+        "temp_ft_grapple/temp_ft_grapple-9.png"
+      ]
+    }
+  }
+}

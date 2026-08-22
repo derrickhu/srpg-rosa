@@ -18,6 +18,7 @@ import {
   vfxSetsForKinds,
   type FlashDef,
   type PropBurstDef,
+  type ShakeSpec,
   type VfxRecipe,
 } from '@/data/vfxCatalog';
 import { emitSparks } from '@/view/battle/vfxSparks';
@@ -27,7 +28,9 @@ import {
   playHitBurst,
   playPathBeam,
   playSlashSweep,
+  playWindup,
 } from '@/view/battle/vfxProcedural';
+import { createBoardShaker } from '@/view/battle/cameraShake';
 import {
   spawnCombatFloat,
   spawnRoundBanner,
@@ -42,6 +45,8 @@ import {
   createUnitToken,
   createBackground,
   createUiIcon,
+  RUN_GOLD_X,
+  runGoldYBelow,
 } from '@/view/renderHelpers';
 import { makeButton } from '@/ui/Button';
 import { AssetManager } from '@/core/AssetManager';
@@ -51,7 +56,9 @@ import {
   unitHeadLocalY,
   type AnimatedUnitHandle,
 } from '@/view/AnimatedUnit';
+import { isDisplayLive } from '@/view/pixiLive';
 import {
+  AOE_STAGGER_MS,
   HIT_FLASH_MS,
   HIT_KNOCK_MS,
   HIT_KNOCK_PX,
@@ -82,6 +89,7 @@ import {
 import { battleUnitInfoModel } from '@/view/unitInfoModel';
 import { createUnitInfoOverlay } from '@/view/unitInfoPanel';
 import { getSafeAreaInsets } from '@/core/safeArea';
+import { splitStageGold } from '@/game/state/ProgressManager';
 import type { SkillDef } from '@/battle/types';
 
 export interface PlaybackScreen {
@@ -92,6 +100,8 @@ export interface PlaybackScreen {
 export interface PlaybackState {
   nodeLabel: string;
   gold: number;
+  /** 本场胜利应到手的金币总额；按击杀拆开发飞向金币栏 */
+  goldReward: number;
   /** 本局药剂库存（战斗中可用） */
   potions: Record<string, number>;
   /** 使用药剂后同步扣减 run 库存 */
@@ -100,6 +110,8 @@ export interface PlaybackState {
   onPickupPotion?: (potionId: string) => void;
   /** 无尽第二波起不能回布阵：站位已经带过来了，回去等于拆掉这一局 */
   allowReturnDeploy?: boolean;
+  /** 特效试炼：连放 + GM 清冷却 */
+  sandbox?: boolean;
 }
 
 export interface PlaybackCallbacks {
@@ -204,22 +216,37 @@ export function createBattlePlaybackView(
 
   function awaitEase(ms: number, onProgress: (t: number) => void): Promise<void> {
     return new Promise((resolve) => {
-      if (skipping) {
-        onProgress(1);
-        resolve();
-        return;
-      }
       let acc = 0;
+      const finish = (): void => {
+        app.ticker.remove(step);
+        resolve();
+      };
       const step = (): void => {
+        // 切场景时 root 先被拆。回调里写 x/y 会抛，一抛这里摘不掉 ticker，之后每帧都炸。
+        if (root.destroyed) {
+          finish();
+          return;
+        }
         acc += app.ticker.deltaMS;
         const k = skipping ? 1 : Math.min(1, acc / ms);
         const e = 1 - (1 - k) ** 2;
-        onProgress(e);
-        if (k >= 1) {
-          app.ticker.remove(step);
-          resolve();
+        try {
+          onProgress(e);
+        } catch {
+          finish();
+          return;
         }
+        if (k >= 1) finish();
       };
+      if (skipping) {
+        try {
+          onProgress(1);
+        } catch {
+          /* 跳过时对象可能已经没了 */
+        }
+        resolve();
+        return;
+      }
       app.ticker.add(step);
     });
   }
@@ -239,6 +266,12 @@ export function createBattlePlaybackView(
   root.addChild(tokenLayer);
   root.addChild(inputLayer);
   root.addChild(fxLayer);
+
+  /**
+   * 震动只带棋盘相关的层。背景不带（整屏晃很晕）、HUD 不带（读起来像界面坏了）、
+   * 点击层不带（命中区跟着位移，手感会漂）。
+   */
+  const shaker = createBoardShaker([gridLayer, dropLayer, rangeLayer, tokenLayer, fxLayer]);
 
   // --- 设置按钮（左上角齿轮） ---
   const settingsBtnSize = 36;
@@ -298,43 +331,14 @@ export function createBattlePlaybackView(
     root.addChild(hintTx);
     void (async () => {
       await awaitEase(3500, () => {});
-      await awaitEase(500, (k) => { hintTx.alpha = 1 - k; });
+      await awaitEase(500, (k) => {
+        if (isDisplayLive(hintTx)) hintTx.alpha = 1 - k;
+      });
       if (!hintTx.destroyed) {
         root.removeChild(hintTx);
         hintTx.destroy();
       }
     })();
-  }
-
-  // --- 金币（设置按钮下方） ---
-  {
-    const goldIconSize = 22;
-    const goldValueTx = makeText(`${gameState.gold}`, 'uiStrong', { fill: 0xffffff });
-    const goldPadX = 6;
-    const goldPadY = 4;
-    const goldBgW = goldIconSize + 4 + goldValueTx.width + goldPadX * 2;
-    const goldBgH = Math.max(goldIconSize, goldValueTx.height) + goldPadY * 2;
-
-    const goldContainer = new PIXI.Container();
-    goldContainer.x = 8;
-    goldContainer.y = settingsBtn.y + settingsBtnSize + 4;
-
-    const goldBg2 = new PIXI.Graphics();
-    goldBg2.beginFill(0x000000, 0.4);
-    goldBg2.drawRoundedRect(0, 0, goldBgW, goldBgH, 8);
-    goldBg2.endFill();
-    goldContainer.addChild(goldBg2);
-
-    const goldIcon = createUiIcon('icon_gold', goldIconSize);
-    if (goldIcon) {
-      goldIcon.x = goldPadX;
-      goldIcon.y = (goldBgH - goldIconSize) / 2;
-      goldContainer.addChild(goldIcon);
-    }
-    goldValueTx.x = goldPadX + goldIconSize + 4;
-    goldValueTx.y = (goldBgH - goldValueTx.height) / 2;
-    goldContainer.addChild(goldValueTx);
-    root.addChild(goldContainer);
   }
 
   // --- 右上：倍速 + 跳过。贴在胶囊**下方**右对齐，不要和微信 ···/⊙ 叠在一起 ---
@@ -359,7 +363,8 @@ export function createBattlePlaybackView(
   drawSpeedBtn();
   speedBtn.addChild(speedBg);
   speedBtn.addChild(speedLbl);
-  speedBtn.x = sw - skipBtnW - 8 - 6 - speedBtnW;
+  const cdBtnW = 54;
+  speedBtn.x = sw - skipBtnW - 8 - 6 - speedBtnW - (gameState.sandbox ? cdBtnW + 6 : 0);
   speedBtn.y = topCtrlY;
   speedBtn.eventMode = 'static';
   speedBtn.cursor = 'pointer';
@@ -370,6 +375,30 @@ export function createBattlePlaybackView(
   });
   root.addChild(speedBtn);
 
+  if (gameState.sandbox) {
+    const cdBtn = new PIXI.Container();
+    const cdBg = new PIXI.Graphics();
+    cdBg.lineStyle(1.5, 0xc4a052, 1);
+    cdBg.beginFill(0x3a2a10, 0.75);
+    cdBg.drawRoundedRect(0, 0, cdBtnW, ctrlH, 10);
+    cdBg.endFill();
+    cdBtn.addChild(cdBg);
+    const cdLbl = makeText('CD清零', 'ui', { fill: 0xffe08a, fontSize: 12 });
+    cdLbl.anchor.set(0.5);
+    cdLbl.x = cdBtnW / 2;
+    cdLbl.y = ctrlH / 2;
+    cdBtn.addChild(cdLbl);
+    cdBtn.x = sw - skipBtnW - 8 - 6 - cdBtnW;
+    cdBtn.y = topCtrlY;
+    cdBtn.eventMode = 'static';
+    cdBtn.cursor = 'pointer';
+    cdBtn.hitArea = new PIXI.Rectangle(0, 0, cdBtnW, ctrlH);
+    cdBtn.on('pointertap', () => {
+      sim.clearSkillCds();
+    });
+    root.addChild(cdBtn);
+  }
+
   const skipBtn = new PIXI.Container();
   const skipBg = new PIXI.Graphics();
   skipBg.lineStyle(1.5, 0x888888, 1);
@@ -377,7 +406,7 @@ export function createBattlePlaybackView(
   skipBg.drawRoundedRect(0, 0, skipBtnW, ctrlH, 10);
   skipBg.endFill();
   skipBtn.addChild(skipBg);
-  const skipLbl = makeText('跳过', 'ui', { fill: 0xffffff, fontSize: 13 });
+  const skipLbl = makeText(gameState.sandbox ? '回布阵' : '跳过', 'ui', { fill: 0xffffff, fontSize: 13 });
   skipLbl.anchor.set(0.5);
   skipLbl.x = skipBtnW / 2;
   skipLbl.y = ctrlH / 2;
@@ -396,6 +425,104 @@ export function createBattlePlaybackView(
     manualUi?.abortWait();
   });
   root.addChild(skipBtn);
+
+  // --- 左上金币栏：击杀掉落飞进这里，数字当场涨。位置和布阵 / 补给点同一条线 ---
+  const goldIconSize = 22;
+  const goldPadX = 6;
+  const goldPadY = 4;
+  let displayGold = gameState.gold;
+  const goldHud = new PIXI.Container();
+  const goldBg = new PIXI.Graphics();
+  goldHud.addChild(goldBg);
+  const goldIconHud = createUiIcon('icon_gold', goldIconSize);
+  if (goldIconHud) goldHud.addChild(goldIconHud);
+  const goldValueTx = makeText(`${displayGold}`, 'uiStrong', { fill: 0xfff0b0 });
+  goldHud.addChild(goldValueTx);
+  function layoutGoldHud(): void {
+    const bgW = goldIconSize + 4 + goldValueTx.width + goldPadX * 2;
+    const bgH = Math.max(goldIconSize, goldValueTx.height) + goldPadY * 2;
+    goldBg.clear();
+    goldBg.beginFill(0x000000, 0.45);
+    goldBg.drawRoundedRect(0, 0, bgW, bgH, 8);
+    goldBg.endFill();
+    if (goldIconHud) {
+      goldIconHud.x = goldPadX;
+      goldIconHud.y = (bgH - goldIconSize) / 2;
+    }
+    goldValueTx.x = goldPadX + goldIconSize + 4;
+    goldValueTx.y = (bgH - goldValueTx.height) / 2;
+    goldHud.x = RUN_GOLD_X;
+    goldHud.y = runGoldYBelow(settingsBtn.y, settingsBtnSize);
+  }
+  layoutGoldHud();
+  root.addChild(goldHud);
+
+  function goldHudCenter(): { x: number; y: number } {
+    return { x: goldHud.x + 14, y: goldHud.y + 14 };
+  }
+
+  function addDisplayGold(amount: number): void {
+    if (amount <= 0) return;
+    displayGold += amount;
+    goldValueTx.text = `${displayGold}`;
+    layoutGoldHud();
+    if (isDisplayLive(goldHud)) goldHud.scale.set(1.18);
+    void (async () => {
+      await awaitEase(dur(160), (k) => {
+        if (!isDisplayLive(goldHud)) return;
+        goldHud.scale.set(1.18 - 0.18 * k);
+      });
+      if (isDisplayLive(goldHud)) goldHud.scale.set(1);
+    })();
+  }
+
+  function makeCoinSprite(): PIXI.Container {
+    const icon = createUiIcon('icon_gold', 18);
+    if (icon) return icon;
+    const g = new PIXI.Graphics();
+    g.beginFill(0xffd24a, 1);
+    g.drawCircle(9, 9, 9);
+    g.endFill();
+    return g;
+  }
+
+  function flyCoinsToHud(fromX: number, fromY: number, amount: number): void {
+    if (amount <= 0 || skipping) return;
+    const n = Math.min(4, Math.max(1, amount));
+    addDisplayGold(amount);
+    const dest = goldHudCenter();
+    for (let i = 0; i < n; i++) {
+      const coin = makeCoinSprite();
+      const ox = fromX + (i - (n - 1) / 2) * 10;
+      const oy = fromY - 8;
+      coin.x = ox;
+      coin.y = oy;
+      fxLayer.addChild(coin);
+      const delay = i * 50;
+      void (async () => {
+        if (delay > 0) await awaitEase(dur(delay), () => {});
+        if (root.destroyed || coin.destroyed) return;
+        await awaitEase(dur(440), (k) => {
+          if (!isDisplayLive(coin)) return;
+          const e = 1 - (1 - k) * (1 - k);
+          coin.x = ox + (dest.x - ox) * e;
+          coin.y = oy + (dest.y - oy) * e - Math.sin(k * Math.PI) * 36;
+          coin.alpha = k > 0.85 ? 1 - (k - 0.85) / 0.15 : 1;
+        });
+        if (!coin.destroyed) {
+          fxLayer.removeChild(coin);
+          coin.destroy({ children: true });
+        }
+      })();
+    }
+  }
+
+  const enemyKillShares = splitStageGold(
+    gameState.goldReward,
+    initialUnits.filter((u) => u.faction === 'enemy').length,
+  );
+  let enemyKillIndex = 0;
+  const enemyUids = new Set(initialUnits.filter((u) => u.faction === 'enemy').map((u) => u.uid));
 
   /**
    * 托管开关：战斗中随时在「自己打」和「AI 代打」之间来回切。
@@ -725,7 +852,7 @@ export function createBattlePlaybackView(
     }
     rangeLayer.addChild(rangeG);
     await awaitEase(dur(durationMs), (k) => {
-      rangeG.alpha = 0.42 + Math.sin(k * Math.PI) * 0.48;
+      if (isDisplayLive(rangeG)) rangeG.alpha = 0.42 + Math.sin(k * Math.PI) * 0.48;
     });
     rangeLayer.removeChild(rangeG);
     rangeG.destroy();
@@ -817,6 +944,7 @@ export function createBattlePlaybackView(
     fxLayer.addChild(sp);
     void (async () => {
       await awaitEase(dur(400), (k) => {
+        if (!isDisplayLive(sp)) return;
         if (k < 0.2) {
           sp.alpha = k / 0.2;
           sp.scale.set((size / tex.width) * (0.6 + 0.6 * (k / 0.2)));
@@ -833,6 +961,21 @@ export function createBattlePlaybackView(
         sp.destroy();
       }
     })();
+  }
+
+  /**
+   * 弹体的出屏长度（像素）。
+   *
+   * 下限必须是**格子的比例**，不能是绝对像素。`cell` 被 `computeBoardLayout` 夹在
+   * 28–56 之间，所以从前那个 `Math.max(cell * cells, 56)` 的下限永远至少是一整格，
+   * 满屏时正好 1.0 格——配方里任何小于 1 格的 `cells` 都被静默顶回 1 格，
+   * 速射箭那句「0.95 格，全表最短」于是从来没生效过。小屏上更糟：cell=28 时
+   * 下限相当于 2 格，一支箭比角色（0.92 格高）大一倍还多。
+   *
+   * 下限本来要防的是「小屏上特效缩成看不见的点」，那本质是个相对量。
+   */
+  function travelSizePx(cells: number): number {
+    return Math.max(cell * cells, cell * 0.5);
   }
 
   /**
@@ -914,7 +1057,7 @@ export function createBattlePlaybackView(
     sp.alpha = 1;
     fxLayer.addChild(sp);
     await awaitEase(dur(def.durationMs), (k) => {
-      if (sp.destroyed) return;
+      if (!isDisplayLive(sp)) return;
       const s = def.scaleFrom + (def.scaleTo - def.scaleFrom) * k;
       sp.scale.set(unit * s);
       sp.alpha = k < 0.72 ? 1 : 1 - (k - 0.72) / 0.28;
@@ -944,6 +1087,22 @@ export function createBattlePlaybackView(
     } = {},
   ): Promise<void> {
     if (skipping) return;
+
+    // 蓄力前摇先跑完，后面的挥击 / 飞行 / 爆炸才有「攒够了才放」的落差。
+    // 这一段必须 await：并行播的话它就只是爆炸旁边多了一圈线。
+    if (recipe.windup) {
+      const dx = (to?.x ?? from.x) - from.x;
+      const dy = (to?.y ?? from.y) - from.y;
+      await playWindup(
+        fxLayer,
+        from,
+        recipe.windup,
+        cell,
+        dx === 0 && dy === 0 ? 0 : Math.atan2(dy, dx),
+      );
+      if (root.destroyed || skipping) return;
+    }
+
     if (recipe.cast) playFlash(recipe.cast, from, to);
     else if (recipe.castBurst) playCastBurst(fxLayer, from, recipe.castBurst, cell);
 
@@ -962,7 +1121,7 @@ export function createBattlePlaybackView(
     }
 
     if (recipe.travel && recipe.travelPerTarget && (opts.onTargets?.length ?? 0) > 0) {
-      const size = Math.max(cell * recipe.travel.cells, 56);
+      const size = travelSizePx(recipe.travel.cells);
       await Promise.all(
         (opts.onTargets ?? []).map(async (p, i) => {
           if (i > 0) await awaitEase(dur(40 * i), () => {});
@@ -972,6 +1131,8 @@ export function createBattlePlaybackView(
             onArrive: () => {
               if (recipe.impact) playFlash(recipe.impact, from, p.at);
               if (recipe.hitBurst) playHitBurst(fxLayer, p.at, recipe.hitBurst, cell);
+              // 分头扑的每一发都震一下会糊成持续抖动，只认第一发
+              if (i === 0) fireShake(recipe.shake, from, p.at);
               p.run();
             },
           }).done;
@@ -981,12 +1142,14 @@ export function createBattlePlaybackView(
     }
 
     if (recipe.travel && to) {
-      const size = Math.max(cell * recipe.travel.cells, 56);
+      const size = travelSizePx(recipe.travel.cells);
       const dist = Math.hypot(to.x - from.x, to.y - from.y) || 1;
-      const waypoints = (opts.onPass ?? []).map((p) => ({
+      const waypoints = (opts.onPass ?? []).map((p, i) => ({
         atFraction: Math.min(0.98, Math.hypot(p.at.x - from.x, p.at.y - from.y) / dist),
         run: () => {
           if (recipe.impactPerHit && recipe.impact) playFlash(recipe.impact, from, p.at);
+          // 贯穿只在第一个目标上震：一发箭穿三个人震三次，读起来是三发箭
+          if (i === 0) fireShake(recipe.shake, from, p.at);
           p.run();
         },
       }));
@@ -995,7 +1158,10 @@ export function createBattlePlaybackView(
         waypoints,
       }).done;
       // 普攻那种「只有一个落点」：抵达后播命中。贯穿的命中已经在途经时播过了
-      if (!recipe.impactPerHit && recipe.impact) playFlash(recipe.impact, from, to);
+      if (!recipe.impactPerHit && recipe.impact) {
+        playFlash(recipe.impact, from, to);
+        fireShake(recipe.shake, from, to);
+      }
       // 贯穿但没命中任何人（空放）时，仍在终点闪一下，否则玩家会以为技能没出去
       if (recipe.impactPerHit && (opts.onPass?.length ?? 0) === 0 && recipe.impact) {
         playFlash(recipe.impact, from, to);
@@ -1005,6 +1171,24 @@ export function createBattlePlaybackView(
 
     if (recipe.impact) playFlash(recipe.impact, from, to);
     else if (recipe.hitBurst) playHitBurst(fxLayer, to ?? from, recipe.hitBurst, cell);
+    fireShake(recipe.shake, from, to);
+  }
+
+  /**
+   * 命中震动。`alongAim` 的方向在这里算——数据层不知道谁站在哪。
+   *
+   * 自身 AoE 的 `to` 是空的（没有单一目标），这时方向退化成 0；
+   * 那类招式本来就该用不带方向的 `SHAKE_BLAST`。
+   */
+  function fireShake(
+    spec: ShakeSpec | undefined,
+    from: { x: number; y: number },
+    to: { x: number; y: number } | undefined,
+  ): void {
+    if (!spec || skipping) return;
+    const dx = (to?.x ?? from.x) - from.x;
+    const dy = (to?.y ?? from.y) - from.y;
+    shaker.shake(spec, dx === 0 && dy === 0 ? 0 : Math.atan2(dy, dx));
   }
 
   /**
@@ -1029,16 +1213,16 @@ export function createBattlePlaybackView(
     const overlay = src ? createHitFlashOverlay(src) : null;
     void (async () => {
       await awaitEase(dur(Math.max(HIT_FLASH_MS, HIT_KNOCK_MS)), (k) => {
-        if (body.destroyed) return;
+        if (!isDisplayLive(body)) return;
         const elapsed = k * Math.max(HIT_FLASH_MS, HIT_KNOCK_MS);
-        if (overlay && src && !src.destroyed) {
+        if (overlay && src && isDisplayLive(src)) {
           syncHitFlashOverlay(overlay, src, hitFlashLift(Math.min(1, elapsed / HIT_FLASH_MS)));
         }
         const d = hitKnockDisplacement(Math.min(1, elapsed / HIT_KNOCK_MS), HIT_KNOCK_PX);
         body.x = origX + dir.x * d;
         body.y = origY + dir.y * d;
       });
-      if (!body.destroyed) {
+      if (isDisplayLive(body)) {
         body.x = origX;
         body.y = origY;
       }
@@ -1489,6 +1673,7 @@ export function createBattlePlaybackView(
           tok.x = fromC.x;
           tok.y = fromC.y;
           await awaitEase(dur(150), (k) => {
+            if (!isDisplayLive(tok)) return;
             tok.x = fromC.x + (toC.x - fromC.x) * k;
             tok.y = fromC.y + (toC.y - fromC.y) * k;
           });
@@ -1514,6 +1699,18 @@ export function createBattlePlaybackView(
 
         const vfxKey = skillVfxOverride.get(`${ev.uid}:${ev.skillId}`) ?? ev.skillId;
         const recipe = SKILL_VFX[vfxKey] ?? SKILL_VFX[ev.skillId];
+        /**
+         * 按离施法者的距离排序。两处都要用：贯穿技能靠它决定途经顺序，
+         * AoE 靠它决定错帧顺序——两者要的都是「先近后远」。
+         */
+        const orderedHits = [...ev.hits].sort((a, b) => {
+          const pa = posByUid.get(a.target);
+          const pb = posByUid.get(b.target);
+          if (!pa || !pb || !casterPos) return 0;
+          const da = Math.abs(pa.x - casterPos.x) + Math.abs(pa.y - casterPos.y);
+          const db = Math.abs(pb.x - casterPos.x) + Math.abs(pb.y - casterPos.y);
+          return da - db;
+        });
         const applyHitFx = (h: (typeof ev.hits)[number]): void => {
           tokenOverheads.get(h.target)?.updateHp(h.hpLeft);
           const tt = tokens.get(h.target);
@@ -1548,17 +1745,8 @@ export function createBattlePlaybackView(
             : firstTargetPos
               ? cellCenter(originX, originY, cell, firstTargetPos)
               : { x: cx + cell * 3, y: cy };
-          // 按离施法者的距离排序，途经顺序才是「先近后远」
-          const ordered = [...ev.hits].sort((a, b) => {
-            const pa = posByUid.get(a.target);
-            const pb = posByUid.get(b.target);
-            if (!pa || !pb || !casterPos) return 0;
-            const da = Math.abs(pa.x - casterPos.x) + Math.abs(pa.y - casterPos.y);
-            const db = Math.abs(pb.x - casterPos.x) + Math.abs(pb.y - casterPos.y);
-            return da - db;
-          });
           await playRecipe(recipe, { x: cx, y: cy }, endAt, {
-            onPass: ordered.map((h) => {
+            onPass: orderedHits.map((h) => {
               const tok = tokens.get(h.target);
               return {
                 at: tok ? { x: tok.x, y: tok.y } : endAt,
@@ -1575,7 +1763,16 @@ export function createBattlePlaybackView(
             aimTok ? { x: aimTok.x, y: aimTok.y } : undefined,
           );
           await awaitEase(dur(HIT_STOP_MS), () => {});
-          for (const h of ev.hits) applyHitFx(h);
+          // AoE 逐个中招，而不是同一帧四个人一起闪白。
+          //
+          // 齐闪读起来是「场地效果同时结算」——像是一个陷阱触发了，而不是
+          // 「我扫过去挨个打到」。同一份特效换成错帧之后，四个伤害数字会顺着
+          // 扫过的方向依次跳出来，这就是 AoE 爽感的全部来源。
+          // 单体技能只有一个 hit，这个循环等于原来的写法。
+          for (let i = 0; i < orderedHits.length; i++) {
+            if (i > 0) await awaitEase(dur(AOE_STAGGER_MS), () => {});
+            applyHitFx(orderedHits[i]!);
+          }
           await awaitEase(dur(320), () => {});
         } else {
           // 没登记专属特效的技能仍走 displayKind 的静态贴图
@@ -1639,8 +1836,13 @@ export function createBattlePlaybackView(
       case 'death': {
         const tok = tokens.get(ev.uid);
         if (tok) {
+          if (enemyUids.has(ev.uid)) {
+            const share = enemyKillShares[enemyKillIndex] ?? 0;
+            enemyKillIndex += 1;
+            flyCoinsToHud(tok.x, tok.y, share);
+          }
           await awaitEase(dur(260), (k) => {
-            tok.alpha = 1 - k;
+            if (isDisplayLive(tok)) tok.alpha = 1 - k;
           });
           animByUid.get(ev.uid)?.destroy();
           animByUid.delete(ev.uid);

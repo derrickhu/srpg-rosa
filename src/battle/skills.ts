@@ -122,6 +122,35 @@ function foesWithinManhattan(self: UnitState, units: UnitState[], radius: number
   });
 }
 
+/**
+ * 覆盖以自身为心的方形（切比雪夫 <= r），**含四个斜角**，不含自身格。
+ *
+ * 曼哈顿距离量不出「贴着我站」这件事：斜角邻居的曼哈顿距离是 2，和隔一格的正对面
+ * 一样远。所以 `neighborAoE manhattan:1` 和 `discAoE radius:1` 打到的是**同一批人**
+ * ——都只有正交四格。旋风斩那种 360° 环形特效画的是整个 3×3，
+ * 用这两个形状里的任何一个都会漏掉斜角，正是《特效圣经》§4.6 禁止的
+ * 「特效比实际范围大」。要让贴身一圈真的是一圈，得换一把尺子。
+ */
+function cellsWithinChebyshev(center: Vec2, radius: number, terrain: TerrainGrid): Vec2[] {
+  const { w, h } = gridSize(terrain);
+  const out: Vec2[] = [];
+  for (let y = Math.max(0, center.y - radius); y <= Math.min(h - 1, center.y + radius); y++) {
+    for (let x = Math.max(0, center.x - radius); x <= Math.min(w - 1, center.x + radius); x++) {
+      if (x === center.x && y === center.y) continue;
+      out.push({ x, y });
+    }
+  }
+  return out;
+}
+
+function foesWithinChebyshev(self: UnitState, units: UnitState[], radius: number): UnitState[] {
+  return livingFoes(self, units).filter((t) => {
+    const dx = Math.abs(t.pos.x - self.pos.x);
+    const dy = Math.abs(t.pos.y - self.pos.y);
+    return (dx !== 0 || dy !== 0) && dx <= radius && dy <= radius;
+  });
+}
+
 function alliesAtManhattanExcludingSelf(self: UnitState, units: UnitState[], dist: number): UnitState[] {
   return livingAllies(self, units).filter(
     (u) => u.uid !== self.uid && manhattan(u.pos, self.pos) === dist,
@@ -391,13 +420,18 @@ function castAreaAoE(
   units: UnitState[],
   terrain: TerrainGrid,
   defs: Record<UnitKind, UnitArchetypeDef>,
-  area: { kind: 'ring'; dist: number } | { kind: 'disc'; radius: number },
+  area:
+    | { kind: 'ring'; dist: number }
+    | { kind: 'disc'; radius: number }
+    | { kind: 'square'; radius: number },
   allowNoFoes = false,
 ): BattleEvent[] {
   const foes =
     area.kind === 'ring'
       ? foesAtManhattan(self, units, area.dist)
-      : foesWithinManhattan(self, units, area.radius);
+      : area.kind === 'square'
+        ? foesWithinChebyshev(self, units, area.radius)
+        : foesWithinManhattan(self, units, area.radius);
   if (foes.length === 0 && !allowNoFoes) return [];
   const hits: SkillHit[] = [];
   for (const t of foes) {
@@ -417,7 +451,9 @@ function castAreaAoE(
       rangeCells:
         area.kind === 'ring'
           ? cellsAtManhattan(self.pos, area.dist, terrain)
-          : cellsWithinManhattan(self.pos, area.radius, terrain),
+          : area.kind === 'square'
+            ? cellsWithinChebyshev(self.pos, area.radius, terrain)
+            : cellsWithinManhattan(self.pos, area.radius, terrain),
       hits,
       atkTerrainNote: terrainAttackNote(terrain, self.pos) ?? undefined,
     },
@@ -861,6 +897,18 @@ export function skillAiming(
         autoTargets: foes.map((f) => f.uid),
       };
     }
+    case 'squareAoE': {
+      const foes = foesWithinChebyshev(self, units, spec.shape.radius);
+      if (foes.length === 0 && !changesTerrain(spec)) return null;
+      const rangeCells = cellsWithinChebyshev(self.pos, spec.shape.radius, terrain);
+      return {
+        ...base,
+        rangeCells,
+        candidates: [],
+        aimCells: rangeCells,
+        autoTargets: foes.map((f) => f.uid),
+      };
+    }
     case 'discAoE': {
       const foes = foesWithinManhattan(self, units, spec.shape.radius);
       if (foes.length === 0 && !changesTerrain(spec)) return null;
@@ -1011,6 +1059,11 @@ function castByShape(
     case 'discAoE':
       return castAreaAoE(self, def, spec, units, terrain, defs, {
         kind: 'disc',
+        radius: spec.shape.radius,
+      }, allowNoFoes);
+    case 'squareAoE':
+      return castAreaAoE(self, def, spec, units, terrain, defs, {
+        kind: 'square',
         radius: spec.shape.radius,
       }, allowNoFoes);
     case 'neighborPickFoe':

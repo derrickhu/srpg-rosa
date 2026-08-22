@@ -45,6 +45,19 @@ export type SkillShape =
    * 词条「横扫」要的是真的覆盖更多格，所以单开这个形状。
    */
   | { type: 'discAoE'; radius: number }
+  /**
+   * 以自身为心、边长 2r+1 的**方形**内所有敌人（切比雪夫 <= r），含四个斜角，不含自身格。
+   *
+   * 为什么不能拿前两个凑：曼哈顿距离认为斜角邻居（距离 2）和隔一格的正对面一样远，
+   * 所以 `neighborAoE manhattan:1` 和 `discAoE radius:1` 打到的是**同一批人**
+   * ——都只有正交四格，斜角一律漏掉。
+   *
+   * 环形/扩散型特效（旋风斩的刃环、咆哮的冲击波、践踏的尘环）画的是整个 3×3，
+   * 配上面任何一个形状都会「特效比范围大」：玩家照着特效边界站到斜角，以为安全，
+   * 结果这一招有时候算有时候不算。改特效等于把旋风斩画成一个十字，那不叫旋风，
+   * 所以改的是尺子。`radius:1` 就是标准的「贴身一圈八格」。
+   */
+  | { type: 'squareAoE'; radius: number }
   /** 四向射线穿透；玩家点方向，AI 才按策略挑一条线 */
   | { type: 'lineBestRayAllFoes' }
   /**
@@ -219,6 +232,22 @@ export interface SkillSpec {
 }
 
 const SPECS: Record<string, SkillSpec> = {
+  /**
+   * 剑士默认：绕身一圈全部砍到。
+   *
+   * 形状是 `discAoE radius:1` 而不是 `neighborAoE manhattan:1`，因为后者打的是
+   * **正好 1 格外的环**——也就是只有上下左右四格，贴在斜角的敌人挨不到。
+   * 一记「旋风斩」放过站在斜对面的人，机制上说不通，而特效那边画的又是绕身
+   * 360° 的刃环、`cells=3` 盖满 3×3，正好撞上《特效圣经》§4.6 明令禁止的那种错：
+   * 特效比实际范围大，玩家会照着特效的边界走位，然后发现打不到。
+   *
+   * 两边只能改一边。改特效等于把旋风斩画成一个十字，那不叫旋风；所以改形状。
+   * 用 `squareAoE`（切比雪夫，含斜角）而不是 `discAoE`：后者的半径 1 量的还是曼哈顿，
+   * 打到的和 `neighborAoE manhattan:1` 是同一批人，换过去等于什么都没改。
+   * 倍率从 0.45 压到 0.40 抵掉多出来的四个斜角格。
+   * 展示文案不变——`itemText` / `skillText` 都把贴身一圈读作「邻格全体敌人」。
+   * 词条「横扫」也照样工作（`widenAoE` 把它摊到 radius 2）。
+   */
   whirl: {
     id: 'whirl',
     name: '旋风斩',
@@ -227,8 +256,8 @@ const SPECS: Record<string, SkillSpec> = {
     timing: 'beforeMove',
     role: 'damage',
     displayKind: 'whirlwind',
-    shape: { type: 'neighborAoE', manhattan: 1 },
-    damage: { kind: 'scaledAtk', atkMul: 0.45 },
+    shape: { type: 'squareAoE', radius: 1 },
+    damage: { kind: 'scaledAtk', atkMul: 0.4 },
   },
   pierce: {
     id: 'pierce',
@@ -306,7 +335,11 @@ const SPECS: Record<string, SkillSpec> = {
     damage: { kind: 'scaledAtk', atkMul: 0.9 },
     shopPrice: 7,
   },
-  /** 骑兵主动：邻格 AoE + 减速，反集群 */
+  /**
+   * 骑兵主动：绕身一圈踏过去 + 减速，反集群。
+   * 形状同「旋风斩」改成 `squareAoE radius:1`：马绕身踏过一圈却漏掉斜角说不通。
+   * 倍率 0.5 → 0.45 抵掉多出来的四格。
+   */
   trample: {
     id: 'trample',
     name: '铁蹄践踏',
@@ -315,8 +348,8 @@ const SPECS: Record<string, SkillSpec> = {
     timing: 'beforeMove',
     role: 'damage',
     displayKind: 'whirlwind',
-    shape: { type: 'neighborAoE', manhattan: 1 },
-    damage: { kind: 'scaledAtk', atkMul: 0.5 },
+    shape: { type: 'squareAoE', radius: 1 },
+    damage: { kind: 'scaledAtk', atkMul: 0.45 },
     shopPrice: 8,
     onCastFoeEffects: [{ kind: 'spdDown', subSpd: 2, rounds: 2 }],
   },
@@ -343,6 +376,11 @@ const SPECS: Record<string, SkillSpec> = {
   /**
    * Boss 专属（血牙酋长）：邻格 AoE + 自身攻击提升。
    * exclusiveProfession 为 null 仅为通过施放校验；不进任何商店池/可学列表，玩家拿不到。
+   *
+   * 形状同「旋风斩」改成 `squareAoE radius:1`：一声咆哮向外扩散却漏掉斜角，
+   * 而特效 `cells=3.2` 画的是盖满 3×3 的环——玩家躲到斜角以为安全，
+   * 下一场换个 Boss 又被打到，这种「有时候算有时候不算」比单纯难更劝退。
+   * 倍率 0.6 → 0.52 让期望伤害基本不变。
    */
   savage_roar: {
     id: 'savage_roar',
@@ -353,8 +391,8 @@ const SPECS: Record<string, SkillSpec> = {
     role: 'damage',
     enemyOnly: true,
     displayKind: 'whirlwind',
-    shape: { type: 'neighborAoE', manhattan: 1 },
-    damage: { kind: 'scaledAtk', atkMul: 0.6 },
+    shape: { type: 'squareAoE', radius: 1 },
+    damage: { kind: 'scaledAtk', atkMul: 0.52 },
     onCastSelfEffects: [{ kind: 'atkBonus', addAtk: 6, rounds: 2 }],
   },
   cleave: {

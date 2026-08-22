@@ -38,6 +38,11 @@ export function describeSkillShape(spec: SkillSpec): string {
       return `周围 ${shape.manhattan} 格内所有敌人`;
     case 'discAoE':
       return `周围 ${shape.radius} 格全覆盖所有敌人`;
+    case 'squareAoE':
+      // 「含斜角」是这个形状唯一区别于上面两个的地方，不写玩家就看不出区别
+      return shape.radius === 1
+        ? '贴身一圈八格所有敌人（含斜角）'
+        : `周围 ${shape.radius} 格方形内所有敌人（含斜角）`;
     case 'neighborPickFoe':
       return `${describeReach(shape.manhattan, shape.reach)}选一个敌人`;
     case 'neighborPickAlly':

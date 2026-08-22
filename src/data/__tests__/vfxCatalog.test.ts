@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { UnitKind } from '@/battle/types';
-import { defaultSkillId } from '@/data/skillCatalog';
+import { allPlayerSkillSpecs, defaultSkillId } from '@/data/skillCatalog';
 import { UNIT_DEFS } from '@/data/unitDefs';
 import { ENEMY_SKILL_SKINS } from '@/data/enemySkillCatalog';
 import {
@@ -13,6 +13,7 @@ import {
   type VfxRecipe,
 } from '@/data/vfxCatalog';
 import { getAnimManifest } from '@/view/animSets';
+import { UNIT_HEIGHT_CELLS } from '@/view/AnimatedUnit';
 import { FX_BUNDLE } from '@/core/assetBundles';
 
 const KINDS = Object.keys(UNIT_DEFS) as UnitKind[];
@@ -46,7 +47,16 @@ describe('特效登记表', () => {
         ).toBeDefined();
         expect(m!.animations[flash.set]!.frames.length).toBeGreaterThan(0);
         expect(m!.animations[flash.set]!.loop, `${flash.set} 是一次性特效，不能 loop`).toBe(false);
-        expect(m!.blend, `${label}/${flash.set} 少了 blend: 'add'`).toBe('add');
+        // 混合方式必须**声明**，但不再强制 `add`。
+        //
+        // 这条原先写死成 `toBe('add')`，隐含「特效都是光」。它拦住的是真问题
+        // （黑底图走普通混合会在屏幕上变成黑方块），但把一整类零件判成了违规：
+        // 藤蔓、树皮、根须、蜜蜂、铁钩都是**物质**，不发光。
+        // 而 additive 管线按亮度烘 alpha，暗部一律变透明，所以走 additive 的素材
+        // 只有亮部能显示——深色实体在这条路上根本画不出来。
+        // 真正要守的不是「必须是 add」，是「在草地上看得见」，那条守卫在
+        // `src/view/__tests__/vfxGrassContrast.test.ts`，它直接量像素。
+        expect(['add', 'normal'], `${label}/${flash.set} 的 blend 没声明`).toContain(m!.blend);
       }
       if (recipe.travel?.beamSet) {
         const m = getAnimManifest(recipe.travel.beamSet);
@@ -98,6 +108,41 @@ describe('特效登记表', () => {
     }
   });
 
+  /**
+   * 上面那条只查「各职业的默认技能」，于是漏了一整类：
+   * 商店卖的临时技能和可学但非默认的技能没人管，`war_shout` 和 8 个
+   * `temp_fo_*` / `temp_ft_*` 就这么一直躺在静态贴图上——玩家花钱买到手，
+   * 放出来只是一张不动的图，而测试全绿。
+   *
+   * 所以守卫要按「玩家**拿得到**的每一招」来，不是按「谁是默认技能」。
+   * `allPlayerSkillSpecs()` 正好是这个集合（排掉 enemyOnly；`reserved` 只管主槽
+   * 可学列表，那些招照样在商店卖，所以必须算进来）。
+   */
+  it('玩家拿得到的每一招都有配方，含商店临时技能', () => {
+    const missing: string[] = [];
+    for (const spec of allPlayerSkillSpecs()) {
+      // 冲锋走 CHARGE_VFX，不在 SKILL_VFX 里
+      if (spec.id === 'charge') continue;
+      const recipe = SKILL_VFX[spec.id];
+      if (!recipe) {
+        missing.push(`${spec.id}(${spec.name})`);
+        continue;
+      }
+      // 有配方不等于看得见：全空的配方和没有配方表现一样
+      const hasVisual = Boolean(
+        recipe.impact ||
+          recipe.cast ||
+          recipe.travel ||
+          recipe.propBurst ||
+          recipe.slashSweep ||
+          recipe.pathBeam ||
+          recipe.castBurst,
+      );
+      if (!hasVisual) missing.push(`${spec.id}(${spec.name}) 配方是空的`);
+    }
+    expect(missing, `这些技能会退回静态贴图：${missing.join('、')}`).toEqual([]);
+  });
+
   it('远程配方必须有发出去的光轨，不能只靠弹体小图', () => {
     const ranged = [
       ['普攻:bow', ATTACK_VFX.bow],
@@ -116,20 +161,42 @@ describe('特效登记表', () => {
   });
 
   it('近战普攻必须有扫斩或短路径，而且要挂生图', () => {
-    expect(ATTACK_VFX.sword.slashSweep?.set, '剑士扫斩没有斩击生图').toBe('slash');
+    // 挥砍必须挂**逐帧**图集。单张剑的抠图沿弧线钉一路做不出挥砍：
+    // 挥砍的信息量在刀身角度的变化里，钉静态图的结果是一把剑绕着角色打转
+    expect(ATTACK_VFX.sword.slashSweep?.set, '剑士挥砍没有逐帧刀影').toBe('sword_swing');
     expect(ATTACK_VFX.cavalry.pathBeam?.set, '骑兵路径没有突刺生图').toBe('thrust');
     expect(ATTACK_VFX.shield.impact?.set, '盾卫普攻没有砸击生图').toBe('bash_hit');
-    expect(SKILL_VFX.whirl!.slashSweep?.set, '旋风斩扫斩没有刃的生图').toBe('whirl');
+    expect(SKILL_VFX.whirl!.impact?.set, '旋风斩没有绕身刃环的生图').toBe('whirl');
     expect(SKILL_VFX.heal_touch!.pathBeam?.set, '圣疗光路没有生图').toBe('heal_flash');
     expect(SKILL_VFX.ward_prayer!.pathBeam?.set, '守护祷言光路没有生图').toBe('ward_aegis');
-    expect(ATTACK_VFX.mage.travel?.glowSet, '法师普攻没有火球').toBe('ember_orb');
-    expect(ATTACK_VFX.mage.impact?.set, '法师普攻命中应是小球砸中，不是技能爆炸').toBe('ember_orb');
+    // 火球走发光序列帧，不叠抠图：那张抠图有近三分之一的不透明像素是画进去的
+    // 漫画黑描边，而且单张静态图平移起来是僵的
+    expect(ATTACK_VFX.mage.travel?.sprite, '火球不该再叠抠图弹体').toBeUndefined();
+    expect(ATTACK_VFX.mage.travel?.glowSet, '法师普攻没有火球发光图').toBe('ember_orb');
+    // 命中闪光不能拿**弹体**素材充当：弹体有朝向、飞行段按射向转过，而命中段
+    // `mode: 'burst'` 把朝向钉成 0，斜射的那一发一命中焰尾就从斜角掰成水平，
+    // 屏幕上就是「火球打到人身上拐了个弯」
+    expect(ATTACK_VFX.mage.impact?.set, '法师普攻命中不能拿弹体图充当，会拐弯').toBe(
+      'ember_splat',
+    );
     expect(SKILL_VFX.ember!.impact?.set, '炎弹技能命中应是爆炸').toBe('ember_burst');
+  });
+
+  it('弓手三招各有自己的箭，不共用一张图', () => {
+    // 弹体在屏幕上停留的时间比命中闪光长得多，所以「三招同一支箭、只换命中闪光」
+    // 玩家看到的其实是同一支箭飞了三次
+    const arrows = [
+      ATTACK_VFX.bow.travel?.sprite,
+      SKILL_VFX.pierce!.travel?.sprite,
+      SKILL_VFX.snap!.travel?.sprite,
+    ];
+    expect(arrows.every(Boolean), '弓手有招没配弹体').toBe(true);
+    expect(new Set(arrows).size, `弓手三招共用了箭：${arrows.join(', ')}`).toBe(3);
   });
 
   it('远程普攻必须有飞行段——没有飞行段就只是「敌人身上闪一下」', () => {
     expect(ATTACK_VFX.bow.travel, '弓手普攻丢了飞行段').toBeDefined();
-    expect(ATTACK_VFX.bow.travel!.sprite).toBe('proj_arrow');
+    expect(ATTACK_VFX.bow.travel!.sprite).toBe('proj_arrow_wood');
     expect(ATTACK_VFX.bow.impact, '弓手普攻丢了命中闪光').toBeDefined();
     expect(ATTACK_VFX.mage.travel, '法师普攻丢了飞行段').toBeDefined();
     expect(ATTACK_VFX.healer.travel, '祭司普攻丢了飞行段').toBeDefined();
@@ -139,15 +206,150 @@ describe('特效登记表', () => {
     // 穿透和普攻的视觉差就在这条尾迹
     expect(SKILL_VFX.pierce!.travel!.beamSet).toBe('pierce');
     expect(SKILL_VFX.pierce!.impact!.set, '穿透命中不要复用普攻箭星').toBe('pierce');
-    expect(ATTACK_VFX.mage.travel!.glowSet).toBe('ember_orb');
+    // 火球和圣击同口径：本身就是光的东西不要再叠抠图实体
+    expect(ATTACK_VFX.mage.travel!.sprite, '火球不是实体道具').toBeUndefined();
+    expect(ATTACK_VFX.mage.travel!.glowSet, '火球要发光序列帧，否则草地上看不清').toBe('ember_orb');
+    expect(SKILL_VFX.ember!.travel!.sprite, '炎弹也不叠抠图实体').toBeUndefined();
     expect(SKILL_VFX.ember!.travel!.glowSet).toBe('ember_orb');
     expect(SKILL_VFX.ember!.impact!.set).toBe('ember_burst');
-    expect(SKILL_VFX.ember!.travel!.beamSet, '炎弹刀气应是火刃而不是弓手穿透').toBe('ember_wave');
-    expect(ATTACK_VFX.healer.travel!.beamSet, '祭司普攻应有清晰闪电路径').toBe('holy_bolt');
+    expect(ATTACK_VFX.healer.travel!.sprite, '圣击不是实体徽章').toBeUndefined();
     expect(ATTACK_VFX.healer.travel!.glowSet).toBe('holy_orb');
+    expect(ATTACK_VFX.healer.travel!.beamSet, '圣击应有闪电路径').toBe('holy_bolt');
     expect(SKILL_VFX.heal_touch!.impact!.set).toBe('heal_flash');
     expect(SKILL_VFX.ward_prayer!.impact!.set).toBe('ward_aegis');
     expect(SKILL_VFX.field_bless!.impact!.set).toBe('bless_rays');
+  });
+
+  it('命中闪光不能拿弹体素材充当——弹体有朝向，炸开没有', () => {
+    // 法师普攻曾经拿 `ember_orb`（火球弹体本身）当命中闪光：飞行段按射向转过，
+    // 命中段 `mode: 'burst'` 却把朝向钉成 0，斜射的那一发一命中焰尾就从斜角
+    // 掰成水平，玩家看到的是「火球打到人身上拐了个弯」。
+    // 换 `mode: 'aimed'` 只能遮住症状——有朝向的素材当命中闪光用本身就是错的。
+    const projArt = new Set<string>();
+    for (const r of [...Object.values(ATTACK_VFX), ...Object.values(SKILL_VFX)]) {
+      if (r?.travel?.glowSet) projArt.add(r.travel.glowSet);
+    }
+    for (const [id, r] of [
+      ...Object.entries(ATTACK_VFX),
+      ...Object.entries(SKILL_VFX),
+    ] as [string, (typeof ATTACK_VFX)[keyof typeof ATTACK_VFX] | undefined][]) {
+      const set = r?.impact?.set;
+      if (!set) continue;
+      expect(projArt.has(set), `${id} 拿弹体图 ${set} 当命中闪光，命中时会拐个弯`).toBe(false);
+    }
+  });
+
+  it('副本临时技能不许穿角色技能的皮', () => {
+    /**
+     * 临时技能是**每章的招牌**：玩家花钱买、每章换一批，它们是「这一章不一样」
+     * 最直接的兑现。而它们原先几乎全在复用角色技能的图集——
+     * 松脂火把放出来是法师的炎环、压制号令是狂暴战吼、攻城战旗是祭司的战场祝福、
+     * 飞爪钩索是骑兵走路时的光环。名字全新，屏幕上全是旧招。
+     *
+     * 这是我自己定的口径造成的：当时写着「临时技能是功能牌不是招牌大招，
+     * 美术预算该低于角色技能，靠色相 + 锚点和原主人分开」。
+     * 那条口径有两个问题。一是**形状永远比色相先被认出来**，靠换色相分不开；
+     * 二是它把因果搞反了——临时技能恰恰是章节的卖点，预算该往这儿倾斜。
+     *
+     * 所以钉成契约：临时技能的命中/弹体图集，不许出现在任何**非**临时技能的配方里。
+     * 反过来不查——角色技能之间共用的问题由另外两条守卫管。
+     */
+    const tempIds = Object.keys(SKILL_VFX).filter((id) => id.startsWith('temp_'));
+    expect(tempIds.length, '临时技能配方一个都没找到，选择器写错了').toBeGreaterThan(8);
+
+    // 非临时技能（含普攻）用掉的所有图集
+    const ownedByCharacters = new Set<string>();
+    for (const [id, r] of Object.entries(SKILL_VFX)) {
+      if (id.startsWith('temp_') || !r) continue;
+      for (const s of [r.impact?.set, r.travel?.glowSet, r.travel?.spriteSet]) {
+        if (s) ownedByCharacters.add(s);
+      }
+    }
+    for (const r of Object.values(ATTACK_VFX)) {
+      for (const s of [r?.impact?.set, r?.travel?.glowSet, r?.travel?.spriteSet]) {
+        if (s) ownedByCharacters.add(s);
+      }
+    }
+
+    for (const id of tempIds) {
+      const r = SKILL_VFX[id]!;
+      for (const s of [r.impact?.set, r.travel?.glowSet, r.travel?.spriteSet]) {
+        if (!s) continue;
+        expect(
+          ownedByCharacters.has(s),
+          `${id} 用的 ${s} 是角色技能的图，临时技能是每章的招牌，不该穿别人的皮`,
+        ).toBe(false);
+      }
+    }
+
+    // 每一招都得真有东西显示。原先有八招连配方都没有，
+    // 买到手放出来只有 displayKind 的静态贴图
+    for (const id of tempIds) {
+      const r = SKILL_VFX[id]!;
+      const hasArt = Boolean(r.impact?.set || r.travel || r.propBurst);
+      expect(hasArt, `${id} 没有任何主体部件，屏幕上看不出放了什么`).toBe(true);
+    }
+  });
+
+  it('同一章的临时技能之间也要分得开', () => {
+    // 抓的是这一轮最糟的一处：树皮庇护和守林人之姿**共用同一张** `ward_aegis`，
+    // 也就是说同一章里相邻的两张牌连彼此都没分开（还顺带和祭司的守护祷言撞了）。
+    // 章内撞车比跨章撞车更致命——玩家是在同一个商店里比较这几张牌的。
+    const byChapter = new Map<string, Map<string, string[]>>();
+    for (const [id, r] of Object.entries(SKILL_VFX)) {
+      if (!id.startsWith('temp_') || !r) continue;
+      const chapter = id.slice(0, 'temp_xx'.length); // temp_gl / temp_fo / temp_ft
+      const seen = byChapter.get(chapter) ?? new Map<string, string[]>();
+      for (const s of [r.impact?.set, r.travel?.glowSet, r.travel?.spriteSet, r.propBurst?.sprite]) {
+        if (s) seen.set(s, [...(seen.get(s) ?? []), id]);
+      }
+      byChapter.set(chapter, seen);
+    }
+    for (const [chapter, seen] of byChapter) {
+      for (const [art, users] of seen) {
+        expect(users.length, `${chapter} 的 ${users.join(' / ')} 共用了 ${art}`).toBe(1);
+      }
+    }
+  });
+
+  it('弹体大小以角色身高为尺，箭不能比人还大', () => {
+    // 尺子是**角色身高**（UNIT_HEIGHT_CELLS = 0.92 格），不是格子——格子里站着人，
+    // 玩家判断「这东西多大」用的参照物是人。破甲重箭曾经写 2.1 格，出屏是角色身高的
+    // 2.3 倍，屏幕上是一支投枪飞过去。
+    //
+    // 上限只对**箭**收紧。试过给「所有实体抠图弹」定一个上限，结果一路打补丁：
+    // 蜂群（`swarm_bees`）画的是一簇虫而不是手持物，虫云比人宽是对的；
+    // 撞城槌（`prop_ram`）是要几个人合抬的攻城器械，比人长也是对的。
+    // 一个统一上限要靠豁免名单才立得住，那它就不是一条契约了。箭不一样：
+    // 箭的长度有硬参照（战箭约 0.9m，人 1.7m），说得出「不能比人大」。
+    const arrows: [string, number][] = [
+      ['普攻木箭', ATTACK_VFX.bow.travel!.cells],
+      ['穿透重箭', SKILL_VFX.pierce!.travel!.cells],
+      ['速射轻箭', SKILL_VFX.snap!.travel!.cells],
+    ];
+    for (const [name, cells] of arrows) {
+      const bodies = cells / UNIT_HEIGHT_CELLS;
+      expect(bodies, `${name}是角色身高的 ${bodies.toFixed(2)} 倍，比人还大`).toBeLessThan(1.3);
+    }
+    // 三支箭的长短次序也钉住：普攻最朴素，速射最短，穿透最长
+    expect(SKILL_VFX.snap!.travel!.cells, '速射箭该是最短的').toBeLessThan(
+      ATTACK_VFX.bow.travel!.cells,
+    );
+    expect(SKILL_VFX.pierce!.travel!.cells, '穿透重箭该是最长的').toBeGreaterThan(
+      ATTACK_VFX.bow.travel!.cells,
+    );
+
+    // 下限对所有弹体生效：渲染侧的出屏下限是 0.5 格，写得比它还小等于这个数字不生效。
+    // 从前那个下限是**绝对像素**（56px），而格子最大只有 56px，于是所有小于 1 格的
+    // 配方值都被静默顶回 1 格——速射箭那句「0.95 格，全表最短」从来没生效过。
+    for (const [id, r] of [
+      ...Object.entries(ATTACK_VFX),
+      ...Object.entries(SKILL_VFX),
+    ] as [string, (typeof ATTACK_VFX)[keyof typeof ATTACK_VFX] | undefined][]) {
+      const cells = r?.travel?.cells;
+      if (cells === undefined) continue;
+      expect(cells, `${id} 的弹体小于渲染下限 0.5 格，写多小都一样`).toBeGreaterThanOrEqual(0.5);
+    }
   });
 
   it('默认技能的命中生图不能和普攻同一张', () => {
@@ -223,15 +425,26 @@ describe('特效登记表', () => {
 
     expect(snare.impact?.set).toBe('temp_gl_snare');
     expect(snare.impact?.anchor).toBe('target');
-    expect(getAnimManifest('temp_gl_snare')?.blend).toBe('add');
+    // 草是实体，走普通混合。它曾经是 additive，也曾经是全库在草地上最看不清的一张：
+    // 自身像素里 64% 与草地色差 <60，等于没放特效
+    expect(getAnimManifest('temp_gl_snare')?.blend).toBe('normal');
 
     expect(salve.propBurst?.sprite).toBe('prop_salve');
     expect(salve.propBurst?.anchor).toBe('target');
     expect(salve.travel).toBeUndefined();
 
-    expect(swarm.travel?.sprite).toBe('proj_bees');
+    // 蜂群走**多帧**抠图弹体，不是单张静图。单图沿轨道平移做不出「群体在扰动」，
+    // 和剑士从前拿一张剑图沿弧线钉下去是同一种毛病
+    expect(swarm.travel?.spriteSet).toBe('swarm_bees');
+    expect(swarm.travel?.sprite).toBeUndefined();
+    // 实体弹不能走 additive：additive 的前提是「暗部即透明」，
+    // 而蜜蜂身上最有辨识度的正是黑条纹
+    expect(getAnimManifest('swarm_bees')?.blend).toBe('normal');
     expect(swarm.travelPerTarget).toBe(true);
     expect(swarm.travel?.orbitLaps).toBeGreaterThanOrEqual(2);
+    // 绕圈的弹体必须钉住不转。绕圈 heading 每圈扫满 360°，
+    // 三圈就是翻三个滚——屏幕上是蜜蜂倒着飞
+    expect(swarm.travel?.noRotate).toBe(true);
     expect(swarm.propBurst).toBeUndefined();
 
     expect(horn.propBurst?.sprite).toBe('prop_horn');

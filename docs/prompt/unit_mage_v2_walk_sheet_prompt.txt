@@ -1,0 +1,29 @@
+# 法师奥莉 v2 —— 4x4 行走。体型锁 v2 identity，对齐祭司/弓手两头身。
+
+A 4x4 sprite sheet, full 4-direction walk cycle, top-down tactics RPG.
+Keep the attached identity: same chunky 2-head girl mage, same deep-teal pointed hat and robe,
+same cream collar, same warm brown bob, same fat orange-orb staff, same thick black outlines.
+Only facing and walk pose change. Do NOT shrink her into a toddler.
+
+HER BODY (hair-top to boots, ignoring hat cone and staff) must stay the same size in all 16
+cells and match the identity frame. The tall hat is EXTRA above the head.
+
+WALK MOTION — readable from silhouette at 44px:
+  Column 1: neutral, feet together, full standing height.
+  Column 2: LEFT foot far FORWARD, right foot far BEHIND, visible gap, body drops ~10%.
+  Column 3: identical to column 1.
+  Column 4: RIGHT foot far forward, left trailing, same body drop.
+
+ROWS:
+  Row 1 top:    facing DOWN, face visible
+  Row 2:        facing LEFT, left profile
+  Row 3:        facing RIGHT, mirrored from row 2
+  Row 4 bottom: facing UP, back of hat AND orange orb still visible
+
+RULES:
+1. EXACTLY 16 equal cells, 4x4. No borders, no lines between cells.
+2. Background 100% solid magenta #FF00FF. No shadow, no gradient.
+3. Identical body scale and camera in every cell. Hat/staff may change pose, body never zooms.
+4. Body fills about 45% of cell height; hat extends above. Magenta margin on all sides.
+5. Nothing crosses a cell edge. Same foot baseline.
+6. No purple/pink on costume. NO TEXT, no labels, no watermark.

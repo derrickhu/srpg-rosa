@@ -4,6 +4,7 @@ import type { SkillSpec } from '@/data/skillCatalog';
 import { describeReach, describeSkillSpec } from '@/data/skillText';
 import { getSkillMod, isExclusiveMod, type SkillModRarity } from '@/data/skillModCatalog';
 import { createUiIcon } from '@/view/renderHelpers';
+import { isDisplayLive } from '@/view/pixiLive';
 
 /**
  * 单位信息面板：布阵页和战斗页共用同一块渲染。
@@ -159,6 +160,11 @@ function buildRangeRow(
     // 词条改了形状却画老图的话，玩家会照着错的范围走位。
     gridR = shape.radius + 1;
     rangeDesc = `周围${shape.radius}格全覆盖\n命中所有敌人`;
+  } else if (shape.type === 'squareAoE') {
+    gridR = shape.radius + 1;
+    rangeDesc = shape.radius === 1
+      ? '贴身一圈八格\n含斜角，命中所有敌人'
+      : `周围${shape.radius}格方形\n含斜角，命中所有敌人`;
   } else if (shape.type === 'neighborPickFoe') {
     gridR = shape.manhattan + 1;
     rangeDesc = `${describeReach(shape.manhattan, shape.reach)}\n点选一个敌人`;
@@ -181,7 +187,15 @@ function buildRangeRow(
   }
   cells[gridR]![gridR] = 'center';
 
-  if (shape.type === 'neighborAoE'
+  if (shape.type === 'squareAoE') {
+    // 方形不吃下面那套曼哈顿量法：切比雪夫 <= r 就是把方框内全填上
+    for (let dy = -shape.radius; dy <= shape.radius; dy++) {
+      for (let dx = -shape.radius; dx <= shape.radius; dx++) {
+        if (dx === 0 && dy === 0) continue;
+        cells[gridR + dy]![gridR + dx] = 'hit';
+      }
+    }
+  } else if (shape.type === 'neighborAoE'
       || shape.type === 'neighborPickFoe' || shape.type === 'neighborPickAlly'
       || shape.type === 'discAoE') {
     const md = shape.type === 'discAoE' ? shape.radius : shape.manhattan;
@@ -526,7 +540,7 @@ export function createUnitInfoPanel(
   // 场景可能被 SceneManager 整棵拆掉而不经过 `stop()`（战斗结束时面板还开着），
   // 所以 ticker 自己也要能发现容器没了并摘掉自己，否则它会一直抓着这棵树不放。
   const tick = (): void => {
-    if (panel.destroyed) {
+    if (!isDisplayLive(panel)) {
       PIXI.Ticker.shared.remove(tick);
       return;
     }
