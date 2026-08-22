@@ -1,0 +1,108 @@
+# 第四章 Boss「沼母·蛭后」—— 四方向行走 sheet（generate2dsprite player_sheet, 4x4）
+#
+# 关卡：src/data/stagesMvp.ts `c4_7`，animSet `mirequeen`
+# 参考图：art/sprite-runs/bloodfang/walk/raw-sheet.png —— 同时锁风格和 4x4 布局
+#
+# ## 剪影：为什么是「竖立的臃肿囊体」
+#
+# 第四章四只杂兵已经占掉：巨手（无身体）、宽伞飞虫、横长四足、扁壳巨钳。
+# 精英塔玛是人形兽人。蛭后必须避开这五个，所以走**竖立的水滴形囊体**：
+# 上半身鼓成一个巨大的卵囊，下面两条粗短腿，前面两条粗抓肢。
+# 40px 下它是全章唯一一个「上宽下窄的竖直块」，和横长的鳄、扁宽的蟹正好反着。
+#
+# 不要画成多足贴地爬行：一是会和沼行鳄撞剪影，二是四方向行走的多足很难在
+# 16 格里保持一致（龙王那次已经验证双足最稳）。
+#
+# ## 体型
+#
+# boss 在运行时还会 ×1.3（BattlePlaybackView `if (u.boss) body.scale.set(1.3)`），
+# 所以这里画**正常单位的格内占比**，靠轮廓臃肿体现压迫感，不要画满格。
+# 画满格 + 运行时 1.3 会直接溢出到相邻格子。
+#
+# ## 配色
+#
+# 本章签名色是脓黄绿 + 近黑，四只杂兵是 近黑 L12 / 亮酸黄绿 L67 / 苔绿 L33 / 灰绿 L66。
+# 蛭后必须压得住这四只：主体走**比泥沼手还深的沼黑**（#1E2119，L10），
+# 囊袋走**比吹箭虫还亮的胆绿**（#B8D63C，L72），明度两极都比杂兵更极端。
+#
+# 胆绿只出现在囊袋和口环内缘——那是「腐沼瘟息」的蓄能位置，
+# 让技能来源在静止帧里就有交代（同龙王的喉部白热）。
+#
+# 橙红一律不要（那是第五章的签名）；蓝、钢青、纯绿也不要：会撞我方盾卫、法师和前几章兽人。
+#
+# ## 生图后必做：换行
+#
+# 这一版生图把第 2、3 行**画反了**——第 2 行朝右、第 3 行朝左，而管线按
+# down/left/right/up 的行序打标签。不换行的话，蛭后往左走时会朝右转。
+# 修法不是重生图（其余 15 格都是好的），而是交换两行：
+#
+#   from PIL import Image
+#   im = Image.open(<raw>).convert('RGBA'); W, H = im.size; ch = H // 4
+#   r2 = im.crop((0, ch, W, 2*ch)); r3 = im.crop((0, 2*ch, W, 3*ch))
+#   out = im.copy(); out.paste(r3, (0, ch)); out.paste(r2, (0, 2*ch))
+#
+# 教训：左右行序是模型最常搞反的一项，**每张 4x4 行走表处理前都要先肉眼核对
+# 第 2、3 行的朝向**，别等打包完在游戏里看出来。
+#
+# ## 键色安全
+#
+# 主色是沼黑、胆绿、暗铁，到品红 #FF00FF 的色距均 > 200，远超抠色阈值 100/150。
+# 但仍必须在 prompt 里明文禁掉粉/品红/紫罗兰——这一章题材（腐坏、瘟疫）最容易被模型
+# 自动补成紫色。
+
+Use the attached image as the STYLE and LAYOUT reference: same hand-drawn cartoon game sprite look,
+same thick dark outlines, same flat saturated fills with light cel shading, same 3/4 top-down camera,
+same 4x4 grid arrangement, same magenta background. Only the character changes.
+
+A 4x4 sprite sheet showing a full 4-direction walk cycle for a top-down tactics RPG BOSS.
+
+CHARACTER: a swamp leech queen called the Mire Mother. Her silhouette is a TALL BLOATED TEARDROP:
+a single enormous swollen EGG SAC forms her upper body and is the widest part of her, tapering down
+to a narrow waist, carried on TWO THICK STUMPY LEGS. She stands UPRIGHT — she does not crawl, she is
+not a many-legged bug, she does not lie low on the ground. Two short thick GRASPING ARMS with blunt
+hooked claws hang in front of her narrow waist. Chibi / super-deformed proportions, noticeably
+HEAVIER and BROADER than a normal unit.
+
+Her hide is deep SWAMP BLACK (#1E2119) in big flat overlapping segment plates, like a leech's ringed
+body. Set into the front of the swollen sac are THREE or FOUR fat rounded BILE GREEN blisters
+(#B8D63C), painted as HARD-EDGED FLAT SHAPES with dark outlines — this is stored plague, and it is
+the only bright thing on her. Where her head would be there is a round LAMPREY MOUTH RING of blunt
+dark hooks, with the same bile green showing in its inner ring. No eyes, or at most two tiny dark
+dots. Menacing and grotesque but toy-like, never gory, no blood, no gore.
+
+PALETTE: deep swamp black body, bile green blisters and mouth ring, dark iron for the hooks and
+claws. NO pink, NO magenta, NO violet, NO lavender, NO purple anywhere on the character — those
+colours would be destroyed by the background chroma key, and this is the single most likely mistake
+for a plague-themed creature. NO orange, NO red. NO blue, NO steel cyan: those read as the player's
+own units.
+
+NO SOFT GLOW: the bile green parts must be flat bright shapes with hard dark outlines. No bloom, no
+halo, no gradient, no light spill onto the body or the background.
+
+CAMERA: 3/4 top-down view from slightly above, consistent in all 16 cells. You can see the top of
+the sac, the mouth ring, the arms, and the full body down to the feet.
+
+SHEET LAYOUT — rows are facing direction, columns are walk frames:
+  Row 1 (top):    facing DOWN, toward the camera, mouth ring and front blisters fully visible
+  Row 2:          facing LEFT, left side profile, the sac bulging behind and above
+  Row 3:          facing RIGHT, right side profile, mirrored from row 2
+  Row 4 (bottom): facing UP, away from the camera, the back of the sac visible, no mouth ring
+  Column 1: neutral standing pose, both feet together, weight low
+  Column 2: LEFT foot stepping forward, heavy body bob down, sac wobbling
+  Column 3: neutral standing pose, both feet together
+  Column 4: RIGHT foot stepping forward, heavy body bob down, sac wobbling
+
+ABSOLUTE RULES:
+1. EXACTLY 16 equal-size cells in a 4x4 grid. Every cell the same width and height.
+2. NO borders, NO dividing lines, NO frames between cells. Cells are separated only by the flat
+   background color.
+3. Background is 100% solid flat magenta #FF00FF everywhere, including between the cells. No gradient,
+   no vignette, no ground shadow, no drop shadow under the character.
+4. IDENTICAL SCALE in all 16 cells: same top-to-foot height, same sac width, same camera distance.
+   Do not zoom in or out between cells. Do not crop tighter in some cells.
+5. IDENTICAL character identity and palette in all 16 cells.
+6. Character is centered in its cell and fills about 70% of the cell height, leaving even magenta
+   margin on all four sides.
+7. Nothing crosses a cell edge — no claw, hook or sac may touch or overlap a neighbouring cell.
+8. Feet rest on the same horizontal baseline in every cell.
+9. NO text, NO labels, NO numbers, NO arrows, NO UI, NO watermark anywhere in the image.

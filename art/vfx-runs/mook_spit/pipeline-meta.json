@@ -1,0 +1,43 @@
+{
+  "source": "scripts/vfx-sheet.py",
+  "input": "/Users/rosa/rosa_games/game_assets/srpg-rosa/assets/vfx/mook_spit/raw/mook_spit_2x2.png",
+  "target": "vfx",
+  "mode": "vfx_sheet",
+  "rows": 2,
+  "cols": 2,
+  "cell_size": 256,
+  "threshold": 22,
+  "frame_labels": [
+    "mook_spit-1",
+    "mook_spit-2",
+    "mook_spit-3",
+    "mook_spit-4"
+  ],
+  "align": "core",
+  "key": "black",
+  "alpha_gamma": 2.0,
+  "shared_crop_side": 369,
+  "crop_offsets": [
+    {
+      "x": 107,
+      "y": 108
+    },
+    {
+      "x": 55,
+      "y": 103
+    },
+    {
+      "x": 106,
+      "y": 0
+    },
+    {
+      "x": 58,
+      "y": 20
+    }
+  ],
+  "empty_frames": [],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}

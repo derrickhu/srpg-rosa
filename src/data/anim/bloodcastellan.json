@@ -1,0 +1,616 @@
+{
+  "id": "bloodcastellan",
+  "source": "art/sprite-runs/bloodcastellan",
+  "blend": "normal",
+  "image": "images/anim/bloodcastellan.png",
+  "meta": {
+    "size": {
+      "w": 1024,
+      "h": 2048
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 190,
+    "baselineY": 235,
+    "ref": "bloodcastellan-walk/down-1.png"
+  },
+  "frames": {
+    "bloodcastellan-walk/down-1.png": {
+      "frame": {
+        "x": 804,
+        "y": 670,
+        "w": 217,
+        "h": 192
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 19,
+        "y": 45,
+        "w": 217,
+        "h": 192
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodcastellan-walk/down-2.png": {
+      "frame": {
+        "x": 398,
+        "y": 670,
+        "w": 200,
+        "h": 200
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 28,
+        "y": 37,
+        "w": 200,
+        "h": 200
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodcastellan-walk/down-4.png": {
+      "frame": {
+        "x": 600,
+        "y": 670,
+        "w": 202,
+        "h": 199
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 27,
+        "y": 38,
+        "w": 202,
+        "h": 199
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodcastellan-walk/left-1.png": {
+      "frame": {
+        "x": 2,
+        "y": 459,
+        "w": 156,
+        "h": 209
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 50,
+        "y": 28,
+        "w": 156,
+        "h": 209
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodcastellan-walk/left-2.png": {
+      "frame": {
+        "x": 692,
+        "y": 242,
+        "w": 150,
+        "h": 211
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 53,
+        "y": 26,
+        "w": 150,
+        "h": 211
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodcastellan-walk/left-4.png": {
+      "frame": {
+        "x": 386,
+        "y": 242,
+        "w": 151,
+        "h": 213
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 52,
+        "y": 24,
+        "w": 151,
+        "h": 213
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodcastellan-walk/left-1-mirror.png": {
+      "frame": {
+        "x": 160,
+        "y": 459,
+        "w": 156,
+        "h": 209
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 50,
+        "y": 28,
+        "w": 156,
+        "h": 209
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodcastellan-walk/left-2-mirror.png": {
+      "frame": {
+        "x": 844,
+        "y": 242,
+        "w": 150,
+        "h": 211
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 53,
+        "y": 26,
+        "w": 150,
+        "h": 211
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodcastellan-walk/left-4-mirror.png": {
+      "frame": {
+        "x": 539,
+        "y": 242,
+        "w": 151,
+        "h": 213
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 53,
+        "y": 24,
+        "w": 151,
+        "h": 213
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodcastellan-walk/up-1.png": {
+      "frame": {
+        "x": 424,
+        "y": 877,
+        "w": 211,
+        "h": 184
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 22,
+        "y": 53,
+        "w": 211,
+        "h": 184
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodcastellan-walk/up-2.png": {
+      "frame": {
+        "x": 2,
+        "y": 877,
+        "w": 209,
+        "h": 191
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 23,
+        "y": 46,
+        "w": 209,
+        "h": 191
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodcastellan-walk/up-4.png": {
+      "frame": {
+        "x": 213,
+        "y": 877,
+        "w": 209,
+        "h": 191
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 23,
+        "y": 46,
+        "w": 209,
+        "h": 191
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodcastellan-attack_down/attack-1.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 202,
+        "h": 238
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 27,
+        "y": 0,
+        "w": 202,
+        "h": 238
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodcastellan-attack_down/attack-2.png": {
+      "frame": {
+        "x": 206,
+        "y": 2,
+        "w": 188,
+        "h": 238
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 34,
+        "y": 0,
+        "w": 188,
+        "h": 238
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodcastellan-attack_down/attack-3.png": {
+      "frame": {
+        "x": 688,
+        "y": 2,
+        "w": 196,
+        "h": 224
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 29,
+        "y": 16,
+        "w": 196,
+        "h": 224
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodcastellan-attack_down/attack-4.png": {
+      "frame": {
+        "x": 318,
+        "y": 459,
+        "w": 237,
+        "h": 209
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 9,
+        "y": 29,
+        "w": 237,
+        "h": 209
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodcastellan-attack_left/attack-1.png": {
+      "frame": {
+        "x": 396,
+        "y": 2,
+        "w": 144,
+        "h": 233
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 56,
+        "y": 4,
+        "w": 144,
+        "h": 233
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodcastellan-attack_left/attack-2.png": {
+      "frame": {
+        "x": 2,
+        "y": 670,
+        "w": 196,
+        "h": 205
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 30,
+        "y": 32,
+        "w": 196,
+        "h": 205
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodcastellan-attack_left/attack-3.png": {
+      "frame": {
+        "x": 2,
+        "y": 242,
+        "w": 190,
+        "h": 215
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 33,
+        "y": 23,
+        "w": 190,
+        "h": 215
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodcastellan-attack_left/attack-4.png": {
+      "frame": {
+        "x": 557,
+        "y": 459,
+        "w": 157,
+        "h": 208
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 49,
+        "y": 30,
+        "w": 157,
+        "h": 208
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodcastellan-attack_left/attack-1-mirror.png": {
+      "frame": {
+        "x": 542,
+        "y": 2,
+        "w": 144,
+        "h": 233
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 56,
+        "y": 4,
+        "w": 144,
+        "h": 233
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodcastellan-attack_left/attack-2-mirror.png": {
+      "frame": {
+        "x": 200,
+        "y": 670,
+        "w": 196,
+        "h": 205
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 30,
+        "y": 32,
+        "w": 196,
+        "h": 205
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodcastellan-attack_left/attack-3-mirror.png": {
+      "frame": {
+        "x": 194,
+        "y": 242,
+        "w": 190,
+        "h": 215
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 33,
+        "y": 23,
+        "w": 190,
+        "h": 215
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodcastellan-attack_left/attack-4-mirror.png": {
+      "frame": {
+        "x": 716,
+        "y": 459,
+        "w": 157,
+        "h": 208
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 50,
+        "y": 30,
+        "w": 157,
+        "h": 208
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "walk_down": {
+      "loop": true,
+      "fps": 9,
+      "frames": [
+        "bloodcastellan-walk/down-1.png",
+        "bloodcastellan-walk/down-2.png",
+        "bloodcastellan-walk/down-1.png",
+        "bloodcastellan-walk/down-4.png"
+      ]
+    },
+    "walk_left": {
+      "loop": true,
+      "fps": 9,
+      "frames": [
+        "bloodcastellan-walk/left-1.png",
+        "bloodcastellan-walk/left-2.png",
+        "bloodcastellan-walk/left-1.png",
+        "bloodcastellan-walk/left-4.png"
+      ]
+    },
+    "walk_right": {
+      "loop": true,
+      "fps": 9,
+      "frames": [
+        "bloodcastellan-walk/left-1-mirror.png",
+        "bloodcastellan-walk/left-2-mirror.png",
+        "bloodcastellan-walk/left-1-mirror.png",
+        "bloodcastellan-walk/left-4-mirror.png"
+      ]
+    },
+    "walk_up": {
+      "loop": true,
+      "fps": 9,
+      "frames": [
+        "bloodcastellan-walk/up-1.png",
+        "bloodcastellan-walk/up-2.png",
+        "bloodcastellan-walk/up-1.png",
+        "bloodcastellan-walk/up-4.png"
+      ]
+    },
+    "idle": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "bloodcastellan-walk/up-1.png"
+      ]
+    },
+    "default": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "bloodcastellan-walk/down-1.png"
+      ]
+    },
+    "idle_up": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "bloodcastellan-walk/up-1.png"
+      ]
+    },
+    "idle_down": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "bloodcastellan-walk/down-1.png"
+      ]
+    },
+    "idle_left": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "bloodcastellan-walk/left-1.png"
+      ]
+    },
+    "idle_right": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "bloodcastellan-walk/left-1-mirror.png"
+      ]
+    },
+    "attack_down": {
+      "loop": false,
+      "fps": 11,
+      "frames": [
+        "bloodcastellan-attack_down/attack-1.png",
+        "bloodcastellan-attack_down/attack-2.png",
+        "bloodcastellan-attack_down/attack-3.png",
+        "bloodcastellan-attack_down/attack-4.png"
+      ]
+    },
+    "attack_left": {
+      "loop": false,
+      "fps": 11,
+      "frames": [
+        "bloodcastellan-attack_left/attack-1.png",
+        "bloodcastellan-attack_left/attack-2.png",
+        "bloodcastellan-attack_left/attack-3.png",
+        "bloodcastellan-attack_left/attack-4.png"
+      ]
+    },
+    "attack_right": {
+      "loop": false,
+      "fps": 11,
+      "frames": [
+        "bloodcastellan-attack_left/attack-1-mirror.png",
+        "bloodcastellan-attack_left/attack-2-mirror.png",
+        "bloodcastellan-attack_left/attack-3-mirror.png",
+        "bloodcastellan-attack_left/attack-4-mirror.png"
+      ]
+    }
+  }
+}

@@ -817,6 +817,246 @@ const SPECS: Record<string, SkillSpec> = {
     damage: { kind: 'scaledAtk', atkMul: 0.65 },
   },
   /**
+   * 第四章 Boss 专属：半径 2 的浊雾，打完还留毒。
+   *
+   * 这是全游戏**第一次把 `poison` 交到敌方手上**（之前只有玩家的淬毒词条用它）。
+   * 放在这一章是因为沼泽地形本身就每回合掉 5 血，两者叠起来玩家才会真的感到
+   * 「续航」这个词的重量——同一个动词讲两遍，第二遍才有分量。
+   *
+   * `discAoE radius: 2` 是 Boss 里第一次出现的大范围形状（前三个 Boss 分别是
+   * `squareAoE r1` / `neighborAoE` / 直线），半径 2 意味着**站开也躲不掉**，
+   * 逼玩家从「摆阵型」换成「算清这一轮要不要贴上去」。
+   *
+   * 即时伤害压到 0.42，比前四个 Boss 都低（0.52 / 0.55 / 0.65 / 按血量）。
+   * 理由是这一招的压力**全在毒上**：范围内每人 4 点 ×3 回合，五个上场位吃满是 60 点，
+   * 而它冷却 3 回合就能再来一次。即时伤再高就会变成「一发 AoE 秒掉整个后排」。
+   */
+  swamp_miasma: {
+    id: 'swamp_miasma',
+    name: '腐沼瘟息',
+    cooldown: 3,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'damage',
+    enemyOnly: true,
+    displayKind: 'whirlwind',
+    shape: { type: 'discAoE', radius: 2 },
+    damage: { kind: 'scaledAtk', atkMul: 0.42 },
+    onCastFoeEffects: [{ kind: 'poison', dmgPerRound: 4, rounds: 3 }],
+  },
+  /**
+   * 终章 Boss 专属：形状和「破阵冲撞」同为直线，**伤害口径完全不同**。
+   *
+   * 这是全游戏唯一按目标最大血量收费的招式（`percentTargetMaxHp`），也是唯一
+   * 关掉三角克制的招式。理由是终章 Boss 不该能被「前面堆一个盾卫」解掉：
+   * 只要伤害走 `scaledAtk`，玩家的最优解永远是把克制关系摆对、让减伤最高的那个吃第一下。
+   * 按最大血量收费之后，肉盾恰恰是**吃亏最多**的那个，堆坦克这条路自己就断了。
+   *
+   * 注意它并非真的「无视一切」：`guard` 减伤仍然统一生效（见 `computeSkillHitDamage`），
+   * 所以玩家的应对手段还在，只是从「站位克制」换成了「主动交减伤」。
+   *
+   * 比例 0.18 配处决线 0.4/×1.6，即满血挨一下掉 18%、残血挨一下掉 28.8%。
+   * 这个组合是故意反着直觉设计的——**这一招惩罚拖，不惩罚莽**：
+   * 想靠残血单位磨最后一轮的打法会被处决线收走，而处决线（0.4）刻意比玩家自己的
+   * 收割词条（0.5）更窄，免得玩家觉得「Boss 那招比我的还狠」。
+   */
+  dragon_breath: {
+    id: 'dragon_breath',
+    name: '灭世龙息',
+    cooldown: 3,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'damage',
+    enemyOnly: true,
+    displayKind: 'lineShot',
+    shape: { type: 'lineBestRayAllFoes' },
+    damage: { kind: 'percentTargetMaxHp', ratio: 0.18, applyCounter: false },
+    executeBonus: { belowHpRatio: 0.4, mul: 1.6 },
+  },
+  /**
+   * ── 杂兵专属技能（`enemyOnly`）─────────────────────────────────────
+   *
+   * 投放曲线和地形、临时技能同一个思路——**每章只加一件事**：
+   * 第一章全员只普攻（教学基线，让玩家先把三角克制和高地读明白），
+   * 第二章给弓手位一条，第三章给骑兵位一条，第四章两条，终章四个兵位全有。
+   * 曲线见 [敌人图鉴](../../docs/敌人图鉴.md) §1.1 末尾。
+   *
+   * 三条共同口径，偏离哪一条都会出问题：
+   *
+   * 1. **倍率一律压在 0.5 以下**（Boss 是 0.42–0.65）。杂兵是**成群**出现的，
+   *    一场四五只，单只 0.7 的倍率乘以数量就不是加压而是清场。
+   * 2. **每章内四条的动词必须互异。** 同一章两只怪都是「近战单体加 debuff」，
+   *    玩家读到的是同一个威胁出现两次，等于这一章只加了一件事却付了两条的代价。
+   * 3. **特效走杂兵四件套**（抓挠 / 喷吐 / 砸击 / 喷散），不穿玩家刀光、飞箭、火球的皮。
+   *    配方见 `vfxCatalog.MOOK_ATTACK_VFX` 与对应技能条目。
+   */
+  /**
+   * 第二章 · 喷孢囊（弓手位）。**全游戏第一个会出手的杂兵。**
+   *
+   * 挑弓手位是因为它站后排、最容易被玩家忽略，而中了毒就必须回头处理——
+   * 这一下正好教会「后排也是威胁」，比让贴脸的剑士位多打一下有信息量。
+   *
+   * 即时伤只有 0.3，压力全在毒上。这也是玩家**第一次挨到毒**（之前 `poison`
+   * 只在自己的淬毒词条上出现过），所以剂量刻意给得很轻：3 点 ×2 回合，
+   * 认得出发生了什么就够，不该在教学章后半段真的打崩谁。
+   */
+  spore_spray: {
+    id: 'spore_spray',
+    name: '孢子喷散',
+    cooldown: 3,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'damage',
+    enemyOnly: true,
+    displayKind: 'whirlwind',
+    shape: { type: 'discAoE', radius: 1 },
+    damage: { kind: 'scaledAtk', atkMul: 0.3 },
+    onCastFoeEffects: [{ kind: 'poison', dmgPerRound: 3, rounds: 2 }],
+  },
+  /**
+   * 第三章 · 巡墙狼骑（骑兵位）。
+   *
+   * `reach` 用缺省的 `exact`：**得隔着一格才够得着，贴脸反而不行**。
+   * 这一章教的是墙和闸门，全是空间题，所以这一招也该是空间题——
+   * 玩家挤成一团时它够不到，散开到两格间距时它正好开始疼。
+   *
+   * 配 `spdDown` 而不是 `atkDown`：减速在这一章比减伤有用得多，
+   * 因为开闸门本来就要押人站机关，慢一格就是多挨一轮墙上的弩。
+   */
+  wall_ram: {
+    id: 'wall_ram',
+    name: '撞阵',
+    cooldown: 3,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'control',
+    enemyOnly: true,
+    displayKind: 'singleBash',
+    shape: { type: 'neighborPickFoe', manhattan: 2 },
+    damage: { kind: 'scaledAtk', atkMul: 0.45 },
+    onCastFoeEffects: [{ kind: 'spdDown', subSpd: 3, rounds: 2 }],
+  },
+  /**
+   * 第四章 · 吹箭虫（弓手位）。远程下毒。
+   *
+   * 和沼行鳄的「毒沼撕咬」是**这一章的核心设计**：同一个 debuff 由一远一近两只怪施加，
+   * 玩家第一次遇到「躲开一只还有另一只」。再叠上沼泽地形每回合 −5，
+   * 这一章的商店池转向续航（草药敷治、树皮庇护）就是给这套压力配的解药。
+   *
+   * `reach: 'within'` 而不是环：远程点杀该是「3 格内随便站都能射」，
+   * 被贴脸了也能射。这和第三章狼骑的 `exact` 正好相反，两章的空间题因此不重复。
+   */
+  venom_dart: {
+    id: 'venom_dart',
+    name: '淬毒吹箭',
+    cooldown: 2,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'damage',
+    enemyOnly: true,
+    displayKind: 'lineShot',
+    shape: { type: 'neighborPickFoe', manhattan: 3, reach: 'within' },
+    damage: { kind: 'scaledAtk', atkMul: 0.4 },
+    onCastFoeEffects: [{ kind: 'poison', dmgPerRound: 3, rounds: 2 }],
+  },
+  /**
+   * 第四章 · 沼行鳄（骑兵位）。近战下毒，毒更重但要贴上来。
+   *
+   * 毒 5 点高于吹箭虫的 3 点，代价是必须进到邻格——这是这一章「远近两只怪叠同一个
+   * debuff」里的近战那一半。两条毒在引擎侧是**新盖旧**不是叠加
+   * （见 `mergeFoeCastEffect`），所以同时中两只的毒只会取后一次的剂量。
+   * 这是故意的：叠加会让四只怪围上来直接变成每回合 −20，那不是加压是处刑。
+   */
+  mire_bite: {
+    id: 'mire_bite',
+    name: '毒沼撕咬',
+    cooldown: 2,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'damage',
+    enemyOnly: true,
+    displayKind: 'singleBash',
+    shape: { type: 'neighborPickFoe', manhattan: 1 },
+    damage: { kind: 'scaledAtk', atkMul: 0.48 },
+    onCastFoeEffects: [{ kind: 'poison', dmgPerRound: 5, rounds: 2 }],
+  },
+  /**
+   * ── 终章四条：四个兵位全部有技能 ──────────────────────────────────
+   *
+   * 这是投放曲线的终点，也是「终章该是复习加压」的具体形式：玩家要同时处理
+   * 四种主动威胁。四条的动词刻意铺满四个方向——**群伤 / 远程点 / 打断阵型 / 自保**，
+   * 没有一条和另一条重复，也各自对应前面某一章教过的东西的加强版。
+   */
+  /** 终章 · 熔岩块（剑士位）：贴身一圈纯群伤，无 debuff。全章唯一的即时爆发。 */
+  magma_burst: {
+    id: 'magma_burst',
+    name: '爆裂',
+    cooldown: 3,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'damage',
+    enemyOnly: true,
+    displayKind: 'whirlwind',
+    shape: { type: 'neighborAoE', manhattan: 1 },
+    damage: { kind: 'scaledAtk', atkMul: 0.42 },
+  },
+  /** 终章 · 火翼蝠（弓手位）：3 格内点杀，短冷却高频骚扰，靠出手次数而不是单发。 */
+  cinder_breath: {
+    id: 'cinder_breath',
+    name: '火星吐息',
+    cooldown: 2,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'damage',
+    enemyOnly: true,
+    displayKind: 'lineShot',
+    shape: { type: 'neighborPickFoe', manhattan: 3, reach: 'within' },
+    damage: { kind: 'scaledAtk', atkMul: 0.38 },
+  },
+  /**
+   * 终章 · 岩鳞龙兽（骑兵位）：隔一格突进 + 削攻。
+   *
+   * 形状和第三章狼骑的「撞阵」相同（`exact` 2 格），但挂的是 `atkDown` 不是 `spdDown`。
+   * 同一个形状换一个 debuff 是刻意的复习：玩家在第三章已经学会拿间距应对这个形状，
+   * 终章沿用形状但换掉后果，让那套走位知识仍然有用、又不能照抄。
+   */
+  wyrm_dash: {
+    id: 'wyrm_dash',
+    name: '龙息冲刺',
+    cooldown: 3,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'damage',
+    enemyOnly: true,
+    displayKind: 'singleBash',
+    shape: { type: 'neighborPickFoe', manhattan: 2 },
+    damage: { kind: 'scaledAtk', atkMul: 0.5 },
+    onCastFoeEffects: [{ kind: 'atkDown', subAtk: 4, rounds: 2 }],
+  },
+  /**
+   * 终章 · 灰烬甲虫（盾卫位）：**全游戏唯一会自保的杂兵。**
+   *
+   * `selfCast` + `guard`，不造成任何伤害。它把「先集火脆皮」从一个习惯变成必须：
+   * 玩家过去五章一直可以先啃最前面那个盾卫，这一只在挨打的第一轮就把自己
+   * 减伤 30%，硬啃它等于把回合数送给它后面那三个会出手的同伴。
+   *
+   * 减伤 0.3 低于玩家的树皮庇护（0.35）：这一招的目的是**改变目标优先级**，
+   * 不是让它自己变成打不动的墙。杂兵不该有比玩家手牌更强的数值。
+   */
+  ash_harden: {
+    id: 'ash_harden',
+    name: '硬化',
+    cooldown: 3,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'control',
+    enemyOnly: true,
+    displayKind: 'whirlwind',
+    shape: { type: 'selfCast' },
+    damage: { kind: 'none' },
+    onCastSelfEffects: [{ kind: 'guard', reduceRatio: 0.3, rounds: 2 }],
+  },
+  /**
    * 法师默认：3 格内点杀。和弓手「速射」同形，差在职业和倍率；
    * 点谁由玩家或 AI 决定，不写进技能。
    */

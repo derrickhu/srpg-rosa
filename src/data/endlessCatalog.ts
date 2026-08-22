@@ -1,7 +1,7 @@
 import type { AiDifficulty } from '@/battle/ai';
 import { playerDeployRowRange } from '@/battle/constants';
 import { getTerrainAt, gridSize, type TerrainGrid } from '@/battle/grid';
-import type { UnitKind, Vec2 } from '@/battle/types';
+import type { TroopKind, Vec2 } from '@/battle/types';
 import { getTerrainSpec } from '@/data/terrainSpec';
 import { CHAPTER1_ROOKIE, STAGES_MVP, type StageEnemySpawn } from '@/data/stagesMvp';
 import type { DungeonDef } from '@/data/dungeonCatalog';
@@ -49,7 +49,10 @@ export function endlessTerrain(): TerrainGrid {
   return STAGES_MVP[0]!.terrain;
 }
 
-const KINDS: UnitKind[] = ['sword', 'bow', 'cavalry', 'shield']; // 无尽不刷法师/祭司
+// 类型是 TroopKind 而不是 UnitKind：无尽复用第一章的杂兵模板，而那张表只有四兵种。
+// 写成 UnitKind 时 `CHAPTER1_ROOKIE[defId]` 是隐式 any——往 UnitKind 里加个 'mage'
+// 就会在运行时取到 undefined，而报错只是「读不到 name」。
+const KINDS: TroopKind[] = ['sword', 'bow', 'cavalry', 'shield']; // 无尽不刷法师/祭司
 
 /** 第 `wave` 波出几只。从 2 只起，每两波加一只，封顶 6。 */
 export function endlessWaveCount(wave: number): number {

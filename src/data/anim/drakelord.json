@@ -1,0 +1,616 @@
+{
+  "id": "drakelord",
+  "source": "art/sprite-runs/drakelord",
+  "blend": "normal",
+  "image": "images/anim/drakelord.png",
+  "meta": {
+    "size": {
+      "w": 2048,
+      "h": 1024
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 190,
+    "baselineY": 236,
+    "ref": "drakelord-walk/down-1.png"
+  },
+  "frames": {
+    "drakelord-walk/down-1.png": {
+      "frame": {
+        "x": 1007,
+        "y": 2,
+        "w": 179,
+        "h": 217
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 38,
+        "y": 20,
+        "w": 179,
+        "h": 217
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "drakelord-walk/down-2.png": {
+      "frame": {
+        "x": 1188,
+        "y": 2,
+        "w": 180,
+        "h": 217
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 38,
+        "y": 20,
+        "w": 180,
+        "h": 217
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "drakelord-walk/down-4.png": {
+      "frame": {
+        "x": 1370,
+        "y": 2,
+        "w": 179,
+        "h": 217
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 38,
+        "y": 20,
+        "w": 179,
+        "h": 217
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "drakelord-walk/left-1.png": {
+      "frame": {
+        "x": 1477,
+        "y": 242,
+        "w": 216,
+        "h": 206
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 20,
+        "y": 31,
+        "w": 216,
+        "h": 206
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "drakelord-walk/left-2.png": {
+      "frame": {
+        "x": 183,
+        "y": 242,
+        "w": 216,
+        "h": 208
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 20,
+        "y": 29,
+        "w": 216,
+        "h": 208
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "drakelord-walk/left-4.png": {
+      "frame": {
+        "x": 401,
+        "y": 242,
+        "w": 216,
+        "h": 208
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 20,
+        "y": 29,
+        "w": 216,
+        "h": 208
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "drakelord-walk/left-1-mirror.png": {
+      "frame": {
+        "x": 1695,
+        "y": 242,
+        "w": 216,
+        "h": 206
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 20,
+        "y": 31,
+        "w": 216,
+        "h": 206
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "drakelord-walk/left-2-mirror.png": {
+      "frame": {
+        "x": 619,
+        "y": 242,
+        "w": 216,
+        "h": 208
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 20,
+        "y": 29,
+        "w": 216,
+        "h": 208
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "drakelord-walk/left-4-mirror.png": {
+      "frame": {
+        "x": 837,
+        "y": 242,
+        "w": 216,
+        "h": 208
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 20,
+        "y": 29,
+        "w": 216,
+        "h": 208
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "drakelord-walk/up-1.png": {
+      "frame": {
+        "x": 2,
+        "y": 242,
+        "w": 179,
+        "h": 212
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 38,
+        "y": 25,
+        "w": 179,
+        "h": 212
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "drakelord-walk/up-2.png": {
+      "frame": {
+        "x": 1551,
+        "y": 2,
+        "w": 179,
+        "h": 215
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 38,
+        "y": 22,
+        "w": 179,
+        "h": 215
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "drakelord-walk/up-4.png": {
+      "frame": {
+        "x": 1732,
+        "y": 2,
+        "w": 179,
+        "h": 215
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 38,
+        "y": 22,
+        "w": 179,
+        "h": 215
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "drakelord-attack_down/attack-1.png": {
+      "frame": {
+        "x": 210,
+        "y": 2,
+        "w": 188,
+        "h": 237
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 34,
+        "y": 0,
+        "w": 188,
+        "h": 237
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "drakelord-attack_down/attack-2.png": {
+      "frame": {
+        "x": 442,
+        "y": 456,
+        "w": 191,
+        "h": 197
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 32,
+        "y": 40,
+        "w": 191,
+        "h": 197
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "drakelord-attack_down/attack-3.png": {
+      "frame": {
+        "x": 400,
+        "y": 2,
+        "w": 189,
+        "h": 231
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 33,
+        "y": 7,
+        "w": 189,
+        "h": 231
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "drakelord-attack_down/attack-4.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 206,
+        "h": 238
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 25,
+        "y": 0,
+        "w": 206,
+        "h": 238
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "drakelord-attack_left/attack-1.png": {
+      "frame": {
+        "x": 591,
+        "y": 2,
+        "w": 206,
+        "h": 224
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 25,
+        "y": 14,
+        "w": 206,
+        "h": 224
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "drakelord-attack_left/attack-2.png": {
+      "frame": {
+        "x": 2,
+        "y": 456,
+        "w": 218,
+        "h": 203
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 19,
+        "y": 35,
+        "w": 218,
+        "h": 203
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "drakelord-attack_left/attack-3.png": {
+      "frame": {
+        "x": 635,
+        "y": 456,
+        "w": 210,
+        "h": 172
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 23,
+        "y": 66,
+        "w": 210,
+        "h": 172
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "drakelord-attack_left/attack-4.png": {
+      "frame": {
+        "x": 1055,
+        "y": 242,
+        "w": 209,
+        "h": 207
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 23,
+        "y": 31,
+        "w": 209,
+        "h": 207
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "drakelord-attack_left/attack-1-mirror.png": {
+      "frame": {
+        "x": 799,
+        "y": 2,
+        "w": 206,
+        "h": 224
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 25,
+        "y": 14,
+        "w": 206,
+        "h": 224
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "drakelord-attack_left/attack-2-mirror.png": {
+      "frame": {
+        "x": 222,
+        "y": 456,
+        "w": 218,
+        "h": 203
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 19,
+        "y": 35,
+        "w": 218,
+        "h": 203
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "drakelord-attack_left/attack-3-mirror.png": {
+      "frame": {
+        "x": 847,
+        "y": 456,
+        "w": 210,
+        "h": 172
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 23,
+        "y": 66,
+        "w": 210,
+        "h": 172
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "drakelord-attack_left/attack-4-mirror.png": {
+      "frame": {
+        "x": 1266,
+        "y": 242,
+        "w": 209,
+        "h": 207
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 24,
+        "y": 31,
+        "w": 209,
+        "h": 207
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "walk_down": {
+      "loop": true,
+      "fps": 9,
+      "frames": [
+        "drakelord-walk/down-1.png",
+        "drakelord-walk/down-2.png",
+        "drakelord-walk/down-1.png",
+        "drakelord-walk/down-4.png"
+      ]
+    },
+    "walk_left": {
+      "loop": true,
+      "fps": 9,
+      "frames": [
+        "drakelord-walk/left-1.png",
+        "drakelord-walk/left-2.png",
+        "drakelord-walk/left-1.png",
+        "drakelord-walk/left-4.png"
+      ]
+    },
+    "walk_right": {
+      "loop": true,
+      "fps": 9,
+      "frames": [
+        "drakelord-walk/left-1-mirror.png",
+        "drakelord-walk/left-2-mirror.png",
+        "drakelord-walk/left-1-mirror.png",
+        "drakelord-walk/left-4-mirror.png"
+      ]
+    },
+    "walk_up": {
+      "loop": true,
+      "fps": 9,
+      "frames": [
+        "drakelord-walk/up-1.png",
+        "drakelord-walk/up-2.png",
+        "drakelord-walk/up-1.png",
+        "drakelord-walk/up-4.png"
+      ]
+    },
+    "idle": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "drakelord-walk/up-1.png"
+      ]
+    },
+    "default": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "drakelord-walk/down-1.png"
+      ]
+    },
+    "idle_up": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "drakelord-walk/up-1.png"
+      ]
+    },
+    "idle_down": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "drakelord-walk/down-1.png"
+      ]
+    },
+    "idle_left": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "drakelord-walk/left-1.png"
+      ]
+    },
+    "idle_right": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "drakelord-walk/left-1-mirror.png"
+      ]
+    },
+    "attack_down": {
+      "loop": false,
+      "fps": 11,
+      "frames": [
+        "drakelord-attack_down/attack-1.png",
+        "drakelord-attack_down/attack-2.png",
+        "drakelord-attack_down/attack-3.png",
+        "drakelord-attack_down/attack-4.png"
+      ]
+    },
+    "attack_left": {
+      "loop": false,
+      "fps": 11,
+      "frames": [
+        "drakelord-attack_left/attack-1.png",
+        "drakelord-attack_left/attack-2.png",
+        "drakelord-attack_left/attack-3.png",
+        "drakelord-attack_left/attack-4.png"
+      ]
+    },
+    "attack_right": {
+      "loop": false,
+      "fps": 11,
+      "frames": [
+        "drakelord-attack_left/attack-1-mirror.png",
+        "drakelord-attack_left/attack-2-mirror.png",
+        "drakelord-attack_left/attack-3-mirror.png",
+        "drakelord-attack_left/attack-4-mirror.png"
+      ]
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "source": "scripts/vfx-sheet.py",
+  "input": "/Users/rosa/rosa_games/game_assets/srpg-rosa/assets/vfx/mook_puff/raw/mook_puff_2x2.png",
+  "target": "vfx",
+  "mode": "vfx_sheet",
+  "rows": 2,
+  "cols": 2,
+  "cell_size": 256,
+  "threshold": 22,
+  "frame_labels": [
+    "mook_puff-1",
+    "mook_puff-2",
+    "mook_puff-3",
+    "mook_puff-4"
+  ],
+  "align": "center",
+  "key": "black",
+  "alpha_gamma": 2.0,
+  "shared_crop_side": 452,
+  "crop_offsets": [
+    {
+      "x": 30,
+      "y": 30
+    },
+    {
+      "x": 30,
+      "y": 30
+    },
+    {
+      "x": 30,
+      "y": 30
+    },
+    {
+      "x": 30,
+      "y": 30
+    }
+  ],
+  "empty_frames": [],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}

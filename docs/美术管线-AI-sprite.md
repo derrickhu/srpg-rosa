@@ -83,12 +83,62 @@ despill 会把整片背景压成黑色、毁掉复现锚点。
 弓尖或脚底。生图模型很难稳定遵守"只占单元格 X%、四周留白"，重摇是抽奖，缩放是确定性的：
 
 ```bash
-python3 scripts/respace-sheet.py --input raw.png --output raw-spaced.png
+python3 scripts/respace-sheet.py --input raw.png --output raw-spaced.png --rows 2 --cols 2
 ```
+
+`--rows` / `--cols` 必须和生图网格一致，脚本不再给缺省值。缺省曾经是 4×4，
+第五章杂兵那张 2×2 被当成 16 格切开，每只怪正中留下品红十字，下游
+`--component-mode largest` 再各取一块碎片——棋盘上就只剩身体一角。
 
 它对**每个单元格施加同一个缩放系数、各自绕自己的中心缩放**，这是对每格完全相同的相似变换，
 帧间的大小与站位关系原样保留，不会破坏 `--shared-scale` 和 `--align feet`。
 逐格各缩各的会让角色忽大忽小，绝对不要那样做。bow v3 实测系数 0.92 即通过严格 QC。
+
+深色熔岩/甲壳这类身体会被品红键色拆成多块连通域，**不要用 `largest`**——它会留下
+最大的那一小片裂纹。这类 sheet 用 `--component-mode all`，按整格透明度包围盒取全身。
+
+### 2.9 只重做一张 sheet 里的某一只
+
+一章四只是一张 2x2 一次生出来的，`--shared-scale` 保证四只等大。事后发现其中一只画错了、
+只想重做那一只时，有两个坑。
+
+**坑一：prompt 里不要写「某个形状必须支配剪影」。**
+
+第三章闸门盾卫和第四章泥壳蟹接连翻车，是同一个原因。当时写的是「兽人几乎完全藏在门板盾后 /
+读成一块平板 / 没有饰色」和「巨壳几乎盖住整只、穹顶必须支配剪影」，同时又要求「一只不对称的
+巨钳当记忆点」。结果：盾卫成了一个没有特征的黑矩形（40px 下读成一扇门，而那一章的立意
+恰恰依赖人形剪影）；泥壳蟹成了一只乌龟，名字叫蟹图上是龟，单位面板当场露馅。
+
+**「必须支配」这种最高级指令会把另一个特征直接删掉。** 要主次就描述**比例**——
+「举起的钳约占体高一半，且明显大于壳」「盾覆盖他身高的中间一半，绿头明确高过盾上缘」。
+
+**坑二：单格补生成的体型接不上原批次，`--scale-profile` 只报不修。**
+
+判据是 `body_scale = sqrt(躯干核心面积 / 原图面积)`，也就是**主体在原图里占多大**，
+完全由生图构图决定。偏了就表现为棋盘上这一只比同章另外三只大一圈或小一圈，
+带 `--strict-qc` 会报 `profile body-scale drift ... exceeds 0.1000`。
+`respace-sheet.py` 修不了——它是 `min(1.0, ...)`，只会缩小。用：
+
+```bash
+# 1. 先不带 --strict-qc 跑一遍，量出真值
+python3 .../generate2dsprite.py process --input raw-mob4.png ... --output-dir tmp/
+python3 -c "import json;print(json.load(open('tmp/pipeline-meta.json'))['qc_summary']['body_scale_mean'])"
+# 2. 按真值缩放（相似变换，body_scale 与系数严格成正比，一次到位不用迭代）
+python3 scripts/rescale-subject.py --input raw-mob4.png --output raw-mob4-scaled.png \
+  --scale-profile art/sprite-runs/mobs-ch3/scale-profile.json --current-body-scale 0.4916
+# 3. 带 --strict-qc 重跑，再 despill，再覆盖回原批次的 mob-N.png
+```
+
+`--current-body-scale` 一定要传。不传会退化成按主体掩码估算，而**掩码面积和管线的
+躯干核心不是一个口径**：紧凑人形两者接近（盾卫按估算缩完就过了），但一只举着巨钳、
+四条细腿横撑的蟹能差到 24%，照估算缩完 QC 反而更不过。踩过。
+
+**还有一种情况是这道闸本身不该拦。** 泥壳蟹最终 `body_scale` 只有 0.369、离批次均值
+0.507 差 27%，怎么缩都过不了：它刻意做成又宽又扁，躯干核心相对任何装得下它的方框都偏小，
+要凑到均值就得撑破画框。而真正决定棋盘上大小的是**输出高度**——`createUnitToken`
+只按高度撑满格子。它输出 217x149，第四章批次高度是 129/166/169/171，**落在区间内**，
+所以视觉上没问题。这种情况下去掉 `--strict-qc`，改为显式核对这几项并把理由记下来：
+输出高度落在批次区间、`source_edge_touch` / `output_edge_touch` / `paste_clamped` 全为假。
 
 ### 3. 后处理
 
@@ -329,19 +379,80 @@ whirl: { set: 'whirl', anchor: 'caster', cells: 3, mode: 'burst', sparks: skillS
 | `bow` | 351KB | 同上 | 四方向 10fps | 四方向（right 镜像） | 叶绿，大弓 + 米白披风 |
 | `shield` | 378KB | 同上 | 四方向 9fps | 四方向（right 镜像） | 钢蓝，米白塔盾 + 蓝十字 |
 | `cavalry` | 418KB | 同上 | 四方向 11fps | 四方向（right 镜像） | 金黄，白马 + 长枪，唯一宽大于高的剪影 |
-| `bloodfang` | 450KB | 同上 | 四方向 9fps | down / left / right（right 镜像） | 第一章 Boss 血牙酋长，关 7 的 `animSet` |
 | `slash` | 45KB | — | — | — | add 混合，普攻命中特效 |
 | `roar` | 79KB | — | — | — | add 混合，狂暴战吼冲击波 9 帧 20fps |
 
-第一章杂兵是**单帧静止怪**，四只共用一张 2x2 生图（`docs/prompt/mobs_ch1_v1_prompt.txt`），
-`preset: 'single'` 每只取一帧。`defId` 仍是四兵种，数值/克制/AI 全不变，只有 `animSet` 换掉。
+五个 Boss 规格一致：四方向行走 + down / left / right 攻击（right 由 left 镜像）。
+和兵种的区别只有 attack 不做 up，理由见本节末。
 
-| 集合 | 体积 | 对应 defId | 剪影 |
+| 集合 | 体积 | 章 | Boss | 剪影识别位 |
+|---|---:|---|---|---|
+| `bloodfang` | 450KB | 1 草原 | 血牙酋长 | 牛角盔 + 阔刃斩刀 |
+| `bloodshaman` | 451KB | 2 密林 | 血牙萨满 | 鹿角冠 + 法杖 + 佝偻长袍 |
+| `bloodcastellan` | 424KB | 3 要塞 | 血牙城主 | 方形攻城盔 + 方肩甲 + 塔盾，全表最重 |
+| `mirequeen` | 349KB | 4 毒沼 | 沼母·蛭后 | 无腿垂囊 + 酸绿吸盘，唯一没有武器的 |
+| `drakelord` | 579KB | 5 龙岭 | 龙王·安卡洛斯 | 双足立姿 + 展翼 + 胸腹橙裂纹 |
+
+精英是**单帧静止**，四章合出一张 2×2（`art/sprite-runs/elites/`），
+`preset: 'single'` 每只取一帧。它们是「强化过的杂兵」，动作份量不该和 Boss 齐平。
+
+| 集合 | 体积 | 章 | 精英 |
 |---|---:|---|---|
-| `slime` | 7.7KB | sword | 黏泥怪，圆滚水滴 |
-| `sporecap` | 12.0KB | bow | 孢子菇，宽伞盖 |
-| `bloodwolf` | 11.1KB | cavalry | 血牙狼，四足低伏 |
-| `rockshell` | 13.8KB | shield | 岩甲龟，厚穹顶 |
+| `torun` | 13KB | 2 密林 | 猎长·图伦 |
+| `castellan` | 15KB | 3 要塞 | 血牙城卫长 |
+| `mirespeaker` | 14KB | 4 毒沼 | 沼语者 |
+| `drakekin` | 14KB | 5 龙岭 | 龙裔 |
+
+Boss 技能特效各一套专属，形态互不重复（环 / 柱 / 线 / 沉雾 / 锥，见
+[敌人图鉴](./敌人图鉴.md) §3.1）：
+
+| 集合 | 体积 | 章 | 皮肤 | 形态 |
+|---|---:|---|---|---|
+| `bloodfang_roar` | 76KB | 1 | 血牙咆哮 | 犬齿环，向外扩散 |
+| `bloodfang_wildfire` | 73KB | 2 | 燎原咒火 | 竖直火柱，向上窜 |
+| `bloodfang_breach` | 41KB | 3 | 破阵冲撞 | 等宽钝头贯穿线，向前推 |
+| `mirequeen_miasma` | 34KB | 4 | 腐沼瘟息 | 低伏浊雾，向下沉 |
+| `drake_cataclysm` | 85KB | 5 | 灭世龙息 | 锥形吐息，从一点张开 |
+
+杂兵技能**不出专属特效**，复用通用命中效果。杂兵技能是加压手段，不需要被单独记住，
+而每多一张专属图就多一个和 Boss 招式撞形态的机会。
+
+杂兵是**单帧静止怪**，每章四只共用一张 2x2 生图，`preset: 'single'` 每只取一帧。
+`defId` 仍是四兵种，数值/克制/AI 全不变，只有 `animSet` 换掉。
+
+**剪影语法跨章不变**：圆滚 / 宽伞 / 横长 / 穹顶 恒定对应 sword / bow / cavalry / shield，
+换的只是题材与配色。玩家学一遍就够，每章重学是不划算的——图鉴与配色推演见
+[敌人图鉴](./敌人图鉴.md)。
+
+| 集合 | 体积 | 对应 defId | 剪影 | 章 |
+|---|---:|---|---|---|
+| `slime` | 7.7KB | sword | 黏泥怪，圆滚水滴 | 1 草原 |
+| `sporecap` | 12.0KB | bow | 孢子菇，宽伞盖 | 1 |
+| `bloodwolf` | 11.1KB | cavalry | 血牙狼，四足低伏 | 1 |
+| `rockshell` | 13.8KB | shield | 岩甲龟，厚穹顶 | 1 |
+| `vinecocoon` | 13.9KB | sword | 藤缚茧，缠成球、无脸 | 2 密林 |
+| `sporesac` | 8.8KB | bow | 喷孢囊，**上窄下宽**的垂囊 | 2 |
+| `leafpanther` | 11.7KB | cavalry | 林影豹，四足低伏 + 脊鳍 | 2 |
+| `mosswarden` | 12.0KB | shield | 苔石像，方块 | 2 |
+| `fangtrooper` | 12.7KB | sword | 血牙守卒，绿皮兽人持斧 | 3 要塞 |
+| `wallbalist` | 10.6KB | bow | 城头弩手，横抱的巨弩比肩宽 | 3 |
+| `wallrider` | 14.7KB | cavalry | 巡墙狼骑，兽人骑炭灰狼 | 3 |
+| `gatewarden` | 14.5KB | shield | 闸门盾卫，绿头压在暗铁门板盾上缘 | 3 |
+| `mirehand` | 7.1KB | sword | 泥沼手，近黑泥团 | 4 毒沼 |
+| `dartbug` | 11.4KB | bow | 吹箭虫，亮酸黄绿 + 黑吹管 | 4 |
+| `miregator` | 9.8KB | cavalry | 沼行鳄，四足长身 | 4 |
+| `mudcarapace` | 8.6KB | shield | 泥壳蟹，**举起的巨钳**当主体、壳扁而宽 | 4 |
+| `magmacore` | 4.7KB | sword | 熔岩块，无腿圆石 + 硬边橙裂纹 | 5 龙岭 |
+| `emberbat` | 8.9KB | bow | 火翼蝠，一对大翼占上三分之二 | 5 |
+| `scalewyrm` | 7.8KB | cavalry | 岩鳞龙兽，背脊一排橙骨刺 | 5 |
+| `ashshell` | 7.5KB | shield | 灰烬甲虫，苍白穹顶，全章唯一不发光的 | 5 |
+
+第一章 prompt `docs/prompt/mobs_ch1_v1_prompt.txt`，其余各章依次 `mobs_ch{2..5}_v1_prompt.txt`。
+第二章那张的配色推演里记了一处**算错又改对**的账（初稿把林影豹定成深青，对法师
+色相差 15、明度差 11，两条判据都不过），照抄时先读那段注释。
+
+第三、四章各有一只重生成过（`mobs_ch3_mob4_v2_prompt.txt`、`mobs_ch4_mob4_v2_prompt.txt`），
+两次是**同一种 prompt 翻车**，见下面 §2.9。
 
 ### 杂兵只出一张图，动起来的部分交给代码
 
@@ -376,7 +487,9 @@ destroy，但 `handle.destroy()` 只在单位阵亡时调用，存活单位的�
 `createUnitToken` 只按**高度**撑满格子，所以派生时要把比例烤进图片：所有集合共用同一个裁剪框，
 站位复刻 `AnimatedUnit`（身体 0.92 格、脚线在格心下方 0.2 格）。裁剪框取全集合并集而不是对称方图
 ——剑士的巨剑向上探出 1.10 格、脚下只要 0.21 格，对称留边会白扔掉半张图，把角色压到只剩四成高。
-当前实测 1.38×1.41 格 → 126×128px，身体占图高 65%。
+当前实测 1.51×1.39 格 → 139×128px，身体占图高 66%（19 张合计 108KB）。
+框宽是第三章那具横抱的十字弩撑出来的——**撑宽不影响棋盘上的大小**，
+`createUnitToken` 只按高度撑满格子，宽出来的只是左右透明边。
 
 **敌方杂兵必须进同一个裁剪框**：布阵格里敌我并排站，各切各的框就没法比大小了。
 也因此 `createUnitToken` 不能改回按长边撑满——血牙狼是横向剪影，长边是宽，
@@ -408,9 +521,10 @@ CDN 目录一边从云端下载、一边照样打进包里，等于白配。五�
 
 改完记得 `bash scripts/upload.sh` 把 `images/anim` 传上 CDN，否则线上直接白图。
 
-`bloodfang` 没做 `attack_up`：`AnimatedUnit.playAttack` 找不到对应动画时回退到 `attack_right`
-（`AnimatedUnit.ts:111`），朝上攻击会用镜像出来的右向动作。Boss 站在关 7 北侧高台、玩家从
-南侧上来，朝上攻击几乎不会发生，不值得为它单独生一张。兵种则四向做齐，因为它们哪个方向都可能打。
+五个 Boss 都没做 `attack_up`：`AnimatedUnit.playAttack` 找不到对应动画时回退到
+`attack_right`（`AnimatedUnit.ts:111`），朝上攻击会用镜像出来的右向动作。Boss 一律摆在
+地图北侧、玩家从南侧上来，朝上攻击几乎不会发生，不值得每个都多生一张。兵种则四向做齐，
+因为它们哪个方向都可能打。
 
 ### 行走动作的验收标准
 
@@ -442,6 +556,10 @@ CDN 目录一边从云端下载、一边照样打进包里，等于白配。五�
 # 2. 按连通域切开
 python3 scripts/split-tile-sheet.py --input sheet.png --out-dir images/terrain \
     --names high forest river swamp wall abyss --size 128
+# 森林状态机（燃烧 / 焦土）和闸门三态是后来补的，各出一张 sheet：
+#   docs/prompt/terrain_forest_states_2x1_prompt.txt  → burning scorched
+#   docs/prompt/terrain_gate_states_3x1_prompt.txt    → lever gate_closed gate_open
+# 多状态必须和底图同一副骨架（三冠树、U 形石框），否则换贴图读不成「刚才那一格变了」。
 # 3. 清紫边 + 压缩
 python3 scripts/despill-magenta.py images/terrain
 pngquant --force --strip --quality=70-95 --speed 1 --output <f> <f>

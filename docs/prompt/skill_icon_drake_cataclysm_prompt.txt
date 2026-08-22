@@ -1,0 +1,61 @@
+技能图标 · 第五章（终章）Boss 皮肤「灭世龙息」
+产出 → images/ui/skill_drake_cataclysm.png
+生成器：Cursor 内置 GenerateImage，aspect_ratio 1:1
+
+切图（单图，只做去洋红边）：
+    python3 scripts/split-tile-sheet.py --input <sheet>.png --out-dir <tmp> --size 72 \
+        --grid 1x1 --names drake_cataclysm
+    python3 scripts/despill-magenta.py <tmp>
+
+这是**敌方技能皮肤**图标（src/data/enemySkillCatalog.ts 的 drake_cataclysm），
+底层实现是 dragon_breath：直线穿透 + 按目标最大血量收费 + 残血处决。
+它不进玩家商店，也不在可学列表，所以配色不迁就玩家技能的分组规则，
+要一眼看出「这不是我的招」。
+
+要和三个东西分开，优先级从高到低：
+
+1. **同为直线的第三章「破阵冲撞」**（skill_bloodfang_breach）。那个是钢青色的一条
+   等宽贯穿线；这个必须是**张开的锥形**——窄口喷出、越远越宽。玩家分不清
+   「一条线」和「另一条线」，但分得清「从嘴里喷出来的」和「整个人撞过来的」。
+   所以这张图标的成败全在**锥形张开**这一件事上，不在颜色。
+
+2. **第二章「燎原咒火」**（skill_bloodfang_wildfire）。那个是暗红咒火、竖直向上窜的
+   火舌；这个是白热吐息、**横向**喷射。同为火，靠「方向 + 色温」分：
+   咒火是邪的（暗红），龙息是烫的（白热到橙红）。
+
+3. **玩家的炎弹 / 松脂火把**。玩家那两个是暖橙小火，尺度是「一发」；
+   这个要读起来是**一片**，覆盖感要压过它们。
+
+硬禁：不要洋红、不要粉、不要紫（背景是洋红抠色键，火焰内芯用近洋红的红会被抠掉一块）。
+第二章咒火用了 #C2185B 做内芯，这张**不要跟**——那个是暗底上的小面积内芯，
+而这张的高亮面积大得多，贴近键色会直接崩边。白热内芯用纯白到浅黄。
+
+---
+
+A SINGLE GAME UI ICON representing an enemy BOSS SKILL in a cartoon fantasy tactics mobile game. The skill is a dragon's cataclysmic breath: a searing cone of white-hot fire blasted out in a straight line.
+
+CRITICAL BACKGROUND: the entire background around the icon must be 100% solid flat MAGENTA, hex #FF00FF. It is a chroma key and will be deleted. No white, no grey, no gradient, no drop shadows onto the background.
+
+CRITICAL SIZE CONSTRAINT — the most important rule: this icon is displayed at only 26 to 56 pixels in the game. It must be ONE bold, chunky, instantly readable silhouette that survives being shrunk to the size of a fingernail. Think of a chess piece, not an illustration. NO thin lines, NO small parts, NO fine detail, NO tiny sparkles, NO text, NO numbers. If an element would be less than a tenth of the icon's width, delete it.
+
+CRITICAL — THIS SITS ON A CREAM WHITE CARD (#FCFCF6). The icon needs a THICK near-black outline (#1A1410) all the way around it and a saturated fill inside, so it does not float on the pale card.
+
+STYLE — must match the game's characters, which are chunky cartoon figures with heavy black outlines and flat colours:
+- A SOLID FILLED SILHOUETTE with a thick near-black outline. Not a line icon, not an outline icon — the shape is filled in.
+- Flat saturated colour fills, at most 3 colours plus the outline, plus one simple lighter shade for a single cel-shaded highlight.
+- Chunky, rounded shapes. Slightly exaggerated and toy-like.
+- No gradients, no glow, no bevel, no gloss, no photographic detail, no pixel art, no thin strokes.
+
+CONTENTS — a WIDENING CONE OF BREATH FIRE, and nothing else:
+- THE SINGLE MOST IMPORTANT FEATURE: the shape is a CONE that clearly FANS OUT. It starts as a NARROW rounded muzzle-point at the LOWER-LEFT of the icon and blasts out toward the UPPER-RIGHT, getting steadily WIDER, ending in a broad rounded flame-front that is at least FOUR TIMES wider than where it started. It must NOT be a straight beam, NOT a bar of even thickness, NOT a lightning bolt, NOT an arrow.
+- The cone is built from THREE NESTED FLAT BANDS following the same fan shape: a BLAZING WHITE-HOT core (#FFF6E0) down the centre, a hot ORANGE band around it (#FF7A18), and a DEEP RED outer edge (#B3200C) just inside the black outline. The white core is the narrowest band and stays in the middle.
+- The wide flame-front end breaks into THREE or FOUR thick, rounded, blunt tongues of fire — chunky lobes, not spikes, not wisps.
+- ABSOLUTELY NO PINK, NO MAGENTA, NO PURPLE, NO VIOLET anywhere in the flame. The hot core is WHITE and PALE YELLOW only.
+- NO dragon head, NO jaw, NO teeth, NO eye, NO neck, NO creature of any kind — this is the breath alone, nothing is producing it on screen.
+- NO torch, NO handle, NO shaft, NO hand, NO arm.
+- NO skulls, NO faces, NO runes, NO circles or badges behind the flame.
+
+LAYOUT RULES:
+1. EXACTLY 1 icon, centred, filling about 75% of the image with a clear magenta margin on all four sides. The cone runs corner-to-corner on the diagonal so it uses the full width.
+2. NO borders, NO dividing lines, NO frames, NO circles or badges behind the icon.
+3. NO text, no labels, no captions, no letters, no numbers, no watermark anywhere in the image.

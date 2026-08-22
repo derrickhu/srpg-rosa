@@ -555,8 +555,24 @@ export function createUnitInfoPanel(
   };
 }
 
+export interface UnitInfoOverlayOptions {
+  dimAlpha?: number;
+  /**
+   * 面板落点。默认居中（布阵 / 看自己人）。
+   *
+   * `dodgeTop`：贴上半场左右两边里离 `dodge` 更远的那一侧。
+   * 敌人通常站棋盘上沿，居中一块米白会整片盖住他们——而敌方面板短，
+   * 塞进左上或右上的空草正好。
+   */
+  place?: 'center' | 'dodgeTop';
+  /** `dodgeTop` 要躲开的屏幕坐标（被查看单位的格心） */
+  dodge?: { x: number; y: number };
+  /** 上沿避开顶部 HUD（设置钮 / 回合胶囊） */
+  topInset?: number;
+}
+
 /**
- * 遮罩 + 居中面板 + 点遮罩关闭。两个页面都要这一套，别各写一遍。
+ * 遮罩 + 面板 + 点遮罩关闭。两个页面都要这一套，别各写一遍。
  *
  * 面板自己吃掉点击（`eventMode: 'static'`），否则点面板正文也会把它关掉。
  */
@@ -565,23 +581,62 @@ export function createUnitInfoOverlay(
   screenW: number,
   screenH: number,
   onClose: () => void,
+  opts?: UnitInfoOverlayOptions,
 ): { view: PIXI.Container; stop(): void } {
   const root = new PIXI.Container();
 
   const dim = new PIXI.Graphics();
-  dim.beginFill(0x000000, 0.5);
+  dim.beginFill(0x000000, opts?.dimAlpha ?? 0.5);
   dim.drawRect(0, 0, screenW, screenH);
   dim.endFill();
   dim.eventMode = 'static';
   dim.on('pointertap', onClose);
   root.addChild(dim);
 
-  const panelW = Math.min(300, screenW - 32);
+  const margin = 10;
+  const dodge = opts?.place === 'dodgeTop';
+  // 敌方面板短，不必拉到 300：窄了才能真正让开上排敌人
+  const panelW = dodge
+    ? Math.min(236, screenW - margin * 2)
+    : Math.min(300, screenW - 32);
   const panel = createUnitInfoPanel(model, panelW);
-  panel.view.x = Math.floor((screenW - panelW) / 2);
-  // 面板可能比屏幕高（词条攒满 + 长技能说明），那就贴顶而不是居中溢出到看不见
-  panel.view.y = Math.max(8, Math.floor((screenH - panel.height) / 2));
+  const pos = placeOverlayPanel(
+    screenW,
+    screenH,
+    panelW,
+    panel.height,
+    opts,
+  );
+  panel.view.x = pos.x;
+  panel.view.y = pos.y;
   root.addChild(panel.view);
 
   return { view: root, stop: panel.stop };
+}
+
+function placeOverlayPanel(
+  screenW: number,
+  screenH: number,
+  panelW: number,
+  panelH: number,
+  opts?: UnitInfoOverlayOptions,
+): { x: number; y: number } {
+  const margin = 10;
+  if (opts?.place === 'dodgeTop') {
+    const y = Math.max(margin, opts.topInset ?? margin);
+    const leftX = margin;
+    const rightX = screenW - panelW - margin;
+    const dodge = opts.dodge ?? { x: screenW / 2, y: screenH / 2 };
+    const cxL = leftX + panelW / 2;
+    const cxR = rightX + panelW / 2;
+    const cy = y + panelH / 2;
+    const dL = (dodge.x - cxL) ** 2 + (dodge.y - cy) ** 2;
+    const dR = (dodge.x - cxR) ** 2 + (dodge.y - cy) ** 2;
+    return { x: dL >= dR ? leftX : rightX, y };
+  }
+  return {
+    x: Math.floor((screenW - panelW) / 2),
+    // 面板可能比屏幕高（词条攒满 + 长技能说明），那就贴顶而不是居中溢出到看不见
+    y: Math.max(8, Math.floor((screenH - panelH) / 2)),
+  };
 }

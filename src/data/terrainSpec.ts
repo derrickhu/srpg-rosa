@@ -173,6 +173,8 @@ const SPECS: Record<TerrainId, TerrainSpec> = {
     atkMul: 1,
     defMul: 1,
     dotPerRound: 8,
+    // 火焰是识别信号，但贴图像素大部分是炭树，中位明度其实比沼泽还暗。
+    // 兜底色取火焰橙而不是炭棕：CDN 抖动那几秒必须仍读成「着火了」。
     color: 0xe4642c,
     decay: { rounds: 2, to: 'scorched' },
   },
@@ -190,7 +192,9 @@ const SPECS: Record<TerrainId, TerrainSpec> = {
     atkMul: 1,
     defMul: 1,
     dotPerRound: 0,
-    color: 0x9c7cd4,
+    // 贴图是木柄 + 灰石座（实测主色 #7B7064）。不要写成紫——品红键色会把紫抠掉，
+    // 而且机关格要在草地上跳出来靠的是「一根斜出去的柄」，不是一块紫水晶。
+    color: 0x7b7064,
     opensGates: true,
   },
   /**
@@ -206,7 +210,7 @@ const SPECS: Record<TerrainId, TerrainSpec> = {
     atkMul: 1,
     defMul: 1,
     dotPerRound: 0,
-    color: 0x4c3c2c,
+    color: 0x6f6358,
     blocksSight: true,
     opensTo: 'gate_open',
   },
@@ -223,7 +227,7 @@ const SPECS: Record<TerrainId, TerrainSpec> = {
     atkMul: 1,
     defMul: 1,
     dotPerRound: 0,
-    color: 0x8c7c64,
+    color: 0x7e7b77,
   },
   /**
    * 焦土：烧完之后的终态，规则上等同平原（零动词）。
@@ -238,7 +242,7 @@ const SPECS: Record<TerrainId, TerrainSpec> = {
     atkMul: 1,
     defMul: 1,
     dotPerRound: 0,
-    color: 0x3c342c,
+    color: 0x3e3326,
   },
 };
 

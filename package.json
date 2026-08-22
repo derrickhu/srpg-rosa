@@ -12,6 +12,7 @@
     "anim:tokens": "node scripts/anim2token.mjs",
     "build:godot": "bash scripts/build-wechat-godot.sh",
     "dev": "vite build --watch",
+    "map:edit": "vite --open /tools/map-editor/index.html",
     "upload:cdn": "node scripts/upload_cdn.cjs",
     "upload:cdn:dry": "node scripts/upload_cdn.cjs --dry-run",
     "test": "vitest run",

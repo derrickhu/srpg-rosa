@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>关卡地图 GM 编辑器 · 无尽纹章</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <header>
+    <h1>关卡地图 GM 编辑器</h1>
+    <div class="head-right">
+      <span id="dirty" class="tag hidden">未保存</span>
+      <button id="btnUndo" title="Ctrl+Z">撤销</button>
+      <button id="btnReload">放弃改动并重载</button>
+      <button id="btnPreview">预览 diff</button>
+      <button id="btnSave" class="primary">保存到 stagesMvp.ts</button>
+    </div>
+  </header>
+
+  <div id="status" class="status">加载中…</div>
+
+  <main>
+    <!-- 左：章节 / 关卡 + 章节节奏 -->
+    <aside class="col col-left">
+      <section>
+        <h2>章节节奏</h2>
+        <div id="pacing" class="pacing"></div>
+      </section>
+      <section>
+        <h2>关卡</h2>
+        <div id="stageList" class="stage-list"></div>
+      </section>
+    </aside>
+
+    <!-- 中：棋盘 -->
+    <section class="col col-board">
+      <div class="board-head">
+        <strong id="boardTitle">—</strong>
+        <span id="boardMeta" class="muted"></span>
+      </div>
+      <canvas id="board" width="640" height="720"></canvas>
+      <div class="legend muted">
+        左键：地形笔刷模式下刷格子 / 敌人模式下放置与拖动 ·
+        Shift + 左键：删除敌人 · Ctrl+Z 撤销
+      </div>
+      <section>
+        <h2>校验</h2>
+        <div id="issues" class="issues"></div>
+      </section>
+    </section>
+
+    <!-- 右：工具 -->
+    <aside class="col col-right">
+      <section>
+        <h2>工具</h2>
+        <div class="row" id="tools">
+          <button data-tool="terrain" class="active">地形笔刷</button>
+          <button data-tool="enemy">摆敌人</button>
+        </div>
+      </section>
+
+      <section id="terrainPanel">
+        <h2>地形</h2>
+        <div id="terrainPalette" class="palette"></div>
+      </section>
+
+      <section id="enemyPanel" class="hidden">
+        <h2>新敌人模板</h2>
+        <div class="row" id="templatePalette"></div>
+        <h2>兵种</h2>
+        <div class="row" id="troopPalette"></div>
+      </section>
+
+      <section>
+        <h2>选中敌人</h2>
+        <div id="enemyInspector" class="muted">未选中</div>
+      </section>
+
+      <section>
+        <h2>关卡属性</h2>
+        <div class="form" id="stageForm"></div>
+      </section>
+
+      <section>
+        <h2>胜率模拟</h2>
+        <div class="form" id="simForm"></div>
+        <button id="btnSim">跑模拟（用当前未保存布局）</button>
+        <div id="simOut" class="sim-out muted"></div>
+      </section>
+    </aside>
+  </main>
+
+  <div id="modal" class="modal hidden">
+    <div class="modal-box">
+      <div class="modal-head">
+        <strong id="modalTitle">预览</strong>
+        <button id="modalClose">关闭</button>
+      </div>
+      <pre id="modalBody"></pre>
+    </div>
+  </div>
+
+  <script type="module" src="./main.ts"></script>
+</body>
+</html>

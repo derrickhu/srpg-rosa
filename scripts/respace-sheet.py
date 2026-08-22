@@ -8,8 +8,11 @@
 完全相同的相似变换，帧与帧之间的大小、站位关系原样保留，不会破坏下游的
 --shared-scale 与 --align feet。逐格各缩各的会让角色忽大忽小，绝对不要那样做。
 
-    python3 scripts/respace-sheet.py --input raw.png --output spaced.png
-    python3 scripts/respace-sheet.py --input raw.png --output spaced.png --margin 0.10
+    python3 scripts/respace-sheet.py --input raw.png --output spaced.png --rows 2 --cols 2
+    python3 scripts/respace-sheet.py --input raw.png --output spaced.png --rows 4 --cols 4 --margin 0.10
+
+行列必须显式传入。缺省曾经是 4×4——一张 2×2 杂兵 sheet 被当成 16 格切开，
+每只怪正中留下一条品红十字，下游 `largest` 再各取一块碎片，棋盘上就只剩身体一角。
 """
 import argparse
 import sys
@@ -30,8 +33,8 @@ def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument('--input', required=True)
     p.add_argument('--output', required=True)
-    p.add_argument('--rows', type=int, default=4)
-    p.add_argument('--cols', type=int, default=4)
+    p.add_argument('--rows', type=int, required=True)
+    p.add_argument('--cols', type=int, required=True)
     p.add_argument('--margin', type=float, default=0.08,
                    help='单元格每边至少留出的空白比例')
     a = p.parse_args()

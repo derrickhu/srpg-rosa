@@ -1,0 +1,88 @@
+# 第三章杂兵 mob-4「闸门盾卫」重生成 v2 —— 单格补生成，只换这一只
+#
+# ## 为什么要重做（v1 错在哪）
+#
+# v1 的这一格同时下了三条指令：「兽人几乎完全藏在门板盾后」+「读成一块平板」+
+# 「没有饰色，是四只里最暗最朴素的一块」。三条叠起来的结果是一个**没有特征的黑矩形**，
+# 40px 下读成一扇门或一块布景，不像一个单位。
+#
+# 而这一章的立意恰恰依赖人形剪影——「你在打一支有建制的军队」，建制感只有人形能给
+# （见 docs/敌人图鉴.md §2 第 3 章）。把人藏起来就把这一章的话说没了。
+# 另外要塞地图本身偏暗，一块近黑的平板在上面会丢边缘。
+#
+# ## v2 改什么
+#
+# 门板盾的想法是对的、也切题，留着；改的是**遮挡关系**：盾侧过来、偏到一边，
+# 让绿皮的头和肩、以及两条腿明确露在盾外。
+#
+# **不加第四个饰色**：这一章的统一色就是绿皮 + 暗铁，三只已经各有饰色
+# （守卒血红布、弩手骨白箭袋、狼骑血红三角旗）。让**绿皮自己露出来**当识别点，
+# 比再塞一个饰色干净——绿头压在暗铁盾上缘，正是 40px 下唯一需要读到的那一笔。
+#
+# 盾面加一道亮铁包边，让这块暗色内部有结构，不再是一整块死黑。
+#
+# ## 不要重蹈的那条
+#
+# **不要再写「某个形状必须支配剪影」。** 第三章这只和第四章泥壳蟹是同一种翻车：
+# 那句话会把识别特征本身吃掉（兽人被盾吃了、蟹钳被壳吃了）。要主次就描述**比例**，
+# 别下「支配」这种最高级指令。
+#
+# 处理命令（务必带 --scale-profile，套用原批次的体型基准，否则这只和同章另外三只不一样大）：
+#   python3 ~/.cursor/skills/generate2dsprite/scripts/generate2dsprite.py process \
+#     --input art/sprite-runs/mobs-ch3-fix/raw-mob4.png --target creature --mode grid \
+#     --rows 1 --cols 1 --label-prefix mob --cell-size 256 \
+#     --output-dir art/sprite-runs/mobs-ch3-fix/idle \
+#     --align feet --shared-scale --component-mode largest --strict-qc \
+#     --scale-profile art/sprite-runs/mobs-ch3/scale-profile.json
+#   python3 scripts/despill-magenta.py art/sprite-runs/mobs-ch3-fix/idle
+#   cp art/sprite-runs/mobs-ch3-fix/idle/mob-1.png art/sprite-runs/mobs-ch3/idle/mob-4.png
+#   node scripts/sprite2anim.mjs && node scripts/anim2token.mjs
+
+A SINGLE CARTOON ORC SOLDIER for a tactics game, drawn as one game sprite, centred in the image.
+
+CRITICAL BACKGROUND: the entire background, all space around the character, must be 100% solid flat
+MAGENTA, hex #FF00FF. It is a chroma key and will be deleted. No white, no grey, no gradient, no
+ground shadow, no drop shadow, no glow onto the background. The character must not touch any edge of
+the image and must sit inside about 70% of it with a clear magenta margin all around. This
+instruction overrides everything else in this prompt.
+
+CRITICAL FORBIDDEN COLOURS: absolutely NO pink, NO magenta, NO violet, NO purple, NO lilac anywhere
+on the character. The background key colour is magenta, so any pinkish-purple will be destroyed when
+the background is removed.
+
+CAMERA: a 3/4 top-down view, as if looking down at a tabletop board from above and slightly in
+front. The character faces the viewer, standing on flat invisible ground.
+
+CRITICAL SIZE CONSTRAINT: this is displayed at only about 40 pixels tall in the game. It must be ONE
+bold chunky readable silhouette. NO fine detail, NO small parts, NO texture, NO patterns, NO tiny
+highlights. If a feature would be smaller than a tenth of the character's width, delete it. This is
+a low-tier trash mob and should look SIMPLER than a hero character.
+
+STYLE — must match the other three orcs of this set:
+- Chunky, rounded, toy-like cartoon character. Slightly exaggerated, friendly-menacing, never gory
+  and never scary.
+- A THICK near-black outline (#1A1410) all the way around the character and around its major
+  internal shapes.
+- FLAT colour fills. At most 3 colours plus the outline, plus one lighter shade for a single simple
+  cel-shaded highlight and one darker shade for a single shadow. No gradients, no soft shading, no
+  gloss, no texture noise, no painterly brushwork, no pixel art.
+- Big simple eyes. No noses, no ears, no fingers, no teeth smaller than the outline width.
+- Same army as the others: MID GREEN skin (#5F9E3F) and DARK IRON armour (#2E3238).
+
+CONTENTS — GATE SHIELD BEARER, an orc holding a big rectangular iron door-shield:
+
+- He is a SOLDIER FIRST. The viewer must read "a green orc standing behind a shield", never "a slab
+  of metal". Proportion target: the shield covers roughly the middle HALF of his height.
+- His GREEN HEAD AND SHOULDERS rise CLEARLY ABOVE the top edge of the shield — the green head above
+  dark iron is the single most important read at small size. Two small tusks, two simple eyes.
+- The shield is TURNED at a slight angle and held OFF TO ONE SIDE of his body, not planted flat and
+  centred. Because it is off to one side, his far shoulder and arm are visible on the other side.
+- BOTH LEGS AND FEET are clearly visible below the bottom edge of the shield, planted wide in a
+  braced stance. The shield does NOT reach the ground.
+- The shield is dark iron with a THICK LIGHTER IRON RIM all the way around and exactly three big
+  chunky bolt studs down its centre, so the dark area has visible internal structure and never reads
+  as one dead black rectangle.
+- No cross marking on the shield, and the shield is rectangular, not rounded.
+- He is the WIDEST and heaviest of the four orcs, but he is still unmistakably a person.
+
+NO text, no labels, no captions, no letters, no numbers, no watermark anywhere in the image.

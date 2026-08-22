@@ -1,0 +1,86 @@
+{
+  "id": "emberbat",
+  "source": "art/sprite-runs/mobs-ch5",
+  "blend": "normal",
+  "image": "images/anim/emberbat.png",
+  "meta": {
+    "size": {
+      "w": 256,
+      "h": 128
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 90,
+    "baselineY": 214,
+    "ref": "mobs-ch5-idle/mob-2.png"
+  },
+  "frames": {
+    "mobs-ch5-idle/mob-2.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 217,
+        "h": 114
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 19,
+        "y": 123,
+        "w": 217,
+        "h": 114
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "idle": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch5-idle/mob-2.png"
+      ]
+    },
+    "default": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch5-idle/mob-2.png"
+      ]
+    },
+    "idle_up": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch5-idle/mob-2.png"
+      ]
+    },
+    "idle_down": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch5-idle/mob-2.png"
+      ]
+    },
+    "idle_left": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch5-idle/mob-2.png"
+      ]
+    },
+    "idle_right": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch5-idle/mob-2.png"
+      ]
+    }
+  }
+}

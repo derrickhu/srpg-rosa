@@ -33,7 +33,14 @@ const PAD_MARGIN = 1.03;
 const UNIT_HEIGHT_CELLS = 0.92;
 const MOOK_HEIGHT_CELLS = 0.7;
 const FEET_BELOW_CENTER = 0.2;
-const MOOK_SETS = new Set(['slime', 'sporecap', 'bloodwolf', 'rockshell']);
+// 与 animSets.ts 的 MOOK_ART_SETS 同步。判据是**剪影形态**（非人形、宽块状），
+// 不是「是不是杂兵」——第三章守军是人形兽人，按英雄身高走，刻意不在这里。
+const MOOK_SETS = new Set([
+  'slime', 'sporecap', 'bloodwolf', 'rockshell',
+  'vinecocoon', 'sporesac', 'leafpanther', 'mosswarden',
+  'mirehand', 'dartbug', 'miregator', 'mudcarapace',
+  'magmacore', 'emberbat', 'scalewyrm', 'ashshell',
+]);
 
 /**
  * 要派生 token 的集合。前四个是 UnitKind（与 src/battle/types.ts 一致），
@@ -45,8 +52,20 @@ const MOOK_SETS = new Set(['slime', 'sporecap', 'bloodwolf', 'rockshell']);
  */
 const TOKEN_SETS = [
   'sword', 'bow', 'shield', 'cavalry', 'mage', 'healer',
+  // 第一章杂兵
   'slime', 'sporecap', 'bloodwolf', 'rockshell',
-  'bloodfang',
+  // 第二章杂兵
+  'vinecocoon', 'sporesac', 'leafpanther', 'mosswarden',
+  // 第三章杂兵：人形兽人守军，**不在 MOOK_SETS 里**（按英雄身高，理由见 animSets.ts）
+  'fangtrooper', 'wallbalist', 'wallrider', 'gatewarden',
+  // 第四章杂兵
+  'mirehand', 'dartbug', 'miregator', 'mudcarapace',
+  // 第五章杂兵
+  'magmacore', 'emberbat', 'scalewyrm', 'ashshell',
+  // 第二至五章精英：血牙部族人形兽人，**不在 MOOK_SETS 里**（按英雄身高）
+  'torun', 'castellan', 'mirespeaker', 'drakekin',
+  // Boss：完整图集档位，token 从行走的第一帧派生
+  'bloodfang', 'bloodshaman', 'bloodcastellan', 'mirequeen', 'drakelord',
 ];
 
 function loadSet(id) {

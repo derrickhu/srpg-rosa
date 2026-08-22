@@ -1,0 +1,90 @@
+# 第四章杂兵 mob-4「泥壳蟹」重生成 v2 —— 单格补生成，只换这一只
+#
+# ## 为什么要重做（v1 错在哪）
+#
+# v1 写了「巨壳几乎盖住整只，读成一个会走的穹顶」+「穹顶必须支配剪影」，同时又要求
+# 「一只不对称的巨钳」当记忆点。**互相矛盾**：穹顶支配了，钳子就被压没了。
+# 出来的结果是一只乌龟——名字叫「蟹」，图上却是龟，单位面板会当场露馅。
+#
+# 而且蟹壳穹顶这个形状在五章里是**第三只穹顶**：第一章岩甲龟（棕穹顶）、
+# 第五章灰烬甲虫（苍白穹顶）。第一章和第五章那两只各有存在理由
+# （前者是初见的盾位教学，后者是「满章发光里唯一不亮的那个」），这只没有，
+# 所以让它去做真正的蟹。
+#
+# ## v2 只改剪影，配色一个字不动
+#
+# **配色 #A8B0A0（H100 S9 L66）保留。** 那是排过的：本章明度要铺成 12/67/33/66
+# 才能在沼泽 L24 / 河流 L54 这两块偏暗地形上浮出来，而且靠低饱和度和吹箭虫的
+# 高饱和酸黄绿分开（推演见 mobs_ch4_v1_prompt.txt 头部）。动颜色会把那套推演推倒重来。
+#
+# 改的只有一件事：**让巨钳成为主体，壳退成扁的、宽的底座。**
+# 「宽、扁、一只举起的巨钳」和龟壳穹顶在 40px 下是两个完全不同的读法。
+#
+# ## 不要重蹈的那条
+#
+# **不要再写「某个形状必须支配剪影」。** 这只和第三章闸门盾卫是同一种翻车。
+# 要主次就描述**比例**（钳子约占体高多少），别下「支配」这种最高级指令，
+# 它会把另一个特征直接删掉。
+#
+# 处理命令（务必带 --scale-profile，套用原批次体型基准）：
+#   python3 ~/.cursor/skills/generate2dsprite/scripts/generate2dsprite.py process \
+#     --input art/sprite-runs/mobs-ch4-fix/raw-mob4.png --target creature --mode grid \
+#     --rows 1 --cols 1 --label-prefix mob --cell-size 256 \
+#     --output-dir art/sprite-runs/mobs-ch4-fix/idle \
+#     --align feet --shared-scale --component-mode largest --strict-qc \
+#     --scale-profile art/sprite-runs/mobs-ch4/scale-profile.json
+#   python3 scripts/despill-magenta.py art/sprite-runs/mobs-ch4-fix/idle
+#   cp art/sprite-runs/mobs-ch4-fix/idle/mob-1.png art/sprite-runs/mobs-ch4/idle/mob-4.png
+#   node scripts/sprite2anim.mjs && node scripts/anim2token.mjs
+
+A SINGLE CARTOON SWAMP CRAB CREATURE for a tactics game, drawn as one game sprite, centred in the
+image. It is something that crawled out of a poisonous bog.
+
+CRITICAL BACKGROUND: the entire background, all space around the creature, must be 100% solid flat
+MAGENTA, hex #FF00FF. It is a chroma key and will be deleted. No white, no grey, no gradient, no
+ground shadow, no drop shadow, no glow onto the background. The creature must not touch any edge of
+the image and must sit inside about 70% of it with a clear magenta margin all around. This
+instruction overrides everything else in this prompt.
+
+CRITICAL FORBIDDEN COLOURS: absolutely NO pink, NO magenta, NO violet, NO purple, NO lilac anywhere
+on the creature. The background key colour is magenta, so any pinkish-purple will be destroyed when
+the background is removed.
+
+CAMERA: a 3/4 top-down view, as if looking down at a tabletop board from above and slightly in
+front. The creature faces the viewer, standing on flat invisible ground.
+
+CRITICAL SIZE CONSTRAINT: this is displayed at only about 40 pixels tall in the game. It must be ONE
+bold chunky readable silhouette. NO fine detail, NO small parts, NO texture, NO patterns, NO tiny
+highlights. If a feature would be smaller than a tenth of the creature's width, delete it. This is a
+low-tier trash mob and should look SIMPLER than a hero character.
+
+STYLE — must match the other three creatures of this set:
+- Chunky, rounded, toy-like cartoon creature. Slightly exaggerated, friendly-menacing, never gory
+  and never scary.
+- A THICK near-black outline (#1A1410) all the way around the creature and around its major internal
+  shapes.
+- FLAT colour fills. At most 3 colours plus the outline, plus one lighter shade for a single simple
+  cel-shaded highlight and one darker shade for a single shadow. No gradients, no soft shading, no
+  gloss, no texture noise, no painterly brushwork, no pixel art.
+- Big simple eyes. No noses, no ears, no fingers, no teeth smaller than the outline width.
+
+CONTENTS — MUD CRAB, built around ONE ENORMOUS CLAW:
+
+- The creature must read as A CRAB, never as a turtle or a tortoise. The test: if the giant claw were
+  removed, nothing recognisable should be left.
+- ONE ENORMOUS CLAW on ONE SIDE ONLY, HELD UP AND OPEN beside the body. Proportion target: the raised
+  claw alone is about HALF the creature's total height and is the single biggest shape in the picture,
+  clearly bigger than the shell. The other claw is a tiny stub on the opposite side — the lopsided
+  pairing is the whole idea.
+- The SHELL IS LOW, FLAT AND WIDE, like a squashed rounded rectangle sitting close to the ground. It
+  is NOT a tall dome and NOT hemispherical. It should be at most a third of the creature's height.
+- The whole creature is much WIDER than it is tall, with a low centre of gravity.
+- Four stubby legs, two on each side, splayed out sideways from under the flat shell in a crab stance
+  — sideways-splayed legs, not tucked under like a turtle's.
+- Two small simple eyes on SHORT STALKS standing up on top of the flat shell, not hidden underneath
+  it. The stalked eyes are a second anti-turtle signal.
+- Colours: the shell and claw are a pale desaturated GREY-GREEN (#A8B0A0) with a slightly lighter rim
+  highlight and a darker grey-green shadow underneath. No more than three big chunky plate divisions
+  on the shell — no fine mosaic.
+
+NO text, no labels, no captions, no letters, no numbers, no watermark anywhere in the image.

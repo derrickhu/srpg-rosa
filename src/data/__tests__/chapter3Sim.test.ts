@@ -18,7 +18,7 @@ const DUNGEON = 'dungeon_fortress';
  *
  * 玩家状态假设 —— 刚通关第二章：
  *   按前两章那条斜率（第一章 1 级、第二章 2 级）继续走，这一章按 **3 级**算。
- *   精华（`bonusAtkEach`）在章内从 5 累积到 7。
+ *   精华（`bonusAtkEach`）在章内从 4 累积到 6，接着第二章那条「每两场战斗 +1」的斜率。
  *
  * 上阵人数按关卡自己的 `maxDeploy` 给，不再一律三人：
  *   推进关没写 `maxDeploy`，走 `DeployManager` 的默认 3 人；
@@ -32,7 +32,7 @@ const DUNGEON = 'dungeon_fortress';
 describe('第三章难度曲线回归', () => {
   const stages = battleStageIndices(DUNGEON);
 
-  const BONUS_BY_STAGE = [5, 5, 6, 6, 6, 7];
+  const BONUS_BY_STAGE = [4, 4, 5, 5, 6, 6];
   const LEVEL = 3;
   const QUARTET = [...TRIO, CAVALRY];
 
@@ -56,12 +56,15 @@ describe('第三章难度曲线回归', () => {
   /**
    * 推进关目标 ≥75%，同第二章。
    *
-   * 这一章的推进关多了一层「要不要开闸门」的决定，但**自动模式测不到这个决定**
-   * ——AI 不会去站机关（见 `terrainSpec` 的机关契约）。所以这四条量的是
-   * 「玩家完全不用机关、硬着头皮绕路打」的下限。人工用好机关应当明显高于此。
+   * 前两关（高地弓阵、哨塔盲角）只有城墙，教的是「墙挡路也挡箭」；
+   * 后两关（闸门机关、放闸）才引入机关，多了一层「要不要开闸门」的决定。
+   *
+   * 那个决定**自动模式测不到**——AI 不会去站机关（见 `terrainSpec` 的机关契约）。
+   * 所以后两条量的是「玩家完全不用机关、硬着头皮绕路打」的下限，
+   * 人工用好机关应当明显高于此。
    */
-  it('关 14-17 推进关：不用机关硬打也不该卡关', () => {
-    const labels = ['关14 闸门机关', '关15 瓮城窄道', '关16 放闸', '关17 双门齐落'];
+  it('关 10-13 推进关：不用机关硬打也不该卡关', () => {
+    const labels = ['关10 高地弓阵', '关11 哨塔盲角', '关12 闸门机关', '关13 放闸'];
     for (const [i, label] of labels.entries()) {
       const r = simulateStage(cfg(i), N);
       report(label, r, '>=75%');
@@ -70,11 +73,11 @@ describe('第三章难度曲线回归', () => {
   }, 120_000);
 
   /** 精英关目标 55%-90%，同第二章 */
-  it('关 18 精英战：明显是个台阶，但不是第二个 Boss', () => {
+  it('关 14 精英战：明显是个台阶，但不是第二个 Boss', () => {
     const r = simulateStage(cfg(4), N);
-    report('关18 精英', r, '55%~90%');
-    expect(r.winRate, `关18 胜率 ${(r.winRate * 100).toFixed(1)}%`).toBeGreaterThanOrEqual(0.55);
-    expect(r.winRate, `关18 胜率 ${(r.winRate * 100).toFixed(1)}%`).toBeLessThanOrEqual(0.9);
+    report('关14 精英', r, '55%~90%');
+    expect(r.winRate, `关14 胜率 ${(r.winRate * 100).toFixed(1)}%`).toBeGreaterThanOrEqual(0.55);
+    expect(r.winRate, `关14 胜率 ${(r.winRate * 100).toFixed(1)}%`).toBeLessThanOrEqual(0.9);
   }, 60_000);
 
   /**
@@ -98,16 +101,16 @@ describe('第三章难度曲线回归', () => {
    * 见 `docs/玩法重设计.md`；那件事要等角色和技能扩完，靠实机验证一起做，
    * 现在把八章都按未定的尺子返工一遍是白费。
    */
-  it('关 19 Boss：裸打惩罚、备药后可过，且会放破阵冲撞', () => {
+  it('关 15 Boss：裸打惩罚、备药后可过，且会放破阵冲撞', () => {
     const naked = simulateStage(cfg(5), N);
-    report('关19 Boss 裸打', naked, '50%~80%');
+    report('关15 Boss 裸打', naked, '50%~80%');
     expect(naked.winRate, `Boss 裸打胜率 ${(naked.winRate * 100).toFixed(1)}%`).toBeLessThanOrEqual(0.8);
     expect(naked.winRate, `Boss 裸打胜率 ${(naked.winRate * 100).toFixed(1)}%`).toBeGreaterThanOrEqual(0.5);
     // 结算 id 是底层 warlord_breach；展示名「破阵冲撞」只影响飘字/面板
     expect(naked.skillCasts['warlord_breach'] ?? 0, 'Boss 应释放破阵冲撞').toBeGreaterThan(0);
 
     const prepared = simulateStage(cfg(5, { healPotions: 2 }), N);
-    report('关19 Boss 带 2 药', prepared, '>=85%');
+    report('关15 Boss 带 2 药', prepared, '>=85%');
     expect(
       prepared.winRate,
       `Boss 带 2 药胜率 ${(prepared.winRate * 100).toFixed(1)}%`,

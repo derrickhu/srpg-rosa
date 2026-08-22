@@ -1,0 +1,140 @@
+# 第二至五章精英 —— 四只一张 2x2（generate2dsprite --mode grid --rows 2 --cols 2）
+#
+# 设计依据：docs/敌人图鉴.md §2 各章「精英」行。第一章精英百夫长·卡格**刻意沿用 bloodfang**
+# （他是酋长的部下，提前认脸），所以这里只做第二到五章的四只。
+#
+# ## 为什么四只一批
+#
+# 一次出全套，四只的描边粗细、简化程度、俯视角度天然一致；分四次生图做不到。
+# 而精英之间虽然不同章不同场，但玩家会在**图鉴/单位面板**里横向比较，风格漂移看得出来。
+#
+# ## 为什么精英统一是人形兽人
+#
+# 血牙部族是贯穿五章的敌对势力：**杂兵是当地野物，精英与 Boss 是血牙部族**。
+# 这条读图规矩第一章就立下了，剪影本身就是「这个不好惹」的信号。
+# 于是精英在第二、四、五章天然和本章杂兵分开（人形 vs 非人形），
+# 只有第三章需要认真算——那一章杂兵也是人形兽人，靠饰色（金）+ 单侧巨大肩甲区分。
+#
+# 例外是第五章的龙裔·卡尔萨：他是**半龙化**的兽人，仍是人形，但一侧手臂已变成龙爪。
+#
+# ## 配色推演（判据：色相差 ≥25° 或明度差 ≥20，满足一条即可）
+#
+#   1 猎长·图伦（第 2 章）  深皮革棕 L30 + 血红 + 骨白长弓
+#     本章杂兵明度是 70/85/50/40，他取**最暗**的 30 立住。血红对林影豹的锈橙
+#     只差 10° 色相、5 明度，单看配色是不够的——所以**主体读法压在骨白长弓上**：
+#     一条比人还高的竖线，和四足低伏的豹在 40px 下是两个完全不同的形。
+#
+#   2 血牙城卫长（第 3 章）绿皮 + 暗铁 + **金**
+#     全章唯一的金。这一章统一色是绿皮 + 暗铁，三只杂兵饰色分别是血红/骨白/血红，
+#     金是第四个，不撞。金对我方骑兵 H42 L52 要注意：骑兵是白马 + 长枪的横向剪影，
+#     这只是直立军官，跨剪影类别。
+#
+#   3 沼语者·塔玛（第 4 章）近黑袍 + **酸黄绿**吊壶
+#     酸黄绿是本章的签名色（吹箭虫同色系）。他和吹箭虫的区别不靠颜色靠形：
+#     人形直立 vs 圆腹昆虫。近黑袍对泥沼手 L12 同样靠形分开。
+#
+#   4 龙裔·卡尔萨（第 5 章）绿皮 + 黑曜鳞 + 橙红龙爪
+#     **绿皮是他的识别点**：本章四只杂兵没有一只是绿的（黑曜/橙红/灰黑/苍白）。
+#     橙红只用在那只龙爪上，和本章签名色呼应但不夺主。
+#
+# ## 剪影必须互不相同（这是四只放一张图最容易翻的地方）
+#
+#   图伦   = 高瘦 + 一条比人还高的**竖线**（长弓）
+#   城卫长 = 上宽 + **肩部**单侧巨大块（肩甲）
+#   塔玛   = 弓背下沉 + **垂下来**的一个小块（吊壶）
+#   卡尔萨 = **手部**单侧巨大块（龙爪），位置刻意和城卫长的肩部错开
+#
+# 城卫长和卡尔萨都是「单侧巨大块」，靠**块在肩还是在手**区分，配色再帮一把。
+#
+# 禁色：粉、品红、紫罗兰一律不许出现（抠色键是品红 #FF00FF）。
+#
+# **不要写「某个形状必须支配剪影」**——那条最高级指令会把另一个识别特征直接删掉，
+# 第三章闸门盾卫和第四章泥壳蟹连着栽过两次，见 docs/美术管线-AI-sprite.md §2.9。
+# 要主次就描述比例。
+#
+# 处理命令：
+#   python3 ~/.cursor/skills/generate2dsprite/scripts/generate2dsprite.py process \
+#     --input art/sprite-runs/elites/raw-2x2.png --target creature --mode grid \
+#     --rows 2 --cols 2 --label-prefix elite --cell-size 256 \
+#     --output-dir art/sprite-runs/elites/idle \
+#     --align feet --shared-scale --component-mode largest --strict-qc \
+#     --write-scale-profile art/sprite-runs/elites/scale-profile.json
+#   python3 scripts/despill-magenta.py art/sprite-runs/elites/idle
+#   node scripts/sprite2anim.mjs && node scripts/anim2token.mjs
+#
+# elite-1 猎长·图伦(torun) / elite-2 血牙城卫长(castellan)
+# elite-3 沼语者·塔玛(mirespeaker) / elite-4 龙裔·卡尔萨(drakekin)
+
+A 2-column x 2-row grid of 4 CARTOON ORC ELITE CHARACTERS for a top-down tactics game, drawn as game
+sprites. All four belong to the same Bloodfang orc tribe and must read as one faction.
+
+CRITICAL BACKGROUND: the entire background, including all space between and around the four
+characters, must be 100% solid flat MAGENTA, hex #FF00FF. It is a chroma key and will be deleted.
+No white, no grey, no gradient, no ground shadow, no drop shadow, no glow onto the background.
+The characters must not touch each other or the edges of the image. This instruction overrides
+everything else in this prompt.
+
+CRITICAL FORBIDDEN COLOURS: absolutely NO pink, NO magenta, NO violet, NO purple, NO lilac anywhere
+on any character. The background key colour is magenta, so any pinkish-purple on a character will be
+destroyed when the background is removed.
+
+CAMERA: a 3/4 top-down view, as if looking down at a tabletop board from above and slightly in
+front. Every character faces the viewer, standing on flat invisible ground. All four must sit at the
+SAME eye level, be seen from the SAME angle, and have the SAME head-to-boot height.
+
+CRITICAL SIZE CONSTRAINT: these are displayed at only about 40 pixels tall in the game. Each
+character must be ONE bold chunky readable silhouette. NO fine detail, NO small parts, NO texture,
+NO patterns, NO tiny highlights. If a feature would be smaller than a tenth of the character's
+width, delete it. These are mid-tier elites: a little more ornate than a trash mob, but still much
+simpler than a hero.
+
+STYLE:
+- Chunky, rounded, toy-like cartoon characters with chibi proportions — large head, short body.
+  Slightly exaggerated, friendly-menacing, never gory and never scary.
+- A THICK near-black outline (#1A1410) all the way around every character and around its major
+  internal shapes.
+- FLAT colour fills only. At most 4 colours per character plus the outline, plus one lighter shade
+  for a single simple cel-shaded highlight and one darker shade for a single shadow. No gradients,
+  no soft shading, no gloss, no shiny spheres, no texture noise, no painterly brushwork, no pixel art.
+- Big simple eyes. No noses, no ears, no fingers, no teeth smaller than the outline width.
+- Shared tribal identity: ash-grey-green orc skin, two small tusks in the lower jaw, and somewhere on
+  each one a small bone ornament.
+
+Per-cell contents:
+
+TOP-LEFT — HUNT MASTER. A lean orc hunter standing upright, holding a HUGE LONGBOW VERTICALLY beside
+him. The bow is BONE WHITE (#E8E4D8) and is TALLER THAN HE IS, reaching from the ground to above the
+top of his head — this tall pale vertical line beside a dark body is his whole read. His clothing is
+DARK LEATHER BROWN (#4A3A2A), the darkest body of the four. Blood red (#B23A32) war paint stripes
+across one cheek and a blood red cloth band on one arm. A short quiver of stubby bolts at his hip.
+He is the TALLEST and NARROWEST of the four.
+
+TOP-RIGHT — CASTELLAN. A broad orc officer standing square to the viewer in DARK IRON (#2E3238) plate
+with green skin showing at the arms and face. On ONE SHOULDER ONLY sits an ENORMOUS ANGULAR PAULDRON
+about as wide as his own torso, painted BRASS GOLD (#B8863A) with a lighter gold rim — the lopsided
+shoulder is his read. He has ONE EYE: the other is covered by a plain dark iron eye patch, drawn as
+one simple flat shape. He holds a short broad blade low in the other hand. He is the WIDEST ACROSS
+THE SHOULDERS of the four, and the asymmetric mass sits HIGH, at shoulder level.
+
+BOTTOM-LEFT — MIRE SPEAKER. A hunched orc witch doctor with a rounded curved back, leaning forward
+over a crooked bone staff. HANGING DOWN from the top of the staff on a short cord is a fat round
+BONE FLASK, dangling clearly below his hand at about waist height, with a few flat drip shapes
+falling from its bottom — the dangling flask under a bent-over body is his read. The flask's contents
+show as ACID YELLOW-GREEN (#D2DC7A) painted as a hard-edged flat shape, no glow. His robe is NEAR
+BLACK (#24211C). He is the SHORTEST and roundest of the four.
+
+BOTTOM-RIGHT — DRAKE KIN. An orc warrior mid-transformation into a dragon. His body and legs are
+covered in flat OBSIDIAN BLACK (#1F1D22) scale plates, and his green orc skin is still clearly
+visible on his face and one normal arm. His OTHER ARM has become an ENORMOUS DRAGON CLAW, about twice
+the thickness of his normal arm, held DOWN AND FORWARD at hip height with three big blunt talons.
+The claw is a deep ORANGE RED (#C64A28). Two short blunt horns on his head. The asymmetric mass sits
+LOW, at hand level — this must not read like a shoulder pad.
+
+LAYOUT RULES:
+1. EXACTLY 4 characters in a clean 2x2 arrangement.
+2. NO borders, NO dividing lines, NO frames, NO circles or platforms under the characters.
+3. Each character fills about 70% of its cell with a clear magenta margin on all four sides. Nothing
+   crosses into a neighbouring cell — not a bow tip, not a pauldron, not a talon.
+4. All four must feel like ONE set drawn by one artist and like ONE tribe: same outline thickness,
+   same skin tone, same level of simplification, same camera angle, same body height.
+5. NO text, no labels, no captions, no letters, no numbers, no watermark anywhere in the image.

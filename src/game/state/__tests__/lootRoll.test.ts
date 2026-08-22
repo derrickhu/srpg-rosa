@@ -3,6 +3,7 @@ import { DUNGEON_DEFS } from '@/data/dungeonCatalog';
 import { allSkillMods, getSkillMod } from '@/data/skillModCatalog';
 import { rollLoot, startRun } from '../ProgressManager';
 import { playerDeployRowRange } from '@/battle/constants';
+import { gridSize } from '@/battle/grid';
 import { createInitialState, currentStage, partyCharacters, type MvpGameState } from '../GameState';
 
 const DUNGEON_ID = DUNGEON_DEFS[0]!.id;
@@ -26,7 +27,7 @@ function newRun(): MvpGameState {
 /** 战后抽卡看的是布阵，不是整队。测试默认全员上场，要测替补再自己改 placements。 */
 function deployParty(s: MvpGameState, rosterIds?: string[]): void {
   const ids = rosterIds ?? partyCharacters(s).map((m) => m.rosterId);
-  const { h } = currentStage(s).terrain;
+  const { h } = gridSize(currentStage(s).terrain);
   const [row] = playerDeployRowRange(h);
   s.run!.placements = ids.map((rosterId, i) => ({
     uid: `p${i}`,

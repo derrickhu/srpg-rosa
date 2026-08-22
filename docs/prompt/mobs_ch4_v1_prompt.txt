@@ -1,0 +1,114 @@
+# 第四章杂兵 · 毒沼节肢 —— 四只一张 2x2（generate2dsprite --mode grid --rows 2 --cols 2）
+#
+# 设计依据：docs/敌人图鉴.md §2 第 4 章。剪影语法沿用第一章（圆滚/宽伞/横长/穹顶
+# 对应 sword/bow/cavalry/shield），换题材与配色。
+#
+# 这一章的配色是全五章最难排的，推演记在这里：
+#
+#   「毒」的自然联想是病态紫，但**紫做不出来**：抠色键是品红 #FF00FF，H270–330 的主色
+#   到键色的色距 < 150，会被连着素材一起吃掉（docs/美术管线-AI-sprite.md §2，魂晶踩过）。
+#   所以这一章的毒感只能靠**酸黄绿 + 近黑**的明度两极来表达。
+#
+#   而黄绿这一带正好被我方两个职业夹住：弓手 H90 L33（叶绿）、骑兵 H42 L52（金黄）。
+#   H42–H90 之间任何中等明度的黄绿都会同时贴着两个，色相差永远不够 25°。
+#   突破口是**明度**（判据是「色相差 ≥25° 或明度差 ≥20」，满足一条即可）：
+#
+#   1 泥沼手  #24211C L12 近黑      vs 全部职业明度差 ≥ 15，且是全场最暗的一块
+#   2 吹箭虫  #D2DC7A H68 S55 L67  vs 弓手 H90 L33 明度差 34✓ / 骑兵 H42 L52 色相差 26✓
+#                                   刻意取**亮**酸黄绿而不是中等脓黄——中等值两条判据都不过
+#   3 沼行鳄  #3D6B3D H120 S27 L33 vs 弓手 30°✓ / 法师 H180 60°✓ / 沼泽 H60 60°✓
+#   4 泥壳蟹  #A8B0A0 H100 S9 L66  vs 骑兵 58°✓ / 弓手 明度差 33✓；低饱和，靠饱和度轴和吹箭虫分开
+#
+#   明度铺成 12 / 67 / 33 / 66。本章地形沼泽 H60 L24、河流 H207 L54 都偏暗偏中，
+#   两只亮的（吹箭虫、泥壳蟹）浮得出来，两只暗的靠色相和地形错开。
+#
+# 禁色：粉、品红、紫罗兰——这一章尤其要盯，因为「毒」很容易被模型画成紫。
+#
+# 处理命令：
+#   python3 ~/.cursor/skills/generate2dsprite/scripts/generate2dsprite.py process \
+#     --input art/sprite-runs/mobs-ch4/raw-2x2.png --target creature --mode grid \
+#     --rows 2 --cols 2 --label-prefix mob --cell-size 256 \
+#     --output-dir art/sprite-runs/mobs-ch4/idle \
+#     --align feet --shared-scale --component-mode largest --strict-qc \
+#     --write-scale-profile art/sprite-runs/mobs-ch4/scale-profile.json
+#   python3 scripts/despill-magenta.py art/sprite-runs/mobs-ch4/idle
+#   node scripts/sprite2anim.mjs   # mirehand/dartbug/miregator/mudcarapace 各取一帧
+#
+# mob-1 泥沼手(sword) / mob-2 吹箭虫(bow) / mob-3 沼行鳄(cavalry) / mob-4 泥壳蟹(shield)
+
+A 2-column x 2-row grid of 4 CARTOON SWAMP CREATURE CHARACTERS for a tactics game, drawn as game
+sprites. These are things that crawled out of a poisonous bog.
+
+CRITICAL BACKGROUND: the entire background, including all space between and around the four
+creatures, must be 100% solid flat MAGENTA, hex #FF00FF. It is a chroma key and will be deleted.
+No white, no grey, no gradient, no ground shadow, no drop shadow, no glow onto the background.
+The creatures must not touch each other or the edges of the image. This instruction overrides
+everything else in this prompt.
+
+CRITICAL FORBIDDEN COLOURS: absolutely NO pink, NO magenta, NO violet, NO purple, NO lilac anywhere
+on any creature. This matters more here than anywhere else — "poison" is often drawn purple, and
+purple is FORBIDDEN because the background key colour is magenta and any purple would be destroyed
+when the background is removed. Express poison with ACID YELLOW-GREEN and NEAR-BLACK instead. Use
+only the specific colours named per cell below.
+
+CAMERA: a 3/4 top-down view, as if looking down at a tabletop board from above and slightly in
+front. Every creature faces the viewer, standing on flat invisible ground. All four must sit at the
+SAME eye level and be seen from the SAME angle.
+
+CRITICAL SIZE CONSTRAINT: these are displayed at only about 40 pixels tall in the game. Each
+creature must be ONE bold chunky readable silhouette. NO fine detail, NO small parts, NO texture,
+NO patterns, NO tiny highlights. If a feature would be smaller than a tenth of the creature's
+width, delete it. These are low-tier trash mobs and should look SIMPLER than a hero character —
+fewer shapes, fewer colours, one strong idea each.
+
+STYLE — must match the game's heroes:
+- Chunky, rounded, toy-like cartoon creatures. Slightly exaggerated, friendly-menacing, never gory
+  and never scary.
+- A THICK near-black outline (#1A1410) all the way around every creature and around its major
+  internal shapes.
+- FLAT colour fills. At most 3 colours per creature plus the outline, plus one lighter shade for a
+  single simple cel-shaded highlight and one darker shade for a single shadow. No gradients, no soft
+  shading, no gloss, no texture noise, no painterly brushwork, no pixel art.
+- Big simple eyes where the creature has eyes at all. No noses, no ears, no separate fingers.
+
+Per-cell contents:
+
+TOP-LEFT — MUD HAND. A single enormous CLAWED HAND made of wet mud, pushing UP out of the ground —
+there is no body, no head, no face, no eyes at all. It has exactly THREE thick stubby fingers, each
+as fat as a tree trunk, curled slightly inward like a grasping claw. Do not draw five thin fingers.
+The mud is a very dark NEAR-BLACK BROWN (#24211C) with one slightly lighter warm grey highlight on
+the top of the knuckles. A low rounded mound of the same dark mud at the base where it meets the
+ground. Overall the shape is compact, rounded and squat — wider than it is tall. This is the darkest
+creature of the four. The idea "it is just a giant hand" is the whole silhouette.
+
+TOP-RIGHT — BLOWPIPE BUG. A fat insect whose big round BULBOUS ABDOMEN sits high up and forms the
+top of the silhouette, carried on four short thin legs below, so the shape is clearly TOP-HEAVY and
+WIDE AT THE TOP, narrow at the bottom. From its small head at the front juts a thick BLOWPIPE that
+FLARES OPEN at the far end like a short trumpet bell, pointing forward and slightly up. The pipe
+must be chunky with real bulk, not a thin straw. Body is a bright ACID YELLOW-GREEN (#D2DC7A) with a
+darker olive shadow under the abdomen, and the blowpipe is near-black. Two big simple round eyes.
+This is the brightest creature of the four.
+
+BOTTOM-LEFT — BOG CROCODILE. A four-legged crocodile standing low and long, seen from the front
+three-quarter angle so all four legs and the body length are visible. Its LONG BLUNT SNOUT takes up
+roughly HALF the total body length and juts straight forward — the absurdly long snout is the whole
+silhouette idea. Back and flanks are a dark MOSS GREEN (#3D6B3D) with a few big chunky flat back
+plates. The underside of the snout and the belly are a pale BONE CREAM, which must read clearly
+against the dark green back. Two small simple eyes set high on the head. The silhouette should be
+much WIDER than it is tall.
+
+BOTTOM-RIGHT — MUD CRAB. A heavy crab whose enormous domed SHELL covers almost the whole creature,
+reading as a walking dome. The shell is a pale desaturated GREY-GREEN (#A8B0A0) with a slightly
+lighter rim and no more than four big chunky plate divisions — no fine mosaic. Four stubby legs at
+the corners and two small simple eyes peeking out at the front under the shell. One single ASYMMETRIC
+GIANT CLAW on one side only, clearly two or three times bigger than the other tiny claw — the
+lopsided giant claw plus the dome is the memorable pairing. The dome must dominate the silhouette.
+
+LAYOUT RULES:
+1. EXACTLY 4 creatures in a clean 2x2 arrangement.
+2. NO borders, NO dividing lines, NO frames, NO circles or platforms under the creatures.
+3. Each creature fills about 70% of its cell with a clear magenta margin on all four sides. Nothing
+   crosses into a neighbouring cell.
+4. All four must feel like ONE set drawn by one artist: same outline thickness, same level of
+   simplification, same camera angle.
+5. NO text, no labels, no captions, no letters, no numbers, no watermark anywhere in the image.

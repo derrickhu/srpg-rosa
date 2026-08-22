@@ -1,0 +1,219 @@
+{
+  "id": "mirequeen_miasma",
+  "source": "art/vfx-runs/mirequeen_miasma",
+  "blend": "add",
+  "image": "images/anim/mirequeen_miasma.png",
+  "meta": {
+    "size": {
+      "w": 512,
+      "h": 512
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 45,
+    "baselineY": 196,
+    "ref": "mirequeen_miasma/mirequeen_miasma-1.png"
+  },
+  "frames": {
+    "mirequeen_miasma/mirequeen_miasma-1.png": {
+      "frame": {
+        "x": 227,
+        "y": 270,
+        "w": 85,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 85,
+        "y": 151,
+        "w": 85,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mirequeen_miasma/mirequeen_miasma-2.png": {
+      "frame": {
+        "x": 247,
+        "y": 188,
+        "w": 173,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 36,
+        "y": 138,
+        "w": 173,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mirequeen_miasma/mirequeen_miasma-3.png": {
+      "frame": {
+        "x": 251,
+        "y": 97,
+        "w": 223,
+        "h": 83
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 12,
+        "y": 137,
+        "w": 223,
+        "h": 83
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mirequeen_miasma/mirequeen_miasma-4.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 247,
+        "h": 93
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 4,
+        "y": 105,
+        "w": 247,
+        "h": 93
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mirequeen_miasma/mirequeen_miasma-5.png": {
+      "frame": {
+        "x": 251,
+        "y": 2,
+        "w": 249,
+        "h": 92
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 3,
+        "y": 106,
+        "w": 249,
+        "h": 92
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mirequeen_miasma/mirequeen_miasma-6.png": {
+      "frame": {
+        "x": 2,
+        "y": 97,
+        "w": 247,
+        "h": 89
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 4,
+        "y": 108,
+        "w": 247,
+        "h": 89
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mirequeen_miasma/mirequeen_miasma-7.png": {
+      "frame": {
+        "x": 2,
+        "y": 188,
+        "w": 243,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 7,
+        "y": 77,
+        "w": 243,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mirequeen_miasma/mirequeen_miasma-8.png": {
+      "frame": {
+        "x": 2,
+        "y": 270,
+        "w": 223,
+        "h": 68
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 17,
+        "y": 85,
+        "w": 223,
+        "h": 68
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mirequeen_miasma/mirequeen_miasma-9.png": {
+      "frame": {
+        "x": 314,
+        "y": 270,
+        "w": 192,
+        "h": 46
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 29,
+        "y": 101,
+        "w": 192,
+        "h": 46
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "mirequeen_miasma": {
+      "loop": false,
+      "fps": 20,
+      "frames": [
+        "mirequeen_miasma/mirequeen_miasma-1.png",
+        "mirequeen_miasma/mirequeen_miasma-2.png",
+        "mirequeen_miasma/mirequeen_miasma-3.png",
+        "mirequeen_miasma/mirequeen_miasma-4.png",
+        "mirequeen_miasma/mirequeen_miasma-5.png",
+        "mirequeen_miasma/mirequeen_miasma-6.png",
+        "mirequeen_miasma/mirequeen_miasma-7.png",
+        "mirequeen_miasma/mirequeen_miasma-8.png",
+        "mirequeen_miasma/mirequeen_miasma-9.png"
+      ]
+    }
+  }
+}

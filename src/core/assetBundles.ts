@@ -8,6 +8,10 @@ import type { AssetBundleDef } from './AssetManager';
  */
 
 // 没有 plain：平原格不画贴图，直接透出战斗背景（见 renderHelpers.createTerrainCell）。
+//
+// 多状态地形必须每态一张。森林被点燃后变成 burning、烧尽变成 scorched；
+// 闸门从 gate_closed 变成 gate_open。漏登记的表现是那一格突然变成纯色方块
+// （`createTerrainCell` 走不到纹理就用 `terrainSpec.color`），玩家会以为着火/开门没发生。
 export const TERRAIN_BUNDLE: AssetBundleDef = {
   name: 'terrain',
   assets: {
@@ -17,6 +21,11 @@ export const TERRAIN_BUNDLE: AssetBundleDef = {
     swamp: 'images/terrain/swamp.png',
     wall: 'images/terrain/wall.png',
     abyss: 'images/terrain/abyss.png',
+    burning: 'images/terrain/burning.png',
+    scorched: 'images/terrain/scorched.png',
+    lever: 'images/terrain/lever.png',
+    gate_closed: 'images/terrain/gate_closed.png',
+    gate_open: 'images/terrain/gate_open.png',
   },
 };
 
@@ -29,12 +38,44 @@ export const UNIT_BUNDLE: AssetBundleDef = {
     shield: 'images/units/shield.png',
     mage: 'images/units/mage.png',
     healer: 'images/units/healer.png',
-    // 第一章杂兵 / 精英·Boss 专属外观，key = spawn 的 animSet（见 src/data/stagesMvp.ts）
+    // 杂兵 / 精英·Boss 专属外观，key = spawn 的 animSet（见 src/data/stagesMvp.ts）。
+    // 每章一批，图鉴见 docs/敌人图鉴.md。漏登记的表现是布阵格里那只怪只剩一个阵营色圆圈。
+    // 第一章 · 草原野地魔物
     slime: 'images/units/slime.png',
     sporecap: 'images/units/sporecap.png',
     bloodwolf: 'images/units/bloodwolf.png',
     rockshell: 'images/units/rockshell.png',
-    bloodfang: 'images/units/bloodfang.png',
+    // 第二章 · 密林腐生植物
+    vinecocoon: 'images/units/vinecocoon.png',
+    sporesac: 'images/units/sporesac.png',
+    leafpanther: 'images/units/leafpanther.png',
+    mosswarden: 'images/units/mosswarden.png',
+    // 第三章 · 要塞兽人守军
+    fangtrooper: 'images/units/fangtrooper.png',
+    wallbalist: 'images/units/wallbalist.png',
+    wallrider: 'images/units/wallrider.png',
+    gatewarden: 'images/units/gatewarden.png',
+    // 第四章 · 毒沼节肢
+    mirehand: 'images/units/mirehand.png',
+    dartbug: 'images/units/dartbug.png',
+    miregator: 'images/units/miregator.png',
+    mudcarapace: 'images/units/mudcarapace.png',
+    // 第五章 · 龙岭火山属
+    magmacore: 'images/units/magmacore.png',
+    emberbat: 'images/units/emberbat.png',
+    scalewyrm: 'images/units/scalewyrm.png',
+      ashshell: 'images/units/ashshell.png',
+      // 第二至五章 · 血牙部族精英（第一章精英沿用 bloodfang）
+      torun: 'images/units/torun.png',
+      castellan: 'images/units/castellan.png',
+      mirespeaker: 'images/units/mirespeaker.png',
+      drakekin: 'images/units/drakekin.png',
+      // Boss
+      bloodfang: 'images/units/bloodfang.png',
+      bloodshaman: 'images/units/bloodshaman.png',
+      bloodcastellan: 'images/units/bloodcastellan.png',
+      mirequeen: 'images/units/mirequeen.png',
+      drakelord: 'images/units/drakelord.png',
   },
 };
 
@@ -130,6 +171,19 @@ export const UI_BUNDLE: AssetBundleDef = {
     skill_bloodfang_roar: 'images/ui/skill_bloodfang_roar.png',
     skill_bloodfang_wildfire: 'images/ui/skill_bloodfang_wildfire.png',
     skill_bloodfang_breach: 'images/ui/skill_bloodfang_breach.png',
+    skill_mirequeen_miasma: 'images/ui/skill_mirequeen_miasma.png',
+    skill_drake_cataclysm: 'images/ui/skill_drake_cataclysm.png',
+    // 杂兵技能图标。这一批**没有皮肤**，直接按底层 SkillSpec id 挂在怪种上
+    // （`stagesMvp` 的 `MookTemplate.skillId`），所以键名是 `skill_<specId>`
+    // 而不是 `skill_<skinId>`。少登记一个的表现是面板上一个灰圆，不报错。
+    skill_spore_spray: 'images/ui/skill_spore_spray.png',
+    skill_wall_ram: 'images/ui/skill_wall_ram.png',
+    skill_venom_dart: 'images/ui/skill_venom_dart.png',
+    skill_mire_bite: 'images/ui/skill_mire_bite.png',
+    skill_magma_burst: 'images/ui/skill_magma_burst.png',
+    skill_cinder_breath: 'images/ui/skill_cinder_breath.png',
+    skill_wyrm_dash: 'images/ui/skill_wyrm_dash.png',
+    skill_ash_harden: 'images/ui/skill_ash_harden.png',
     // 战斗操作条的动作图标。压在深色圆按钮上，所以这批是**浅色填充**，
     // 和压在米白卡上的那两批（mod_* / skill_*）配色相反，不要互相借用。
     act_wait: 'images/ui/act_wait.png',

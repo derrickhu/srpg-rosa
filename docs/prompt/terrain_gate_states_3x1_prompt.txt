@@ -1,0 +1,54 @@
+地形 decal · 要塞机关与闸门（关 / 开）。切图：
+    python3 scripts/split-tile-sheet.py --input <sheet>.png --out-dir images/terrain \
+        --grid 3x1 --names lever gate_closed gate_open --size 128
+    python3 scripts/despill-magenta.py images/terrain
+
+现役城墙贴图是 `images/terrain/wall.png`：俯视灰石垛口、有一点厚度、中性灰、无彩偏。
+闸门两态必须和这堵墙是**同一套石头**——闸门夹在两段城墙中间，色或材质漂了，
+玩家会以为中间缺了一块墙，而不是「这是一扇门」。
+
+三格是一件事的三张脸：
+    lever         机关：玩家站上去，下一回合把全场闸门永久打开
+    gate_closed   关着：规则等同城墙（挡路且挡视线）
+    gate_open     开了：规则等同平原，但必须留下「这扇门是我开的」的痕迹
+
+机关不能画成另一扇门，也不能画成紫色水晶（键色是品红，紫会被抠掉）。
+闸门开/关必须是**同一副门框**，只改门扇的位置——认不出同一扇门，开门这件事就没被看见。
+
+约束同 `terrain_v4_3x2_prompt.txt`：品红底、不画草地、不描黑边、低频、约 40px 可读。
+
+---
+
+A 3-column x 1-row grid (3 cells) of TERRAIN TILE sprites for a cartoon tactics game, drawn as flat decals that will be pasted on top of a separate bright yellow-green grass background.
+
+These three tiles belong to the FORTRESS chapter. The existing WALL tile is a block of cool grey stone fortification seen from above, simple mortar lines, a row of square crenellations, slight thickness, neutral grey with no colour cast. The two GATE tiles must use that SAME grey stone language so they sit in a gap in a wall run and still read as part of the wall.
+
+CRITICAL BACKGROUND REQUIREMENT: the background of the whole image, including all the space between and around the tiles, must be 100% solid flat MAGENTA, hex #FF00FF. Not white, not grey, not a gradient. It is a chroma key and will be deleted.
+
+CRITICAL — NO GRASS: these tiles sit on grass that is supplied separately underneath. Do NOT draw any grass, lawn, meadow or green ground under or around the tiles. Only draw the terrain feature itself, surrounded by magenta.
+
+CRITICAL — NO BLACK OUTLINES: terrain must NOT have thick black outlines. Use either no outline at all, or a soft outline in a darker shade of the tile's own colour.
+
+PERSPECTIVE: straight top-down / very slightly tilted bird's-eye. NOT isometric, NOT diamond-shaped. The bottom edge of each tile reads as horizontal.
+
+ABSOLUTELY NO PURPLE OR VIOLET anywhere. Purple will be eaten by the magenta chroma key.
+
+Per-cell contents, left-to-right:
+
+Cell 1 (LEVER / stand here to open every gate next round) — a chunky wooden LEVER on a short grey stone pedestal, seen from above. The pedestal is a low rounded slab of the SAME cool grey as the wall (#8C8C8C). The lever itself is a thick bark-brown (#6B4A2A) club-shaped handle, clearly thrown to one side at about 45 degrees, with one fat iron-grey band around its middle. The handle must dominate the silhouette — it is the only thing that says "operate me". No chains, no gears, no runes, no glow, no crystal, no flag.
+
+Cell 2 (CLOSED GATE / blocks movement and ranged sight, same rules as wall) — a closed PORTCULLIS / fortress gate filling its cell, seen from just above. A U-shaped frame of the SAME cool grey stone as the wall, with a row of two or three short crenellations on the top of the frame. Inside the frame, a closed door of darker warm timber (#6B4A2A) with one fat horizontal iron bar. The whole thing has slight thickness like the wall. It must read as "a shut door in a wall", not as another stretch of wall and not as a wooden crate. No opening, no gap, no light through the door.
+
+Cell 3 (OPEN GATE / end state, rules equal to plain, but must leave a scar) — the SAME U-shaped grey stone frame as cell 2, same crenellations, same thickness, same camera. The timber door is now RAISED / gone: the inside of the frame is empty magenta, so the grass will show through as a walkable gap. A short stone THRESHOLD / sill remains along the bottom of the frame so it still reads as a gate, not a random stone arch. NO timber door left in the opening. It must be obviously the open version of cell 2.
+
+LIGHTNESS: the open gate is lighter (you can walk through); the closed gate is about as dark as the wall; the lever is medium-bright wood so it pops on grass.
+
+LOW FREQUENCY: each tile is displayed only about 40 pixels wide in game. Keep every shape big and soft. No fine texture, no dense speckling, no hatching, no tiny detail.
+
+STYLE: hand-drawn cartoon, flat saturated fills with simple cel shading, no gradients, no noise, no painterly brushwork, no photographic detail, no pixel art.
+
+LAYOUT RULES:
+1. EXACTLY 3 icons in a clean 3-column x 1-row arrangement.
+2. NO borders, NO dividing lines, NO frames, NO circles or badges — they are separated only by magenta.
+3. Each tile occupies about 70% of its cell, leaving a clear magenta margin on all four sides. Nothing touches or crosses a cell edge.
+4. NO text, no labels, no captions, no letters, no numbers, no watermark anywhere.

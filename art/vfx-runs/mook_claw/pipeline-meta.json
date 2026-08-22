@@ -1,0 +1,43 @@
+{
+  "source": "scripts/vfx-sheet.py",
+  "input": "/Users/rosa/rosa_games/game_assets/srpg-rosa/assets/vfx/mook_claw/raw/mook_claw_2x2.png",
+  "target": "vfx",
+  "mode": "vfx_sheet",
+  "rows": 2,
+  "cols": 2,
+  "cell_size": 256,
+  "threshold": 22,
+  "frame_labels": [
+    "mook_claw-1",
+    "mook_claw-2",
+    "mook_claw-3",
+    "mook_claw-4"
+  ],
+  "align": "centroid",
+  "key": "black",
+  "alpha_gamma": 2.0,
+  "shared_crop_side": 376,
+  "crop_offsets": [
+    {
+      "x": 64,
+      "y": 84
+    },
+    {
+      "x": 52,
+      "y": 77
+    },
+    {
+      "x": 72,
+      "y": 77
+    },
+    {
+      "x": 51,
+      "y": 67
+    }
+  ],
+  "empty_frames": [],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}

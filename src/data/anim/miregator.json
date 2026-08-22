@@ -1,0 +1,86 @@
+{
+  "id": "miregator",
+  "source": "art/sprite-runs/mobs-ch4",
+  "blend": "normal",
+  "image": "images/anim/miregator.png",
+  "meta": {
+    "size": {
+      "w": 256,
+      "h": 256
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 125,
+    "baselineY": 234,
+    "ref": "mobs-ch4-idle/mob-3.png"
+  },
+  "frames": {
+    "mobs-ch4-idle/mob-3.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 213,
+        "h": 129
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 21,
+        "y": 108,
+        "w": 213,
+        "h": 129
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "idle": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch4-idle/mob-3.png"
+      ]
+    },
+    "default": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch4-idle/mob-3.png"
+      ]
+    },
+    "idle_up": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch4-idle/mob-3.png"
+      ]
+    },
+    "idle_down": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch4-idle/mob-3.png"
+      ]
+    },
+    "idle_left": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch4-idle/mob-3.png"
+      ]
+    },
+    "idle_right": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch4-idle/mob-3.png"
+      ]
+    }
+  }
+}

@@ -29,6 +29,14 @@ export interface SimCfg {
   enemyScale: number;
   /** 携带的治疗药剂数（有人低于 45% 血时使用，模拟 HUD 手动喝药） */
   healPotions?: number;
+  /**
+   * 直接给一份关卡数据，绕过 `STAGES_MVP[stageIdx]`。
+   *
+   * 给 GM 地图编辑器用：它要在**存盘之前**就能看到这版布局的胜率，否则每调一格
+   * 都得先落盘再重算，而落盘会污染 git 工作区——那样「先试一下」的成本比手算还高。
+   * 各章的回归测试仍走 `stageIdx`，口径不变。
+   */
+  stage?: StageDefMvp;
 }
 
 export interface SimResult {
@@ -122,7 +130,7 @@ function buildEnemies(stage: StageDefMvp, scale: number): UnitState[] {
 }
 
 export function simulateStage(cfg: SimCfg, n: number): SimResult {
-  const stage = STAGES_MVP[cfg.stageIdx]!;
+  const stage = cfg.stage ?? STAGES_MVP[cfg.stageIdx]!;
   let wins = 0;
   let rounds = 0;
   const skillCasts: Record<string, number> = {};

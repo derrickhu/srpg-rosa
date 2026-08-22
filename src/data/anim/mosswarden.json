@@ -1,0 +1,86 @@
+{
+  "id": "mosswarden",
+  "source": "art/sprite-runs/mobs-ch2",
+  "blend": "normal",
+  "image": "images/anim/mosswarden.png",
+  "meta": {
+    "size": {
+      "w": 256,
+      "h": 256
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 172,
+    "baselineY": 233,
+    "ref": "mobs-ch2-idle/mob-4.png"
+  },
+  "frames": {
+    "mobs-ch2-idle/mob-4.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 199,
+        "h": 176
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 28,
+        "y": 61,
+        "w": 199,
+        "h": 176
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "idle": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch2-idle/mob-4.png"
+      ]
+    },
+    "default": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch2-idle/mob-4.png"
+      ]
+    },
+    "idle_up": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch2-idle/mob-4.png"
+      ]
+    },
+    "idle_down": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch2-idle/mob-4.png"
+      ]
+    },
+    "idle_left": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch2-idle/mob-4.png"
+      ]
+    },
+    "idle_right": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch2-idle/mob-4.png"
+      ]
+    }
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "id": "drakekin",
+  "source": "art/sprite-runs/elites",
+  "blend": "normal",
+  "image": "images/anim/drakekin.png",
+  "meta": {
+    "size": {
+      "w": 256,
+      "h": 256
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 166,
+    "baselineY": 233,
+    "ref": "elites-idle/elite-4.png"
+  },
+  "frames": {
+    "elites-idle/elite-4.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 185,
+        "h": 176
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 35,
+        "y": 61,
+        "w": 185,
+        "h": 176
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "idle": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "elites-idle/elite-4.png"
+      ]
+    },
+    "default": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "elites-idle/elite-4.png"
+      ]
+    },
+    "idle_up": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "elites-idle/elite-4.png"
+      ]
+    },
+    "idle_down": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "elites-idle/elite-4.png"
+      ]
+    },
+    "idle_left": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "elites-idle/elite-4.png"
+      ]
+    },
+    "idle_right": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "elites-idle/elite-4.png"
+      ]
+    }
+  }
+}

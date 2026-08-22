@@ -1,0 +1,309 @@
+{
+  "target": "player",
+  "mode": "grid",
+  "prompt": "",
+  "role": "",
+  "input": "art/sprite-runs/bloodcastellan/raw/attack-down-raw.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 200,
+  "rows": 2,
+  "cols": 2,
+  "cell_size": 256,
+  "fit_scale": 0.85,
+  "trim_border": 4,
+  "edge_clean_depth": 3,
+  "align": "feet",
+  "shared_scale": true,
+  "scale_strategy": "fit",
+  "component_mode": "largest",
+  "component_padding": 0,
+  "min_component_area": 1,
+  "edge_touch_margin": 0,
+  "frame_labels": [
+    "attack-1",
+    "attack-2",
+    "attack-3",
+    "attack-4"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 63824,
+      "selected_component_bbox": [
+        111,
+        115,
+        389,
+        450
+      ],
+      "crop_bbox": [
+        111,
+        115,
+        389,
+        450
+      ],
+      "source_frame_size": [
+        504,
+        504
+      ],
+      "is_empty": false,
+      "subject_area": 63824,
+      "body_core_area": 61388,
+      "body_area_fraction": 0.241669816074578,
+      "anchor_source": [
+        291.0,
+        433.0
+      ],
+      "source_edge_touch": false,
+      "output_edge_touch": false,
+      "edge_touch": false,
+      "output_size": [
+        166,
+        200
+      ],
+      "paste_position": [
+        45,
+        37
+      ],
+      "paste_clamped": false,
+      "aligned_bbox": [
+        45,
+        37,
+        211,
+        237
+      ],
+      "source_to_output_scale": 0.5994490358126722,
+      "bbox_scale_applied": true,
+      "scale_strategy": "fit",
+      "scale_changed": true
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        512,
+        0,
+        1024,
+        512
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 58731,
+      "selected_component_bbox": [
+        93,
+        103,
+        350,
+        466
+      ],
+      "crop_bbox": [
+        93,
+        103,
+        350,
+        466
+      ],
+      "source_frame_size": [
+        504,
+        504
+      ],
+      "is_empty": false,
+      "subject_area": 58731,
+      "body_core_area": 55514,
+      "body_area_fraction": 0.21854528848576468,
+      "anchor_source": [
+        238.0,
+        453.0
+      ],
+      "source_edge_touch": false,
+      "output_edge_touch": false,
+      "edge_touch": false,
+      "output_size": [
+        154,
+        217
+      ],
+      "paste_position": [
+        51,
+        20
+      ],
+      "paste_clamped": false,
+      "aligned_bbox": [
+        51,
+        20,
+        205,
+        237
+      ],
+      "source_to_output_scale": 0.5994490358126722,
+      "bbox_scale_applied": true,
+      "scale_strategy": "fit",
+      "scale_changed": true
+    },
+    {
+      "grid": [
+        1,
+        0
+      ],
+      "source_box": [
+        0,
+        512,
+        512,
+        1024
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 59883,
+      "selected_component_bbox": [
+        146,
+        97,
+        416,
+        405
+      ],
+      "crop_bbox": [
+        146,
+        97,
+        416,
+        405
+      ],
+      "source_frame_size": [
+        504,
+        504
+      ],
+      "is_empty": false,
+      "subject_area": 59883,
+      "body_core_area": 53377,
+      "body_area_fraction": 0.2101324326026707,
+      "anchor_source": [
+        221.0,
+        381.0
+      ],
+      "source_edge_touch": false,
+      "output_edge_touch": false,
+      "edge_touch": false,
+      "output_size": [
+        161,
+        184
+      ],
+      "paste_position": [
+        47,
+        53
+      ],
+      "paste_clamped": false,
+      "aligned_bbox": [
+        47,
+        53,
+        208,
+        237
+      ],
+      "source_to_output_scale": 0.5994490358126722,
+      "bbox_scale_applied": true,
+      "scale_strategy": "fit",
+      "scale_changed": true
+    },
+    {
+      "grid": [
+        1,
+        1
+      ],
+      "source_box": [
+        512,
+        512,
+        1024,
+        1024
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 67520,
+      "selected_component_bbox": [
+        49,
+        78,
+        375,
+        366
+      ],
+      "crop_bbox": [
+        49,
+        78,
+        375,
+        366
+      ],
+      "source_frame_size": [
+        504,
+        504
+      ],
+      "is_empty": false,
+      "subject_area": 67520,
+      "body_core_area": 58670,
+      "body_area_fraction": 0.23096970269589318,
+      "anchor_source": [
+        264.0,
+        350.0
+      ],
+      "source_edge_touch": false,
+      "output_edge_touch": false,
+      "edge_touch": false,
+      "output_size": [
+        195,
+        172
+      ],
+      "paste_position": [
+        30,
+        65
+      ],
+      "paste_clamped": false,
+      "aligned_bbox": [
+        30,
+        65,
+        225,
+        237
+      ],
+      "source_to_output_scale": 0.5994490358126722,
+      "bbox_scale_applied": true,
+      "scale_strategy": "fit",
+      "scale_changed": true
+    }
+  ],
+  "edge_touch_frames": [],
+  "source_edge_touch_frames": [],
+  "output_edge_touch_frames": [],
+  "empty_frames": [],
+  "paste_clamped_frames": [],
+  "qc_summary": {
+    "frame_count": 4,
+    "valid_frame_count": 4,
+    "empty_count": 0,
+    "edge_touch_count": 0,
+    "paste_clamped_count": 0,
+    "body_scale_mean": 0.47452065903108653,
+    "output_subject_height_mean": 193.25,
+    "body_scale_cv": 0.02661109492493038,
+    "anchor_x_std": 0.05261678811974649,
+    "anchor_y_std": 0.08112356191130991,
+    "anchor_y_mean": 0.8020833333333333,
+    "profile_body_scale_drift": 0.07759242530297894
+  },
+  "scale_profile": {
+    "path": "art/sprite-runs/bloodcastellan/walk-scale-profile.json",
+    "version": 1,
+    "name": "player-player-sheet",
+    "reference_mode": "player_sheet",
+    "processing_contract_applied": true
+  },
+  "qc_config": {
+    "strict_qc": true,
+    "reject_edge_touch": false,
+    "allow_source_edge_touch": false,
+    "max_body_scale_cv": null,
+    "max_anchor_y_std": null,
+    "max_profile_scale_drift": 0.1
+  }
+}

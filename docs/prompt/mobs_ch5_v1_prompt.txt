@@ -1,0 +1,115 @@
+# 第五章杂兵 · 龙岭火山属 —— 四只一张 2x2（generate2dsprite --mode grid --rows 2 --cols 2）
+#
+# 设计依据：docs/敌人图鉴.md §2 第 5 章。剪影语法沿用第一章（圆滚/宽伞/横长/穹顶
+# 对应 sword/bow/cavalry/shield），换题材与配色。
+#
+# 这一章排剪影时改过两次设计，理由记下来免得改回去：
+#   - 初稿剑士位是「熔岩犬」，四足——**和同章骑兵位的岩鳞龙兽撞剪影**。改成无腿的
+#     熔岩块，回到第一章黏泥怪那个语法位（圆滚、无腿、坐在地上）。
+#   - 初稿盾卫位是「黑曜甲虫」，同样是发光的黑曜石团块——**和熔岩块撞材质**，
+#     40px 下两团深色圆块只靠发光量区分太险。改成灰烬甲虫，冷调灰白、**全章唯一不发光**。
+#
+# 配色推演：
+#   1 熔岩块  黑曜 #1F1B1A L11 + 亮橙红裂纹 #FF6A1F   全场最暗的底 + 最亮的裂纹，反差最大
+#   2 火翼蝠  #E2622A H16 S76 L53   vs 剑士 H24 L28 明度差 25✓ / 骑兵 H42 L52 色相差 26✓
+#   3 岩鳞龙兽 #4A4A50 L30 无彩 + 橙脊刺   走**饱和度**轴而不是色相（同血牙狼那条路）；
+#                                          圣经 §2.1 说每章最多留一只无彩色，这是本章那一只
+#   4 灰烬甲虫 #B0B8C0 H210 S13 L72   vs 盾卫 H210 L42 同色相但明度差 30✓ / 高地 H36 L66 色相差 174✓
+#
+#   明度铺成 11 / 53 / 30 / 72。本章地形深渊 L26（很暗）+ 高地 H36 L66（亮黄），
+#   两头都有，所以四只必须把明度拉满整个区间。
+#
+# 「发光」怎么画（这一章最容易翻车的一条）：圣经 §9 禁掉柔和外发光、渐变、bloom。
+#   熔岩裂纹必须是**平涂的亮色块 + 硬边 + 深描边**，不是 glow、不是光晕、不是渐变过渡。
+#   第二章藤缚茧的青色缝隙就是这么画的，照那个来。
+#
+# 禁色：粉、品红、紫罗兰（抠色键是品红）。火山题材容易带出紫红岩浆，要盯住。
+#
+# 处理命令：
+#   python3 ~/.cursor/skills/generate2dsprite/scripts/generate2dsprite.py process \
+#     --input art/sprite-runs/mobs-ch5/raw-2x2.png --target creature --mode grid \
+#     --rows 2 --cols 2 --label-prefix mob --cell-size 256 \
+#     --output-dir art/sprite-runs/mobs-ch5/idle \
+#     --align feet --shared-scale --component-mode largest --strict-qc \
+#     --write-scale-profile art/sprite-runs/mobs-ch5/scale-profile.json
+#   python3 scripts/despill-magenta.py art/sprite-runs/mobs-ch5/idle
+#   node scripts/sprite2anim.mjs   # magmacore/emberbat/scalewyrm/ashshell 各取一帧
+#
+# mob-1 熔岩块(sword) / mob-2 火翼蝠(bow) / mob-3 岩鳞龙兽(cavalry) / mob-4 灰烬甲虫(shield)
+
+A 2-column x 2-row grid of 4 CARTOON VOLCANIC CREATURE CHARACTERS for a tactics game, drawn as game
+sprites. These live on a volcanic dragon ridge.
+
+CRITICAL BACKGROUND: the entire background, including all space between and around the four
+creatures, must be 100% solid flat MAGENTA, hex #FF00FF. It is a chroma key and will be deleted.
+No white, no grey, no gradient, no ground shadow, no drop shadow, no glow onto the background.
+The creatures must not touch each other or the edges of the image. This instruction overrides
+everything else in this prompt.
+
+CRITICAL FORBIDDEN COLOURS: absolutely NO pink, NO magenta, NO violet, NO purple, NO lilac anywhere
+on any creature. The background key colour is magenta, so any pinkish-purple will be destroyed when
+the background is removed. Lava must be ORANGE-RED, never pinkish-red and never purple-red.
+
+CRITICAL — HOW TO DRAW GLOWING LAVA: the glowing cracks must be painted as FLAT BRIGHT SOLID SHAPES
+with HARD EDGES and a dark outline around them, like cut-out pieces of bright orange paper laid into
+the rock. Absolutely NO soft glow, NO halo, NO bloom, NO light spilling onto nearby surfaces, NO
+gradient fade, NO blur. This is a hard style rule.
+
+CAMERA: a 3/4 top-down view, as if looking down at a tabletop board from above and slightly in
+front. Every creature faces the viewer, standing on flat invisible ground. All four must sit at the
+SAME eye level and be seen from the SAME angle.
+
+CRITICAL SIZE CONSTRAINT: these are displayed at only about 40 pixels tall in the game. Each
+creature must be ONE bold chunky readable silhouette. NO fine detail, NO small parts, NO texture,
+NO patterns, NO tiny highlights. If a feature would be smaller than a tenth of the creature's
+width, delete it. These are low-tier trash mobs and should look SIMPLER than a hero character —
+fewer shapes, fewer colours, one strong idea each.
+
+STYLE — must match the game's heroes:
+- Chunky, rounded, toy-like cartoon creatures. Slightly exaggerated, friendly-menacing, never gory
+  and never scary.
+- A THICK near-black outline (#1A1410) all the way around every creature and around its major
+  internal shapes.
+- FLAT colour fills. At most 3 colours per creature plus the outline, plus one lighter shade for a
+  single simple cel-shaded highlight and one darker shade for a single shadow. No gradients, no soft
+  shading, NO GLOSSY SHINE, no texture noise, no painterly brushwork, no pixel art.
+- Big simple eyes where the creature has eyes at all. No noses, no ears, no separate fingers.
+
+Per-cell contents:
+
+TOP-LEFT — LAVA BOULDER. A squat rounded lump of black volcanic rock sitting DIRECTLY on the ground
+with NO legs and NO arms, wider than it is tall, like a big rounded stone. The rock is almost black
+obsidian (#1F1B1A). Across its surface run four or five wide BRIGHT ORANGE-RED (#FF6A1F) CRACKS,
+painted as flat hard-edged solid shapes with dark outlines. The cracks should be thick and few, not
+a fine web. Two small simple glowing orange eyes near the top, drawn as flat shapes. This is the
+darkest body with the brightest markings — the highest contrast of the four.
+
+TOP-RIGHT — EMBER BAT. A small bat whose ENORMOUS SPREAD WINGS fill the top two thirds of the
+silhouette while its body is tiny by comparison, so the shape is very WIDE AT THE TOP and narrow at
+the bottom. The wings are broad, rounded and leathery with three thick finger-struts each — no thin
+membranes, no scalloped fringe detail. Wings and body are a warm ORANGE-RED (#E2622A) with a darker
+rust shadow on the underside of the wings. A blunt little head with two big simple eyes and two
+short ears. The wings must be clearly wider than the body is tall.
+
+BOTTOM-LEFT — ROCK-SCALE DRAKE. A four-legged lizard-beast standing low and long, seen from the
+front three-quarter angle so all four legs and the body length are visible. Its hide is a
+DESATURATED DARK SLATE GREY (#4A4A50) — almost colourless, the only grey creature here — with a few
+big chunky flat rock plates on the flanks. Running along its spine from neck to tail is a single row
+of five thick BRIGHT ORANGE-RED (#FF6A1F) spikes, painted as flat hard-edged shapes. A blocky head
+with a heavy jaw and two simple eyes. The silhouette should be much WIDER than it is tall.
+
+BOTTOM-RIGHT — ASH BEETLE. A heavy beetle whose enormous smooth domed SHELL covers almost the whole
+creature, reading as a walking dome. The shell is a PALE COOL ASH GREY (#B0B8C0) with a slightly
+lighter rim and a single simple seam down the middle — no more than three big plate divisions. Four
+stubby pale legs at the corners and two small simple dark eyes peeking out at the front under the
+shell. CRITICAL: this creature has NO glowing lava, NO orange, NO cracks at all — it is the one pale
+non-glowing shape in the set, and that is exactly what makes it readable. The dome must dominate.
+
+LAYOUT RULES:
+1. EXACTLY 4 creatures in a clean 2x2 arrangement.
+2. NO borders, NO dividing lines, NO frames, NO circles or platforms under the creatures.
+3. Each creature fills about 70% of its cell with a clear magenta margin on all four sides. Nothing
+   crosses into a neighbouring cell.
+4. All four must feel like ONE set drawn by one artist: same outline thickness, same level of
+   simplification, same camera angle.
+5. NO text, no labels, no captions, no letters, no numbers, no watermark anywhere in the image.

@@ -1,0 +1,86 @@
+{
+  "id": "scalewyrm",
+  "source": "art/sprite-runs/mobs-ch5",
+  "blend": "normal",
+  "image": "images/anim/scalewyrm.png",
+  "meta": {
+    "size": {
+      "w": 256,
+      "h": 256
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 118,
+    "baselineY": 229,
+    "ref": "mobs-ch5-idle/mob-3.png"
+  },
+  "frames": {
+    "mobs-ch5-idle/mob-3.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 216,
+        "h": 135
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 20,
+        "y": 102,
+        "w": 216,
+        "h": 135
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "idle": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch5-idle/mob-3.png"
+      ]
+    },
+    "default": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch5-idle/mob-3.png"
+      ]
+    },
+    "idle_up": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch5-idle/mob-3.png"
+      ]
+    },
+    "idle_down": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch5-idle/mob-3.png"
+      ]
+    },
+    "idle_left": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch5-idle/mob-3.png"
+      ]
+    },
+    "idle_right": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch5-idle/mob-3.png"
+      ]
+    }
+  }
+}

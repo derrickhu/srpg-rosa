@@ -1,0 +1,86 @@
+{
+  "id": "sporesac",
+  "source": "art/sprite-runs/mobs-ch2",
+  "blend": "normal",
+  "image": "images/anim/sporesac.png",
+  "meta": {
+    "size": {
+      "w": 256,
+      "h": 256
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 132,
+    "baselineY": 235,
+    "ref": "mobs-ch2-idle/mob-2.png"
+  },
+  "frames": {
+    "mobs-ch2-idle/mob-2.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 168,
+        "h": 180
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 44,
+        "y": 57,
+        "w": 168,
+        "h": 180
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "idle": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch2-idle/mob-2.png"
+      ]
+    },
+    "default": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch2-idle/mob-2.png"
+      ]
+    },
+    "idle_up": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch2-idle/mob-2.png"
+      ]
+    },
+    "idle_down": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch2-idle/mob-2.png"
+      ]
+    },
+    "idle_left": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch2-idle/mob-2.png"
+      ]
+    },
+    "idle_right": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch2-idle/mob-2.png"
+      ]
+    }
+  }
+}

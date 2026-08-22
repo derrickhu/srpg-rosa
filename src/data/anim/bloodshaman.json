@@ -1,0 +1,616 @@
+{
+  "id": "bloodshaman",
+  "source": "art/sprite-runs/bloodshaman",
+  "blend": "normal",
+  "image": "images/anim/bloodshaman.png",
+  "meta": {
+    "size": {
+      "w": 1024,
+      "h": 1024
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 183,
+    "baselineY": 236,
+    "ref": "bloodshaman-walk/down-1.png"
+  },
+  "frames": {
+    "bloodshaman-walk/down-1.png": {
+      "frame": {
+        "x": 725,
+        "y": 2,
+        "w": 176,
+        "h": 216
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 40,
+        "y": 21,
+        "w": 176,
+        "h": 216
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodshaman-walk/down-2.png": {
+      "frame": {
+        "x": 346,
+        "y": 242,
+        "w": 174,
+        "h": 214
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 41,
+        "y": 23,
+        "w": 174,
+        "h": 214
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodshaman-walk/down-4.png": {
+      "frame": {
+        "x": 522,
+        "y": 242,
+        "w": 167,
+        "h": 214
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 44,
+        "y": 23,
+        "w": 167,
+        "h": 214
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodshaman-walk/left-1.png": {
+      "frame": {
+        "x": 411,
+        "y": 459,
+        "w": 134,
+        "h": 207
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 61,
+        "y": 30,
+        "w": 134,
+        "h": 207
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodshaman-walk/left-2.png": {
+      "frame": {
+        "x": 862,
+        "y": 242,
+        "w": 139,
+        "h": 209
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 58,
+        "y": 28,
+        "w": 139,
+        "h": 209
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodshaman-walk/left-4.png": {
+      "frame": {
+        "x": 2,
+        "y": 459,
+        "w": 132,
+        "h": 209
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 62,
+        "y": 28,
+        "w": 132,
+        "h": 209
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodshaman-walk/left-1-mirror.png": {
+      "frame": {
+        "x": 547,
+        "y": 459,
+        "w": 134,
+        "h": 207
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 61,
+        "y": 30,
+        "w": 134,
+        "h": 207
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodshaman-walk/left-2-mirror.png": {
+      "frame": {
+        "x": 136,
+        "y": 459,
+        "w": 139,
+        "h": 209
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 59,
+        "y": 28,
+        "w": 139,
+        "h": 209
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodshaman-walk/left-4-mirror.png": {
+      "frame": {
+        "x": 277,
+        "y": 459,
+        "w": 132,
+        "h": 209
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 62,
+        "y": 28,
+        "w": 132,
+        "h": 209
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodshaman-walk/up-1.png": {
+      "frame": {
+        "x": 691,
+        "y": 242,
+        "w": 169,
+        "h": 211
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 43,
+        "y": 26,
+        "w": 169,
+        "h": 211
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodshaman-walk/up-2.png": {
+      "frame": {
+        "x": 2,
+        "y": 242,
+        "w": 174,
+        "h": 215
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 41,
+        "y": 22,
+        "w": 174,
+        "h": 215
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodshaman-walk/up-4.png": {
+      "frame": {
+        "x": 178,
+        "y": 242,
+        "w": 166,
+        "h": 215
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 45,
+        "y": 22,
+        "w": 166,
+        "h": 215
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodshaman-attack_down/attack-1.png": {
+      "frame": {
+        "x": 683,
+        "y": 459,
+        "w": 169,
+        "h": 204
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 43,
+        "y": 33,
+        "w": 169,
+        "h": 204
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodshaman-attack_down/attack-2.png": {
+      "frame": {
+        "x": 212,
+        "y": 2,
+        "w": 158,
+        "h": 237
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 49,
+        "y": 0,
+        "w": 158,
+        "h": 237
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodshaman-attack_down/attack-3.png": {
+      "frame": {
+        "x": 372,
+        "y": 2,
+        "w": 163,
+        "h": 223
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 46,
+        "y": 17,
+        "w": 163,
+        "h": 223
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodshaman-attack_down/attack-4.png": {
+      "frame": {
+        "x": 537,
+        "y": 2,
+        "w": 186,
+        "h": 223
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 35,
+        "y": 14,
+        "w": 186,
+        "h": 223
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodshaman-attack_left/attack-1.png": {
+      "frame": {
+        "x": 854,
+        "y": 459,
+        "w": 127,
+        "h": 186
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 64,
+        "y": 52,
+        "w": 127,
+        "h": 186
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodshaman-attack_left/attack-2.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 103,
+        "h": 238
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 76,
+        "y": 0,
+        "w": 103,
+        "h": 238
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodshaman-attack_left/attack-3.png": {
+      "frame": {
+        "x": 355,
+        "y": 670,
+        "w": 142,
+        "h": 172
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 57,
+        "y": 66,
+        "w": 142,
+        "h": 172
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodshaman-attack_left/attack-4.png": {
+      "frame": {
+        "x": 131,
+        "y": 670,
+        "w": 110,
+        "h": 183
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 73,
+        "y": 54,
+        "w": 110,
+        "h": 183
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodshaman-attack_left/attack-1-mirror.png": {
+      "frame": {
+        "x": 2,
+        "y": 670,
+        "w": 127,
+        "h": 186
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 65,
+        "y": 52,
+        "w": 127,
+        "h": 186
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodshaman-attack_left/attack-2-mirror.png": {
+      "frame": {
+        "x": 107,
+        "y": 2,
+        "w": 103,
+        "h": 238
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 77,
+        "y": 0,
+        "w": 103,
+        "h": 238
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodshaman-attack_left/attack-3-mirror.png": {
+      "frame": {
+        "x": 499,
+        "y": 670,
+        "w": 142,
+        "h": 172
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 57,
+        "y": 66,
+        "w": 142,
+        "h": 172
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodshaman-attack_left/attack-4-mirror.png": {
+      "frame": {
+        "x": 243,
+        "y": 670,
+        "w": 110,
+        "h": 183
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 73,
+        "y": 54,
+        "w": 110,
+        "h": 183
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "walk_down": {
+      "loop": true,
+      "fps": 9,
+      "frames": [
+        "bloodshaman-walk/down-1.png",
+        "bloodshaman-walk/down-2.png",
+        "bloodshaman-walk/down-1.png",
+        "bloodshaman-walk/down-4.png"
+      ]
+    },
+    "walk_left": {
+      "loop": true,
+      "fps": 9,
+      "frames": [
+        "bloodshaman-walk/left-1.png",
+        "bloodshaman-walk/left-2.png",
+        "bloodshaman-walk/left-1.png",
+        "bloodshaman-walk/left-4.png"
+      ]
+    },
+    "walk_right": {
+      "loop": true,
+      "fps": 9,
+      "frames": [
+        "bloodshaman-walk/left-1-mirror.png",
+        "bloodshaman-walk/left-2-mirror.png",
+        "bloodshaman-walk/left-1-mirror.png",
+        "bloodshaman-walk/left-4-mirror.png"
+      ]
+    },
+    "walk_up": {
+      "loop": true,
+      "fps": 9,
+      "frames": [
+        "bloodshaman-walk/up-1.png",
+        "bloodshaman-walk/up-2.png",
+        "bloodshaman-walk/up-1.png",
+        "bloodshaman-walk/up-4.png"
+      ]
+    },
+    "idle": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "bloodshaman-walk/up-1.png"
+      ]
+    },
+    "default": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "bloodshaman-walk/down-1.png"
+      ]
+    },
+    "idle_up": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "bloodshaman-walk/up-1.png"
+      ]
+    },
+    "idle_down": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "bloodshaman-walk/down-1.png"
+      ]
+    },
+    "idle_left": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "bloodshaman-walk/left-1.png"
+      ]
+    },
+    "idle_right": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "bloodshaman-walk/left-1-mirror.png"
+      ]
+    },
+    "attack_down": {
+      "loop": false,
+      "fps": 11,
+      "frames": [
+        "bloodshaman-attack_down/attack-1.png",
+        "bloodshaman-attack_down/attack-2.png",
+        "bloodshaman-attack_down/attack-3.png",
+        "bloodshaman-attack_down/attack-4.png"
+      ]
+    },
+    "attack_left": {
+      "loop": false,
+      "fps": 11,
+      "frames": [
+        "bloodshaman-attack_left/attack-1.png",
+        "bloodshaman-attack_left/attack-2.png",
+        "bloodshaman-attack_left/attack-3.png",
+        "bloodshaman-attack_left/attack-4.png"
+      ]
+    },
+    "attack_right": {
+      "loop": false,
+      "fps": 11,
+      "frames": [
+        "bloodshaman-attack_left/attack-1-mirror.png",
+        "bloodshaman-attack_left/attack-2-mirror.png",
+        "bloodshaman-attack_left/attack-3-mirror.png",
+        "bloodshaman-attack_left/attack-4-mirror.png"
+      ]
+    }
+  }
+}

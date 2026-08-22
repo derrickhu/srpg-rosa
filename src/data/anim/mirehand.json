@@ -1,0 +1,86 @@
+{
+  "id": "mirehand",
+  "source": "art/sprite-runs/mobs-ch4",
+  "blend": "normal",
+  "image": "images/anim/mirehand.png",
+  "meta": {
+    "size": {
+      "w": 256,
+      "h": 256
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 168,
+    "baselineY": 236,
+    "ref": "mobs-ch4-idle/mob-1.png"
+  },
+  "frames": {
+    "mobs-ch4-idle/mob-1.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 181,
+        "h": 169
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 37,
+        "y": 68,
+        "w": 181,
+        "h": 169
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "idle": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch4-idle/mob-1.png"
+      ]
+    },
+    "default": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch4-idle/mob-1.png"
+      ]
+    },
+    "idle_up": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch4-idle/mob-1.png"
+      ]
+    },
+    "idle_down": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch4-idle/mob-1.png"
+      ]
+    },
+    "idle_left": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch4-idle/mob-1.png"
+      ]
+    },
+    "idle_right": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch4-idle/mob-1.png"
+      ]
+    }
+  }
+}

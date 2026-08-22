@@ -1,0 +1,114 @@
+{
+  "id": "mook_spit",
+  "source": "art/vfx-runs/mook_spit",
+  "blend": "add",
+  "image": "images/anim/mook_spit.png",
+  "meta": {
+    "size": {
+      "w": 512,
+      "h": 512
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 128,
+    "baselineY": 190,
+    "ref": "mook_spit/mook_spit-1.png"
+  },
+  "frames": {
+    "mook_spit/mook_spit-1.png": {
+      "frame": {
+        "x": 237,
+        "y": 177,
+        "w": 222,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 62,
+        "w": 222,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mook_spit/mook_spit-2.png": {
+      "frame": {
+        "x": 2,
+        "y": 177,
+        "w": 233,
+        "h": 146
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 55,
+        "w": 233,
+        "h": 146
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mook_spit/mook_spit-3.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 215,
+        "h": 173
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 2,
+        "y": 39,
+        "w": 215,
+        "h": 173
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mook_spit/mook_spit-4.png": {
+      "frame": {
+        "x": 219,
+        "y": 2,
+        "w": 222,
+        "h": 165
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 62,
+        "w": 222,
+        "h": 165
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "mook_spit": {
+      "loop": false,
+      "fps": 14,
+      "frames": [
+        "mook_spit/mook_spit-1.png",
+        "mook_spit/mook_spit-2.png",
+        "mook_spit/mook_spit-3.png",
+        "mook_spit/mook_spit-4.png"
+      ]
+    }
+  }
+}

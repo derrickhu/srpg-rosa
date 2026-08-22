@@ -1,0 +1,86 @@
+{
+  "id": "leafpanther",
+  "source": "art/sprite-runs/mobs-ch2",
+  "blend": "normal",
+  "image": "images/anim/leafpanther.png",
+  "meta": {
+    "size": {
+      "w": 256,
+      "h": 256
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 136,
+    "baselineY": 230,
+    "ref": "mobs-ch2-idle/mob-3.png"
+  },
+  "frames": {
+    "mobs-ch2-idle/mob-3.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 217,
+        "h": 156
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 19,
+        "y": 81,
+        "w": 217,
+        "h": 156
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "idle": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch2-idle/mob-3.png"
+      ]
+    },
+    "default": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch2-idle/mob-3.png"
+      ]
+    },
+    "idle_up": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch2-idle/mob-3.png"
+      ]
+    },
+    "idle_down": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch2-idle/mob-3.png"
+      ]
+    },
+    "idle_left": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch2-idle/mob-3.png"
+      ]
+    },
+    "idle_right": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch2-idle/mob-3.png"
+      ]
+    }
+  }
+}

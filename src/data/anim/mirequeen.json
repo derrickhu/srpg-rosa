@@ -1,0 +1,616 @@
+{
+  "id": "mirequeen",
+  "source": "art/sprite-runs/mirequeen",
+  "blend": "normal",
+  "image": "images/anim/mirequeen.png",
+  "meta": {
+    "size": {
+      "w": 1024,
+      "h": 1024
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 216,
+    "baselineY": 237,
+    "ref": "mirequeen-walk/down-1.png"
+  },
+  "frames": {
+    "mirequeen-walk/down-1.png": {
+      "frame": {
+        "x": 309,
+        "y": 2,
+        "w": 152,
+        "h": 216
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 52,
+        "y": 21,
+        "w": 152,
+        "h": 216
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mirequeen-walk/down-2.png": {
+      "frame": {
+        "x": 770,
+        "y": 2,
+        "w": 154,
+        "h": 211
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 51,
+        "y": 26,
+        "w": 154,
+        "h": 211
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mirequeen-walk/down-4.png": {
+      "frame": {
+        "x": 2,
+        "y": 223,
+        "w": 154,
+        "h": 209
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 51,
+        "y": 28,
+        "w": 154,
+        "h": 209
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mirequeen-walk/left-1.png": {
+      "frame": {
+        "x": 136,
+        "y": 434,
+        "w": 129,
+        "h": 205
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 63,
+        "y": 32,
+        "w": 129,
+        "h": 205
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mirequeen-walk/left-2.png": {
+      "frame": {
+        "x": 398,
+        "y": 434,
+        "w": 132,
+        "h": 203
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 62,
+        "y": 34,
+        "w": 132,
+        "h": 203
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mirequeen-walk/left-4.png": {
+      "frame": {
+        "x": 532,
+        "y": 434,
+        "w": 130,
+        "h": 203
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 63,
+        "y": 34,
+        "w": 130,
+        "h": 203
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mirequeen-walk/left-1-mirror.png": {
+      "frame": {
+        "x": 267,
+        "y": 434,
+        "w": 129,
+        "h": 205
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 64,
+        "y": 32,
+        "w": 129,
+        "h": 205
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mirequeen-walk/left-2-mirror.png": {
+      "frame": {
+        "x": 664,
+        "y": 434,
+        "w": 132,
+        "h": 203
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 62,
+        "y": 34,
+        "w": 132,
+        "h": 203
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mirequeen-walk/left-4-mirror.png": {
+      "frame": {
+        "x": 798,
+        "y": 434,
+        "w": 130,
+        "h": 203
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 63,
+        "y": 34,
+        "w": 130,
+        "h": 203
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mirequeen-walk/up-1.png": {
+      "frame": {
+        "x": 155,
+        "y": 2,
+        "w": 152,
+        "h": 217
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 52,
+        "y": 20,
+        "w": 152,
+        "h": 217
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mirequeen-walk/up-2.png": {
+      "frame": {
+        "x": 463,
+        "y": 2,
+        "w": 151,
+        "h": 214
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 52,
+        "y": 23,
+        "w": 151,
+        "h": 214
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mirequeen-walk/up-4.png": {
+      "frame": {
+        "x": 616,
+        "y": 2,
+        "w": 152,
+        "h": 214
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 52,
+        "y": 23,
+        "w": 152,
+        "h": 214
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mirequeen-attack_down/attack-1.png": {
+      "frame": {
+        "x": 430,
+        "y": 223,
+        "w": 154,
+        "h": 208
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 51,
+        "y": 29,
+        "w": 154,
+        "h": 208
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mirequeen-attack_down/attack-2.png": {
+      "frame": {
+        "x": 2,
+        "y": 642,
+        "w": 215,
+        "h": 202
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 20,
+        "y": 35,
+        "w": 215,
+        "h": 202
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mirequeen-attack_down/attack-3.png": {
+      "frame": {
+        "x": 219,
+        "y": 642,
+        "w": 229,
+        "h": 198
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 13,
+        "y": 39,
+        "w": 229,
+        "h": 198
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mirequeen-attack_down/attack-4.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 151,
+        "h": 219
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 52,
+        "y": 18,
+        "w": 151,
+        "h": 219
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mirequeen-attack_left/attack-1.png": {
+      "frame": {
+        "x": 158,
+        "y": 223,
+        "w": 134,
+        "h": 209
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 61,
+        "y": 28,
+        "w": 134,
+        "h": 209
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mirequeen-attack_left/attack-2.png": {
+      "frame": {
+        "x": 586,
+        "y": 223,
+        "w": 138,
+        "h": 208
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 59,
+        "y": 29,
+        "w": 138,
+        "h": 208
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mirequeen-attack_left/attack-3.png": {
+      "frame": {
+        "x": 450,
+        "y": 642,
+        "w": 167,
+        "h": 187
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 44,
+        "y": 50,
+        "w": 167,
+        "h": 187
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mirequeen-attack_left/attack-4.png": {
+      "frame": {
+        "x": 866,
+        "y": 223,
+        "w": 132,
+        "h": 206
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 62,
+        "y": 31,
+        "w": 132,
+        "h": 206
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mirequeen-attack_left/attack-1-mirror.png": {
+      "frame": {
+        "x": 294,
+        "y": 223,
+        "w": 134,
+        "h": 209
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 61,
+        "y": 28,
+        "w": 134,
+        "h": 209
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mirequeen-attack_left/attack-2-mirror.png": {
+      "frame": {
+        "x": 726,
+        "y": 223,
+        "w": 138,
+        "h": 208
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 59,
+        "y": 29,
+        "w": 138,
+        "h": 208
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mirequeen-attack_left/attack-3-mirror.png": {
+      "frame": {
+        "x": 619,
+        "y": 642,
+        "w": 167,
+        "h": 187
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 45,
+        "y": 50,
+        "w": 167,
+        "h": 187
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mirequeen-attack_left/attack-4-mirror.png": {
+      "frame": {
+        "x": 2,
+        "y": 434,
+        "w": 132,
+        "h": 206
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 62,
+        "y": 31,
+        "w": 132,
+        "h": 206
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "walk_down": {
+      "loop": true,
+      "fps": 9,
+      "frames": [
+        "mirequeen-walk/down-1.png",
+        "mirequeen-walk/down-2.png",
+        "mirequeen-walk/down-1.png",
+        "mirequeen-walk/down-4.png"
+      ]
+    },
+    "walk_left": {
+      "loop": true,
+      "fps": 9,
+      "frames": [
+        "mirequeen-walk/left-1.png",
+        "mirequeen-walk/left-2.png",
+        "mirequeen-walk/left-1.png",
+        "mirequeen-walk/left-4.png"
+      ]
+    },
+    "walk_right": {
+      "loop": true,
+      "fps": 9,
+      "frames": [
+        "mirequeen-walk/left-1-mirror.png",
+        "mirequeen-walk/left-2-mirror.png",
+        "mirequeen-walk/left-1-mirror.png",
+        "mirequeen-walk/left-4-mirror.png"
+      ]
+    },
+    "walk_up": {
+      "loop": true,
+      "fps": 9,
+      "frames": [
+        "mirequeen-walk/up-1.png",
+        "mirequeen-walk/up-2.png",
+        "mirequeen-walk/up-1.png",
+        "mirequeen-walk/up-4.png"
+      ]
+    },
+    "idle": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "mirequeen-walk/up-1.png"
+      ]
+    },
+    "default": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "mirequeen-walk/down-1.png"
+      ]
+    },
+    "idle_up": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "mirequeen-walk/up-1.png"
+      ]
+    },
+    "idle_down": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "mirequeen-walk/down-1.png"
+      ]
+    },
+    "idle_left": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "mirequeen-walk/left-1.png"
+      ]
+    },
+    "idle_right": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "mirequeen-walk/left-1-mirror.png"
+      ]
+    },
+    "attack_down": {
+      "loop": false,
+      "fps": 11,
+      "frames": [
+        "mirequeen-attack_down/attack-1.png",
+        "mirequeen-attack_down/attack-2.png",
+        "mirequeen-attack_down/attack-3.png",
+        "mirequeen-attack_down/attack-4.png"
+      ]
+    },
+    "attack_left": {
+      "loop": false,
+      "fps": 11,
+      "frames": [
+        "mirequeen-attack_left/attack-1.png",
+        "mirequeen-attack_left/attack-2.png",
+        "mirequeen-attack_left/attack-3.png",
+        "mirequeen-attack_left/attack-4.png"
+      ]
+    },
+    "attack_right": {
+      "loop": false,
+      "fps": 11,
+      "frames": [
+        "mirequeen-attack_left/attack-1-mirror.png",
+        "mirequeen-attack_left/attack-2-mirror.png",
+        "mirequeen-attack_left/attack-3-mirror.png",
+        "mirequeen-attack_left/attack-4-mirror.png"
+      ]
+    }
+  }
+}

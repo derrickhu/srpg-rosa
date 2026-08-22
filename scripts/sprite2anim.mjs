@@ -150,6 +150,95 @@ const SETS = [
       { dir: 'bloodfang/attack_left', preset: 'attack', facing: 'right', fps: 11, mirror: true },
     ],
   },
+  // 第二章 Boss 血牙萨满：`c2_5` 的 animSet: 'bloodshaman'
+  //
+  // 和酋长同部族（同一套灰绿皮、同样的下獠牙），但剪影必须分得开——原先这三个
+  // 血牙 Boss 共用酋长一张图，是「每个 Boss 长一样」这个问题最直接的来源。
+  // 分法是换掉全部三个识别位：头（骨角冠 vs 铁盔）、手（法杖 vs 阔刀+盾）、
+  // 体型（佝偻长袍 vs 宽肩皮甲）。深红宝石只出现在杖头，交代咒火的来源。
+  {
+    id: 'bloodshaman',
+    blend: 'normal',
+    downscale: 1,
+    runs: [
+      { dir: 'bloodshaman/walk', preset: 'player_sheet', fps: 9, mirrorRight: true },
+      { dir: 'bloodshaman/walk', preset: 'idle_from_walk', mirrorRight: true },
+      { dir: 'bloodshaman/attack_down', preset: 'attack', facing: 'down', fps: 11 },
+      { dir: 'bloodshaman/attack_left', preset: 'attack', facing: 'left', fps: 11 },
+      { dir: 'bloodshaman/attack_left', preset: 'attack', facing: 'right', fps: 11, mirror: true },
+    ],
+  },
+  // 第三章 Boss 血牙城主：`c3_6` 的 animSet: 'bloodcastellan'
+  //
+  // 全表最重的剪影：方形攻城盔 + 比胯还宽的方肩甲 + 齐肩的塔盾，轮廓是个方块，
+  // 和酋长的皮毛收腰、萨满的佝偻长袍三者互不重叠。钢青是本章杂兵的签名色，
+  // 城主取其中最暗最重的一档；唯一的饱和色是塔盾上那道血红人字，标明部族。
+  {
+    id: 'bloodcastellan',
+    blend: 'normal',
+    downscale: 1,
+    runs: [
+      { dir: 'bloodcastellan/walk', preset: 'player_sheet', fps: 9, mirrorRight: true },
+      { dir: 'bloodcastellan/walk', preset: 'idle_from_walk', mirrorRight: true },
+      { dir: 'bloodcastellan/attack_down', preset: 'attack', facing: 'down', fps: 11 },
+      { dir: 'bloodcastellan/attack_left', preset: 'attack', facing: 'left', fps: 11 },
+      { dir: 'bloodcastellan/attack_left', preset: 'attack', facing: 'right', fps: 11, mirror: true },
+    ],
+  },
+  // 第五章 Boss 龙王·安卡洛斯：`c5_7` 的 animSet: 'drakelord'
+  //
+  // 和酋长同档（四向行走 + 两向攻击，attack_up 缺时 AnimatedUnit 回退到 attack_right）。
+  // 双足直立的火山龙，黑曜主体 + 橙红翼膜 + 白热喉部，白热色交代「灭世龙息」的蓄能位置。
+  //
+  // 侧向攻击返工过三次，两条教训记在 docs/美术管线-AI-sprite.md §2.10：
+  //
+  // 1. **姿态要跨动作一致**。初稿侧攻画成了四足伏地、身子拉长，而行走是双足直立——
+  //    播放起来像中途换了一只生物。修法是拿行走表的**左向帧**当身份参考图，
+  //    并在 prompt 里把「双足直立、绝不四足着地」写成硬约束。
+  //
+  // 2. **大小不用在生图里较劲**：`bodyScaleByRun` 会确定性地把各动作对齐到行走组
+  //    （这次实测 attack_down ×1.167、attack_left ×1.026）。但招式留在角色自己的
+  //    竖直列内仍然划算——前肢横伸会让那一帧变宽而矮，把整组压小，打包时就得靠更大的
+  //    放大倍数补回来，而每一次重采样都在掉锐度。
+  {
+    id: 'drakelord',
+    blend: 'normal',
+    downscale: 1,
+    runs: [
+      { dir: 'drakelord/walk', preset: 'player_sheet', fps: 9, mirrorRight: true },
+      { dir: 'drakelord/walk', preset: 'idle_from_walk', mirrorRight: true },
+      { dir: 'drakelord/attack_down', preset: 'attack', facing: 'down', fps: 11 },
+      { dir: 'drakelord/attack_left', preset: 'attack', facing: 'left', fps: 11 },
+      { dir: 'drakelord/attack_left', preset: 'attack', facing: 'right', fps: 11, mirror: true },
+    ],
+  },
+  // 第四章 Boss 沼母·蛭后：`c4_7` 的 animSet: 'mirequeen'，同酋长/龙王档位。
+  //
+  // 剪影是竖立的臃肿囊体（上宽下窄的水滴），避开本章四只杂兵已占的巨手/宽伞/横长/扁壳。
+  // 沼黑主体 + 胆绿囊袋，胆绿只出现在囊袋和口环内缘，交代「腐沼瘟息」的蓄能位置。
+  //
+  // 两条这次踩到的坑，都记在 docs/美术管线-AI-sprite.md §2.10：
+  //
+  // 1. **4x4 行走表的左右行序，模型很容易画反**。这一版第 2 行朝右、第 3 行朝左，
+  //    而管线按 down/left/right/up 打标签——不换行的话蛭后往左走时会朝右转。
+  //    处理前必须先肉眼核对第 2、3 行朝向，修法是交换两行而不是重生图
+  //    （见 docs/prompt/unit_mirequeen_walk_sheet_prompt.txt 里的换行脚本）。
+  //
+  // 2. **抠色残边这一批是真的会漏**。行走帧首次处理后测出 4.74% 的洋红污染
+  //    （暗紫全不透明像素，是黑描边和洋红背景重采样混出来的），而酋长/龙王都是 0%。
+  //    三组动作现在都补跑了 `scripts/despill-magenta.py`，跑完复测降到 0%。
+  {
+    id: 'mirequeen',
+    blend: 'normal',
+    downscale: 1,
+    runs: [
+      { dir: 'mirequeen/walk', preset: 'player_sheet', fps: 9, mirrorRight: true },
+      { dir: 'mirequeen/walk', preset: 'idle_from_walk', mirrorRight: true },
+      { dir: 'mirequeen/attack_down', preset: 'attack', facing: 'down', fps: 11 },
+      { dir: 'mirequeen/attack_left', preset: 'attack', facing: 'left', fps: 11 },
+      { dir: 'mirequeen/attack_left', preset: 'attack', facing: 'right', fps: 11, mirror: true },
+    ],
+  },
   // 第一章杂兵：四只魔物共用一张 2x2 生图（art/sprite-runs/mobs/raw-2x2.png），每只取一帧。
   // 一次出全套是为了让四只的描边粗细、简化程度、俯视角度天然一致；分四次生图做不到。
   // defId 仍是四个兵种，数值/克制/AI 全不动，只有外观换掉——见 stagesMvp 的 animSet。
@@ -166,6 +255,88 @@ const SETS = [
     downscale: 1,
     runs: [{ dir: 'mobs/idle', preset: 'single', label }],
   })),
+  // 第二章杂兵：密林腐生植物，同样四只一张 2x2（art/sprite-runs/mobs-ch2/raw-2x2.png）。
+  // 剪影语法和第一章一一对应（圆滚/宽伞/横长/穹顶 = sword/bow/cavalry/shield），换的只是
+  // 题材与配色——玩家已经学过一遍这套对应关系，不该每章重学。设计见 docs/敌人图鉴.md §2。
+  // 喷孢囊刻意做成「上窄下宽」的垂囊，正是为了和第一章孢子菇的宽伞盖在 40px 下反过来读。
+  ...[
+    { id: 'vinecocoon', label: 'mob-1' },
+    { id: 'sporesac', label: 'mob-2' },
+    { id: 'leafpanther', label: 'mob-3' },
+    { id: 'mosswarden', label: 'mob-4' },
+  ].map(({ id, label }) => ({
+    id,
+    source: `${RUNS_DIR}/mobs-ch2`,
+    blend: 'normal',
+    downscale: 1,
+    runs: [{ dir: 'mobs-ch2/idle', preset: 'single', label }],
+  })),
+  // 第三章杂兵：血牙要塞守军。这一章**故意打破「敌方非人形」原则**——它教的是
+  // 「你在打一支有建制的军队」，而建制感只有人形能给（圣经 §4.2 允许，但要严格算配色）。
+  // 四只统一绿皮 + 暗铁，统一色本身就是「建制」的信号；区分全压在剪影 + 一个饰色上。
+  // 钢青是**不能用**的：对我方盾卫 H210 L42 色相差 10、明度差 3，而两者同为人形同样举盾。
+  ...[
+    { id: 'fangtrooper', label: 'mob-1' },
+    { id: 'wallbalist', label: 'mob-2' },
+    { id: 'wallrider', label: 'mob-3' },
+    { id: 'gatewarden', label: 'mob-4' },
+  ].map(({ id, label }) => ({
+    id,
+    source: `${RUNS_DIR}/mobs-ch3`,
+    blend: 'normal',
+    downscale: 1,
+    runs: [{ dir: 'mobs-ch3/idle', preset: 'single', label }],
+  })),
+  // 第四章杂兵：毒沼节肢。「毒」不能画成紫（品红键色会吃掉），所以走酸黄绿 + 近黑的明度两极。
+  ...[
+    { id: 'mirehand', label: 'mob-1' },
+    { id: 'dartbug', label: 'mob-2' },
+    { id: 'miregator', label: 'mob-3' },
+    { id: 'mudcarapace', label: 'mob-4' },
+  ].map(({ id, label }) => ({
+    id,
+    source: `${RUNS_DIR}/mobs-ch4`,
+    blend: 'normal',
+    downscale: 1,
+    runs: [{ dir: 'mobs-ch4/idle', preset: 'single', label }],
+  })),
+  // 第五章杂兵：龙岭火山属。熔岩裂纹是硬边平涂色块，不是 glow（圣经 §9 禁软发光）。
+  // 这张生图触了格线（火翼蝠翼尖），用 respace-sheet.py 统一缩到 0.92 才过严格 QC，
+  // 所以源图是 raw-2x2-spaced.png 而不是 raw-2x2.png。
+  ...[
+    { id: 'magmacore', label: 'mob-1' },
+    { id: 'emberbat', label: 'mob-2' },
+    { id: 'scalewyrm', label: 'mob-3' },
+    { id: 'ashshell', label: 'mob-4' },
+  ].map(({ id, label }) => ({
+    id,
+    source: `${RUNS_DIR}/mobs-ch5`,
+    blend: 'normal',
+    downscale: 1,
+    runs: [{ dir: 'mobs-ch5/idle', preset: 'single', label }],
+  })),
+  // 第二至五章精英：血牙部族的人形兽人，四只一张 2x2（art/sprite-runs/elites/raw-2x2.png）。
+  //
+  // 精英和 Boss 是血牙部族、杂兵是当地野物——这条读图规矩第一章就立下了，剪影本身就是
+  // 「这个不好惹」的信号。所以它们**不在 MOOK_ART_SETS 里**，按英雄身高渲染。
+  //
+  // 第一章精英百夫长·卡格刻意继续用 bloodfang（酋长的部下，提前认脸），不在这批里。
+  // 剪影靠「大块长在哪」区分：图伦=竖线在身侧、城卫长=大块在肩、塔玛=小块垂在手下、
+  // 卡尔萨=大块在手。城卫长和卡尔萨都是单侧巨大块，全靠肩 vs 手的高低分开。
+  //
+  // 这张生图触了格线（城卫长的剑、卡尔萨的爪），respace 到 0.92 才过严格 QC。
+  ...[
+    { id: 'torun', label: 'elite-1' },
+    { id: 'castellan', label: 'elite-2' },
+    { id: 'mirespeaker', label: 'elite-3' },
+    { id: 'drakekin', label: 'elite-4' },
+  ].map(({ id, label }) => ({
+    id,
+    source: `${RUNS_DIR}/elites`,
+    blend: 'normal',
+    downscale: 1,
+    runs: [{ dir: 'elites/idle', preset: 'single', label }],
+  })),
   // 黑底 additive 技能/命中特效，取用见 src/data/vfxCatalog.ts。
   //
   // 帧数与 fps 是两档标准，理由在 docs/特效圣经.md：
@@ -181,6 +352,17 @@ const SETS = [
     { id: 'roar', frames: 9, fps: 20 },
     { id: 'bloodfang_roar', frames: 9, fps: 20 },
     { id: 'bloodfang_wildfire', frames: 9, fps: 20 },
+    // `bloodfang_breach`：第三章 Boss 皮肤「破阵冲撞」——等宽贯穿线。原先拼 charge_aura +
+    //   thrust 两个通用图集凑，是记了账的欠账，这里补上专属序列。钝头、粗细恒定，
+    //   刻意不做成矛尖，才和下面那条锥形吐息分得开。
+    { id: 'bloodfang_breach', frames: 9, fps: 20 },
+    // `drake_cataclysm`：终章 Boss 皮肤「灭世龙息」——横向锥形吐息。和第三章「破阵冲撞」
+    //   底层形状相同（都是直线穿透），所以特效是玩家区分两者的唯一线索：那个是等宽贯穿线，
+    //   这个是从一点张开的锥。环 / 柱 / 线 / 锥，四个维度到这里正好用满。
+    // `mirequeen_miasma`：第四章 Boss 皮肤「腐沼瘟息」——低伏沉雾。全套里唯一一张
+    //   「填实的低雾」而不是「向外跑的边」，形态上和四个环状/柱状/线状/锥状都分得开。
+    { id: 'mirequeen_miasma', frames: 9, fps: 20 },
+    { id: 'drake_cataclysm', frames: 9, fps: 20 },
     { id: 'whirl', frames: 9, fps: 20 },
     { id: 'quake', frames: 9, fps: 20 },
     { id: 'pierce', frames: 9, fps: 20 },
@@ -218,6 +400,11 @@ const SETS = [
     // 18 帧/秒：挥砍要「快得像一刀」但又得让人看清刀身扫过的角度。
     // 再快刀身就糊了，等于回到单图运动
     { id: 'sword_swing', frames: 9, fps: 18 },
+    // 杂兵通用攻击：4 帧、更糙，不穿玩家刀光/飞箭/火球的皮。见 vfxCatalog.MOOK_ATTACK_VFX
+    { id: 'mook_claw', frames: 4, fps: 18 },
+    { id: 'mook_spit', frames: 4, fps: 14 },
+    { id: 'mook_thud', frames: 4, fps: 18 },
+    { id: 'mook_puff', frames: 4, fps: 16 },
     // 第二、三章临时技能专属图。这两组原先全是借的（火把借法师炎环、绞缠借第一章缠足、
     // 庇护和守林人共用祭司的圣光盾、撞城槌的尾迹居然是火系的 ember_wave、
     // 压制借狂暴战吼、战旗借祭司祝福、钩索借骑兵冲锋光环），

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { effectiveUnitDef } from '@/battle/effectiveUnit';
 import type { UnitState } from '@/battle/types';
-import { STAGES_MVP } from '@/data/stagesMvp';
+import { CHAPTER_STAGE_INDICES, STAGES_MVP } from '@/data/stagesMvp';
 import { UNIT_DEFS } from '@/data/unitDefs';
 import { enemySpawnToUnitState } from '@/game/state/DeployManager';
 import { battleUnitInfoModel } from '@/view/unitInfoModel';
@@ -13,6 +13,17 @@ import { battleUnitInfoModel } from '@/view/unitInfoModel';
  */
 describe('单位信息面板的数值来源', () => {
   const spawn = STAGES_MVP[0]!.enemies[0]!;
+
+  /**
+   * 第一章 Boss 从章节表里找，不硬写 `STAGES_MVP[6]`。
+   *
+   * 那个下标曾经是对的（第一章七关时 Boss 排第七），第一章缩到四关之后它指到了
+   * 第二章的推进关——而那关的敌人没有 `boss: true`，于是取到 `undefined`，
+   * 报错信息只是「读不到属性」，完全看不出是章节重排造成的。
+   */
+  const ch1Boss = STAGES_MVP[CHAPTER_STAGE_INDICES[0]!.find(
+    (i) => STAGES_MVP[i]!.isBoss === true,
+  )!]!;
 
   it('敌人预览与实战用同一份换算', () => {
     const u = enemySpawnToUnitState(spawn, 1.5);
@@ -54,7 +65,7 @@ describe('单位信息面板的数值来源', () => {
   });
 
   it('战斗中显示技能剩余冷却，布阵页预览不显示', () => {
-    const bossSpawn = STAGES_MVP[6]!.enemies.find((e) => e.boss)!;
+    const bossSpawn = ch1Boss.enemies.find((e) => e.boss)!;
     const u: UnitState = { ...enemySpawnToUnitState(bossSpawn, 1), skillCd: 2 };
     const inBattle = battleUnitInfoModel(u, { showCooldown: true });
     const inDeploy = battleUnitInfoModel(u, { showCooldown: false });
@@ -69,7 +80,7 @@ describe('单位信息面板的数值来源', () => {
   });
 
   it('Boss 面板显示皮肤名与图标，不暴露底层 savage_roar 名', () => {
-    const bossSpawn = STAGES_MVP[6]!.enemies.find((e) => e.boss)!;
+    const bossSpawn = ch1Boss.enemies.find((e) => e.boss)!;
     const u = enemySpawnToUnitState(bossSpawn, 1.1);
     const model = battleUnitInfoModel(u, { showCooldown: false });
     expect(model.skills).toHaveLength(1);

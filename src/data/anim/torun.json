@@ -1,0 +1,86 @@
+{
+  "id": "torun",
+  "source": "art/sprite-runs/elites",
+  "blend": "normal",
+  "image": "images/anim/torun.png",
+  "meta": {
+    "size": {
+      "w": 256,
+      "h": 256
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 172,
+    "baselineY": 236,
+    "ref": "elites-idle/elite-1.png"
+  },
+  "frames": {
+    "elites-idle/elite-1.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 142,
+        "h": 217
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 57,
+        "y": 20,
+        "w": 142,
+        "h": 217
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "idle": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "elites-idle/elite-1.png"
+      ]
+    },
+    "default": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "elites-idle/elite-1.png"
+      ]
+    },
+    "idle_up": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "elites-idle/elite-1.png"
+      ]
+    },
+    "idle_down": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "elites-idle/elite-1.png"
+      ]
+    },
+    "idle_left": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "elites-idle/elite-1.png"
+      ]
+    },
+    "idle_right": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "elites-idle/elite-1.png"
+      ]
+    }
+  }
+}

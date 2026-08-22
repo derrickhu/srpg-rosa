@@ -1,0 +1,86 @@
+{
+  "id": "fangtrooper",
+  "source": "art/sprite-runs/mobs-ch3",
+  "blend": "normal",
+  "image": "images/anim/fangtrooper.png",
+  "meta": {
+    "size": {
+      "w": 256,
+      "h": 256
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 149,
+    "baselineY": 235,
+    "ref": "mobs-ch3-idle/mob-1.png"
+  },
+  "frames": {
+    "mobs-ch3-idle/mob-1.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 207,
+        "h": 153
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 24,
+        "y": 84,
+        "w": 207,
+        "h": 153
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "idle": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch3-idle/mob-1.png"
+      ]
+    },
+    "default": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch3-idle/mob-1.png"
+      ]
+    },
+    "idle_up": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch3-idle/mob-1.png"
+      ]
+    },
+    "idle_down": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch3-idle/mob-1.png"
+      ]
+    },
+    "idle_left": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch3-idle/mob-1.png"
+      ]
+    },
+    "idle_right": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch3-idle/mob-1.png"
+      ]
+    }
+  }
+}

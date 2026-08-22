@@ -115,9 +115,13 @@ export function flyProjectile(
 
   const sprite = projectileSprite(def, sizePx);
   if (!sprite) {
+    // 图集还没下完 / 弹体 key 对不上时没有可见弹体，但途经回调不能丢。
+    // 穿透、撞城槌、带溅射的炎弹都把伤害飘字挂在 waypoints 上——
+    // 以前这里只调 onArrive，群攻就会变成「特效放了、数字没有」。
     return {
       done: new Promise<void>((res) => {
         setTimeout(() => {
+          for (const wp of waypoints) wp.run();
           opts.onArrive?.();
           res();
         }, totalMs);
@@ -176,7 +180,10 @@ export function flyProjectile(
       let arrived = false;
       const nativeW = (beam?.textures[0] as PIXI.Texture | undefined)?.width ?? 1;
 
+      let settled = false;
       const finish = (): void => {
+        if (settled) return;
+        settled = true;
         PIXI.Ticker.shared.remove(tick);
         if (!arrived) {
           arrived = true;
@@ -187,15 +194,15 @@ export function flyProjectile(
         void beamPath?.persist();
         // 两段式的核心层是子节点，一律带 children 回收，否则它会跟着图集贴图一起留着
         if (!sprite.destroyed) {
-          layer.removeChild(sprite);
+          if (isDisplayLive(layer)) layer.removeChild(sprite);
           sprite.destroy({ children: true });
         }
         if (glow && !glow.destroyed) {
-          layer.removeChild(glow);
+          if (isDisplayLive(layer)) layer.removeChild(glow);
           glow.destroy({ children: true });
         }
         if (beam && !beam.destroyed) {
-          layer.removeChild(beam);
+          if (isDisplayLive(layer)) layer.removeChild(beam);
           beam.destroy({ children: true });
         }
         resolve();
@@ -203,11 +210,9 @@ export function flyProjectile(
 
       const tick = (): void => {
         if (!isDisplayLive(sprite) || !isDisplayLive(layer)) {
-          PIXI.Ticker.shared.remove(tick);
-          ribbon?.destroy();
-          beamPath?.destroy();
-          if (glow && isDisplayLive(glow)) glow.destroy({ children: true });
-          resolve();
+          // 切场 / 跳过 / 图集回收会把弹体提前拆掉。途经和抵达回调仍要跑完，
+          // 否则穿透这类群攻会只播一半特效、后半段命中既不飘字也不改血条。
+          finish();
           return;
         }
         elapsed += PIXI.Ticker.shared.deltaMS;

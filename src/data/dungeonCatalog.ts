@@ -78,31 +78,79 @@ export interface DungeonDef {
 
 const r = (rows: ShopPoolRow[]): ShopPoolRow[] => rows;
 
+/**
+ * ─────────────────────────────────────────────────────────────────────────────
+ * 商店池的投放曲线
+ * ─────────────────────────────────────────────────────────────────────────────
+ *
+ * 三条规矩，都是从「第一章一次抛完」这个毛病里补出来的：
+ *
+ * 1. **地形券只卖已经登场过的地形。** 第一章还没见过森林就卖森林券，等于让玩家
+ *    花钱买一个他读不懂的东西。登场章节见 `stagesMvp` 的投放曲线总纲：
+ *    高地（章 1）、森林（章 2）、城墙（章 3）。
+ *
+ * 2. **临时技能每章只新增 1/2/3/4/4 招。** 原先第一章一口气开四招——那是四段
+ *    要读的说明文字，出现在玩家连高地都还没用熟的时候。现在第一章只有一招
+ *    （野草缠足：最便宜、最好懂的控制），后面随着战斗变长再加。
+ *
+ * 3. **池子是「本章新增 + 上一章」的滑动窗口，不是全量累积。** 全量累积到第五章
+ *    会有 14 招，而商店一次只 roll 3 件（还保底一件药剂）——想要的那招基本抽不到，
+ *    「选一个流派」就退化成抽奖。滑动窗口让每章的池子由**本章的族**主导，
+ *    上一章的留一轮作为过渡，玩家仍能把上一章顺手的招带过来。
+ */
+
+/** 各章**新增**的临时技能。总计 14 招，恰好是现有全部临时技能 */
+const TEMP_NEW_BY_CHAPTER: ShopPoolRow[][] = [
+  // 章 1 草原：一招就够。控制类里最便宜、最好懂的那个
+  r([{ category: 'tempSkill', skillId: 'temp_gl_snare', price: 6 }]),
+  // 章 2 密林：火把是这一章的关键一招（松脂林道那关就等着它）
+  r([
+    { category: 'tempSkill', skillId: 'temp_fo_torch', price: 8 },
+    { category: 'tempSkill', skillId: 'temp_fo_thorn', price: 7 },
+  ]),
+  // 章 3 要塞：撞城槌和 Boss 的破阵冲撞同形，钩索配墙与闸门
+  r([
+    { category: 'tempSkill', skillId: 'temp_ft_ram', price: 9 },
+    { category: 'tempSkill', skillId: 'temp_ft_suppress', price: 7 },
+    { category: 'tempSkill', skillId: 'temp_ft_grapple', price: 7 },
+  ]),
+  // 章 4 毒沼：四招全是续航/增益。这一章的地形每回合在扣血，
+  // 商店该给的是「扛得住」而不是「打得快」
+  r([
+    { category: 'tempSkill', skillId: 'temp_gl_salve', price: 7 },
+    { category: 'tempSkill', skillId: 'temp_fo_bark', price: 8 },
+    { category: 'tempSkill', skillId: 'temp_ft_banner', price: 8 },
+    { category: 'tempSkill', skillId: 'field_bless', price: 8 },
+  ]),
+  // 章 5 龙岭：剩下的四招一起开，终章不再留新东西
+  r([
+    { category: 'tempSkill', skillId: 'temp_gl_horn', price: 7 },
+    { category: 'tempSkill', skillId: 'temp_gl_swarm', price: 8 },
+    { category: 'tempSkill', skillId: 'temp_fo_warden', price: 7 },
+    { category: 'tempSkill', skillId: 'war_shout', price: 8 },
+  ]),
+];
+
+/** 第 n 章（1 起）的临时技能池 = 本章新增 + 上一章新增 */
+function tempSkillPool(chapter: number): ShopPoolRow[] {
+  return [...(TEMP_NEW_BY_CHAPTER[chapter - 2] ?? []), ...(TEMP_NEW_BY_CHAPTER[chapter - 1] ?? [])];
+}
+
+/**
+ * 章 1 草原战线：只有高地券。
+ *
+ * 这一章整个只有平原和高地两种地形（见 `stagesMvp`），所以能卖的券也只有一种。
+ * 这不是内容少，是**这一章要问的问题只有一个**：这个丘归谁。一张券配一个问题。
+ */
 const POOL_GRASSLAND = r([
   { category: 'terrain', terrainId: 'high', price: 4 },
   { category: 'potion', potionId: 'heal', price: 5 },
   { category: 'potion', potionId: 'draught', price: 5 },
-  { category: 'tempSkill', skillId: 'temp_gl_snare', price: 6 },
-  { category: 'tempSkill', skillId: 'temp_gl_salve', price: 7 },
-  { category: 'tempSkill', skillId: 'temp_gl_swarm', price: 8 },
-  { category: 'tempSkill', skillId: 'temp_gl_horn', price: 7 },
+  ...tempSkillPool(1),
 ]);
 
 /**
- * 三章及以后暂时共用通用技能作临时技能。
- *
- * **这是欠的账，不是设计**：临时技能本该一章一套，玩家进新章节应该从技能名上
- * 就读出场景变了。草原（`temp_gl_*`）和密林（`temp_fo_*`）是范本，其余三章照着补即可——
- * 机制都现成，只是数据和图标。先这样是因为只有前两章过了数值回归，
- * 给还没调过的章节配专属内容，等于在会推翻的地基上堆东西。
- */
-const TEMP_GENERIC = r([
-  { category: 'tempSkill', skillId: 'war_shout', price: 8 },
-  { category: 'tempSkill', skillId: 'field_bless', price: 8 },
-]);
-
-/**
- * 密林深处：卖森林券是这一章的关键一格。
+ * 章 2 密林深处：森林券是这一章的关键一格。
  *
  * 森林在这一章既是掩体又是燃料，所以「买一片林子放下去」同时是防守手段和给
  * 「松脂火把」备料——同一张券有两种用法，而它们还互相冲突（烧了就没掩体了），
@@ -112,15 +160,13 @@ const POOL_FOREST = r([
   { category: 'terrain', terrainId: 'high', price: 4 },
   { category: 'terrain', terrainId: 'forest', price: 4 },
   { category: 'potion', potionId: 'heal', price: 5 },
+  { category: 'potion', potionId: 'draught', price: 5 },
   { category: 'potion', potionId: 'slow', price: 6 },
-  { category: 'tempSkill', skillId: 'temp_fo_torch', price: 8 },
-  { category: 'tempSkill', skillId: 'temp_fo_thorn', price: 7 },
-  { category: 'tempSkill', skillId: 'temp_fo_bark', price: 8 },
-  { category: 'tempSkill', skillId: 'temp_fo_warden', price: 7 },
+  ...tempSkillPool(2),
 ]);
 
 /**
- * 要塞攻防：卖城墙券是这一章的关键一格。
+ * 章 3 要塞攻防：城墙券是这一章的关键一格。
  *
  * 城墙在这一章既挡路又挡视线，所以「买一堵墙放下去」是玩家手里唯一能主动
  * 制造掩体的手段——闸门开启之后门口那条走廊会变成对射场，
@@ -128,21 +174,29 @@ const POOL_FOREST = r([
  */
 const POOL_FORTRESS = r([
   { category: 'terrain', terrainId: 'high', price: 5 },
+  { category: 'terrain', terrainId: 'forest', price: 5 },
   { category: 'terrain', terrainId: 'wall', price: 5 },
   { category: 'potion', potionId: 'heal', price: 6 },
   { category: 'potion', potionId: 'draught', price: 6 },
-  { category: 'tempSkill', skillId: 'temp_ft_ram', price: 9 },
-  { category: 'tempSkill', skillId: 'temp_ft_suppress', price: 7 },
-  { category: 'tempSkill', skillId: 'temp_ft_banner', price: 8 },
-  { category: 'tempSkill', skillId: 'temp_ft_grapple', price: 7 },
+  { category: 'potion', potionId: 'slow', price: 6 },
+  ...tempSkillPool(3),
 ]);
 
+/**
+ * 章 4 毒沼泥潭：券的作用第一次变成「铺一条不掉血的路」。
+ *
+ * 前三章买券是为了拿便宜（站高地、躲林子、造掩体），这一章沼泽每回合扣 5 血，
+ * 于是「在泥潭里垫一格高地」变成了一条通路而不是一个增益。同一张高地券，
+ * 换个地形环境就换了用途——这是不加新机制就能加深度的地方。
+ */
 const POOL_SWAMP = r([
   { category: 'terrain', terrainId: 'high', price: 5 },
   { category: 'terrain', terrainId: 'forest', price: 5 },
+  { category: 'terrain', terrainId: 'wall', price: 5 },
   { category: 'potion', potionId: 'heal', price: 6 },
+  { category: 'potion', potionId: 'draught', price: 7 },
   { category: 'potion', potionId: 'slow', price: 7 },
-  ...TEMP_GENERIC,
+  ...tempSkillPool(4),
 ]);
 
 const POOL_DRAGON = r([
@@ -152,7 +206,7 @@ const POOL_DRAGON = r([
   { category: 'potion', potionId: 'heal', price: 7 },
   { category: 'potion', potionId: 'draught', price: 7 },
   { category: 'potion', potionId: 'slow', price: 7 },
-  ...TEMP_GENERIC,
+  ...tempSkillPool(5),
 ]);
 
 /**
@@ -199,7 +253,7 @@ export const DUNGEON_DEFS: DungeonDef[] = [
   {
     id: 'dungeon_grassland',
     name: '草原战线',
-    desc: '血牙部族入侵草原，新兵在此经受完整试炼。',
+    desc: '血牙部族踏进草原。四场遭遇战，先学会抢那两块缓丘。',
     nodes: buildNodes(chapterStages(1)),
     roguelikePool: POOL_GRASSLAND,
     metaReward: 10,
@@ -212,7 +266,7 @@ export const DUNGEON_DEFS: DungeonDef[] = [
   {
     id: 'dungeon_forest',
     name: '密林深处',
-    desc: '林地伏击，远程与机动更危险。',
+    desc: '林子替谁挡伤，谁就占便宜——而它烧得起来。',
     nodes: buildNodes(chapterStages(2)),
     roguelikePool: POOL_FOREST,
     metaReward: 12,
@@ -224,7 +278,7 @@ export const DUNGEON_DEFS: DungeonDef[] = [
   {
     id: 'dungeon_fortress',
     name: '要塞攻防',
-    desc: '城墙与高地纵横，正面强攻。',
+    desc: '墙挡路，也挡箭。闸门是唯一能被你亲手操作的地形。',
     nodes: buildNodes(chapterStages(3)),
     roguelikePool: POOL_FORTRESS,
     metaReward: 14,
@@ -236,7 +290,7 @@ export const DUNGEON_DEFS: DungeonDef[] = [
   {
     id: 'dungeon_swamp',
     name: '毒沼泥潭',
-    desc: '沼泽减速，阵地与控制为王。',
+    desc: '河水拖慢脚步，泥潭每回合抽血。这里的地形一直在扣你的账。',
     nodes: buildNodes(chapterStages(4)),
     roguelikePool: POOL_SWAMP,
     metaReward: 16,
@@ -248,7 +302,7 @@ export const DUNGEON_DEFS: DungeonDef[] = [
   {
     id: 'dungeon_dragon',
     name: '龙岭绝巅',
-    desc: '终焉之地，龙王与精锐镇守。',
+    desc: '绝壁能切断退路，却挡不住一支箭。龙王在最高处。',
     nodes: buildNodes(chapterStages(5)),
     roguelikePool: POOL_DRAGON,
     metaReward: 20,

@@ -1,0 +1,113 @@
+# 第二章杂兵 · 密林腐生植物 —— 四只一张 2x2（generate2dsprite --mode grid --rows 2 --cols 2）
+#
+# 设计依据：docs/敌人图鉴.md §2 第 2 章。剪影语法沿用第一章（圆滚/宽伞/横长/穹顶
+# 对应 sword/bow/cavalry/shield 四个兵位），换题材与配色，不换语法——玩家已经学过一遍。
+#
+# 配色推演（改之前先算一遍，判据见美术风格圣经 §2.1 / §4.3）：
+#   本章地形是森林 H105 L28，是全表最暗的地形之一，所以四只整体走**高明度**才浮得出来。
+#   避让对象：法师 H180 L27、弓手 H90 L33、祭司 L90、剑士 H24 L28、森林 H105 L28。
+#
+#   1 藤缚茧  #98CDB3 H150 S35 L70  vs 法师 30°✓ / 森林 45°✓ / 弓手 60°✓
+#   2 喷孢囊  #E8E4D8 骨白 L85      靠明度立住；和祭司乳白同为低饱和高明度，但一个是
+#                                    持金杖的人形、一个是垂囊，跨剪影类别由形状分开（圣经 §2.1）
+#   3 林影豹  #C65A39 H14 S55 L50  本章唯一暖色锚点。初稿定的深青 H165 L38 是**错的**：
+#                                    对法师 H180 L27 色相差 15、明度差 11，两条判据都不过关，
+#                                    而且在暗绿森林里会迷彩化。换暖色同时解决这两件事。
+#   4 苔石像  #4D8066 H150 S25 L40  和藤缚茧同色相，靠明度差 30 分开（70 vs 40）
+#
+#   明度铺开成 70 / 85 / 50 / 40，这是 40px 下唯一可靠的区分轴。
+#
+# 禁色：粉、品红、紫罗兰一律不许出现。抠色键是品红 #FF00FF，H270–330 的主色会被
+#   连着素材一起吃掉（见 docs/美术管线-AI-sprite.md §2 与 §2.8）。
+#
+# 「发光」怎么画：圣经 §9 禁掉柔和外发光。藤缚茧缝隙里的青光必须是**平涂的亮色块**，
+#   不是 glow、不是渐变、不是光晕。
+#
+# 处理命令：
+#   python3 ~/.cursor/skills/generate2dsprite/scripts/generate2dsprite.py process \
+#     --input art/sprite-runs/mobs-ch2/raw-2x2.png --target creature --mode grid \
+#     --rows 2 --cols 2 --label-prefix mob --cell-size 256 \
+#     --output-dir art/sprite-runs/mobs-ch2/idle \
+#     --align feet --shared-scale --component-mode largest --strict-qc \
+#     --write-scale-profile art/sprite-runs/mobs-ch2/scale-profile.json
+#   python3 scripts/despill-magenta.py art/sprite-runs/mobs-ch2/idle
+#   node scripts/sprite2anim.mjs   # SETS 里 vinecocoon/sporesac/leafpanther/mosswarden 各取一帧
+#
+# mob-1 藤缚茧(sword) / mob-2 喷孢囊(bow) / mob-3 林影豹(cavalry) / mob-4 苔石像(shield)
+
+A 2-column x 2-row grid of 4 CARTOON PLANT-CREATURE CHARACTERS for a tactics game, drawn as game
+sprites. These are things the forest itself grew, not animals wearing armour.
+
+CRITICAL BACKGROUND: the entire background, including all space between and around the four
+creatures, must be 100% solid flat MAGENTA, hex #FF00FF. It is a chroma key and will be deleted.
+No white, no grey, no gradient, no ground shadow, no drop shadow, no glow onto the background.
+The creatures must not touch each other or the edges of the image. This instruction overrides
+everything else in this prompt.
+
+CRITICAL FORBIDDEN COLOURS: absolutely NO pink, NO magenta, NO violet, NO purple, NO lilac anywhere
+on any creature. The background key colour is magenta, so any pinkish-purple on a creature will be
+destroyed when the background is removed. Use only the specific colours named per cell below.
+
+CAMERA: a 3/4 top-down view, as if looking down at a tabletop board from above and slightly in
+front. Every creature faces the viewer, standing on flat invisible ground. All four must sit at the
+SAME eye level and be seen from the SAME angle.
+
+CRITICAL SIZE CONSTRAINT: these are displayed at only about 40 pixels tall in the game. Each
+creature must be ONE bold chunky readable silhouette. NO fine detail, NO small parts, NO texture,
+NO patterns, NO tiny highlights. If a feature would be smaller than a tenth of the creature's
+width, delete it. These are low-tier trash mobs and should look SIMPLER than a hero character —
+fewer shapes, fewer colours, one strong idea each.
+
+STYLE — must match the game's heroes:
+- Chunky, rounded, toy-like cartoon creatures. Slightly exaggerated, friendly-menacing, never gory
+  and never scary.
+- A THICK near-black outline (#1A1410) all the way around every creature and around its major
+  internal shapes.
+- FLAT saturated colour fills. At most 3 colours per creature plus the outline, plus one lighter
+  shade for a single simple cel-shaded highlight and one darker shade for a single shadow. No
+  gradients, no soft shading, no gloss, no texture noise, no painterly brushwork, no pixel art.
+- Any "glowing" part must be painted as a FLAT BRIGHT SHAPE with a hard outline. No soft glow, no
+  halo, no bloom, no light spill.
+- Big simple eyes where the creature has eyes at all. No noses, no ears, no fingers, no teeth
+  smaller than the outline width.
+
+Per-cell contents:
+
+TOP-LEFT — VINE COCOON. A fat rounded ball of thick woody vines wound tightly around something,
+wider than it is tall, sitting directly on the ground with no legs and NO FACE AT ALL — no eyes, no
+mouth. The vines are a pale sage grey-green (#98CDB3) with a slightly darker sage shadow underneath.
+Between the vines are three or four narrow FLAT BRIGHT CYAN slits, painted as hard-edged solid
+shapes with dark outlines, as if something lit is sealed inside. A few short vine ends curl out at
+the base. The "no face, just a wound-up ball with glowing cracks" idea is the whole silhouette.
+
+TOP-RIGHT — DROOPING SPORE SAC. A plant whose thin stalk rises from the ground and then BENDS OVER
+so that a big heavy bulbous sac HANGS DOWNWARD at the front. The sac is the bottom-heavy part of the
+silhouette: narrow at the top where the stalk is, fat and round at the bottom. The sac is a warm
+BONE WHITE (#E8E4D8) with a darker cream shadow. At the very bottom of the sac is a single dark
+split opening, like a puckered slit mouth, painted in near-black. Two small simple eyes on the sac
+above the split. CRITICAL: this must read as TOP-NARROW and BOTTOM-WIDE — it is the opposite of a
+normal upright mushroom cap.
+
+BOTTOM-LEFT — PANTHER. A four-legged big cat standing low and long, seen from the front
+three-quarter angle so all four legs and the body length are visible. Fur is a warm RUST ORANGE-RED
+(#C65A39) with a darker rust shadow along the belly. Running down its spine from head to tail is a
+single row of four or five flat BONE WHITE LEAF-SHAPED FINS, like pale leaves standing up out of its
+back — this row of pale fins is the memorable feature and must be clearly visible against the rust
+fur. A blocky head with two small ears and two simple eyes. Low, wide and predatory — the silhouette
+should be much WIDER than it is tall.
+
+BOTTOM-RIGHT — MOSS STATUE. A squat crouching stone idol with a big BLOCKY SQUARE HEAD that sits
+directly on its shoulders with no neck, and short thick stubby arms and legs folded in close, so the
+whole thing reads as a heavy rounded-off cube. The stone is a dark grey-green (#4D8066) with a
+lighter grey-green highlight on the top of the head. On top of its shoulders and head sits a thick
+slab of brighter moss, painted as one simple flat shape, not many little tufts. Two small simple
+eyes carved into the square face. The heavy cube silhouette must dominate.
+
+LAYOUT RULES:
+1. EXACTLY 4 creatures in a clean 2x2 arrangement.
+2. NO borders, NO dividing lines, NO frames, NO circles or platforms under the creatures.
+3. Each creature fills about 70% of its cell with a clear magenta margin on all four sides. Nothing
+   crosses into a neighbouring cell.
+4. All four must feel like ONE set drawn by one artist: same outline thickness, same level of
+   simplification, same camera angle.
+5. NO text, no labels, no captions, no letters, no numbers, no watermark anywhere in the image.

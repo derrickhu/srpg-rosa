@@ -1,0 +1,86 @@
+{
+  "id": "dartbug",
+  "source": "art/sprite-runs/mobs-ch4",
+  "blend": "normal",
+  "image": "images/anim/dartbug.png",
+  "meta": {
+    "size": {
+      "w": 256,
+      "h": 256
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 162,
+    "baselineY": 228,
+    "ref": "mobs-ch4-idle/mob-2.png"
+  },
+  "frames": {
+    "mobs-ch4-idle/mob-2.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 202,
+        "h": 171
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 27,
+        "y": 66,
+        "w": 202,
+        "h": 171
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "idle": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch4-idle/mob-2.png"
+      ]
+    },
+    "default": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch4-idle/mob-2.png"
+      ]
+    },
+    "idle_up": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch4-idle/mob-2.png"
+      ]
+    },
+    "idle_down": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch4-idle/mob-2.png"
+      ]
+    },
+    "idle_left": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch4-idle/mob-2.png"
+      ]
+    },
+    "idle_right": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch4-idle/mob-2.png"
+      ]
+    }
+  }
+}

@@ -1,5 +1,6 @@
 import type { UnitKind } from '@/battle/types';
 import { defaultSkillId } from '@/data/skillCatalog';
+import { isMookArt } from '@/view/animSets';
 
 /**
  * 战斗特效登记表：一个技能 = 一份「配方」，由施放 / 飞行 / 命中三段组合而成。
@@ -356,6 +357,38 @@ const BARK = [0xeaf7d0, 0x8fae3a, 0x4a5a12] as const;
 const TORCH = [0xfff2cc, 0xff9a2a, 0xc25400] as const;
 /** 要塞章攻城土金：比剑士金橙更褐更暗 */
 const SIEGE = [0xffeccc, 0xd98a34, 0x8a4a12] as const;
+/**
+ * 终章龙息：全表最亮的一族，内芯直接给到近白。
+ *
+ * 和法师赤焰（FIRE）的关系是**同色相不同色温**——赤焰中段是 #ff4a12 的红橙，
+ * 这一族中段是 #ff7a18 的纯橙、外沿也更红。区分靠的是「烧得更旺」而不是换色相：
+ * 终章 Boss 的招式不该看成奥莉在放火，但也不该为了区分而变成另一个颜色的火。
+ */
+const DRAKEFIRE = [0xfff6e0, 0xff7a18, 0xb3200c] as const;
+/**
+ * 毒沼章瘟疫脓黄绿。
+ *
+ * **绝不能画成紫色。** 瘟疫/毒在通用美术语言里几乎总是紫的，而紫是本项目的硬禁
+ * （既贴近抠色键，也和我方法师的品红族撞）。改走脓黄绿之后另有一个好处：
+ * 它和第二章的林绿（BARK）是同一色相的两个极端——那个暗而木质，这个亮而酸，
+ * 于是「森林」和「腐坏」在屏幕上分得开，而不用再占一个新色相。
+ */
+const MIASMA = [0xcfe05a, 0xa8bc3a, 0x3d5220] as const;
+/**
+ * 第三章破阵冲撞：白热芯 + 钢青身 + 血红沿。
+ *
+ * 三个血牙 Boss 只能靠形态区分，但这一招还多一层任务——它要读成**攻城器械**
+ * 而不是又一次咆哮。所以中段破例给了钢青（和这一章守军的甲、和城门同色系），
+ * 血红只压在边沿保住部族归属。这是血牙三招里唯一不以红为主体的一招。
+ */
+const BREACH = [0xffe8e0, 0x7a8794, 0xa8201a] as const;
+/**
+ * 杂兵通用攻击：骨白芯 + 锈褐。
+ *
+ * 不进上面六族——那六族是「谁在出手」的职业色。杂兵共用这一族，玩家看到锈褐
+ * 就知道是野怪在挠 / 喷 / 砸，不是队里谁的金橙刀光。
+ */
+const FERAL = [0xfff0d4, 0xc47a32, 0x6a3010] as const;
 
 /** 火花/光带不用近白那档，否则一叠就糊成灯泡 */
 function toneColors(colors: readonly number[]): number[] {
@@ -532,11 +565,11 @@ export function castBurst(colors: readonly number[], sizeCells = 1.35): HitBurst
 }
 
 /**
- * 普攻特效，按**兵种原型**取。
+ * 普攻特效，按**兵种原型**取。只给我方英雄，以及精英 / Boss 的普攻。
+ * 各章杂兵（含第三章人形守军）走下面的 `MOOK_ATTACK_VFX`。
  *
- * 敌人复用四原型（草原杂兵的 defId 仍是 sword/bow/...），所以魔物也吃这张表：
- * 黏泥怪拍一下同样是金橙。这是有意的——普攻特效讲的是「这一下是近战还是远程、
- * 是刺还是砸」，属于战斗语法，不是角色皮肤。
+ * 敌人的 defId 仍是 sword/bow/...，但再让黏泥怪挥金橙刀光，玩家读成「对面也是我方
+ * 那一套招」——近战 / 远程 / 砸的语法可以共用，零件不能共用。
  */
 export const ATTACK_VFX: Record<UnitKind, VfxRecipe> = {
   // 近战斩击：生图斩击弧扫过去，落到目标再盖一记。几何弧只垫一层很淡的光
@@ -673,6 +706,131 @@ export const ATTACK_VFX: Record<UnitKind, VfxRecipe> = {
     shake: SHAKE_TAP,
   },
 };
+
+/**
+ * 杂兵普攻。按兵种原型分四种语法，零件是自己的糙一套：
+ * 近战抓挠 / 远程喷吐 / 突进抓挠 / 甲壳砸击。
+ *
+ * 第三章守军也走这里：它们是人形，但仍然是「小怪」，不该挥我方那把金橙刀。
+ */
+export const MOOK_ATTACK_VFX: Record<UnitKind, VfxRecipe> = {
+  sword: {
+    impact: {
+      set: 'mook_claw',
+      anchor: 'target',
+      cells: 1.45,
+      mode: 'aimed',
+      playbackSpeed: 0.85,
+      sparks: hitSparks(FERAL),
+    },
+    shake: SHAKE_TAP,
+  },
+  bow: {
+    travel: {
+      glowSet: 'mook_spit',
+      cells: 0.7,
+      speedPxPerSec: 280,
+      minMs: 240,
+      lingerMs: 50,
+      noRotate: true,
+      trail: trailSparks(FERAL),
+      ribbon: ribbonGlow(FERAL, 5),
+    },
+    impact: {
+      set: 'mook_puff',
+      anchor: 'target',
+      cells: 1.35,
+      mode: 'burst',
+      playbackSpeed: 0.9,
+      sparks: hitSparks(FERAL),
+    },
+    shake: SHAKE_TAP,
+  },
+  cavalry: {
+    pathBeam: pathGlow(FERAL, 'smooth', 10),
+    impact: {
+      set: 'mook_claw',
+      anchor: 'target',
+      cells: 1.5,
+      mode: 'aimed',
+      playbackSpeed: 0.85,
+      sparks: hitSparks(FERAL, 0.9),
+    },
+    shake: SHAKE_TAP,
+  },
+  shield: {
+    impact: {
+      set: 'mook_thud',
+      anchor: 'target',
+      cells: 1.55,
+      mode: 'burst',
+      playbackSpeed: 0.85,
+      sparks: hitSparks(FERAL),
+    },
+    shake: SHAKE_TAP,
+  },
+  mage: {
+    travel: {
+      glowSet: 'mook_spit',
+      cells: 0.85,
+      speedPxPerSec: 240,
+      minMs: 280,
+      lingerMs: 50,
+      noRotate: true,
+      trail: trailSparks(FERAL),
+      ribbon: ribbonGlow(FERAL, 5),
+    },
+    impact: {
+      set: 'mook_puff',
+      anchor: 'target',
+      cells: 1.4,
+      mode: 'burst',
+      playbackSpeed: 0.9,
+      sparks: hitSparks(FERAL),
+    },
+    shake: SHAKE_TAP,
+  },
+  healer: {
+    travel: {
+      glowSet: 'mook_spit',
+      cells: 0.75,
+      speedPxPerSec: 260,
+      minMs: 260,
+      lingerMs: 50,
+      noRotate: true,
+      trail: trailSparks(FERAL),
+      ribbon: ribbonGlow(FERAL, 5),
+    },
+    impact: {
+      set: 'mook_puff',
+      anchor: 'target',
+      cells: 1.35,
+      mode: 'burst',
+      playbackSpeed: 0.9,
+      sparks: hitSparks(FERAL),
+    },
+    shake: SHAKE_TAP,
+  },
+};
+
+/** 第三章人形守军：剪影按英雄身高，攻击特效仍走杂兵通用件。 */
+const CHAPTER3_MOOK_SETS = new Set([
+  'fangtrooper',
+  'wallbalist',
+  'wallrider',
+  'gatewarden',
+]);
+
+export function usesMookCombatVfx(animSet?: string): boolean {
+  if (!animSet) return false;
+  return isMookArt(animSet) || CHAPTER3_MOOK_SETS.has(animSet);
+}
+
+/** 回放查普攻配方：杂兵走糙的一套，其余走职业表。 */
+export function attackRecipeFor(kind: UnitKind, animSet?: string): VfxRecipe {
+  if (usesMookCombatVfx(animSet)) return MOOK_ATTACK_VFX[kind] ?? MOOK_ATTACK_VFX.sword;
+  return ATTACK_VFX[kind] ?? ATTACK_VFX.sword;
+}
 
 /**
  * 技能特效，按 skillId 取。没登记的技能回退到 `skillFxKey` 的静态贴图。
@@ -952,36 +1110,235 @@ export const SKILL_VFX: Record<string, VfxRecipe> = {
     },
   },
   /**
-   * 第三章 Boss 皮肤「破阵冲撞」：起手一圈冲锋光环，然后沿线逐个突刺。
+   * 第三章 Boss 皮肤「破阵冲撞」：一条等宽贯穿线从施法者推出去，沿线逐个震地。
    *
    * 三个血牙 Boss 都是红色系，所以只能靠**形态**区分（见 §4.4）：
    * 咆哮是向外扩散的环、咒火是向上窜的柱、这一招是**一条贯穿线**。
    *
-   * 这里复用了 `charge_aura` 和 `thrust` 两个现成图集，是记了账的美术欠账
-   * （见 `enemySkillCatalog` 里这个皮肤的注释）。`impactPerHit` 必须开：
-   * 一条线上穿三个人却只闪一下，玩家会以为只打到了一个。
+   * 和终章「灭世龙息」底层形状相同（都是 `lineBestRayAllFoes`），特效是玩家区分
+   * 两者的唯一线索：那一招是从一点张开的锥，这一招粗细恒定、钝头，读成攻城槌。
+   *
+   * `impactPerHit` 必须开：一条线上穿三个人却只闪一下，玩家会以为只打到了一个。
    */
   bloodfang_breach: {
-    windup: windupGather([0xffd8e8, 0xc2185b, 0x8b0000], 1.4, 300),
+    windup: windupGather(BREACH, 1.4, 300),
     shake: SHAKE_HEAVY,
     cast: {
-      set: 'charge_aura',
+      set: 'bloodfang_breach',
       anchor: 'caster',
-      cells: 2.4,
-      mode: 'burst',
-      sparks: skillSparks([0xffd8e8, 0xc2185b, 0x8b0000]),
+      cells: 3.2,
+      mode: 'aimed',
+      playbackSpeed: 0.75,
+      sparks: skillSparks(BREACH),
     },
-    pathBeam: pathGlow([0xffe8e0, 0xff3a2a, 0x8b0000], 'jagged', 12, 'thrust'),
+    pathBeam: pathGlow(BREACH, 'smooth', 12),
     impact: {
-      set: 'thrust',
+      set: 'bash_hit',
       anchor: 'target',
       cells: 2.1,
-      mode: 'aimed',
-      playbackSpeed: 0.7,
-      sparks: skillSparks([0xffd8e8, 0xc2185b, 0x8b0000]),
+      mode: 'burst',
+      playbackSpeed: 0.75,
+      sparks: skillSparks(BREACH),
     },
     impactPerHit: true,
   },
+  /**
+   * 第四章 Boss 皮肤「腐沼瘟息」：贴地漫开的低伏浊雾。
+   *
+   * 全套 Boss 特效里唯一一张「填实的低雾」，其余四张都是「向外跑的边」或「有方向的推」。
+   * 形态取「向下沉」这个还没人用过的方向，和机制是同一句话：这一章的地形本身在削你
+   * （沼泽每回合 −5），这一招把「脚下的东西在害你」再放大一遍。
+   *
+   * `cells` 给到 4.4，是全表最大的 impact。因为形状是 `discAoE radius:2`——
+   * 直径 5 格。前四个 Boss 的 AoE 都是半径 1，照抄它们的 3.2 会让特效明显小于
+   * 实际打到的范围，而玩家是照着特效记范围的。
+   */
+  mirequeen_miasma: {
+    windup: windupGather(MIASMA, 1.6, 340),
+    shake: SHAKE_HEAVY,
+    impact: {
+      set: 'mirequeen_miasma',
+      anchor: 'caster',
+      cells: 4.4,
+      mode: 'burst',
+      playbackSpeed: 0.7,
+      sparks: skillSparks(MIASMA),
+    },
+  },
+  /**
+   * 终章 Boss 皮肤「灭世龙息」：从口部张开的锥形吐息，沿线穿透。
+   *
+   * 它和上面的破阵冲撞**底层形状完全相同**（都是 `lineBestRayAllFoes`），
+   * 所以这份配方是玩家区分两场 Boss 战招式的唯一线索，而且不能靠颜色——
+   * 破阵已经占了红色系。区分落在**锥形**上：那个是等宽的贯穿线，这个越远越宽。
+   * 环（咆哮）/ 柱（咒火）/ 线（破阵）/ 锥（龙息），四个形态维度到这里用满。
+   *
+   * 锥形挂在 `cast` 而不是 `impact`：它是「从他嘴里喷出来的那一下」，
+   * 属于施法者身上的事件，`mode='aimed'` 让它转向目标（素材画成朝右，见
+   * docs/prompt/vfx/drake_cataclysm.md）。命中复用 `ember_burst` 的热爆，
+   * 是记了账的复用——这一招的辨识度全在锥形上，命中再做一张专属图收益很低。
+   *
+   * `impactPerHit` 必须开，同破阵：一条线穿三个人却只闪一下，玩家会以为只打到一个。
+   */
+  drake_cataclysm: {
+    windup: windupImplode(DRAKEFIRE, 1.9, 360),
+    shake: SHAKE_BLAST,
+    cast: {
+      set: 'drake_cataclysm',
+      anchor: 'caster',
+      // 3.6 格是全库最大的 cast，仅此一次：终章最后一招，锥形要真的盖住一条走廊
+      cells: 3.6,
+      mode: 'aimed',
+      playbackSpeed: 0.72,
+      sparks: skillSparks(DRAKEFIRE),
+    },
+    pathBeam: pathGlow(DRAKEFIRE, 'smooth', 14),
+    impact: {
+      set: 'ember_burst',
+      anchor: 'target',
+      cells: 2.1,
+      mode: 'burst',
+      playbackSpeed: 0.75,
+      sparks: skillSparks(DRAKEFIRE),
+    },
+    impactPerHit: true,
+  },
+  // ══════════════ 杂兵技能：四件通用零件 + 章节色 ══════════════
+  //
+  // 和 Boss 那五招是两个档位：杂兵不需要被单独记住，所以四张图够用——
+  // 抓挠 / 喷吐 / 砸击 / 喷散。原先借玩家旋风斩、火球、铁锤，屏幕上就是
+  // 「对面也在放我的招」。零件共用，色相走章节色，认的是「有东西来了」和「哪一章」。
+
+  /** 第二章 · 喷孢囊「孢子喷散」：贴身一圈脏雾。 */
+  spore_spray: {
+    windup: windupGather(BARK, 1.3, 240),
+    shake: SHAKE_LIGHT,
+    impact: {
+      set: 'mook_puff',
+      anchor: 'caster',
+      cells: 2.8,
+      mode: 'burst',
+      playbackSpeed: 0.75,
+      sparks: skillSparks(BARK),
+    },
+  },
+  /** 第三章 · 巡墙狼骑「撞阵」：隔一格砸上去。 */
+  wall_ram: {
+    windup: windupGather(SIEGE, 1.2, 220),
+    shake: SHAKE_HEAVY,
+    pathBeam: pathGlow(SIEGE, 'smooth', 9),
+    impact: {
+      set: 'mook_thud',
+      anchor: 'target',
+      cells: 1.8,
+      mode: 'burst',
+      playbackSpeed: 0.85,
+      sparks: skillSparks(SIEGE),
+    },
+  },
+  /** 第四章 · 吹箭虫「淬毒吹箭」：一团脏液飞过去，不是弓。 */
+  venom_dart: {
+    windup: windupGather(MIASMA, 0.9, 170),
+    travel: {
+      glowSet: 'mook_spit',
+      cells: 0.55,
+      speedPxPerSec: 320,
+      minMs: 200,
+      lingerMs: 40,
+      noRotate: true,
+      trail: trailSparks(MIASMA),
+      ribbon: ribbonGlow(MIASMA, 5),
+    },
+    impact: {
+      set: 'mook_puff',
+      anchor: 'target',
+      cells: 1.4,
+      mode: 'burst',
+      playbackSpeed: 0.95,
+      sparks: skillSparks(MIASMA),
+    },
+    shake: SHAKE_LIGHT,
+  },
+  /** 第四章 · 沼行鳄「毒沼撕咬」：邻格抓挠。 */
+  mire_bite: {
+    windup: windupGather(MIASMA, 1.0, 200),
+    shake: SHAKE_HEAVY,
+    impact: {
+      set: 'mook_claw',
+      anchor: 'target',
+      cells: 1.7,
+      mode: 'aimed',
+      playbackSpeed: 0.85,
+      sparks: skillSparks(MIASMA),
+    },
+  },
+  /** 终章 · 熔岩块「爆裂」：贴身一圈喷散。 */
+  magma_burst: {
+    windup: windupImplode(DRAKEFIRE, 1.4, 260),
+    shake: SHAKE_BLAST,
+    impact: {
+      set: 'mook_puff',
+      anchor: 'caster',
+      cells: 2.8,
+      mode: 'burst',
+      playbackSpeed: 0.75,
+      sparks: skillSparks(DRAKEFIRE),
+    },
+  },
+  /** 终章 · 火翼蝠「火星吐息」：小一团喷吐，不是奥莉的火球。 */
+  cinder_breath: {
+    windup: windupGather(DRAKEFIRE, 1.0, 180),
+    travel: {
+      glowSet: 'mook_spit',
+      cells: 0.8,
+      speedPxPerSec: 280,
+      minMs: 220,
+      lingerMs: 50,
+      noRotate: true,
+      trail: trailSparks(DRAKEFIRE),
+      ribbon: ribbonGlow(DRAKEFIRE, 5),
+    },
+    impact: {
+      set: 'mook_puff',
+      anchor: 'target',
+      cells: 1.45,
+      mode: 'burst',
+      playbackSpeed: 0.85,
+      sparks: skillSparks(DRAKEFIRE),
+    },
+    shake: SHAKE_LIGHT,
+  },
+  /**
+   * 终章 · 岩鳞龙兽「龙息冲刺」：隔一格抓过去。
+   * 和狼骑「撞阵」同形，区分靠抓挠 vs 砸击，再加上章节色。
+   */
+  wyrm_dash: {
+    windup: windupGather(DRAKEFIRE, 1.2, 220),
+    shake: SHAKE_HEAVY,
+    pathBeam: pathGlow(DRAKEFIRE, 'smooth', 10),
+    impact: {
+      set: 'mook_claw',
+      anchor: 'target',
+      cells: 1.7,
+      mode: 'aimed',
+      playbackSpeed: 0.8,
+      sparks: skillSparks(DRAKEFIRE),
+    },
+  },
+  /** 终章 · 灰烬甲虫「硬化」：自身一记闷响，不借盾墙。 */
+  ash_harden: {
+    windup: windupGather(SILVER, 1.1, 220),
+    shake: SHAKE_LIGHT,
+    impact: {
+      set: 'mook_thud',
+      anchor: 'caster',
+      cells: 1.9,
+      mode: 'burst',
+      playbackSpeed: 0.8,
+      sparks: skillSparks(SILVER),
+    },
+  },
+
   // ── 草原战线临时技能：四种完全不同的「零件」语言，禁止再做成同质环光 ──
   /**
    * 野草缠足：长草窜起来在敌人腿上打成一个结。

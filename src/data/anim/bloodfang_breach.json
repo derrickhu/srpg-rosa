@@ -1,0 +1,219 @@
+{
+  "id": "bloodfang_breach",
+  "source": "art/vfx-runs/bloodfang_breach",
+  "blend": "add",
+  "image": "images/anim/bloodfang_breach.png",
+  "meta": {
+    "size": {
+      "w": 512,
+      "h": 512
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 40,
+    "baselineY": 182,
+    "ref": "bloodfang_breach/bloodfang_breach-1.png"
+  },
+  "frames": {
+    "bloodfang_breach/bloodfang_breach-1.png": {
+      "frame": {
+        "x": 2,
+        "y": 283,
+        "w": 253,
+        "h": 40
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 3,
+        "y": 142,
+        "w": 253,
+        "h": 40
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodfang_breach/bloodfang_breach-2.png": {
+      "frame": {
+        "x": 233,
+        "y": 224,
+        "w": 139,
+        "h": 44
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 140,
+        "w": 139,
+        "h": 44
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodfang_breach/bloodfang_breach-3.png": {
+      "frame": {
+        "x": 2,
+        "y": 135,
+        "w": 225,
+        "h": 87
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 1,
+        "y": 118,
+        "w": 225,
+        "h": 87
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodfang_breach/bloodfang_breach-4.png": {
+      "frame": {
+        "x": 259,
+        "y": 2,
+        "w": 251,
+        "h": 114
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 5,
+        "y": 71,
+        "w": 251,
+        "h": 114
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodfang_breach/bloodfang_breach-5.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 255,
+        "h": 131
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 63,
+        "w": 255,
+        "h": 131
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodfang_breach/bloodfang_breach-6.png": {
+      "frame": {
+        "x": 229,
+        "y": 135,
+        "w": 231,
+        "h": 73
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 5,
+        "y": 92,
+        "w": 231,
+        "h": 73
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodfang_breach/bloodfang_breach-7.png": {
+      "frame": {
+        "x": 2,
+        "y": 224,
+        "w": 229,
+        "h": 57
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 6,
+        "y": 71,
+        "w": 229,
+        "h": 57
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodfang_breach/bloodfang_breach-8.png": {
+      "frame": {
+        "x": 257,
+        "y": 283,
+        "w": 211,
+        "h": 36
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 5,
+        "y": 83,
+        "w": 211,
+        "h": 36
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bloodfang_breach/bloodfang_breach-9.png": {
+      "frame": {
+        "x": 2,
+        "y": 325,
+        "w": 190,
+        "h": 26
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 16,
+        "y": 88,
+        "w": 190,
+        "h": 26
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "bloodfang_breach": {
+      "loop": false,
+      "fps": 20,
+      "frames": [
+        "bloodfang_breach/bloodfang_breach-1.png",
+        "bloodfang_breach/bloodfang_breach-2.png",
+        "bloodfang_breach/bloodfang_breach-3.png",
+        "bloodfang_breach/bloodfang_breach-4.png",
+        "bloodfang_breach/bloodfang_breach-5.png",
+        "bloodfang_breach/bloodfang_breach-6.png",
+        "bloodfang_breach/bloodfang_breach-7.png",
+        "bloodfang_breach/bloodfang_breach-8.png",
+        "bloodfang_breach/bloodfang_breach-9.png"
+      ]
+    }
+  }
+}

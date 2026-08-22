@@ -1,0 +1,86 @@
+{
+  "id": "wallbalist",
+  "source": "art/sprite-runs/mobs-ch3",
+  "blend": "normal",
+  "image": "images/anim/wallbalist.png",
+  "meta": {
+    "size": {
+      "w": 256,
+      "h": 256
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 136,
+    "baselineY": 236,
+    "ref": "mobs-ch3-idle/mob-2.png"
+  },
+  "frames": {
+    "mobs-ch3-idle/mob-2.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 217,
+        "h": 142
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 19,
+        "y": 95,
+        "w": 217,
+        "h": 142
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "idle": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch3-idle/mob-2.png"
+      ]
+    },
+    "default": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch3-idle/mob-2.png"
+      ]
+    },
+    "idle_up": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch3-idle/mob-2.png"
+      ]
+    },
+    "idle_down": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch3-idle/mob-2.png"
+      ]
+    },
+    "idle_left": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch3-idle/mob-2.png"
+      ]
+    },
+    "idle_right": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch3-idle/mob-2.png"
+      ]
+    }
+  }
+}

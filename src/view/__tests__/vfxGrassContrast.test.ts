@@ -98,9 +98,11 @@ describe('特效在草地上的可辨识度', () => {
 
   it.each(sets.map((s) => [s.id] as const))('%s 在草地上读得出形状', (setId) => {
     const m = sets.find((s) => s.id === setId)!.m;
-    // 取起峰附近的三帧里最好的一帧：尾帧本来就该淡到看不见，
-    // 拿它判会把所有正常的衰减都判成违规
-    const ratios = [2, 3, 4]
+    // 取起峰附近最好的一帧。6–9 帧的老片峰值在 2–4；杂兵四件套只有 4 帧，
+    // 峰值在 1，硬拿 2/3/4 等于在用淡出尾帧判可见度。
+    const n = m.animations[setId]!.frames.length;
+    const window = n <= 4 ? [0, 1, 2] : [2, 3, 4];
+    const ratios = window
       .map((i) => weakRatio(setId, m, i))
       .filter((r): r is number => r !== null);
     expect(ratios.length, `${setId} 没取到帧`).toBeGreaterThan(0);

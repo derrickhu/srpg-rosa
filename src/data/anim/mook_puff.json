@@ -1,0 +1,114 @@
+{
+  "id": "mook_puff",
+  "source": "art/vfx-runs/mook_puff",
+  "blend": "add",
+  "image": "images/anim/mook_puff.png",
+  "meta": {
+    "size": {
+      "w": 512,
+      "h": 512
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 73,
+    "baselineY": 170,
+    "ref": "mook_puff/mook_puff-1.png"
+  },
+  "frames": {
+    "mook_puff/mook_puff-1.png": {
+      "frame": {
+        "x": 193,
+        "y": 206,
+        "w": 116,
+        "h": 100
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 70,
+        "y": 77,
+        "w": 116,
+        "h": 100
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mook_puff/mook_puff-2.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 246,
+        "h": 202
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 28,
+        "w": 246,
+        "h": 202
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mook_puff/mook_puff-3.png": {
+      "frame": {
+        "x": 250,
+        "y": 2,
+        "w": 244,
+        "h": 202
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 2,
+        "y": 10,
+        "w": 244,
+        "h": 202
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mook_puff/mook_puff-4.png": {
+      "frame": {
+        "x": 2,
+        "y": 206,
+        "w": 189,
+        "h": 161
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 29,
+        "y": 41,
+        "w": 189,
+        "h": 161
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "mook_puff": {
+      "loop": false,
+      "fps": 16,
+      "frames": [
+        "mook_puff/mook_puff-1.png",
+        "mook_puff/mook_puff-2.png",
+        "mook_puff/mook_puff-3.png",
+        "mook_puff/mook_puff-4.png"
+      ]
+    }
+  }
+}

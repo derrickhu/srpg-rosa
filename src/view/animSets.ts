@@ -13,9 +13,36 @@ import slimeManifest from '@/data/anim/slime.json';
 import sporecapManifest from '@/data/anim/sporecap.json';
 import bloodwolfManifest from '@/data/anim/bloodwolf.json';
 import rockshellManifest from '@/data/anim/rockshell.json';
+import vinecocoonManifest from '@/data/anim/vinecocoon.json';
+import sporesacManifest from '@/data/anim/sporesac.json';
+import leafpantherManifest from '@/data/anim/leafpanther.json';
+import mosswardenManifest from '@/data/anim/mosswarden.json';
+import fangtrooperManifest from '@/data/anim/fangtrooper.json';
+import wallbalistManifest from '@/data/anim/wallbalist.json';
+import wallriderManifest from '@/data/anim/wallrider.json';
+import gatewardenManifest from '@/data/anim/gatewarden.json';
+import mirehandManifest from '@/data/anim/mirehand.json';
+import dartbugManifest from '@/data/anim/dartbug.json';
+import miregatorManifest from '@/data/anim/miregator.json';
+import mudcarapaceManifest from '@/data/anim/mudcarapace.json';
+import magmacoreManifest from '@/data/anim/magmacore.json';
+import emberbatManifest from '@/data/anim/emberbat.json';
+import scalewyrmManifest from '@/data/anim/scalewyrm.json';
+import ashshellManifest from '@/data/anim/ashshell.json';
+import bloodcastellanManifest from '@/data/anim/bloodcastellan.json';
+import bloodshamanManifest from '@/data/anim/bloodshaman.json';
+import drakelordManifest from '@/data/anim/drakelord.json';
+import mirequeenManifest from '@/data/anim/mirequeen.json';
+import torunManifest from '@/data/anim/torun.json';
+import castellanManifest from '@/data/anim/castellan.json';
+import mirespeakerManifest from '@/data/anim/mirespeaker.json';
+import drakekinManifest from '@/data/anim/drakekin.json';
 import roarManifest from '@/data/anim/roar.json';
 import bloodfangRoarManifest from '@/data/anim/bloodfang_roar.json';
 import bloodfangWildfireManifest from '@/data/anim/bloodfang_wildfire.json';
+import bloodfangBreachManifest from '@/data/anim/bloodfang_breach.json';
+import drakeCataclysmManifest from '@/data/anim/drake_cataclysm.json';
+import mirequeenMiasmaManifest from '@/data/anim/mirequeen_miasma.json';
 import whirlManifest from '@/data/anim/whirl.json';
 import quakeManifest from '@/data/anim/quake.json';
 import pierceManifest from '@/data/anim/pierce.json';
@@ -47,6 +74,10 @@ import trampleDustManifest from '@/data/anim/trample_dust.json';
 import shieldWallManifest from '@/data/anim/shield_wall.json';
 import hexMarkManifest from '@/data/anim/hex_mark.json';
 import swordSwingManifest from '@/data/anim/sword_swing.json';
+import mookClawManifest from '@/data/anim/mook_claw.json';
+import mookSpitManifest from '@/data/anim/mook_spit.json';
+import mookThudManifest from '@/data/anim/mook_thud.json';
+import mookPuffManifest from '@/data/anim/mook_puff.json';
 // 第二、三章临时技能专属图。这两组原先全是借角色技能的图（见 docs/特效圣经 §7.1），
 // 于是「每章的专属第二技能」在屏幕上全是别人的招
 import tempFoTorchManifest from '@/data/anim/temp_fo_torch.json';
@@ -133,9 +164,45 @@ const MANIFESTS: Record<string, AnimManifest> = {
   sporecap: sporecapManifest as AnimManifest,
   bloodwolf: bloodwolfManifest as AnimManifest,
   rockshell: rockshellManifest as AnimManifest,
+  // 第二章杂兵，同为单帧静止怪。剪影语法和第一章一一对应（圆滚/宽伞/横长/穹顶），
+  // 换的是题材与配色，见 docs/敌人图鉴.md §1.1
+  vinecocoon: vinecocoonManifest as AnimManifest,
+  sporesac: sporesacManifest as AnimManifest,
+  leafpanther: leafpantherManifest as AnimManifest,
+  mosswarden: mosswardenManifest as AnimManifest,
+  // 第三章杂兵：血牙要塞守军。人形兽人，**不算 MOOK**（见 MOOK_ART_SETS 的说明）
+  fangtrooper: fangtrooperManifest as AnimManifest,
+  wallbalist: wallbalistManifest as AnimManifest,
+  wallrider: wallriderManifest as AnimManifest,
+  gatewarden: gatewardenManifest as AnimManifest,
+  // 第四章杂兵：毒沼节肢
+  mirehand: mirehandManifest as AnimManifest,
+  dartbug: dartbugManifest as AnimManifest,
+  miregator: miregatorManifest as AnimManifest,
+  mudcarapace: mudcarapaceManifest as AnimManifest,
+  // 第五章杂兵：龙岭火山属
+  magmacore: magmacoreManifest as AnimManifest,
+  emberbat: emberbatManifest as AnimManifest,
+  scalewyrm: scalewyrmManifest as AnimManifest,
+  ashshell: ashshellManifest as AnimManifest,
+  // 第二至五章 Boss：和第一章酋长同档的完整图集（四向行走 + 两向攻击）。
+  // 五个 Boss 五张专属图集，不再共用 `bloodfang`。
+  bloodshaman: bloodshamanManifest as AnimManifest,
+  bloodcastellan: bloodcastellanManifest as AnimManifest,
+  mirequeen: mirequeenManifest as AnimManifest,
+  drakelord: drakelordManifest as AnimManifest,
+  // 第二至五章精英：血牙部族人形兽人，同为单帧静止。**不算 MOOK**（按英雄身高，
+  // 理由见 MOOK_ART_SETS 的说明）。第一章精英沿用 bloodfang，不在这里。
+  torun: torunManifest as AnimManifest,
+  castellan: castellanManifest as AnimManifest,
+  mirespeaker: mirespeakerManifest as AnimManifest,
+  drakekin: drakekinManifest as AnimManifest,
   roar: roarManifest as AnimManifest,
   bloodfang_roar: bloodfangRoarManifest as AnimManifest,
   bloodfang_wildfire: bloodfangWildfireManifest as AnimManifest,
+  bloodfang_breach: bloodfangBreachManifest as AnimManifest,
+  mirequeen_miasma: mirequeenMiasmaManifest as AnimManifest,
+  drake_cataclysm: drakeCataclysmManifest as AnimManifest,
   // 职业普攻 + 默认技能特效，全部黑底 additive。取用见 src/data/vfxCatalog.ts
   whirl: whirlManifest as AnimManifest,
   quake: quakeManifest as AnimManifest,
@@ -175,6 +242,10 @@ const MANIFESTS: Record<string, AnimManifest> = {
   shield_wall: shieldWallManifest as AnimManifest,
   hex_mark: hexMarkManifest as AnimManifest,
   sword_swing: swordSwingManifest as AnimManifest,
+  mook_claw: mookClawManifest as AnimManifest,
+  mook_spit: mookSpitManifest as AnimManifest,
+  mook_thud: mookThudManifest as AnimManifest,
+  mook_puff: mookPuffManifest as AnimManifest,
 };
 
 /**
@@ -194,10 +265,27 @@ export function sharesPlayerArt(setId: string): boolean {
 }
 
 /**
- * 第一章单帧杂兵。剪影是宽块状（黏泥/伞盖/四足/龟壳），按英雄同高归一化会显得比人还壮；
- * 渲染时用更矮的身体高度（见 `unitHeightCells`），token 派生也跟着缩。
+ * 矮个头的**非人形**杂兵。剪影是宽块状（黏泥/伞盖/四足/龟壳/藤球/石像），按英雄同高
+ * 归一化会显得比人还壮；渲染时用更矮的身体高度（见 `unitHeightCells`），token 派生也跟着缩。
+ *
+ * **判据是剪影形态，不是「是不是杂兵」。** 第三章的要塞守军同样是杂兵，但它们是人形兽人、
+ * 体型比例和英雄一致，压到 0.7 格会读成一群小孩；而那一章要表达的正是「你在打一支
+ * 对等的正规军」，同高才对。所以它们**刻意不在这里**。
+ *
+ * 新增非人形杂兵集合必须加进来，漏了会按英雄身高渲染，在棋盘上明显比我方单位壮一圈。
+ * 图鉴见 docs/敌人图鉴.md §1.1。
  */
-const MOOK_ART_SETS = new Set(['slime', 'sporecap', 'bloodwolf', 'rockshell']);
+const MOOK_ART_SETS = new Set([
+  // 第一章 · 草原野地魔物
+  'slime', 'sporecap', 'bloodwolf', 'rockshell',
+  // 第二章 · 密林腐生植物
+  'vinecocoon', 'sporesac', 'leafpanther', 'mosswarden',
+  // 第四章 · 毒沼节肢
+  'mirehand', 'dartbug', 'miregator', 'mudcarapace',
+  // 第五章 · 龙岭火山属
+  'magmacore', 'emberbat', 'scalewyrm', 'ashshell',
+  // 注意跳过了第三章：那一章是人形兽人守军，见上面的说明
+]);
 
 export function isMookArt(setId: string): boolean {
   return MOOK_ART_SETS.has(setId);
@@ -258,6 +346,11 @@ const CORE_SET_IDS: readonly string[] = [
   'sporecap',
   'bloodwolf',
   'rockshell',
+  // 杂兵通用攻击：第一关黏泥怪就会用，四张合计很小，排进优先段
+  'mook_claw',
+  'mook_spit',
+  'mook_thud',
+  'mook_puff',
 ];
 
 const sheets = new Map<string, PIXI.Spritesheet>();

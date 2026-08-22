@@ -52,10 +52,9 @@ export const ENEMY_SKILL_SKINS: Record<string, EnemySkillSkin> = {
   /**
    * 第三章 Boss · 血牙城主。底层是 `warlord_breach`（直线穿透）。
    *
-   * 特效**复用现有 additive 图集**（穿透拖尾 + 震地命中），是这一章明确记账的美术欠账：
-   * 前两个 Boss 各有专属序列帧，这个暂时没有。这么做的依据是「先用现有 animSet
-   * 把玩法和数值跑通，美术留作后续专项」这条决定——形态上它已经和前两个分得开
-   * （那两个是环和柱，这个是一条贯穿线），欠的只是这条线的专属贴图。
+   * 特效是专属序列帧：一条粗细恒定的钝头贯穿线。它和终章「灭世龙息」共用底层形状
+   * （都是 `lineBestRayAllFoes`），所以贴图承担了区分两者的全部工作——那一招是
+   * 从一点张开的锥，这一招是等宽的攻城槌。**形状可以复用，形态不行。**
    */
   bloodfang_breach: {
     id: 'bloodfang_breach',
@@ -63,6 +62,36 @@ export const ENEMY_SKILL_SKINS: Record<string, EnemySkillSkin> = {
     name: '破阵冲撞',
     iconKey: 'skill_bloodfang_breach',
     vfxId: 'bloodfang_breach',
+  },
+  /**
+   * 第四章 Boss · 沼母·蛭后。底层是 `swamp_miasma`（半径 2 浊雾 + 群体中毒）。
+   *
+   * 这是第一个**不属于血牙部族**的 Boss，所以它是全套里唯一可以彻底换色相的一个：
+   * 前三个都锁在血红，这个走脓黄绿。形态上也刻意反着来——前面三招分别向外扩散、
+   * 向上窜、向前推，这一招**往下沉**：浊雾贴着地面漫开，和「脚下的沼泽在削你」
+   * 是同一句话。
+   */
+  mirequeen_miasma: {
+    id: 'mirequeen_miasma',
+    implementsId: 'swamp_miasma',
+    name: '腐沼瘟息',
+    iconKey: 'skill_mirequeen_miasma',
+    vfxId: 'mirequeen_miasma',
+  },
+  /**
+   * 终章 Boss · 龙王·安卡洛斯。底层是 `dragon_breath`（直线 + 按最大血量收费）。
+   *
+   * 它和破阵冲撞**同为直线**，所以形态上无法靠轮廓区分，区分改落在两处：
+   * 一是配色（那个钢青，这个白热转橙红），二是起手位置——吐息从口部张开成锥形，
+   * 而冲撞是整条线同时亮。玩家分不清「一条线」和「另一条线」，但分得清
+   * 「从他嘴里喷出来的」和「他整个人撞过来的」。
+   */
+  drake_cataclysm: {
+    id: 'drake_cataclysm',
+    implementsId: 'dragon_breath',
+    name: '灭世龙息',
+    iconKey: 'skill_drake_cataclysm',
+    vfxId: 'drake_cataclysm',
   },
 };
 

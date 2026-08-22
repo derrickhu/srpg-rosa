@@ -1,0 +1,68 @@
+{
+  "source": "scripts/vfx-sheet.py",
+  "input": "art/vfx-runs/bloodfang_breach/raw-sheet.png",
+  "target": "vfx",
+  "mode": "vfx_sheet",
+  "rows": 3,
+  "cols": 3,
+  "cell_size": 256,
+  "threshold": 22,
+  "frame_labels": [
+    "bloodfang_breach-1",
+    "bloodfang_breach-2",
+    "bloodfang_breach-3",
+    "bloodfang_breach-4",
+    "bloodfang_breach-5",
+    "bloodfang_breach-6",
+    "bloodfang_breach-7",
+    "bloodfang_breach-8",
+    "bloodfang_breach-9"
+  ],
+  "align": "center",
+  "key": "black",
+  "alpha_gamma": 2.0,
+  "shared_crop_side": 341,
+  "crop_offsets": [
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "empty_frames": [],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}

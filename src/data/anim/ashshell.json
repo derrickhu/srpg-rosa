@@ -1,0 +1,86 @@
+{
+  "id": "ashshell",
+  "source": "art/sprite-runs/mobs-ch5",
+  "blend": "normal",
+  "image": "images/anim/ashshell.png",
+  "meta": {
+    "size": {
+      "w": 256,
+      "h": 256
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 139,
+    "baselineY": 230,
+    "ref": "mobs-ch5-idle/mob-4.png"
+  },
+  "frames": {
+    "mobs-ch5-idle/mob-4.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 194,
+        "h": 146
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 31,
+        "y": 91,
+        "w": 194,
+        "h": 146
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "idle": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch5-idle/mob-4.png"
+      ]
+    },
+    "default": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch5-idle/mob-4.png"
+      ]
+    },
+    "idle_up": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch5-idle/mob-4.png"
+      ]
+    },
+    "idle_down": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch5-idle/mob-4.png"
+      ]
+    },
+    "idle_left": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch5-idle/mob-4.png"
+      ]
+    },
+    "idle_right": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch5-idle/mob-4.png"
+      ]
+    }
+  }
+}

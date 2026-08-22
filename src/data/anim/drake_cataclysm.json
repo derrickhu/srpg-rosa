@@ -1,0 +1,219 @@
+{
+  "id": "drake_cataclysm",
+  "source": "art/vfx-runs/drake_cataclysm",
+  "blend": "add",
+  "image": "images/anim/drake_cataclysm.png",
+  "meta": {
+    "size": {
+      "w": 512,
+      "h": 1024
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 15,
+    "baselineY": 131,
+    "ref": "drake_cataclysm/drake_cataclysm-1.png"
+  },
+  "frames": {
+    "drake_cataclysm/drake_cataclysm-1.png": {
+      "frame": {
+        "x": 419,
+        "y": 447,
+        "w": 48,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 21,
+        "y": 116,
+        "w": 48,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "drake_cataclysm/drake_cataclysm-2.png": {
+      "frame": {
+        "x": 2,
+        "y": 447,
+        "w": 197,
+        "h": 76
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 13,
+        "y": 85,
+        "w": 197,
+        "h": 76
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "drake_cataclysm/drake_cataclysm-3.png": {
+      "frame": {
+        "x": 2,
+        "y": 196,
+        "w": 246,
+        "h": 135
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 2,
+        "y": 54,
+        "w": 246,
+        "h": 135
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "drake_cataclysm/drake_cataclysm-4.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 235,
+        "h": 192
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 15,
+        "y": 14,
+        "w": 235,
+        "h": 192
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "drake_cataclysm/drake_cataclysm-5.png": {
+      "frame": {
+        "x": 239,
+        "y": 2,
+        "w": 232,
+        "h": 151
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 10,
+        "y": 34,
+        "w": 232,
+        "h": 151
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "drake_cataclysm/drake_cataclysm-6.png": {
+      "frame": {
+        "x": 250,
+        "y": 196,
+        "w": 236,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 7,
+        "y": 49,
+        "w": 236,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "drake_cataclysm/drake_cataclysm-7.png": {
+      "frame": {
+        "x": 2,
+        "y": 333,
+        "w": 208,
+        "h": 112
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 16,
+        "y": 55,
+        "w": 208,
+        "h": 112
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "drake_cataclysm/drake_cataclysm-8.png": {
+      "frame": {
+        "x": 212,
+        "y": 333,
+        "w": 199,
+        "h": 82
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 12,
+        "y": 72,
+        "w": 199,
+        "h": 82
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "drake_cataclysm/drake_cataclysm-9.png": {
+      "frame": {
+        "x": 201,
+        "y": 447,
+        "w": 216,
+        "h": 36
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 9,
+        "y": 98,
+        "w": 216,
+        "h": 36
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "drake_cataclysm": {
+      "loop": false,
+      "fps": 20,
+      "frames": [
+        "drake_cataclysm/drake_cataclysm-1.png",
+        "drake_cataclysm/drake_cataclysm-2.png",
+        "drake_cataclysm/drake_cataclysm-3.png",
+        "drake_cataclysm/drake_cataclysm-4.png",
+        "drake_cataclysm/drake_cataclysm-5.png",
+        "drake_cataclysm/drake_cataclysm-6.png",
+        "drake_cataclysm/drake_cataclysm-7.png",
+        "drake_cataclysm/drake_cataclysm-8.png",
+        "drake_cataclysm/drake_cataclysm-9.png"
+      ]
+    }
+  }
+}

@@ -1,0 +1,76 @@
+技能图标 · 杂兵技能「中段章」2x2（第 2/3/4 章，当前使用中）
+产出 → images/ui/skill_{spore_spray,wall_ram,venom_dart,mire_bite}.png
+生成器：Cursor 内置 GenerateImage，aspect_ratio 1:1
+
+切图：
+    python3 scripts/split-tile-sheet.py --input <sheet>.png --out-dir <tmp> --size 72 \
+        --grid 2x2 --names spore_spray wall_ram venom_dart mire_bite
+    python3 scripts/despill-magenta.py <tmp>
+
+用 --grid 2x2 而不是让脚本数连通域：吹箭是「吹管 + 飞出的针」、撞阵是「狼头 + 冲击纹」，
+都是分离部件，连通域会把块数数错（理由见脚本头部注释）。
+
+约束同 A 组（见 skill_icons_a_3x3_prompt.txt 开头那几段），这里只记差异。
+
+## 这一组是**敌方杂兵**技能，材质分界要和前两类分开
+
+已有的两条分界是：常规技能 = **金属**（钢、铁、盾），临时技能 = **自然物**
+（草原是草药蜂木，密林是树皮松脂荆棘）。杂兵技能占第三类：**生物性器官与凶器**
+——孢子囊、狼头、吹管、鳄口。它们不是人造的工具，也不是玩家采到的植物，
+是**怪身上长出来的东西**。玩家在面板上看到这一类，应该读到「这是它的一部分」。
+
+所以这一组里**不要出现**：制式盾牌、剑、锤、铁质武器（那是常规技能的符号）、
+药瓶、绳索、旗帜、火把（那是临时技能的符号）。
+
+## 四个技能的语义（改 prompt 前先看 src/data/skillCatalog.ts 的杂兵技能段）
+
+    spore_spray  孢子喷散  第 2 章喷孢囊：半径 1 孢子雾 + 中毒 3/回合 ×2
+    wall_ram     撞阵      第 3 章巡墙狼骑：正好隔 1 格突进 + 减速 3 ×2
+    venom_dart   淬毒吹箭  第 4 章吹箭虫：3 格内点杀 + 中毒 3/回合 ×2
+    mire_bite    毒沼撕咬  第 4 章沼行鳄：邻格重咬 + 中毒 5/回合 ×2
+
+## 关键约束
+
+- **三个带毒的技能不能都画成同一坨绿雾。** 区分靠**载体**：孢子是一团扩散的雾囊、
+  吹箭是一根直的针、撞咬是一张咬合的嘴。毒只是它们共同的颜色，不是共同的形状。
+- 第 4 章那两个（吹箭 / 撞咬）毒量不同（3 对 5），但**图标不承担数值**，
+  别试图画出「更毒」，面板上有数字。
+- `wall_ram` 是这一组唯一不带毒的，它必须一眼看出是**冲撞**而不是中毒——
+  所以它走灰绿狼头 + 土金冲击纹，全组唯一的暖色。
+- **禁止紫色**（本项目硬禁，见美术风格圣经 §1.3）。毒走脓黄绿，不走紫。
+
+---
+
+A 2-column x 2-row grid of 4 GAME UI ICONS representing MONSTER combat abilities in a cartoon fantasy tactics mobile game.
+
+CRITICAL BACKGROUND: the entire background, including all space between and around the icons, must be 100% solid flat MAGENTA, hex #FF00FF. It is a chroma key and will be deleted. No white, no grey, no gradient, no drop shadows onto the background.
+
+CRITICAL SIZE CONSTRAINT — the most important rule: these icons are displayed at only 26 to 56 pixels in the game. Every icon must be ONE bold, chunky, instantly readable silhouette that survives being shrunk to the size of a fingernail. Think of a chess piece, not an illustration. NO thin lines, NO small parts, NO fine detail, NO tiny sparkles, NO text, NO numbers. If an element would be less than a tenth of the icon's width, delete it.
+
+CRITICAL — THESE SIT ON A CREAM WHITE CARD (#FCFCF6). Every icon needs a THICK near-black outline (#1A1410) all the way around it and a saturated fill inside, so it does not float on the pale card.
+
+STYLE — must match the game's characters, which are chunky cartoon figures with heavy black outlines and flat colours:
+- SOLID FILLED SILHOUETTES with a thick near-black outline. These are not line icons and not outline icons — the shape is filled in.
+- Flat saturated colour fills, at most 3 colours per icon plus the outline, plus one simple lighter shade for a single cel-shaded highlight.
+- Chunky, rounded shapes, slightly exaggerated. These are monster body parts, so they may be a little menacing, but keep them toy-like rather than gory. NO blood, NO gore, NO realistic anatomy.
+- No gradients, no glow, no bevel, no gloss, no photographic detail, no pixel art, no thin strokes.
+- Each icon drawn straight-on, upright and centred in its cell.
+
+ABSOLUTELY NO PURPLE OR VIOLET anywhere in this image. Poison is rendered as SICKLY YELLOW-GREEN, never purple.
+
+Per-cell contents, left-to-right then top-to-bottom:
+
+Cell 1 (SPORE BURST / a sac splits open and sprays a poison cloud) — a fat, bulbous BONE-WHITE (#E8E4D0) spore SAC shaped like an upside-down pear, split open along the bottom into a wide jagged mouth, with THREE chunky rounded PUFFS of sickly yellow-green spore cloud (#C8D850) billowing downward and outward from the opening. The sac is the top third, the puffs are the bottom two thirds. The puffs must be big fat rounded blobs, not dots and not a spray of specks. It must read as "something burst and a cloud came out".
+
+Cell 2 (RAM CHARGE / a wolf rider slams into you from one tile away) — a bold frontal WOLF HEAD in charcoal grey-green (#4A5548), jaws shut, ears flat back, brow lowered, so it reads as lowered-head charging rather than biting. Behind and around the head, THREE thick blunt CHEVRON impact marks in warm siege gold (#D98A34) fanning outward to the left and right, pointing the same direction the head faces. The chevrons must be fat wedges, not thin speed lines. This is the only warm-coloured icon in the set. No rider, no body, no wolf legs, no green poison.
+
+Cell 3 (VENOM DART / a bug blows a poisoned needle up to 3 tiles) — one thick stubby BLOWPIPE tube angled diagonally from lower-left to upper-right, the tube a dark near-black chitin (#2A2A22) with one fat lighter band, and separated from its muzzle a single bold DART: a chunky triangular needle head in sickly yellow-green (#C8D850) with a short fat tail, flying up and to the right. Between the tube muzzle and the dart leave a clear gap of magenta. Exactly ONE dart, not a volley. It must read as "a straight thing shot out of a tube". No wings, no insect body, no cloud.
+
+Cell 4 (MIRE BITE / a swamp gator clamps down and leaves venom) — a bold side-view pair of GATOR JAWS opened wide in a V, hinged at the right, snout pointing left, in dark moss green (#3D6B3D) with a lighter olive (#6B8F4A) inside the mouth, lined with FOUR fat triangular white teeth on the upper jaw and FOUR on the lower. Three chunky rounded DROPLETS of sickly yellow-green venom (#C8D850) hang from the lower jaw. It must read as an open biting mouth at a glance. No eyes, no body, no legs, no blood.
+
+LAYOUT RULES:
+1. EXACTLY 4 icons in a clean 2x2 arrangement.
+2. NO borders, NO dividing lines, NO frames, NO circles or badges behind the icons — they are separated only by magenta.
+3. Each icon fills about 70% of its cell, leaving a clear magenta margin on all four sides. Nothing touches or crosses into a neighbouring cell.
+4. All four icons must feel like ONE set: same outline thickness, same level of simplification, same chunky proportions.
+5. NO text, no labels, no captions, no letters, no numbers, no watermark anywhere in the image.

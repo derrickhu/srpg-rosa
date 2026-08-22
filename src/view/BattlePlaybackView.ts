@@ -11,9 +11,9 @@ import { UNIT_DEFS } from '@/data/unitDefs';
 import { POTION_DEFS } from '@/data/potionCatalog';
 import { getSkillSpec } from '@/data/skillCatalog';
 import {
-  ATTACK_VFX,
   CHARGE_VFX,
   SKILL_VFX,
+  attackRecipeFor,
   recipeAnimSets,
   vfxSetsForKinds,
   type FlashDef,
@@ -148,16 +148,14 @@ const MOVE_RANGE_COLOR = 0x52c4dc;
  * 本场战斗会用到的动画集 id：单位外观（Boss 用 animSet 覆盖 defId）+ 特效序列帧。
  * 供进战前 ensureAnimSets 预取，避免特效因图集未就绪而回退静态贴图。
  *
- * 技能特效要按**两条**线收集：显式配的 `battleSkill`，以及兵种默认技能——
- * 敌方杂兵的 battleSkill 是空的，AI 却会通过 effectiveUnitDef 回退到默认技能真的放出来。
- * 只扫 battleSkill 的话，杂兵放旋风斩时图集还没下载，特效就静默降级了。
+ * 技能特效只扫单位上实际挂着的 `battleSkill` / `tempSkill`。
+ * 敌方不再回退职业默认技（见 `effectiveUnitDef`），所以不必再为杂兵预取旋风斩。
  */
 export function animSetsForUnits(units: readonly UnitState[]): string[] {
   const ids = new Set<string>();
   for (const u of units) {
     ids.add(u.animSet ?? u.defId);
-    // 普攻特效按兵种原型预取（近战斩/箭命中等）
-    for (const id of recipeAnimSets(ATTACK_VFX[u.defId] ?? ATTACK_VFX.sword)) ids.add(id);
+    for (const id of recipeAnimSets(attackRecipeFor(u.defId, u.animSet))) ids.add(id);
     if (u.faction === 'player') {
       // 我方还要预取职业默认技能 + 冲锋光环
       for (const id of vfxSetsForKinds([u.defId])) ids.add(id);
@@ -259,6 +257,13 @@ export function createBattlePlaybackView(
   /** 棋盘点击接收层，夹在棋子和特效之间（见 manualTurnUi 的 inputLayer 说明） */
   const inputLayer = new PIXI.Container();
   const fxLayer = new PIXI.Container();
+  /**
+   * 伤害/治疗/技能名飘字单独一层，压在特效之上。
+   *
+   * 两段式混合之后，炎环、旋风这类自身 AoE 的形体层是近乎不透明的大图。
+   * 飘字若和特效抢同一层，后挂上去的火花/残影会把数字盖住，读起来就是「群攻没飘字」。
+   */
+  const floatLayer = new PIXI.Container();
   root.addChild(bgLayer);
   root.addChild(gridLayer);
   root.addChild(dropLayer);
@@ -266,12 +271,13 @@ export function createBattlePlaybackView(
   root.addChild(tokenLayer);
   root.addChild(inputLayer);
   root.addChild(fxLayer);
+  root.addChild(floatLayer);
 
   /**
    * 震动只带棋盘相关的层。背景不带（整屏晃很晕）、HUD 不带（读起来像界面坏了）、
    * 点击层不带（命中区跟着位移，手感会漂）。
    */
-  const shaker = createBoardShaker([gridLayer, dropLayer, rangeLayer, tokenLayer, fxLayer]);
+  const shaker = createBoardShaker([gridLayer, dropLayer, rangeLayer, tokenLayer, fxLayer, floatLayer]);
 
   // --- 设置按钮（左上角齿轮） ---
   const settingsBtnSize = 36;
@@ -583,31 +589,87 @@ export function createBattlePlaybackView(
   // --- 单位信息面板 ---
   //
   // 和布阵页点开的是同一块面板（`unitInfoPanel`）。战斗里最需要它：
-  // 「这个怪还剩多少血、攻击多高、带什么招、身上挂着什么」决定了这一步走哪，
-  // 而这些原来只能靠头顶血条猜。看面板不改变任何战局状态，所以两种模式都允许，
-  // 自动战斗时也能点开——那时候玩家正是在旁观学习。
+  // 「这个怪还剩多少血、攻击多高、带什么招、身上挂着什么」决定了这一步走哪。
+  //
+  // **入口只在行动顺序条。** 棋盘上点人会和走位 / 普攻抢点击——格子小、相邻单位
+  // 判定区重叠，一次误触就会弹出整页信息挡住战场。顺序条的头像本来就是「这个人」，
+  // 点它看详情不会和走位打架。看面板不改战局，托管时也能点。
   const infoOverlay = new PIXI.Container();
   infoOverlay.visible = false;
   let infoStop: (() => void) | null = null;
+  /** 当前在看的单位；顺序条重绘时要给对应卡加一圈，棋盘上也要圈住他 */
+  let inspectUid: string | null = null;
+  const inspectRing = new PIXI.Graphics();
+  inspectRing.visible = false;
+  fxLayer.addChild(inspectRing);
 
-  function hideUnitInfo(): void {
+  function clearInfoOverlay(): void {
     infoStop?.();
     infoStop = null;
     infoOverlay.removeChildren().forEach((c) => c.destroy({ children: true }));
     infoOverlay.visible = false;
   }
 
-  function showUnitInfoAt(cell: Vec2): void {
-    const hitUid = unitUidAtCell(cell);
-    const u = hitUid ? sim.getUnit(hitUid) : null;
-    if (!u) return;
-    hideUnitInfo();
+  function hideUnitInfo(): void {
+    const had = inspectUid;
+    clearInfoOverlay();
+    inspectUid = null;
+    inspectRing.clear();
+    inspectRing.visible = false;
+    if (had) updateOrderStrip(sim.pending()?.uid ?? null);
+  }
+
+  function paintInspectRing(uid: string): void {
+    const u = sim.getUnit(uid);
+    inspectRing.clear();
+    if (!u || u.hp <= 0) {
+      inspectRing.visible = false;
+      return;
+    }
+    const at = cellCenter(originX, originY, cell, u.pos);
+    const s = cell - 3;
+    inspectRing.lineStyle(4, 0xfff4c0, 1);
+    inspectRing.drawRoundedRect(at.x - s / 2, at.y - s / 2, s, s, 7);
+    inspectRing.lineStyle(2, 0xffdd44, 0.95);
+    inspectRing.drawRoundedRect(at.x - s / 2 - 3, at.y - s / 2 - 3, s + 6, s + 6, 9);
+    inspectRing.visible = true;
+  }
+
+  function showUnitInfo(uid: string): void {
+    // 顺序条在信息页之上，点同一张卡不会落到遮罩上——必须自己做开关，
+    // 否则只会清掉再弹一次，看起来就是关不掉。
+    if (inspectUid === uid && infoOverlay.visible) {
+      hideUnitInfo();
+      return;
+    }
+    const u = sim.getUnit(uid);
+    if (!u || u.hp <= 0) return;
+    clearInfoOverlay();
+    inspectUid = uid;
+    paintInspectRing(uid);
+    const at = cellCenter(originX, originY, cell, u.pos);
     const { view, stop } = createUnitInfoOverlay(
-      battleUnitInfoModel(u, { showCooldown: true }), sw, sh, hideUnitInfo,
+      battleUnitInfoModel(u, { showCooldown: true }),
+      sw,
+      sh,
+      hideUnitInfo,
+      {
+        // 遮罩要淡：人还在棋盘上被圈着，盖太黑就看不见「点的是谁」
+        dimAlpha: 0.22,
+        // 敌人站上半场，居中面板会盖住他们。敌方面板短，挪到上沿左右里离他更远的一侧
+        ...(u.faction === 'enemy'
+          ? {
+            place: 'dodgeTop' as const,
+            dodge: at,
+            topInset: roundBg.y + roundLabelH + 8,
+          }
+          : {}),
+      },
     );
     infoStop = stop;
     infoOverlay.addChild(view);
     infoOverlay.visible = true;
+    updateOrderStrip(sim.pending()?.uid ?? null);
   }
 
   // --- 设置面板 ---
@@ -727,8 +789,9 @@ export function createBattlePlaybackView(
   gridLayer.addChild(line);
 
   const posByUid = new Map<string, Vec2>();
-  /** 普攻特效按兵种原型取（见 vfxCatalog.ATTACK_VFX），所以要记住谁是什么兵种 */
+  /** 普攻特效按兵种 + 外观取（杂兵走 MOOK_ATTACK_VFX） */
   const defIdByUid = new Map<string, UnitKind>();
+  const animSetByUid = new Map<string, string>();
   /**
    * 敌方技能皮肤：结算 id（如 savage_roar）→ 专属特效键（bloodfang_roar）。
    * 键是 `${uid}:${skillId}`，不能按 uid 一把梭——否则放临时技能也会误播主技能特效。
@@ -737,6 +800,7 @@ export function createBattlePlaybackView(
   for (const u of initialUnits) {
     posByUid.set(u.uid, { ...u.pos });
     defIdByUid.set(u.uid, u.defId);
+    animSetByUid.set(u.uid, u.animSet ?? u.defId);
     for (const sk of [u.battleSkill, u.tempSkill]) {
       if (sk?.vfxId) skillVfxOverride.set(`${u.uid}:${sk.id}`, sk.vfxId);
     }
@@ -859,7 +923,7 @@ export function createBattlePlaybackView(
   }
 
   const floatHost = (): CombatFloatHost => ({
-    layer: fxLayer,
+    layer: floatLayer,
     skipping: () => skipping,
     dur,
     awaitEase,
@@ -1392,6 +1456,19 @@ export function createBattlePlaybackView(
       tx.y = ORDER_CARD_H - 2;
       card.addChild(tx);
 
+      // 正在看的这个人：再描一圈金边，和棋盘上的检视圈对得上
+      if (uid === inspectUid) {
+        const ring = new PIXI.Graphics();
+        ring.lineStyle(2, 0xfff4c0, 1);
+        ring.drawRoundedRect(1, 1, ORDER_CARD_W - 2, ORDER_CARD_H - 2, 7);
+        card.addChild(ring);
+      }
+
+      card.eventMode = 'static';
+      card.cursor = 'pointer';
+      card.hitArea = new PIXI.Rectangle(0, 0, ORDER_CARD_W, ORDER_CARD_H);
+      card.on('pointertap', () => showUnitInfo(uid));
+
       // 跨回合预估略淡，并在回合分界加一条细缝
       if (nextRound) card.alpha = 0.62;
       if (nextRound && idx === thisRoundCount && cards.length > 0) {
@@ -1604,11 +1681,10 @@ export function createBattlePlaybackView(
             await playEvents(sim.commandAttack(uid, hitUid).events);
             break;
           }
-          // 点在人身上但打不着（自己人、已经出过手、够不到），
-          // 那这一下的意图只能是「我想看看他」。原来这里会掉进 commandMove
-          // 然后因为格子被占静默失败，等于点了没反应。
+          // 点在人身上但打不着（自己人、已经出过手、够不到）：不再弹信息页。
+          // 棋盘点击要留给走位 / 普攻，看人改走行动顺序条。这里 break 掉，
+          // 免得再掉进 commandMove 对着被占的格子静默失败。
           if (hitUid) {
-            showUnitInfoAt(input.cell);
             break;
           }
           if (pending.canMove) await playEvents(sim.commandMove(uid, input.cell).events);
@@ -1678,6 +1754,7 @@ export function createBattlePlaybackView(
             tok.y = fromC.y + (toC.y - fromC.y) * k;
           });
           posByUid.set(ev.uid, { ...ev.to });
+          if (inspectUid === ev.uid) paintInspectRing(ev.uid);
         }
         break;
       }
@@ -1711,7 +1788,10 @@ export function createBattlePlaybackView(
           const db = Math.abs(pb.x - casterPos.x) + Math.abs(pb.y - casterPos.y);
           return da - db;
         });
+        const appliedHits = new Set<string>();
         const applyHitFx = (h: (typeof ev.hits)[number]): void => {
+          if (appliedHits.has(h.target)) return;
+          appliedHits.add(h.target);
           tokenOverheads.get(h.target)?.updateHp(h.hpLeft);
           const tt = tokens.get(h.target);
           if (tt) {
@@ -1724,6 +1804,10 @@ export function createBattlePlaybackView(
             }
           }
         };
+        /** 弹道途经/抵达回调漏了时，表演结束后把还没结算的命中补上 */
+        const flushRemainingHits = (): void => {
+          for (const h of orderedHits) applyHitFx(h);
+        };
 
         if (recipe?.travel && recipe.travelPerTarget) {
           // 蜂群：每个敌人各飞一发蜜蜂团，落到才飘伤害
@@ -1735,6 +1819,7 @@ export function createBattlePlaybackView(
             };
           });
           await playRecipe(recipe, { x: cx, y: cy }, targets[0]?.at, { onTargets: targets });
+          flushRemainingHits();
           await awaitEase(dur(180), () => {});
         } else if (recipe?.travel) {
           // 远程弹道：箭飞到才结算。贯穿技能沿途依次中招，否则穿透就读成「一起爆了」
@@ -1754,6 +1839,7 @@ export function createBattlePlaybackView(
               };
             }),
           });
+          flushRemainingHits();
           await awaitEase(dur(180), () => {});
         } else if (recipe) {
           const aimTok = ev.hits[0] ? tokens.get(ev.hits[0].target) : undefined;
@@ -1801,7 +1887,11 @@ export function createBattlePlaybackView(
           const kind = defIdByUid.get(ev.attacker);
           // 冲锋光环挂在出手端，和飞/砍并行，不挡伤害时机
           if (ev.charged) void playRecipe(CHARGE_VFX, { x: a.x, y: a.y }, undefined);
-          await playRecipe(ATTACK_VFX[kind ?? 'sword'], { x: a.x, y: a.y }, { x: t.x, y: t.y });
+          await playRecipe(
+            attackRecipeFor(kind ?? 'sword', animSetByUid.get(ev.attacker)),
+            { x: a.x, y: a.y },
+            { x: t.x, y: t.y },
+          );
           applyHitFeel(ev.target, { x: a.x, y: a.y });
           await awaitEase(dur(HIT_STOP_MS), () => {});
           floatDamage(t.x, t.y, ev.damage);
@@ -1851,6 +1941,7 @@ export function createBattlePlaybackView(
           tokens.delete(ev.uid);
           tokenOverheads.delete(ev.uid);
         }
+        if (inspectUid === ev.uid) hideUnitInfo();
         break;
       }
       case 'drop': {
@@ -1970,7 +2061,6 @@ export function createBattlePlaybackView(
     threatLayer: fxLayer,
     inputLayer,
     hudLayer,
-    onIdleTap: showUnitInfoAt,
   });
   manualUi.hide();
 
@@ -1978,8 +2068,10 @@ export function createBattlePlaybackView(
   root.addChild(hudLayer);
   root.addChild(settingsBtn);
   root.addChild(settingsOverlay);
-  // 信息面板压在设置之上：它是从棋盘点出来的，谁最后打开谁在上面
+  // 信息面板压在设置之上。顺序条再拎一层到面板上面：
+  // 面板开着时也能点另一张头像换人看，不必先关再点。
   root.addChild(infoOverlay);
+  root.addChild(orderStrip);
 
   void run();
 

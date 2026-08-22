@@ -1,0 +1,86 @@
+{
+  "id": "wallrider",
+  "source": "art/sprite-runs/mobs-ch3",
+  "blend": "normal",
+  "image": "images/anim/wallrider.png",
+  "meta": {
+    "size": {
+      "w": 256,
+      "h": 256
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 184,
+    "baselineY": 233,
+    "ref": "mobs-ch3-idle/mob-3.png"
+  },
+  "frames": {
+    "mobs-ch3-idle/mob-3.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 204,
+        "h": 192
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 26,
+        "y": 45,
+        "w": 204,
+        "h": 192
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "idle": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch3-idle/mob-3.png"
+      ]
+    },
+    "default": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch3-idle/mob-3.png"
+      ]
+    },
+    "idle_up": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch3-idle/mob-3.png"
+      ]
+    },
+    "idle_down": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch3-idle/mob-3.png"
+      ]
+    },
+    "idle_left": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch3-idle/mob-3.png"
+      ]
+    },
+    "idle_right": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch3-idle/mob-3.png"
+      ]
+    }
+  }
+}

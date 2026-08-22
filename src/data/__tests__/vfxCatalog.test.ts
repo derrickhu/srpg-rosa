@@ -2,12 +2,16 @@ import { describe, expect, it } from 'vitest';
 import type { UnitKind } from '@/battle/types';
 import { allPlayerSkillSpecs, defaultSkillId } from '@/data/skillCatalog';
 import { UNIT_DEFS } from '@/data/unitDefs';
-import { ENEMY_SKILL_SKINS } from '@/data/enemySkillCatalog';
+import { ENEMY_SKILL_SKINS, resolveEnemyBattleSkill } from '@/data/enemySkillCatalog';
+import { STAGES_MVP } from '@/data/stagesMvp';
 import {
   ATTACK_VFX,
   CHARGE_VFX,
+  MOOK_ATTACK_VFX,
   SKILL_VFX,
+  attackRecipeFor,
   recipeAnimSets,
+  usesMookCombatVfx,
   vfxSetsForKinds,
   type FlashDef,
   type VfxRecipe,
@@ -21,6 +25,7 @@ const KINDS = Object.keys(UNIT_DEFS) as UnitKind[];
 function allRecipes(): Array<[string, VfxRecipe]> {
   return [
     ...Object.entries(ATTACK_VFX).map(([k, v]): [string, VfxRecipe] => [`普攻:${k}`, v]),
+    ...Object.entries(MOOK_ATTACK_VFX).map(([k, v]): [string, VfxRecipe] => [`杂兵普攻:${k}`, v]),
     ...Object.entries(SKILL_VFX).map(([k, v]): [string, VfxRecipe] => [`技能:${k}`, v]),
     ['冲锋', CHARGE_VFX],
   ];
@@ -143,6 +148,31 @@ describe('特效登记表', () => {
     expect(missing, `这些技能会退回静态贴图：${missing.join('、')}`).toEqual([]);
   });
 
+  /**
+   * 上面那条走 `allPlayerSkillSpecs()`，按定义排掉了 `enemyOnly`。敌方技能因此完全没人管，
+   * 而它们的失效方式和玩家技能一样：没配方就退回 `displayKind` 的静态贴图，
+   * 一整只怪的招式变成一张不动的图。Boss 招式漏了会有人发现，杂兵招式漏了不会。
+   *
+   * 覆盖两条挂法：`skillSkin`（皮肤，查 `vfxId`）和裸挂 `skillId`（查 id 本身）。
+   * 两条的查找键都取自 `resolveEnemyBattleSkill`，和运行时同一个口径。
+   */
+  it('关卡里每个敌方技能都有配方，皮肤和裸挂都算', () => {
+    const keys = new Map<string, string>();
+    for (const stage of STAGES_MVP) {
+      for (const e of stage.enemies) {
+        const resolved = resolveEnemyBattleSkill({
+          skillSkin: e.skillSkin,
+          skillId: e.skillId,
+        });
+        if (resolved) keys.set(resolved.vfxId ?? resolved.id, e.name ?? e.defId);
+      }
+    }
+    expect(keys.size, '一个都没有，说明取字段的路径变了').toBeGreaterThan(0);
+    const missing: string[] = [];
+    for (const [key, owner] of keys) if (!SKILL_VFX[key]) missing.push(`${key}(${owner})`);
+    expect(missing, `这些敌方技能会退回静态贴图：${missing.join('、')}`).toEqual([]);
+  });
+
   it('远程配方必须有发出去的光轨，不能只靠弹体小图', () => {
     const ranged = [
       ['普攻:bow', ATTACK_VFX.bow],
@@ -226,11 +256,16 @@ describe('特效登记表', () => {
     // 掰成水平，玩家看到的是「火球打到人身上拐了个弯」。
     // 换 `mode: 'aimed'` 只能遮住症状——有朝向的素材当命中闪光用本身就是错的。
     const projArt = new Set<string>();
-    for (const r of [...Object.values(ATTACK_VFX), ...Object.values(SKILL_VFX)]) {
+    for (const r of [
+      ...Object.values(ATTACK_VFX),
+      ...Object.values(MOOK_ATTACK_VFX),
+      ...Object.values(SKILL_VFX),
+    ]) {
       if (r?.travel?.glowSet) projArt.add(r.travel.glowSet);
     }
     for (const [id, r] of [
       ...Object.entries(ATTACK_VFX),
+      ...Object.entries(MOOK_ATTACK_VFX),
       ...Object.entries(SKILL_VFX),
     ] as [string, (typeof ATTACK_VFX)[keyof typeof ATTACK_VFX] | undefined][]) {
       const set = r?.impact?.set;
@@ -344,6 +379,7 @@ describe('特效登记表', () => {
     // 配方值都被静默顶回 1 格——速射箭那句「0.95 格，全表最短」从来没生效过。
     for (const [id, r] of [
       ...Object.entries(ATTACK_VFX),
+      ...Object.entries(MOOK_ATTACK_VFX),
       ...Object.entries(SKILL_VFX),
     ] as [string, (typeof ATTACK_VFX)[keyof typeof ATTACK_VFX] | undefined][]) {
       const cells = r?.travel?.cells;
@@ -415,6 +451,50 @@ describe('特效登记表', () => {
     // 血牙咆哮必须用专属图集，不能还躺在通用 roar 上
     expect(SKILL_VFX.bloodfang_roar!.impact!.set).toBe('bloodfang_roar');
     expect(SKILL_VFX.savage_roar!.impact!.set).toBe('roar');
+  });
+
+  it('杂兵普攻和技能不穿玩家刀光 / 飞箭 / 火球的皮', () => {
+    const playerSets = new Set<string>();
+    for (const r of Object.values(ATTACK_VFX)) {
+      for (const id of recipeAnimSets(r)) playerSets.add(id);
+    }
+    for (const k of KINDS) {
+      const id = defaultSkillId(k);
+      if (id === 'charge') continue;
+      const r = SKILL_VFX[id];
+      if (r) for (const s of recipeAnimSets(r)) playerSets.add(s);
+    }
+
+    const mookSkillIds = [
+      'spore_spray',
+      'wall_ram',
+      'venom_dart',
+      'mire_bite',
+      'magma_burst',
+      'cinder_breath',
+      'wyrm_dash',
+      'ash_harden',
+    ];
+    const leaked: string[] = [];
+    for (const [k, r] of Object.entries(MOOK_ATTACK_VFX)) {
+      for (const s of recipeAnimSets(r)) {
+        if (playerSets.has(s)) leaked.push(`杂兵普攻:${k}→${s}`);
+      }
+    }
+    for (const id of mookSkillIds) {
+      const r = SKILL_VFX[id];
+      expect(r, `杂兵技能 ${id} 没有配方`).toBeDefined();
+      for (const s of recipeAnimSets(r!)) {
+        if (playerSets.has(s)) leaked.push(`技能:${id}→${s}`);
+      }
+    }
+    expect(leaked, `这些杂兵特效还在用玩家图集：${leaked.join('、')}`).toEqual([]);
+
+    expect(usesMookCombatVfx('slime')).toBe(true);
+    expect(usesMookCombatVfx('fangtrooper')).toBe(true);
+    expect(usesMookCombatVfx('torun')).toBe(false);
+    expect(attackRecipeFor('sword', 'slime').impact?.set).toBe('mook_claw');
+    expect(attackRecipeFor('sword', 'torun').impact?.set).toBe(ATTACK_VFX.sword.impact?.set);
   });
 
   it('第一章草原临时技能形态互异：缠足光环 / 敷治道具 / 蜂群弹道 / 号角道具', () => {

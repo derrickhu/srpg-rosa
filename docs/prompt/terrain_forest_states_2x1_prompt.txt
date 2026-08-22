@@ -1,0 +1,47 @@
+地形 decal · 森林状态机（燃烧 / 焦土）。切图：
+    python3 scripts/split-tile-sheet.py --input <sheet>.png --out-dir images/terrain \
+        --grid 2x1 --names burning scorched --size 128
+    python3 scripts/despill-magenta.py images/terrain
+
+现役森林贴图是 `images/terrain/forest.png`：三团俯视圆冠，深绿 + 亮绿顶，底部一汪暗影。
+这两格必须是**同一簇树的另外两个状态**，不是另两棵树——玩家点了一发火，棋盘上换贴图，
+认不出「刚才那片林子」就把因果弄丢了。
+
+状态机：forest → burning（两回合）→ scorched（终态，规则等同平原）。
+燃烧必须一眼是火，焦土必须一眼是烧过的林子、而且**没有火**。
+
+约束同 `terrain_v4_3x2_prompt.txt`：品红底、不画草地、不描黑边、低频、约 40px 可读。
+
+---
+
+A 2-column x 1-row grid (2 cells) of TERRAIN TILE sprites for a cartoon tactics game, drawn as flat decals that will be pasted on top of a separate bright yellow-green grass background.
+
+These two tiles are the BURNING and SCORCHED states of the EXISTING forest tile. The forest tile is a cluster of THREE chunky round tree canopies seen from directly above, deep rich green with lighter green sunlit tops and a small dark shadow pool under the cluster. Keep the SAME three-canopy silhouette, the SAME camera, the SAME footprint. Only the material and fire change.
+
+CRITICAL BACKGROUND REQUIREMENT: the background of the whole image, including all the space between and around the tiles, must be 100% solid flat MAGENTA, hex #FF00FF. Not white, not grey, not a gradient. It is a chroma key and will be deleted.
+
+CRITICAL — NO GRASS: these tiles sit on grass that is supplied separately underneath. Do NOT draw any grass, lawn, meadow or green ground under or around the tiles. Only draw the terrain feature itself, surrounded by magenta.
+
+CRITICAL — NO BLACK OUTLINES: terrain must NOT have thick black outlines. Use either no outline at all, or a soft outline in a darker shade of the tile's own colour.
+
+PERSPECTIVE: straight top-down / very slightly tilted bird's-eye. NOT isometric, NOT diamond-shaped. Each tile is roughly square with ORGANIC irregular edges.
+
+ABSOLUTELY NO PURPLE OR VIOLET anywhere.
+
+Per-cell contents, left-to-right:
+
+Cell 1 (BURNING / forest on fire, two rounds then it becomes scorched) — the SAME three chunky round tree canopies, but the foliage is now dark charcoal-brown (#3A2A1C) with glowing ember cracks, and THREE fat rounded FLAME tongues sit on top of the cluster: saturated orange (#F07818) with a smaller bright yellow (#FFCC33) core on each tongue. The flames must be at least as large as one canopy and read as fire at a glance. A small dark shadow pool still sits under the cluster. The tile must look HOT and brighter than the scorched tile. No smoke plumes, no sparks, no flying embers, no particles — just the trees plus three chunky flames.
+
+Cell 2 (SCORCHED / burnt-out end state, rules equal to plain) — the SAME three-canopy footprint, now reduced to THREE chunky BLACKENED STUMPS / charcoal mounds, ashy grey-brown (#4A4038) with a slightly lighter grey-tan (#7A7064) dry top on each mound, and a small darker ash pool underneath. NO flames, NO orange, NO glow, NO cracks of fire. It must read as "those trees already burned down". Darker and duller than cell 1.
+
+LIGHTNESS: burning is the brighter of the two (the fire is the signal); scorched is dark and spent, darker than the living forest. A player seeing the swap must know the fire went out.
+
+LOW FREQUENCY: each tile is displayed only about 40 pixels wide in game. Keep every shape big and soft. No fine texture, no dense speckling, no hatching, no tiny detail.
+
+STYLE: hand-drawn cartoon, flat saturated fills with simple cel shading, no gradients, no noise, no painterly brushwork, no photographic detail, no pixel art.
+
+LAYOUT RULES:
+1. EXACTLY 2 icons in a clean 2-column x 1-row arrangement.
+2. NO borders, NO dividing lines, NO frames, NO circles or badges — they are separated only by magenta.
+3. Each tile occupies about 70% of its cell, leaving a clear magenta margin on all four sides. Nothing touches or crosses a cell edge.
+4. NO text, no labels, no captions, no letters, no numbers, no watermark anywhere.

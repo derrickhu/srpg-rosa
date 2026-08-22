@@ -1,0 +1,82 @@
+# 第五章 Boss「龙王·安卡洛斯」—— 四方向行走 sheet（generate2dsprite player_sheet, 4x4）
+#
+# 关卡：src/data/stagesMvp.ts `c5_7`「龙王」，animSet `drakelord`
+# 参考图：art/sprite-runs/bloodfang/walk/raw-sheet.png —— 同时锁风格和 4x4 布局
+#
+# ## 为什么终章 Boss 值得一整套图集
+#
+# 这是全游戏唯一的收尾高光，档位上和第一章酋长对等（酋长有四向行走 + 两向攻击）。
+# 其余四章的精英走单帧，杂兵走单帧——预算全压在这里和另外三个 Boss 身上。
+#
+# ## 体型
+#
+# boss 在运行时还会 ×1.3（BattlePlaybackView `if (u.boss) body.scale.set(1.3)`），
+# 所以这里画**正常单位的格内占比**，靠轮廓厚重体现压迫感，不要画满格。
+# 画满格 + 运行时 1.3 会直接溢出到相邻格子。
+#
+# ## 配色
+#
+# 本章签名色是熔岩橙红 + 黑曜石，四只杂兵是 黑曜+橙裂纹 / 橙红 / 灰黑 / 苍白。
+# 龙王必须压得住这四只：走**最深的黑曜主体 + 最亮的白热橙**，明度两极都比杂兵更极端。
+# 白热色（#FFD9A0）只出现在喉部和翼膜边缘——那是「灭世龙息」的蓄能位置，
+# 让技能来源在静止帧里就有交代。
+#
+# 钢青、蓝、绿一律不要：绿会撞前四章的兽人，蓝会撞我方盾卫和法师。
+#
+# ## 键色安全
+#
+# 主色是黑曜黑、橙红、白热橙、暗铁，到品红 #FF00FF 的色距均 > 200，
+# 远超抠色阈值 100/150。但仍必须在 prompt 里明文禁掉粉/品红/紫罗兰。
+
+Use the attached image as the STYLE and LAYOUT reference: same hand-drawn cartoon game sprite look,
+same thick dark outlines, same flat saturated fills with light cel shading, same 3/4 top-down camera,
+same 4x4 grid arrangement, same magenta background. Only the character changes.
+
+A 4x4 sprite sheet showing a full 4-direction walk cycle for a top-down tactics RPG FINAL BOSS.
+
+CHARACTER: a volcanic dragon king called Ankaros. He walks UPRIGHT on two thick hind legs like a
+wyvern, not on all fours. Chibi / super-deformed proportions with a large head and short body, but
+noticeably HEAVIER and BROADER than a normal unit — barrel chest, thick tail counterbalancing behind,
+heavy clawed feet. His hide is OBSIDIAN BLACK (#1F1D22) in big flat scale plates. Folded leathery
+WINGS rise from his back and stay folded in every frame, their membranes a deep ORANGE RED (#C64A28).
+A row of blunt dark horns sweeps back from his skull. His THROAT and the leading edge of each wing
+membrane glow a pale WHITE HOT ORANGE (#FFD9A0), painted as HARD-EDGED FLAT SHAPES with dark
+outlines — this is stored dragon fire, and it is the only bright thing on him. Small angry eyes, a
+heavy blunt snout, two short lower tusks. Menacing but toy-like, never gory.
+
+PALETTE: obsidian black hide, deep orange red wing membranes, pale white-hot orange at throat and
+wing edges, dark iron for horns and claws. NO pink, NO magenta, NO violet, NO lavender, NO purple
+anywhere on the character — those colours would be destroyed by the background chroma key. NO blue,
+NO steel cyan, NO green anywhere: those read as the player's own units.
+
+NO SOFT GLOW: the white-hot parts must be flat bright shapes with hard dark outlines. No bloom, no
+halo, no gradient, no light spill onto the body or the background.
+
+CAMERA: 3/4 top-down view from slightly above, consistent in all 16 cells. You can see the top of the
+head, the shoulders, the folded wings, and the full body down to the clawed feet.
+
+SHEET LAYOUT — rows are facing direction, columns are walk frames:
+  Row 1 (top):    facing DOWN, toward the camera, face and glowing throat fully visible
+  Row 2:          facing LEFT, left side profile, tail trailing to the right
+  Row 3:          facing RIGHT, right side profile, mirrored from row 2
+  Row 4 (bottom): facing UP, away from the camera, back and folded wings visible
+  Column 1: neutral standing pose, both feet together, weight low
+  Column 2: LEFT foot stepping forward, heavy body bob down
+  Column 3: neutral standing pose, both feet together
+  Column 4: RIGHT foot stepping forward, heavy body bob down
+
+ABSOLUTE RULES:
+1. EXACTLY 16 equal-size cells in a 4x4 grid. Every cell the same width and height.
+2. NO borders, NO dividing lines, NO frames between cells. Cells are separated only by the flat
+   background color.
+3. Background is 100% solid flat magenta #FF00FF everywhere, including between the cells. No gradient,
+   no vignette, no ground shadow, no drop shadow under the character.
+4. IDENTICAL SCALE in all 16 cells: same head-to-foot height, same shoulder width, same camera
+   distance. Do not zoom in or out between cells. Do not crop tighter in some cells.
+5. IDENTICAL character identity and palette in all 16 cells. The wings stay folded in all 16.
+6. Character is centered in its cell and fills about 70% of the cell height, leaving even magenta
+   margin on all four sides.
+7. Nothing crosses a cell edge — no horn, wing tip, tail, or claw may touch or overlap a neighbouring
+   cell.
+8. Feet rest on the same horizontal baseline in every cell.
+9. NO text, NO labels, NO numbers, NO arrows, NO UI, NO watermark anywhere in the image.
