@@ -70,7 +70,7 @@ import swarmBeesManifest from '@/data/anim/swarm_bees.json';
  *
  * 两条生产路线，产物格式相同（共用 scripts/lib/animAtlas.mjs）：
  *   - scripts/tres2pixi.mjs    Godot SpriteFrames(.tres) → 清单
- *   - scripts/sprite2anim.mjs  AI 生图 + generate2dsprite 后处理 → 清单
+ *   - scripts/sprite2anim.mjs  工具生图 + generate2dsprite 后处理 → 清单
  */
 export type AnimBlend = 'normal' | 'add';
 

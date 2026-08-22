@@ -35,7 +35,7 @@ describe('无尽试炼波次表', () => {
     expect(endlessWaveScale(ENDLESS_MAX_WAVES)).toBeCloseTo(1 + 9 * 0.15);
   });
 
-  it('AI 随波次加难', () => {
+  it('程序决策随波次加难', () => {
     expect(endlessAiDifficulty(1)).toBe('easy');
     expect(endlessAiDifficulty(5)).toBe('normal');
     expect(endlessAiDifficulty(10)).toBe('hard');

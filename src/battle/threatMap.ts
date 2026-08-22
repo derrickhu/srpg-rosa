@@ -51,7 +51,7 @@ export function attackableCellsFrom(
 
 /**
  * 敌方下一行动：移动后普攻能覆盖的格子并集。
- * 口径与 AI 决策同：可达格（含脚下）+ 普攻射程，不含技能。
+ * 口径与程序决策同：可达格（含脚下）+ 普攻射程，不含技能。
  */
 export function cellsThreatenedByEnemies(
   units: UnitState[],
