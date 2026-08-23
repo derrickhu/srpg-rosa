@@ -1,0 +1,44 @@
+# 剑士 v4 —— 朝向挥砍 4 帧（2x2）。<朝向> 三选一：DOWN / LEFT / UP。
+# 参考图：art/sprite-runs/sword/identity-ref-<朝向>.png
+# 处理：--scale-profile art/sprite-runs/sword/scale-profile.json --max-profile-scale-drift 0.5
+# attack_right 由 attack_left 镜像，不出图。
+# 动作是沿自身中线的竖直劈砍，不要横扫。
+
+CRITICAL BACKGROUND REQUIREMENT, THIS OVERRIDES EVERYTHING ELSE: the background of the
+image must be 100% solid flat MAGENTA, hex #FF00FF, bright pure pink-purple. NOT black. NOT
+white. NOT grey. NOT a gradient. Every single pixel that is not part of the character must be
+exactly magenta #FF00FF, including the areas between the cells.
+
+The attached reference image contains ONE SINGLE character frame. It defines only the
+CHARACTER IDENTITY and the ART STYLE. It does NOT define the layout. Do NOT produce a walk
+cycle or a 4x4 sheet — produce the 2x2 attack sheet described below.
+
+Match the reference exactly on: the same handsome chibi swordsman, same vibrant medium-blue
+spiky hair, same blue tunic, same silver-white breastplate and pauldrons, same tan rounded
+boots, same huge broad silver greatsword with a straight crossguard, same thick near-black
+outlines, same flat fills, same 3/4 top-down camera. Only the pose changes.
+
+TWO rounded tan boots MUST be fully visible in every frame, with magenta under the soles.
+
+A 2x2 sprite sheet: 4 frames of a single two-handed greatsword ATTACK. The swing is a
+COMPACT OVERHEAD CHOP straight down the character's own centerline, NOT a wide horizontal sweep.
+
+FRAME ORDER, left-to-right then top-to-bottom:
+  Frame 1 (top-left):     WIND-UP. Greatsword raised straight UP above the head, blade
+                          vertical, both hands on the grip, knees bent.
+  Frame 2 (top-right):    CHOP. Blade swung down to about chest height in front of the body.
+  Frame 3 (bottom-left):  IMPACT. Blade driven DOWN in front of the feet, tip pointing at the
+                          ground, arms extended, torso lunged forward.
+  Frame 4 (bottom-right): RECOVERY. Blade lifted back to a neutral guard beside the body.
+
+ABSOLUTE RULES:
+1. Background 100% solid flat magenta #FF00FF everywhere, including between cells.
+2. EXACTLY 4 equal-size cells in a 2x2 grid. No borders, no dividing lines.
+3. IDENTICAL BODY SCALE and camera in all 4 cells. Hair-top to boot-soles same height.
+4. BODY fills only about 40% of the cell height, wide magenta margin, especially under boots.
+5. NOTHING may touch or cross a cell edge. Keep the sword inside the character's vertical
+   column. If a pose does not fit, make the character smaller.
+6. Feet on the same baseline. Both boots visible.
+7. CHARACTER BODY ONLY. No slash arc, no motion blur, no impact flash, no dust.
+8. NO text, no labels, no numbers, no watermark.
+9. No purple/pink/magenta on the character.

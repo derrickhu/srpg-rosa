@@ -1,0 +1,23 @@
+# 剑士 v4 正面身份补脚。锁现有蓝发银甲，只把靴底画完整。
+# 参考：现有 identity / token（锁身份），祭司/弓手（锁圆靴怎么收住）。
+
+A single chibi tactics-game character sprite, 3/4 view from slightly above, facing DOWN.
+
+CRITICAL BACKGROUND: 100% solid flat MAGENTA #FF00FF. No ground, no shadow, no gradient.
+
+Keep the attached blue-haired swordsman EXACTLY: same vibrant blue spiky hair, same silver
+breastplate and pauldrons, same blue tunic, same huge silver greatsword on the shoulder,
+same determined face, same thick black outlines. Do NOT redesign him.
+
+THE ONLY FIX: complete the FEET.
+- TWO rounded tan-brown BOOTS fully visible, with a clear rounded SOLE curve.
+- The sole is a darker brown ellipse under each boot — you must see the underside curve,
+  not a flat cut-off line.
+- Leave a wide empty magenta band UNDER the soles, at least as tall as one boot.
+- Never let boots touch the image edge. If space is tight, shrink the whole character.
+
+PROPORTIONS: about 2 heads tall. Head including hair is half of body height including boots.
+Body from hair-top to boot-soles is a roughly square box.
+
+hand-drawn cartoon game sprite, chibi, thick near-black outlines, flat saturated fills,
+light cel shading, 3/4 top-down. NO TEXT, no labels, no watermark.

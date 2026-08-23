@@ -1,0 +1,52 @@
+# 盾卫 v2 —— 银灰装甲 4x4 行走。参考 identity-ref-down（v2）。
+
+A 4x4 sprite sheet, full 4-direction walk cycle, top-down tactics RPG.
+Keep the attached identity EXACTLY: same stout chibi knight, same SILVER-GREY steel armour
+and rounded helmet, same cream off-white rectangular tower shield with a charcoal dark-grey
+cross (NOT blue), same thick black outlines. Only facing and walk pose change. NO blue on
+the armour.
+
+HIS TOWER SHIELD IS HIS WHOLE IDENTITY. Big rectangular slab, WIDER THAN HIS BODY, cream
+face, one charcoal cross. Carried on one arm out to his SIDE, slightly forward — never
+flat across his front, so his free-side boot stays visible. Back view: shield still visible.
+
+FEET: two rounded silver-grey boots fully visible in EVERY cell, rounded soles, magenta
+under the soles. Front-facing row especially must show complete boot ovals, not a flat cut.
+
+ART STYLE (project style bible — do not deviate):
+hand-drawn cartoon game sprite, chibi / super-deformed proportions with a large head
+and short limbs, thick near-black outlines (pure black or very dark warm brown — never
+a mid-tone or colorful outline), flat saturated fills with light cel shading (one
+highlight tone, one shadow tone), no gradients, no texture noise, no painterly
+rendering, no photographic detail, 3/4 top-down camera matching a tactics grid.
+The sprite must stay readable at 40 pixels tall: silhouette first, exaggerate the
+weapon and the one signature feature, drop everything that needs zoom to appreciate.
+NO TEXT, no labels, no captions, no watermark anywhere in the image.
+
+WALK MOTION — the walk must be readable from the SILHOUETTE ALONE at 44 pixels tall.
+Columns 1 and 3 must look obviously different from columns 2 and 4 even with all interior
+detail removed. Understating this is the single most common failure:
+  Column 1: neutral. Both feet together directly under the body, legs straight, body at its
+            FULL standing height.
+  Column 2: LEFT foot planted far FORWARD, right foot trailing far BEHIND, with a clearly
+            VISIBLE GAP between the two feet — the stride is wide, not a shuffle. The whole
+            body drops noticeably, squashing down about one tenth of its height. Arms swing
+            opposite to the legs.
+  Column 3: neutral again, identical to column 1.
+  Column 4: mirror of column 2 — RIGHT foot far forward, left foot trailing behind, same
+            heavy body drop, arms swung the other way.
+Exaggerate far past realism. A subtle, realistic walk reads as a statue sliding across the
+board. If in doubt, make the stride wider and the body drop deeper.
+
+ROWS:
+  Row 1 top:    facing DOWN, face visible in the visor
+  Row 2:        facing LEFT
+  Row 3:        facing RIGHT, mirrored from row 2
+  Row 4 bottom: facing UP, back of helmet, shield still visible
+
+RULES:
+1. EXACTLY 16 equal cells, 4x4. No borders, no lines between cells.
+2. Background 100% solid magenta #FF00FF.
+3. Identical body scale and camera. Body (head-top to boots, shield excluded) ~45% of cell.
+4. Magenta margin on all sides, especially under boots. Nothing crosses a cell edge.
+5. Same foot baseline. NO TEXT. No blue on armour. No purple/pink on costume.

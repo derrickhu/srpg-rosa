@@ -3,7 +3,7 @@
   "mode": "attack",
   "prompt": "",
   "role": "",
-  "input": ".pilot/sword_v3/attack_down_spaced.png",
+  "input": "art/sprite-runs/sword/attack_down/raw-sheet.png",
   "threshold": 100,
   "edge_threshold": 150,
   "duration": 200,
@@ -40,50 +40,50 @@
       ],
       "component_mode": "largest",
       "component_count": 1,
-      "selected_component_area": 20670,
+      "selected_component_area": 31234,
       "selected_component_bbox": [
-        215,
-        95,
-        336,
-        424
+        177,
+        51,
+        331,
+        428
       ],
       "crop_bbox": [
-        215,
-        95,
-        336,
-        424
+        177,
+        51,
+        331,
+        428
       ],
       "source_frame_size": [
         504,
         504
       ],
       "is_empty": false,
-      "subject_area": 20670,
-      "body_core_area": 20670,
-      "body_area_fraction": 0.0813728269085412,
+      "subject_area": 31234,
+      "body_core_area": 31234,
+      "body_area_fraction": 0.12296075837742504,
       "anchor_source": [
-        276.0,
-        416.0
+        252.0,
+        417.0
       ],
       "source_edge_touch": false,
       "output_edge_touch": false,
       "edge_touch": false,
       "output_size": [
-        80,
+        88,
         217
       ],
       "paste_position": [
-        88,
+        84,
         20
       ],
       "paste_clamped": false,
       "aligned_bbox": [
-        88,
+        84,
         20,
-        168,
+        172,
         237
       ],
-      "source_to_output_scale": 0.6613981762917933,
+      "source_to_output_scale": 0.5771883289124669,
       "bbox_scale_applied": true,
       "scale_strategy": "fit",
       "scale_changed": true
@@ -101,50 +101,50 @@
       ],
       "component_mode": "largest",
       "component_count": 1,
-      "selected_component_area": 19476,
+      "selected_component_area": 30899,
       "selected_component_bbox": [
-        157,
-        240,
-        277,
-        487
+        174,
+        183,
+        332,
+        476
       ],
       "crop_bbox": [
-        157,
-        240,
-        277,
-        487
+        174,
+        183,
+        332,
+        476
       ],
       "source_frame_size": [
         504,
         504
       ],
       "is_empty": false,
-      "subject_area": 19476,
-      "body_core_area": 19476,
-      "body_area_fraction": 0.07667233560090703,
+      "subject_area": 30899,
+      "body_core_area": 30899,
+      "body_area_fraction": 0.12164194381456286,
       "anchor_source": [
-        195.0,
-        471.0
+        251.0,
+        447.0
       ],
       "source_edge_touch": false,
       "output_edge_touch": false,
       "edge_touch": false,
       "output_size": [
-        79,
-        163
+        91,
+        169
       ],
       "paste_position": [
-        88,
-        74
+        82,
+        68
       ],
       "paste_clamped": false,
       "aligned_bbox": [
-        88,
-        74,
-        167,
+        82,
+        68,
+        173,
         237
       ],
-      "source_to_output_scale": 0.6613981762917933,
+      "source_to_output_scale": 0.5771883289124669,
       "bbox_scale_applied": true,
       "scale_strategy": "fit",
       "scale_changed": true
@@ -162,50 +162,50 @@
       ],
       "component_mode": "largest",
       "component_count": 1,
-      "selected_component_area": 18720,
+      "selected_component_area": 29939,
       "selected_component_bbox": [
-        214,
-        169,
+        176,
+        146,
         332,
-        417
+        444
       ],
       "crop_bbox": [
-        214,
-        169,
+        176,
+        146,
         332,
-        417
+        444
       ],
       "source_frame_size": [
         504,
         504
       ],
       "is_empty": false,
-      "subject_area": 18720,
-      "body_core_area": 18720,
-      "body_area_fraction": 0.07369614512471655,
+      "subject_area": 29939,
+      "body_core_area": 29939,
+      "body_area_fraction": 0.11786265432098765,
       "anchor_source": [
-        272.0,
-        396.0
+        252.0,
+        415.0
       ],
       "source_edge_touch": false,
       "output_edge_touch": false,
       "edge_touch": false,
       "output_size": [
-        78,
-        164
+        90,
+        172
       ],
       "paste_position": [
-        89,
-        73
+        83,
+        65
       ],
       "paste_clamped": false,
       "aligned_bbox": [
-        89,
-        73,
-        167,
+        83,
+        65,
+        173,
         237
       ],
-      "source_to_output_scale": 0.6613981762917933,
+      "source_to_output_scale": 0.5771883289124669,
       "bbox_scale_applied": true,
       "scale_strategy": "fit",
       "scale_changed": true
@@ -222,51 +222,51 @@
         1024
       ],
       "component_mode": "largest",
-      "component_count": 2,
-      "selected_component_area": 19371,
+      "component_count": 1,
+      "selected_component_area": 33912,
       "selected_component_bbox": [
+        84,
         149,
-        141,
-        310,
-        343
+        331,
+        391
       ],
       "crop_bbox": [
+        84,
         149,
-        141,
-        310,
-        343
+        331,
+        391
       ],
       "source_frame_size": [
         504,
         504
       ],
       "is_empty": false,
-      "subject_area": 19371,
-      "body_core_area": 19430,
-      "body_area_fraction": 0.07649124464600655,
+      "subject_area": 33912,
+      "body_core_area": 32018,
+      "body_area_fraction": 0.12604717813051147,
       "anchor_source": [
-        206.0,
-        336.0
+        243.0,
+        380.0
       ],
       "source_edge_touch": false,
       "output_edge_touch": false,
       "edge_touch": false,
       "output_size": [
-        106,
-        133
+        142,
+        139
       ],
       "paste_position": [
-        75,
-        104
+        57,
+        98
       ],
       "paste_clamped": false,
       "aligned_bbox": [
-        75,
-        104,
-        181,
+        57,
+        98,
+        199,
         237
       ],
-      "source_to_output_scale": 0.6613981762917933,
+      "source_to_output_scale": 0.5771883289124669,
       "bbox_scale_applied": true,
       "scale_strategy": "fit",
       "scale_changed": true
@@ -283,13 +283,13 @@
     "empty_count": 0,
     "edge_touch_count": 0,
     "paste_clamped_count": 0,
-    "body_scale_mean": 0.27754944285291683,
-    "output_subject_height_mean": 169.25,
-    "body_scale_cv": 0.01781366406809341,
-    "anchor_x_std": 0.07337749853244736,
-    "anchor_y_std": 0.09576753262057452,
-    "anchor_y_mean": 0.8030753968253967,
-    "profile_body_scale_drift": 0.35513446133863835
+    "body_scale_mean": 0.3494430508601677,
+    "output_subject_height_mean": 174.25,
+    "body_scale_cv": 0.012035421827289483,
+    "anchor_x_std": 0.0074899151143558995,
+    "anchor_y_std": 0.047086451980007014,
+    "anchor_y_mean": 0.8229166666666666,
+    "profile_body_scale_drift": 0.2245921237971663
   },
   "scale_profile": {
     "path": "art/sprite-runs/sword/scale-profile.json",

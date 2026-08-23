@@ -1,0 +1,49 @@
+# 剑士 v4 身份锁帧（朝下待机）
+#
+# 取代 v3 棕发红衣残腿稿。原型是游戏图标里的蓝发少年（银肩甲 + 蓝衣），
+# 压成项目 chibi：两头身、粗描边、全身 5–6 色。
+#
+# 定色（相对盾卫 H210 / 法师 H180 的差）：
+#   发+衣 亮钴蓝 #2B6CDB H221 L51 S80 —— 比盾卫钢蓝更饱和、更亮，且露出头发
+#   胸甲/肩甲 银白 #E8E8E0（唯一高光块）
+#   靴 暖棕 #C48A48
+#   肤 #EEC49A
+# 剪影：肩扛比人还长的宽刃巨剑，斜杠切过格子。
+# 记忆点：那把巨剑。蓝发是英雄辨识，不是第二记忆点。
+#
+# 参考图：游戏图标半身（锁蓝发/银肩甲/蓝衣），弓手/祭司 token（锁头身比和脚）。
+# 禁止紫/粉/品红。
+
+A single chibi tactics-game character sprite, 3/4 view from slightly above, facing DOWN toward the camera.
+
+CRITICAL BACKGROUND: 100% solid flat MAGENTA #FF00FF. No ground, no shadow, no gradient, no vignette.
+
+The first attached image is a circular portrait of a handsome young swordsman with VIBRANT MEDIUM-BLUE spiky hair, silver pauldrons, a blue high-collar tunic, and a brown chest strap. Keep that FACE IDENTITY and COLOR STORY. Translate him into the project's chibi sprite language — do NOT copy the realistic/anime bust, do NOT keep the circular frame or any UI.
+
+The other attached images show the project's chibi proportions: giant head, short chunky limbs, thick black outlines, and TWO VISIBLE ROUNDED BOOTS at the bottom. Match THAT body language.
+
+ART STYLE (project style bible — do not deviate):
+hand-drawn cartoon game sprite, chibi / super-deformed proportions with a large head
+and short limbs, thick near-black outlines (pure black or very dark warm brown — never
+a mid-tone or colorful outline), flat saturated fills with light cel shading (one
+highlight tone, one shadow tone), no gradients, no texture noise, no painterly
+rendering, no photographic detail, 3/4 top-down camera matching a tactics grid.
+The sprite must stay readable at 40 pixels tall: silhouette first, exaggerate the
+weapon and the one signature feature, drop everything that needs zoom to appreciate.
+NO TEXT, no labels, no captions, no watermark anywhere in the image.
+
+PROPORTIONS:
+- About 2 heads tall. Head including the spiky blue hair is about HALF of body height (boots included, sword excluded).
+- Body from hair-top to boot-soles is a roughly SQUARE box.
+- Short thick arms and legs. Mitten hands. TWO rounded tan-brown BOOTS fully visible, poking clearly below the tunic — never crop at the waist or hem.
+- Determined, handsome-cool face at this style's budget: two simple dark eyes, thick angled brows, tiny mouth line. No nose, no blush, no ear detail.
+
+CHARACTER:
+- VIBRANT MEDIUM-BLUE spiky layered hair (the hero look). Hair is uncovered — no helmet.
+- Matching blue tunic, simple silver-white breastplate AND silver pauldrons (the light areas).
+- No cape, no belt, no pouch, no strap, no gold trim, no logos.
+- A HUGE TWO-HANDED GREATSWORD, LONGER THAN HE IS TALL, resting on one shoulder at a clear diagonal. Broad silver-white blade, straight crossguard. The blade tip rising above his head is REQUIRED.
+- Warm tan rounded boots, fully drawn, with magenta empty space BELOW the soles.
+
+LAYOUT: full body centered. Feet sit in the lower third. Generous magenta margin on ALL four sides, especially under the boots. Nothing touches any edge.
+NO TEXT, no labels, no watermark.

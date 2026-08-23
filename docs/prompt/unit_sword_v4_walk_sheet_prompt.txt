@@ -1,0 +1,78 @@
+# 单位 sword v4（蓝发剑士）—— 四方向行走 sheet（generate2dsprite player_sheet, 4x4）
+#
+# 参考图：art/sprite-runs/sword/identity-ref-down.png（v4 单帧，只锁身份）
+# 下游：generate2dsprite.py process --target player --mode player_sheet --align feet
+#       --shared-scale --component-mode largest --write-scale-profile
+
+A 4x4 sprite sheet showing a full 4-direction walk cycle for a top-down tactics RPG unit.
+Keep the character in the reference image: same handsome chibi swordsman, same vibrant
+medium-blue spiky hair, same blue tunic, same silver-white breastplate and pauldrons, same
+tan rounded boots, same huge broad silver greatsword, same palette. Only facing, walk pose
+and sword angle change.
+
+HIS SWORD IS HIS WHOLE IDENTITY.
+- A HUGE TWO-HANDED GREATSWORD, LONGER THAN HE IS TALL. Carried resting on one shoulder at a
+  clear diagonal, so his outline reads as a bold slash across the cell.
+- Broad straight silver-white blade, clear STRAIGHT CROSSGUARD. Do not shrink the sword to
+  fit the cell. Shrink the character instead. The blade tip above the head is REQUIRED.
+
+FEET — the previous version was drawn without feet. That is forbidden.
+- TWO rounded tan-brown boots MUST be fully visible in EVERY cell, poking below the tunic.
+- Leave a clear magenta gap under the soles. Never crop at the waist, hem, or shin.
+- In stride columns the gap BETWEEN the two boots must be obvious.
+
+ART STYLE (project style bible — do not deviate):
+hand-drawn cartoon game sprite, chibi / super-deformed proportions with a large head
+and short limbs, thick near-black outlines (pure black or very dark warm brown — never
+a mid-tone or colorful outline), flat saturated fills with light cel shading (one
+highlight tone, one shadow tone), no gradients, no texture noise, no painterly
+rendering, no photographic detail, 3/4 top-down camera matching a tactics grid.
+The sprite must stay readable at 40 pixels tall: silhouette first, exaggerate the
+weapon and the one signature feature, drop everything that needs zoom to appreciate.
+NO TEXT, no labels, no captions, no watermark anywhere in the image.
+
+PROPORTIONS:
+- Extreme super-deformed. HEAD INCLUDING HAIR is about HALF of body height.
+- BODY from hair-top to boot-soles (sword excluded) is a roughly SQUARE box.
+- Only 5 to 6 flat colours. No belts, straps, buckles, pouches, rivets, gold trim.
+- Face: two dark eyes, angled brows, tiny mouth. No nose.
+
+CAMERA: 3/4 top-down from slightly above. Full body down to the boots in every cell.
+
+SHEET LAYOUT — rows are facing direction, columns are walk frames:
+  Row 1 (top):    facing DOWN, toward the camera, face fully visible
+  Row 2:          facing LEFT, left side profile
+  Row 3:          facing RIGHT, right side profile, mirrored from row 2
+  Row 4 (bottom): facing UP, away from the camera, back of the blue hair and the huge sword
+                  still plainly visible over the shoulder.
+
+WALK MOTION — the walk must be readable from the SILHOUETTE ALONE at 44 pixels tall.
+Columns 1 and 3 must look obviously different from columns 2 and 4 even with all interior
+detail removed. Understating this is the single most common failure:
+  Column 1: neutral. Both feet together directly under the body, legs straight, body at its
+            FULL standing height.
+  Column 2: LEFT foot planted far FORWARD, right foot trailing far BEHIND, with a clearly
+            VISIBLE GAP between the two feet — the stride is wide, not a shuffle. The whole
+            body drops noticeably, squashing down about one tenth of its height. Arms swing
+            opposite to the legs.
+  Column 3: neutral again, identical to column 1.
+  Column 4: mirror of column 2 — RIGHT foot far forward, left foot trailing behind, same
+            heavy body drop, arms swung the other way.
+Exaggerate far past realism. A subtle, realistic walk reads as a statue sliding across the
+board. If in doubt, make the stride wider and the body drop deeper.
+
+ABSOLUTE RULES:
+1. EXACTLY 16 equal-size cells in a 4x4 grid. Every cell the same width and height.
+2. NO borders, NO dividing lines, NO frames between cells. Cells are separated only by the
+   flat background color.
+3. Background is 100% solid flat magenta #FF00FF everywhere, including between the cells.
+   No gradient, no vignette, no ground shadow, no drop shadow under the character.
+4. IDENTICAL BODY SCALE in all 16 cells. Measure from hair-top to boot-soles, IGNORING the
+   sword. Same camera distance; never zoom.
+5. IDENTICAL character identity, costume, and palette in all 16 cells.
+6. His BODY (hair-top to boots, sword excluded) fills about 45% of the cell height in EVERY
+   cell. Centered with magenta margin on all four sides, especially under the boots.
+7. Nothing crosses a cell edge. The blade tip especially must stay clear of the edges.
+8. Feet rest on the same horizontal baseline in every cell.
+9. NO text, NO labels, NO numbers, NO arrows, NO UI, NO watermark anywhere in the image.
+10. NO purple, magenta, pink, or violet anywhere on the character.

@@ -1,0 +1,22 @@
+# 盾卫 v2 —— 银灰盾击 2x2。参考 identity-ref-<朝向>.png
+# 处理：--scale-profile art/sprite-runs/shield/scale-profile.json --max-profile-scale-drift 0.6
+
+CRITICAL BACKGROUND: 100% solid flat MAGENTA #FF00FF everywhere, including between cells.
+
+The attached reference is ONE frame. Identity and style only, NOT layout. Produce a 2x2
+SHIELD BASH sheet. Do NOT copy a walk cycle.
+
+Match the reference: same stout chibi knight, same SILVER-GREY steel armour and helmet
+(NO blue on armour), same cream tower shield with a charcoal dark-grey cross, same thick
+black outlines. Two rounded silver-grey boots visible, magenta under the soles.
+
+He rams forward with the tower shield. The shield is what moves.
+
+FRAME ORDER, left-to-right then top-to-bottom:
+  1 WIND-UP. Shield pulled back to the shoulder, knees bent.
+  2 DRIVE. Lunge forward, shield thrust ahead, leading foot stepping forward.
+  3 IMPACT. Full extension, shield as far forward as it goes, stays upright.
+  4 RECOVERY. Shield back to a side guard.
+
+RULES: 4 equal cells, no borders. Identical body scale. Body ~40% of cell height.
+Nothing crosses an edge. Character body only — no flash, no dust. NO TEXT.

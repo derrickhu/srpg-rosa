@@ -1,0 +1,28 @@
+# 盾卫 v2 身份锁帧（朝下）。蓝甲改银灰，记忆点仍是十字塔盾。
+#
+# 定色：装甲/盔/靴 钢灰 #A8A8A8（低饱和，和剑士钴蓝发错开）
+#       盾面 乳白 #F0EDE4（唯一高光块）
+#       十字 炭灰 #3D3D3D（不要蓝，蓝留给剑士）
+# 参考：现有盾卫身份稿（锁剪影/头身比/塔盾），只换配色。
+
+A single chibi tactics-game character sprite, 3/4 view from slightly above, facing DOWN.
+
+CRITICAL BACKGROUND: 100% solid flat MAGENTA #FF00FF. No ground, no shadow, no gradient.
+
+Keep the attached shield bearer IDENTITY: same stout chibi knight, same rounded full helmet
+with a small face opening, same huge cream rectangular tower shield held to ONE SIDE (not
+flat across the front — at least one boot must stay visible), same thick black outlines,
+same giant-head-tiny-body. ONLY the armor colors change.
+
+NEW PALETTE:
+- Armor, helmet, gauntlets, boots: SILVER-GREY steel. Light metallic #D0D0D0 highlights,
+  mid grey #A0A0A0, darker grey #6E6E6E shadow. No blue anywhere on the armor.
+- Shield face: cream off-white #F0EDE4, still wider than his body.
+- Cross on the shield: charcoal dark grey #3D3D3D — NOT blue.
+- Skin in the visor: #EEC49A. Determined black-dot eyes, thick angled brows.
+
+FEET: two rounded silver-grey boots. The boot on the free side is fully visible with a
+rounded sole. Leave magenta under the soles. Nothing touches the image edge.
+
+hand-drawn cartoon game sprite, chibi, thick near-black outlines, flat fills, light cel
+shading, 3/4 top-down. 4 to 6 flat colours. NO TEXT, no labels, no watermark.

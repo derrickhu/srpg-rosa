@@ -1,0 +1,62 @@
+# 法师奥莉 v3 —— 4x4 行走。身份锁 v2 identity-ref-down（已有脚）。
+#
+# v2 行走 sheet 把人画贴格底，浅棕圆靴被格线吃掉；token 从 walk/down-1 派生，
+# 布阵/队伍卡上就变成没脚。攻击帧是有脚的，所以只重出行走。
+#
+# 参考图：art/sprite-runs/mage/identity-ref-down.png
+# 下游：generate2dsprite process --target player --mode player_sheet --align feet
+#       --shared-scale --component-mode largest --scale-profile 可新建或复用
+
+A 4x4 sprite sheet, full 4-direction walk cycle, top-down tactics RPG.
+Keep the attached identity EXACTLY: same chunky 2-head girl mage, same deep-teal pointed hat
+and robe, same cream collar, same warm brown bob, same fat orange-orb staff, same thick black
+outlines, SAME two rounded tan boots. Only facing and walk pose change. Do NOT shrink her
+into a toddler. Do NOT crop the robe into a flat hem with no boots.
+
+FEET — mandatory in every cell:
+- Two rounded tan-brown boots poke clearly below the teal robe, same as the identity frame.
+- Leave a visible magenta gap under the soles. The robe hem must NEVER be the bottom of the
+  drawing. If you are running out of room, shrink the whole character; do not cut the feet.
+
+HER BODY (hair-top to boots, ignoring hat cone and staff) must stay the same size in all 16
+cells and match the identity frame. The tall hat is EXTRA above the head.
+
+ART STYLE (project style bible — do not deviate):
+hand-drawn cartoon game sprite, chibi / super-deformed proportions with a large head
+and short limbs, thick near-black outlines (pure black or very dark warm brown — never
+a mid-tone or colorful outline), flat saturated fills with light cel shading (one
+highlight tone, one shadow tone), no gradients, no texture noise, no painterly
+rendering, no photographic detail, 3/4 top-down camera matching a tactics grid.
+The sprite must stay readable at 40 pixels tall: silhouette first, exaggerate the
+weapon and the one signature feature, drop everything that needs zoom to appreciate.
+NO TEXT, no labels, no captions, no watermark anywhere in the image.
+
+WALK MOTION — the walk must be readable from the SILHOUETTE ALONE at 44 pixels tall.
+Columns 1 and 3 must look obviously different from columns 2 and 4 even with all interior
+detail removed. Understating this is the single most common failure:
+  Column 1: neutral. Both feet together directly under the body, legs straight, body at its
+            FULL standing height.
+  Column 2: LEFT foot planted far FORWARD, right foot trailing far BEHIND, with a clearly
+            VISIBLE GAP between the two feet — the stride is wide, not a shuffle. The whole
+            body drops noticeably, squashing down about one tenth of its height. Arms swing
+            opposite to the legs.
+  Column 3: neutral again, identical to column 1.
+  Column 4: mirror of column 2 — RIGHT foot far forward, left foot trailing behind, same
+            heavy body drop, arms swung the other way.
+Exaggerate far past realism. A subtle, realistic walk reads as a statue sliding across the
+board. If in doubt, make the stride wider and the body drop deeper.
+
+ROWS:
+  Row 1 top:    facing DOWN, face visible
+  Row 2:        facing LEFT, left profile
+  Row 3:        facing RIGHT, mirrored from row 2
+  Row 4 bottom: facing UP, back of hat AND orange orb still visible
+
+RULES:
+1. EXACTLY 16 equal cells, 4x4. No borders, no lines between cells.
+2. Background 100% solid magenta #FF00FF. No shadow, no gradient.
+3. Identical body scale and camera in every cell. Hat/staff may change pose, body never zooms.
+4. Body fills about 45% of cell height; hat extends above. Magenta margin on all sides,
+   especially under the boots.
+5. Nothing crosses a cell edge. Same foot baseline.
+6. No purple/pink on costume. NO TEXT, no labels, no watermark.
