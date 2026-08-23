@@ -84,6 +84,38 @@ describe('词条在实际战斗中生效', () => {
     expect(skillHits(wide).map((h) => h.target).sort()).toEqual(['far', 'near']);
   });
 
+  it('霜噬是冻伤，命中不叠中毒紫雾', () => {
+    const self: UnitState = {
+      uid: 'floe',
+      defId: 'mage',
+      faction: 'player',
+      hp: 50,
+      pos: { x: 3, y: 3 },
+      skillCd: 0,
+      movedInTurn: false,
+      battleSkill: { id: 'frost_ring', name: '霜环', cooldown: 3, kind: 'whirlwind' },
+      skillMods: ['ex_flame_ignite'],
+    };
+    const foe = dummy('e1', { x: 3, y: 2 });
+    const hits = rawSkillHits(
+      castSkillManual(self, DEFS, [self, foe], FLAT, undefined, 'main', { x: 3, y: 2 }),
+    );
+    expect(hits[0]?.poisoned).toBeUndefined();
+    expect(foe.timedBattleEffects?.some((e) => e.kind === 'poison' && e.theme === 'frost')).toBe(true);
+  });
+
+  it('淬毒的命中带中毒标记，溅射不带', () => {
+    const self: UnitState = {
+      ...hero({ x: 3, y: 3 }, ['venom', 'splash']),
+      battleSkill: { id: 'cleave', name: '重劈', cooldown: 2, kind: 'singleBash' },
+    };
+    const main = dummy('main', { x: 3, y: 2 });
+    const side = dummy('side', { x: 2, y: 2 });
+    const hits = rawSkillHits(castSkillManual(self, DEFS, [self, main, side], FLAT, 'main'));
+    expect(hits.find((h) => h.target === 'main')?.poisoned).toBe(true);
+    expect(hits.find((h) => h.target === 'side')?.poisoned).toBeUndefined();
+  });
+
   it('淬毒挂上的中毒会在之后的轮首持续扣血', () => {
     const self = hero({ x: 3, y: 3 }, ['venom']);
     const foe = dummy('e1', { x: 3, y: 2 });
@@ -133,6 +165,34 @@ describe('词条在实际战斗中生效', () => {
     expect(nearBoost).toBeGreaterThan(nearPlain);
   });
 
+  it('炎弹爆炎打到主目标周围八格，斜角也算，再远的不算', () => {
+    const self: UnitState = {
+      uid: 'mage',
+      defId: 'mage',
+      faction: 'player',
+      hp: 50,
+      pos: { x: 3, y: 3 },
+      skillCd: 0,
+      movedInTurn: false,
+      battleSkill: { id: 'ember', name: '炎弹', cooldown: 2, kind: 'lineShot' },
+      skillMods: ['ex_ember_bloom'],
+    };
+    const main = dummy('main', { x: 3, y: 1 });
+    const diag = dummy('diag', { x: 4, y: 0 });
+    const ortho = dummy('ortho', { x: 3, y: 0 });
+    const far = dummy('far', { x: 5, y: 0 });
+    const events = castSkillManual(self, DEFS, [self, main, diag, ortho, far], FLAT, 'main');
+    const cast = events.find((e) => e.type === 'skillCast');
+    expect(cast?.type).toBe('skillCast');
+    if (cast?.type !== 'skillCast') return;
+    expect(cast.vfxId).toBe('ember_bloom');
+    expect(skillHits(events).map((h) => h.target).sort()).toEqual(['diag', 'main', 'ortho']);
+    const mainDmg = skillHits(events).find((h) => h.target === 'main')!.damage;
+    const diagDmg = skillHits(events).find((h) => h.target === 'diag')!.damage;
+    expect(diagDmg).toBeLessThan(mainDmg);
+    expect(far.hp).toBe(100);
+  });
+
   it('溅射让单体技能打到目标邻格，但减益只落在主目标身上', () => {
     const self: UnitState = {
       ...hero({ x: 3, y: 3 }, ['splash', 'rout']),
@@ -147,6 +207,9 @@ describe('词条在实际战斗中生效', () => {
     const mainDmg = hits.find((h) => h.target === 'main')!.damage;
     const sideDmg = hits.find((h) => h.target === 'side')!.damage;
     expect(sideDmg).toBeLessThan(mainDmg);
+    const raw = rawSkillHits(events);
+    expect(raw.find((h) => h.target === 'main')?.splash).toBeUndefined();
+    expect(raw.find((h) => h.target === 'side')?.splash).toBe(true);
 
     // 溅射只溅伤害：一条词条把单体控制变群控，「点谁」这个决策就没了
     expect(main.timedBattleEffects?.some((e) => e.kind === 'atkDown')).toBe(true);

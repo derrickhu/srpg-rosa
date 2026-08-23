@@ -78,6 +78,7 @@ import mookClawManifest from '@/data/anim/mook_claw.json';
 import mookSpitManifest from '@/data/anim/mook_spit.json';
 import mookThudManifest from '@/data/anim/mook_thud.json';
 import mookPuffManifest from '@/data/anim/mook_puff.json';
+import poisonBurstManifest from '@/data/anim/poison_burst.json';
 // 第二、三章临时技能专属图。这两组原先全是借角色技能的图（见 docs/特效圣经 §7.1），
 // 于是「每章的专属第二技能」在屏幕上全是别人的招
 import tempFoTorchManifest from '@/data/anim/temp_fo_torch.json';
@@ -246,6 +247,7 @@ const MANIFESTS: Record<string, AnimManifest> = {
   mook_spit: mookSpitManifest as AnimManifest,
   mook_thud: mookThudManifest as AnimManifest,
   mook_puff: mookPuffManifest as AnimManifest,
+  poison_burst: poisonBurstManifest as AnimManifest,
 };
 
 /**

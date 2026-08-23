@@ -318,6 +318,21 @@ export interface VfxRecipe {
   /** 命中星爆。impact 上也能写；两边都写则各播一次 */
   hitBurst?: HitBurstSpec;
   /**
+   * 处决触发时叠在**那个目标**上的闪光。旋风斩的「斩残」复用重劈的垂直劈裂：
+   * 刃环还是扫一圈，残血的那个身上再多一记下劈，才读得出「这一刀不一样」。
+   *
+   * 只在 `modNote === '处决'` 的命中上播。没写这一项的技能（燃尽、通用处决）
+   * 仍然只飘字，避免法师火球打出一记金橙重劈。
+   */
+  executeImpact?: FlashDef;
+  /**
+   * 溅射命中叠在**周围那些人**身上的闪光。长驱「贯枪」复用践踏的蹄印扬尘：
+   * 主目标仍是螺旋钻刺，邻格再扬一把土，才读得出「这一枪带了周围」。
+   *
+   * 只在 `SkillHit.splash` 上播。没写的技能（通用溅射、炎弹爆炎）不加。
+   */
+  splashImpact?: FlashDef;
+  /**
    * 施放前的能量收束（代码画）。**AoE 和高倍率单体都该有。**
    *
    * 它播完才进 slash / travel / impact，所以它买到的是节奏：
@@ -344,6 +359,16 @@ const MAGENTA = [0xffe0f8, 0xff5ae0, 0xa32bd0] as const;
 const SILVER = [0xffffff, 0xdfe9f5, 0x9fb2c8] as const;
 /** 法师赤焰：比剑士金橙更红，形态是火球/火环而不是斩击 */
 const FIRE = [0xfff4d0, 0xff4a12, 0xb01400] as const;
+/**
+ * 芙洛霜环占位色。比弓手电青更白、更淡，避免两招都读成「一道青光」。
+ * 正式冰系图集还没做，先靠色相把这一招从奥莉的火里拉开。
+ */
+const FROST = [0xf7fbff, 0xa8d4ff, 0x3a7ab8] as const;
+/**
+ * 中毒叠层。紫是状态语言，不是职业色——和法师品红（偏粉）错开，走葡萄紫。
+ * 淬毒 / 贯钉 / 霜噬 / 蜂群，凡是会挂毒的招都叠这一团，不跟技能自己的色相走。
+ */
+const POISON = [0xf3e8ff, 0x9b4dff, 0x4a1a8a] as const;
 const MINT = [0xf0fff4, 0x6ee7b7, 0x0d9488] as const;
 
 // --- 章节色（只给商店卖的临时技能用）---
@@ -862,6 +887,19 @@ export const SKILL_VFX: Record<string, VfxRecipe> = {
       playbackSpeed: 0.75,
       sparks: skillSparks(GOLD),
     },
+    /**
+     * 斩残：残血目标身上补一记重劈的垂直劈裂。
+     * 斩残原本就挂在重劈上，图集是现成的，而且和绕身刃环形态不撞——
+     * 一个是圈、一个是砸，叠在同一个人身上正好是「扫到了，再补一刀」。
+     */
+    executeImpact: {
+      set: 'cleave_slam',
+      anchor: 'target',
+      cells: 2.2,
+      mode: 'burst',
+      playbackSpeed: 0.62,
+      sparks: skillSparks(GOLD),
+    },
     shake: SHAKE_BLAST,
   },
   /**
@@ -1024,7 +1062,7 @@ export const SKILL_VFX: Record<string, VfxRecipe> = {
   // 突刺类两招都指向目标，所以靠「平面楔形」对「立体螺旋」分开。
 
   /**
-   * 长驱突刺：正好 2 格外点名，所以路径感是它的主角——
+   * 长驱突刺：同行同列 1～2 格点名，所以路径感是它的主角——
    * 拉长的 `thrust` 光路先连过去，落点才是螺旋钻刺。
    * 螺旋而不是再来一个楔形：普攻已经占了楔形（见 §4.4），
    * 同一个角色两招都是「一个向右的三角」等于没做区分。原先没有配方。
@@ -1041,6 +1079,18 @@ export const SKILL_VFX: Record<string, VfxRecipe> = {
       mode: 'aimed',
       playbackSpeed: 0.7,
       sparks: skillSparks(MAGENTA, 0.8),
+    },
+    /**
+     * 贯枪：邻格扬尘。践踏那张图本来就不是环——八个蹄印加土，
+     * 正好讲「周围的人也挨了」，和主目标的螺旋钻刺不撞形态。
+     */
+    splashImpact: {
+      set: 'trample_dust',
+      anchor: 'target',
+      cells: 1.9,
+      mode: 'burst',
+      playbackSpeed: 0.72,
+      sparks: skillSparks(MAGENTA),
     },
     shake: SHAKE_HEAVY,
   },
@@ -1420,10 +1470,10 @@ export const SKILL_VFX: Record<string, VfxRecipe> = {
       sparks: hitSparks([0xfff0c0, 0xffb020, 0xc45a00]),
     },
   },
-  // ══════════════ 法师 · 赤焰 ══════════════
+  // ══════════════ 法师 · 赤焰 / 霜 ══════════════
   //
-  // 普攻=小火球砸中 / 炎弹=大火球飞过去炸 / 炎环=自身向外的火墙。
-  // 火系全是「团 + 环」，所以靠尺寸和飞行时间分：炎弹的 480ms 飞行是它的性格。
+  // 奥莉：普攻=小火球砸中 / 炎弹=大火球飞过去炸 / 爆炎纹章=落到再铺炎环。
+  // 芙洛：霜环=选点冰圈（图集待重做，先冰蓝收束 + 星爆占位）。
 
   /** 炎弹：手上先攒出一团火，再抛出去，落到才炸。普攻只是小球砸中，不播这张爆炸 */
   ember: {
@@ -1463,6 +1513,44 @@ export const SKILL_VFX: Record<string, VfxRecipe> = {
       playbackSpeed: 0.7,
       sparks: skillSparks(FIRE),
     },
+    shake: SHAKE_BLAST,
+  },
+  /**
+   * 炎弹「爆炎」：火球还是那一发，落到之后改铺炎环。
+   *
+   * 飞行段原样保留——玩家认的是那颗火球；命中换成 `flame_ring` cells=3，正好盖住
+   * 切比雪夫 1 的周围八格。这是纹章的画面兑现，不是另做一套火。
+   */
+  ember_bloom: {
+    windup: windupGather(FIRE, 1.2, 260),
+    travel: {
+      glowSet: 'ember_orb',
+      cells: 2.05,
+      speedPxPerSec: 190,
+      minMs: 480,
+      lingerMs: 160,
+      trail: trailSparks(FIRE),
+      ribbon: ribbonGlow(FIRE, 7),
+    },
+    impact: {
+      set: 'flame_ring',
+      anchor: 'target',
+      cells: 3,
+      mode: 'burst',
+      playbackSpeed: 0.7,
+      sparks: skillSparks(FIRE),
+    },
+    shake: SHAKE_BLAST,
+  },
+  /**
+   * 霜环：形状同旧炎环，冰系图集还没做。
+   *
+   * 占位只用冰蓝收束 + 代码星爆，不穿 `flame_ring` 火舌——那张图已经给奥莉的爆炎了。
+   */
+  frost_ring: {
+    windup: windupImplode(FROST, 1.4, 280),
+    castBurst: castBurst(FROST, 2.2),
+    hitBurst: hitBurst(FROST, 2.4),
     shake: SHAKE_BLAST,
   },
   // ══════════════ 祭司 · 青绿 ══════════════
@@ -1853,6 +1941,21 @@ export const SKILL_VFX: Record<string, VfxRecipe> = {
  * `charge` 是被动，永远不发 `skillCast`，所以它不能待在 `SKILL_VFX` 里等事件。
  * 它挂在「这一下普攻吃到了移动加成」上，由 `attack` 事件的 `charged` 标记触发。
  */
+/**
+ * 中毒命中叠层：技能自己的斩 / 箭 / 火球照播，挨毒的那个身上再爆一团紫雾。
+ *
+ * 不写进各招配方，是因为毒来自词条（淬毒、贯钉、霜噬），配方是静态的。
+ * 回放层看 `SkillHit.poisoned`，有就叠这一下。
+ */
+export const POISON_HIT_VFX: FlashDef = {
+  set: 'poison_burst',
+  anchor: 'target',
+  cells: 2.35,
+  mode: 'burst',
+  playbackSpeed: 0.7,
+  sparks: hitSparks(POISON),
+};
+
 export const CHARGE_VFX: VfxRecipe = {
   cast: {
     set: 'charge_aura',
@@ -1873,6 +1976,8 @@ export function recipeAnimSets(recipe: VfxRecipe): string[] {
   if (recipe.travel?.beamSet) ids.push(recipe.travel.beamSet);
   if (recipe.slashSweep?.set) ids.push(recipe.slashSweep.set);
   if (recipe.pathBeam?.set) ids.push(recipe.pathBeam.set);
+  if (recipe.executeImpact) ids.push(recipe.executeImpact.set);
+  if (recipe.splashImpact) ids.push(recipe.splashImpact.set);
   return ids;
 }
 

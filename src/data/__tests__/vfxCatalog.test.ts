@@ -8,6 +8,7 @@ import {
   ATTACK_VFX,
   CHARGE_VFX,
   MOOK_ATTACK_VFX,
+  POISON_HIT_VFX,
   SKILL_VFX,
   attackRecipeFor,
   recipeAnimSets,
@@ -210,6 +211,8 @@ describe('特效登记表', () => {
       'ember_splat',
     );
     expect(SKILL_VFX.ember!.impact?.set, '炎弹技能命中应是爆炸').toBe('ember_burst');
+    expect(SKILL_VFX.ember_bloom!.travel?.glowSet, '爆炎还是那颗火球飞过去').toBe('ember_orb');
+    expect(SKILL_VFX.ember_bloom!.impact?.set, '爆炎命中应复用炎环').toBe('flame_ring');
   });
 
   it('弓手三招各有自己的箭，不共用一张图', () => {
@@ -386,6 +389,30 @@ describe('特效登记表', () => {
       if (cells === undefined) continue;
       expect(cells, `${id} 的弹体小于渲染下限 0.5 格，写多小都一样`).toBeGreaterThanOrEqual(0.5);
     }
+  });
+
+  it('中毒叠层是独立图集，不穿杂兵喷雾的皮', () => {
+    expect(POISON_HIT_VFX.set).toBe('poison_burst');
+    expect(POISON_HIT_VFX.anchor).toBe('target');
+    expect(POISON_HIT_VFX.set, '中毒不能再借 mook_puff，否则淬毒看起来像吹箭虫在喷').not.toBe(
+      'mook_puff',
+    );
+    expect(getAnimManifest('poison_burst'), 'poison_burst 图集没登记').not.toBeNull();
+    expect(getAnimManifest('poison_burst')!.blend).toBe('add');
+  });
+
+  it('长驱贯枪的周围伤复用践踏扬尘，锚在溅射目标身上', () => {
+    expect(SKILL_VFX.lance_thrust!.splashImpact?.set).toBe('trample_dust');
+    expect(SKILL_VFX.lance_thrust!.splashImpact?.anchor).toBe('target');
+    expect(recipeAnimSets(SKILL_VFX.lance_thrust!)).toContain('trample_dust');
+  });
+
+  it('旋风斩处决复用重劈的垂直劈裂，锚在目标身上', () => {
+    expect(SKILL_VFX.whirl!.executeImpact?.set).toBe('cleave_slam');
+    expect(SKILL_VFX.whirl!.executeImpact?.anchor).toBe('target');
+    expect(recipeAnimSets(SKILL_VFX.whirl!), '斩残图集要跟旋风斩一起预取，否则第一刀没图').toContain(
+      'cleave_slam',
+    );
   });
 
   it('默认技能的命中生图不能和普攻同一张', () => {

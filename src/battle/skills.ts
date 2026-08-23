@@ -420,7 +420,18 @@ function resolveHit(
     defTerrainNote: terrainDefenseNote(terrain, tgt.pos) ?? undefined,
     guardNote: guardNote(effectiveUnitDef(tgt, defs)) ?? undefined,
     modNote,
+    poisoned: specAppliesPoison(spec) || undefined,
   };
+}
+
+/**
+ * 这一招会不会给挨打的人挂**中毒**（紫雾）。
+ *
+ * 霜噬等冻伤也走同一条扣血结算，但描述不是中毒，不能叠紫雾。
+ * 溅射不走这条——毒只落在真正吃到 foe 效果的目标上。
+ */
+export function specAppliesPoison(spec: SkillSpec): boolean {
+  return spec.onCastFoeEffects?.some((e) => e.kind === 'poison' && e.theme !== 'frost') ?? false;
 }
 
 /**
@@ -444,6 +455,9 @@ function hitModNote(
  *
  * 溅射伤害按**各自**重新算一遍再打折，不是拿主目标的数字乘比例：克制关系、地形减伤
  * 都跟站位有关，直接乘会出现「打到森林里的弓手和打到空地上的一样疼」。
+ *
+ * 默认尺子是曼哈顿 = 1（正交四格）。`splashChebyshev` 改切比雪夫 = 1（周围八格），
+ * 给炎弹「爆炎」这类要铺满一圈余波的专属用——通用溅射不能跟着加大，否则贯枪会被静默加强。
  */
 function resolveSplashHits(
   self: UnitState,
@@ -459,7 +473,12 @@ function resolveSplashHits(
   const out: SkillHit[] = [];
   for (const t of livingFoes(self, units)) {
     if (t.uid === main.uid) continue;
-    if (manhattan(t.pos, main.pos) !== 1) continue;
+    const dx = Math.abs(t.pos.x - main.pos.x);
+    const dy = Math.abs(t.pos.y - main.pos.y);
+    const inRing = spec.splashChebyshev
+      ? (dx !== 0 || dy !== 0) && dx <= 1 && dy <= 1
+      : manhattan(t.pos, main.pos) === 1;
+    if (!inRing) continue;
     const modNote = hitModNote(spec, t, defs);
     const full = skillHitDamage(self, def, spec, t, terrain, defs);
     const damage = Math.max(1, Math.floor(full * ratio));
@@ -471,6 +490,7 @@ function resolveSplashHits(
       defTerrainNote: terrainDefenseNote(terrain, t.pos) ?? undefined,
       guardNote: guardNote(effectiveUnitDef(t, defs)) ?? undefined,
       modNote,
+      splash: true,
     });
   }
   return out;
@@ -531,6 +551,7 @@ function castAreaAoE(
           : area.kind === 'square'
             ? cellsWithinChebyshev(self.pos, area.radius, terrain)
             : cellsWithinManhattan(self.pos, area.radius, terrain),
+      vfxId: spec.vfxId,
       hits,
       atkTerrainNote: terrainAttackNote(terrain, self.pos) ?? undefined,
     },
@@ -577,6 +598,7 @@ function castGroundPickAoE(
       kind: spec.displayKind,
       rangeCells: cellsDiscInclusive(center, blastRadius, terrain),
       aimCell: { ...center },
+      vfxId: spec.vfxId,
       hits,
       atkTerrainNote: terrainAttackNote(terrain, self.pos) ?? undefined,
     },
@@ -603,6 +625,7 @@ function castSelfCast(
       skillName: skillCastName(self, spec),
       kind: spec.displayKind,
       rangeCells: [{ ...self.pos }],
+      vfxId: spec.vfxId,
       hits: [],
     },
   ];
@@ -673,6 +696,7 @@ function castNeighborPickFoe(
       // 跟着 reach / axisOnly 走：回放高亮的格子和实际打得到的格子不一致，
       // 玩家会照着高亮记这一招的射程，然后在下一场里点空
       rangeCells: axisFilter(baseCells, self.pos, (c) => c, axisOnly),
+      vfxId: spec.vfxId,
       hits,
       atkTerrainNote: terrainAttackNote(terrain, self.pos) ?? undefined,
     },
@@ -809,6 +833,7 @@ function castNeighborPickAlly(
       rangeCells: within
         ? cellsWithinManhattan(self.pos, dist, terrain)
         : cellsAtManhattan(self.pos, dist, terrain),
+      vfxId: spec.vfxId,
       hits,
       atkTerrainNote: terrainAttackNote(terrain, self.pos) ?? undefined,
     },
@@ -893,6 +918,7 @@ function castLineBestRay(
       skillName: skillCastName(self, spec),
       kind: spec.displayKind,
       rangeCells,
+      vfxId: spec.vfxId,
       hits,
       atkTerrainNote: terrainAttackNote(terrain, self.pos) ?? undefined,
     },

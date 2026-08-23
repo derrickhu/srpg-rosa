@@ -405,6 +405,7 @@ const SETS = [
     { id: 'mook_spit', frames: 4, fps: 14 },
     { id: 'mook_thud', frames: 4, fps: 18 },
     { id: 'mook_puff', frames: 4, fps: 16 },
+    { id: 'poison_burst', frames: 6, fps: 20 },
     // 第二、三章临时技能专属图。这两组原先全是借的（火把借法师炎环、绞缠借第一章缠足、
     // 庇护和守林人共用祭司的圣光盾、撞城槌的尾迹居然是火系的 ember_wave、
     // 压制借狂暴战吼、战旗借祭司祝福、钩索借骑兵冲锋光环），

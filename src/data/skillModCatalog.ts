@@ -86,13 +86,9 @@ export interface SkillModDef {
   /**
    * 角色等级达到多少才可能抽到它（见 `ProgressManager.lootCandidatesFor`）。
    *
-   * 这是把**局外成长**和**局内构筑**接起来的那根线。在此之前角色等级只加数值，
-   * 而数值成长在战棋里是最没有存在感的一种成长——玩家升到 10 级，感受到的是
-   * 「怪好像好打了一点」，没有任何一刻能指着说「我解锁了这个」。
-   * 纹章反过来：它改变这一招怎么用，而且解锁那一刻在角色页上是看得见的一行字。
-   *
-   * 仍然是 **run 级**的——等级解锁的是「这条能不能进三选一池」，不是永久拥有。
-   * 直接送的话每局开场就带满构筑，三选一那套「这一局我走哪条路」当场消失。
+   * **只对专属纹章有意义。** 通用纹章恒为 1：它们按技能类型进池，不跟角色等级绑。
+   * 不升级的人三选一里仍然有锋锐、淬毒这些；升级打开的是「这一招自己的招牌强化」。
+   * 仍然是 run 级——解锁的是「能不能进三选一」，不是永久拥有。
    */
   minLevel: number;
   /** 卡片图标资源 key，见 `core/assetBundles` */
@@ -122,7 +118,7 @@ interface ModSeed {
   maxStacks: number;
   /** 只在这些技能上出现；缺省 = 普通词条 */
   only?: readonly string[];
-  /** 覆盖 `defaultMinLevel` 的档位；正常情况下不写，让稀有度决定 */
+  /** 覆盖自动档位。通用纹章不用写（恒为 1）；专属一般也不写，由 `exclusiveUnlockLevel` 错开 */
   minLevel?: number;
   fits(spec: SkillSpec): boolean;
   describe(stacks: number): string;
@@ -130,17 +126,33 @@ interface ModSeed {
 }
 
 /**
- * 稀有度 → 解锁等级。专属纹章比同稀有度的普通纹章早得多，这是刻意的：
- * 一个角色练到中段，先拿到的应该是**他自己那一招的招牌强化**，
- * 而不是一条谁都能吃的通用加成。玩家记住的构筑是前者。
- *
- * 上限 16 级（`MAX_CHARACTER_LEVEL`），所以史诗普通纹章的 13 级基本是终局内容。
+ * 专属纹章的解锁台阶。第一条放在 2 级：升一级就能进三选一，养成立刻有感觉。
+ * 后面隔 4 级一条。第四档 14 只给专属超过三条的招（岚骑），避免两条挤在同一级。
  */
-const GENERIC_MIN_LEVEL: Record<SkillModRarity, number> = { common: 1, rare: 7, epic: 13 };
-const EXCLUSIVE_MIN_LEVEL: Record<SkillModRarity, number> = { common: 1, rare: 4, epic: 10 };
+const EXCLUSIVE_UNLOCK_STEPS = [2, 6, 10, 14] as const;
 
-function defaultMinLevel(seed: ModSeed): number {
-  return (seed.only ? EXCLUSIVE_MIN_LEVEL : GENERIC_MIN_LEVEL)[seed.rarity];
+function exclusiveUnlockLevels(seeds: readonly ModSeed[]): Map<string, number> {
+  const rank: Record<SkillModRarity, number> = { common: 0, rare: 1, epic: 2 };
+  const bySkill = new Map<string, ModSeed[]>();
+  for (const seed of seeds) {
+    if (!seed.only) continue;
+    for (const skillId of seed.only) {
+      const list = bySkill.get(skillId) ?? [];
+      list.push(seed);
+      bySkill.set(skillId, list);
+    }
+  }
+  const out = new Map<string, number>();
+  for (const list of bySkill.values()) {
+    const ordered = [...list].sort((a, b) =>
+      rank[a.rarity] - rank[b.rarity] || seeds.indexOf(a) - seeds.indexOf(b),
+    );
+    ordered.forEach((seed, i) => {
+      const lv = EXCLUSIVE_UNLOCK_STEPS[Math.min(i, EXCLUSIVE_UNLOCK_STEPS.length - 1)]!;
+      out.set(seed.id, Math.min(out.get(seed.id) ?? lv, lv));
+    });
+  }
+  return out;
 }
 
 /**
@@ -294,8 +306,12 @@ function addLifesteal(spec: SkillSpec, ratio: number): SkillSpec {
   return { ...spec, lifestealRatio: (spec.lifestealRatio ?? 0) + ratio };
 }
 
-function addSplash(spec: SkillSpec, ratio: number): SkillSpec {
-  return { ...spec, splashRatio: (spec.splashRatio ?? 0) + ratio };
+function addSplash(spec: SkillSpec, ratio: number, ring: 'ortho' | 'square' = 'ortho'): SkillSpec {
+  return {
+    ...spec,
+    splashRatio: (spec.splashRatio ?? 0) + ratio,
+    splashChebyshev: spec.splashChebyshev || ring === 'square',
+  };
 }
 
 /** 处决线取更宽的那条，倍率相乘（两条处决词条撞在一起时才有的情况） */
@@ -329,6 +345,8 @@ function mergeFoe(spec: SkillSpec, e: SkillCastFoeEffect): SkillSpec {
         kind: 'poison',
         dmgPerRound: x.dmgPerRound + e.dmgPerRound,
         rounds: Math.max(x.rounds, e.rounds),
+        // 淬毒叠到霜噬上时按中毒算：描述和紫雾都跟「中毒」走
+        theme: x.theme === 'frost' && e.theme === 'frost' ? 'frost' : undefined,
       };
     }
   }
@@ -737,9 +755,10 @@ const EXCLUSIVE_SEEDS: readonly ModSeed[] = [
     // 原本是「嘲讽延长到 4 回合 + 削攻」，而嘲讽那一半是**死效果**：
     // 震击是盾卫专属，盾卫 `strike.taunt` 恒为 true（见 `skillCatalog` 里 bash 的说明）。
     // 一条稀有词条有一半写在不生效的机制上，玩家读卡面时完全看不出来。
-    // 改成放大震击自己的特征——它的卖点是出手频率，那就让它每回合都能出手。
-    describe: () => '震击：冷却缩短 1 回合，且减速改为 -4（3 回合）',
-    apply: (spec) => setFoe(cutCooldown(spec, 1), { kind: 'spdDown', subSpd: 4, rounds: 3 }),
+    // 改成加深减速。冷却不能收到 1：底招已经是 2 回合，减到 1 再配 2 回合减益
+    // 等于盯谁锁谁，格隆的身份就从「拖慢」变成「永久关禁闭」。
+    describe: () => '震击：减速改为 -4（2 回合）',
+    apply: (spec) => setFoe(spec, { kind: 'spdDown', subSpd: 4, rounds: 2 }),
   },
   {
     id: 'ex_bash_hurl',
@@ -756,6 +775,7 @@ const EXCLUSIVE_SEEDS: readonly ModSeed[] = [
    * 雷恩现在的招牌旋风斩上——内容一个字没改，只是换了主人。
    * 挂在 AoE 上时处决是逐个目标判的（见 `hitModNote`），所以「一刀清掉一圈残血」
    * 这个读法照样成立，而且比在单体上更像雷恩会做的事。
+   * 残血目标身上会再叠一记重劈的垂直劈裂（`cleave_slam`），刃环和斩杀分得开。
    */
   {
     id: 'ex_cleave_reap',
@@ -777,6 +797,9 @@ const EXCLUSIVE_SEEDS: readonly ModSeed[] = [
     describe: () => '破阵斩：削攻改为 -10（3 回合），且伤害提升 35%',
     apply: (spec) => scaleDamage(setFoe(spec, { kind: 'atkDown', subAtk: 10, rounds: 3 }), 1.35),
   },
+  /**
+   * 邻格扬尘走配方的 splashImpact（践踏蹄印），见 vfxCatalog.lance_thrust。
+   */
   {
     id: 'ex_lance_pierce',
     name: '贯枪',
@@ -817,12 +840,12 @@ const EXCLUSIVE_SEEDS: readonly ModSeed[] = [
     maxStacks: 1,
     only: ['bash'],
     fits: () => true,
-    describe: () => '震击：额外使目标攻击 -6，且减速加深到 -5（3 回合）',
+    describe: () => '震击：额外使目标攻击 -6，且减速加深到 -5（2 回合）',
     apply: (spec) =>
-      mergeFoe(setFoe(spec, { kind: 'atkDown', subAtk: 6, rounds: 3 }), {
+      mergeFoe(setFoe(spec, { kind: 'atkDown', subAtk: 6, rounds: 2 }), {
         kind: 'spdDown',
         subSpd: 3,
-        rounds: 3,
+        rounds: 2,
       }),
   },
   {
@@ -863,15 +886,19 @@ const EXCLUSIVE_SEEDS: readonly ModSeed[] = [
         { kind: 'spdBonus', addSpd: 1, rounds: 2 },
       ),
   },
+  /**
+   * 炎弹的画面质变：火球打中之后再铺一圈火舌。放在连爆 / 燃尽前面，
+   * 升到 2 级就能进三选一——这条的卖点就是战斗里立刻看得出升级。
+   */
   {
-    id: 'ex_ember_reap',
-    name: '燃尽',
+    id: 'ex_ember_bloom',
+    name: '爆炎',
     rarity: 'rare',
     maxStacks: 1,
     only: ['ember'],
     fits: () => true,
-    describe: () => '炎弹：目标血量低于 50% 时，伤害提升 80%',
-    apply: (spec) => withExecute(spec, 0.5, 1.8),
+    describe: () => '炎弹：命中后对周围八格造成 25% 伤害',
+    apply: (spec) => ({ ...addSplash(spec, 0.25, 'square'), vfxId: 'ember_bloom' }),
   },
   /** 原本是速射的「连珠」。速射转给敌方弓兵之后，这条搬到炎弹上当奥莉的出手频率强化 */
   {
@@ -885,14 +912,24 @@ const EXCLUSIVE_SEEDS: readonly ModSeed[] = [
     apply: (spec) => scaleDamage(cutCooldown(spec, 1), 1.2),
   },
   {
-    id: 'ex_flame_ignite',
-    name: '点燃',
+    id: 'ex_ember_reap',
+    name: '燃尽',
     rarity: 'rare',
     maxStacks: 1,
-    only: ['flame_ring'],
+    only: ['ember'],
     fits: () => true,
-    describe: () => '炎环：命中后附加灼烧，每回合 -4 血（2 回合）',
-    apply: (spec) => mergeFoe(spec, { kind: 'poison', dmgPerRound: 4, rounds: 2 }),
+    describe: () => '炎弹：目标血量低于 50% 时，伤害提升 80%',
+    apply: (spec) => withExecute(spec, 0.5, 1.8),
+  },
+  {
+    id: 'ex_flame_ignite',
+    name: '霜噬',
+    rarity: 'rare',
+    maxStacks: 1,
+    only: ['frost_ring'],
+    fits: () => true,
+    describe: () => '霜环：命中后附加冻伤，每回合 -4 血（2 回合）',
+    apply: (spec) => mergeFoe(spec, { kind: 'poison', dmgPerRound: 4, rounds: 2, theme: 'frost' }),
   },
   {
     id: 'ex_heal_spring',
@@ -936,6 +973,7 @@ const EXCLUSIVE_SEEDS: readonly ModSeed[] = [
  * 专属是质变（`set*` 直接改写数值），普通是加成（`merge*` 往上加）。反过来的话，
  * 「破军」会把刚加上的「挫锐」抹掉——玩家两张牌都选了，只有一张起作用。
  */
+const EXCLUSIVE_LEVELS = exclusiveUnlockLevels(EXCLUSIVE_SEEDS);
 const DEFS: SkillModDef[] = [...EXCLUSIVE_SEEDS, ...GENERIC_SEEDS].map(toDef);
 
 function toDef(seed: ModSeed): SkillModDef {
@@ -947,7 +985,7 @@ function toDef(seed: ModSeed): SkillModDef {
     name: seed.name,
     rarity: seed.rarity,
     scope,
-    minLevel: seed.minLevel ?? defaultMinLevel(seed),
+    minLevel: seed.minLevel ?? (seed.only ? (EXCLUSIVE_LEVELS.get(seed.id) ?? 2) : 1),
     icon: seed.icon ?? EXCLUSIVE_ICON,
     maxStacks: seed.maxStacks,
     describe: seed.describe,
@@ -975,12 +1013,18 @@ export function isExclusiveMod(def: SkillModDef): boolean {
 }
 
 /**
- * 这条技能能吃到的**全部**纹章，按解锁等级、稀有度排好序。
+ * 这条技能的**专属**纹章，按解锁等级排好序。
  *
- * 角色页的解锁链读它：玩家在那一页问的是「我把这个人练上去，会多出什么」，
- * 而答案恰好是这个列表按 `minLevel` 切成的几段。排序放在目录里而不是界面里，
- * 是因为「专属排在同级普通之前」是词条自身的定位决定的（专属才是招牌强化），
- * 换个界面来问也该得到同一个顺序。
+ * 角色页解锁链只读这个：升级打开的是招牌强化，通用纹章不在这条链上。
+ */
+export function exclusiveChainForSkill(spec: SkillSpec): SkillModDef[] {
+  return exclusiveModsForSkill(spec.id).sort((a, b) =>
+    a.minLevel - b.minLevel || a.name.localeCompare(b.name),
+  );
+}
+
+/**
+ * 这条技能能吃到的全部纹章（含通用）。抽卡池用 `canApply`，不要走这条。
  */
 export function modChainForSkill(spec: SkillSpec): SkillModDef[] {
   const rank: Record<SkillModRarity, number> = { common: 0, rare: 1, epic: 2 };
@@ -994,7 +1038,7 @@ export function modChainForSkill(spec: SkillSpec): SkillModDef[] {
 
 /** 这条技能有哪些专属词条（供测试与图鉴类界面用） */
 export function exclusiveModsForSkill(skillId: string): SkillModDef[] {
-  const id = skillId === 'arcane_pulse' ? 'flame_ring' : skillId;
+  const id = skillId === 'arcane_pulse' || skillId === 'flame_ring' ? 'frost_ring' : skillId;
   return DEFS.filter((d) => d.scope.kind === 'exclusive' && d.scope.skillIds.includes(id));
 }
 

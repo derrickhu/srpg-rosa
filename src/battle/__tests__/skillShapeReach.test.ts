@@ -99,12 +99,36 @@ describe("reach: 'within' 是一片射程，不是一圈环", () => {
     expect(cells.some((c) => c.x === 7 && c.y === 3), '4 格外的格子不该高亮').toBe(false);
   });
 
-  it('长驱突刺仍是「正好 2 格」：贴脸捅不到，那是它的代价', () => {
+  it('长驱突刺是同行同列 2 格内：贴脸和隔一格都能捅，斜角不行', () => {
+    expect(getSkillSpec('lance_thrust')!.shape).toEqual({
+      type: 'neighborPickFoe',
+      manhattan: 2,
+      reach: 'within',
+      axisOnly: true,
+    });
+
     const near = unit('p1', 'cavalry', { x: 0, y: 3 }, 'player', 'lance_thrust');
-    expect(castHits(near, [near, unit('e1', 'sword', { x: 1, y: 3 }, 'enemy')])).toBeNull();
+    expect(castHits(near, [near, unit('e1', 'sword', { x: 1, y: 3 }, 'enemy')])).toEqual(['e1']);
 
     const far = unit('p2', 'cavalry', { x: 0, y: 3 }, 'player', 'lance_thrust');
     expect(castHits(far, [far, unit('e2', 'sword', { x: 2, y: 3 }, 'enemy')])).toEqual(['e2']);
+
+    const tooFar = unit('p3', 'cavalry', { x: 0, y: 3 }, 'player', 'lance_thrust');
+    expect(castHits(tooFar, [tooFar, unit('e3', 'sword', { x: 3, y: 3 }, 'enemy')])).toBeNull();
+
+    const diag = unit('p4', 'cavalry', { x: 0, y: 3 }, 'player', 'lance_thrust');
+    expect(castHits(diag, [diag, unit('e4', 'sword', { x: 1, y: 4 }, 'enemy')])).toBeNull();
+
+    const self = unit('p5', 'cavalry', { x: 3, y: 3 }, 'player', 'lance_thrust');
+    const foe = unit('e5', 'sword', { x: 4, y: 3 }, 'enemy');
+    const events = castSkillManual(self, UNIT_DEFS, [self, foe], emptyTerrain(7, 7));
+    const cast = events.find((e) => e.type === 'skillCast');
+    if (cast?.type !== 'skillCast') throw new Error('没放出来');
+    const cells = cast.rangeCells ?? [];
+    expect(cells.some((c) => c.x === 4 && c.y === 3), '贴脸格没高亮').toBe(true);
+    expect(cells.some((c) => c.x === 5 && c.y === 3), '第 2 格没高亮').toBe(true);
+    expect(cells.some((c) => c.x === 6 && c.y === 3), '第 3 格不该高亮').toBe(false);
+    expect(cells.some((c) => c.x === 4 && c.y === 4), '斜角不该高亮').toBe(false);
   });
 });
 

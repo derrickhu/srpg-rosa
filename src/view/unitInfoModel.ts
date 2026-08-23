@@ -98,7 +98,10 @@ export function characterInfoModel(state: MvpGameState, m: Character): UnitInfoM
 function describeTimedEffect(e: TimedBattleEffect): string {
   switch (e.kind) {
     case 'taunt': return `嘲讽: 强制被优先攻击（剩 ${e.roundsLeft} 回合）`;
-    case 'poison': return `中毒: 每回合 -${e.dmgPerRound} 血（剩 ${e.roundsLeft} 回合）`;
+    case 'poison':
+      return e.theme === 'frost'
+        ? `冻伤: 每回合 -${e.dmgPerRound} 血（剩 ${e.roundsLeft} 回合）`
+        : `中毒: 每回合 -${e.dmgPerRound} 血（剩 ${e.roundsLeft} 回合）`;
     case 'atkBonus': return `攻击 +${e.addAtk}（剩 ${e.roundsLeft} 回合）`;
     case 'atkDown': return `攻击 -${e.subAtk}（剩 ${e.roundsLeft} 回合）`;
     case 'spdBonus': return `速度 +${e.addSpd}（剩 ${e.roundsLeft} 回合）`;

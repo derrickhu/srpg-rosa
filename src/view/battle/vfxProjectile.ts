@@ -5,7 +5,7 @@ import type { TravelDef } from '@/data/vfxCatalog';
 import { attachCorePass, VFX_BODY_ALPHA } from '@/view/vfxBlend';
 import { emitSparks } from '@/view/battle/vfxSparks';
 import { createGrowingBeam, createRibbon, stampGhost } from '@/view/battle/vfxProcedural';
-import { isDisplayLive } from '@/view/pixiLive';
+import { isDisplayLive, safeDestroy } from '@/view/pixiLive';
 
 /**
  * 飞行弹体。远程技能的距离感和期待感全靠它——只在目标身上闪一下光，读起来是
@@ -193,17 +193,17 @@ export function flyProjectile(
         void ribbon?.persist();
         void beamPath?.persist();
         // 两段式的核心层是子节点，一律带 children 回收，否则它会跟着图集贴图一起留着
-        if (!sprite.destroyed) {
+        if (isDisplayLive(sprite)) {
           if (isDisplayLive(layer)) layer.removeChild(sprite);
-          sprite.destroy({ children: true });
+          safeDestroy(sprite, { children: true });
         }
-        if (glow && !glow.destroyed) {
+        if (glow && isDisplayLive(glow)) {
           if (isDisplayLive(layer)) layer.removeChild(glow);
-          glow.destroy({ children: true });
+          safeDestroy(glow, { children: true });
         }
-        if (beam && !beam.destroyed) {
+        if (beam && isDisplayLive(beam)) {
           if (isDisplayLive(layer)) layer.removeChild(beam);
-          beam.destroy({ children: true });
+          safeDestroy(beam, { children: true });
         }
         resolve();
       };

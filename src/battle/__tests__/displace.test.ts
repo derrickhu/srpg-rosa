@@ -90,6 +90,15 @@ describe('axisDirection', () => {
 });
 
 describe('长驱突刺的突进', () => {
+  it('贴脸捅也能落到目标身后 2 格', () => {
+    const self = unit('p1', 'cavalry', 'player', { x: 2, y: 2 }, 'lance_thrust');
+    const tgt = unit('e1', 'sword', 'enemy', { x: 2, y: 3 });
+    const events = castSkillManual(self, UNIT_DEFS, [self, tgt], emptyTerrain(7, 7), 'e1');
+    expect(events.some((e) => e.type === 'skillCast')).toBe(true);
+    expect(self.pos).toEqual({ x: 2, y: 5 });
+    expect(self.movedInTurn).toBe(true);
+  });
+
   it('命中后穿过目标落到它身后 2 格，并记作已移动', () => {
     const self = unit('p1', 'cavalry', 'player', { x: 2, y: 2 }, 'lance_thrust');
     const tgt = unit('e1', 'sword', 'enemy', { x: 2, y: 4 });

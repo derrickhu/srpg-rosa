@@ -9,8 +9,7 @@ import {
 } from '@/data/characterCatalog';
 import { getSkillSpec, type SkillSpec } from '@/data/skillCatalog';
 import {
-  isExclusiveMod,
-  modChainForSkill,
+  exclusiveChainForSkill,
   type SkillModDef,
   type SkillModRarity,
 } from '@/data/skillModCatalog';
@@ -198,6 +197,8 @@ export function createRosterView(
   let stopPanel: (() => void) | null = null;
   /** 弹窗里改过东西：关掉时要重绘网格，不然卡上的等级还是旧的 */
   let dirty = false;
+  /** 详情分页。升级后原地刷新要记住，否则练纹章时会被弹回技能页 */
+  let detailTab: 'skill' | 'mods' = 'skill';
 
   function closeDetail(): void {
     stopPanel?.();
@@ -211,6 +212,7 @@ export function createRosterView(
 
   function openDetail(m: Character): void {
     modal?.close();
+    detailTab = 'skill';
     const panelW = Math.min(340, W - 20);
     const panelH = Math.min(H - 24, 560);
     const md = createModal({
@@ -239,19 +241,20 @@ export function createRosterView(
   }
 
   /**
-   * 弹窗内容的顺序：**这个人是谁 → 练他会得到什么 → 他这一招具体怎么打**。
+   * 弹窗上半固定、下半分页。
    *
-   * 原来这一页有三处四维、两处姓名等级、一份点了会拒的可学技能列表，
-   * 而「升一级会解锁什么纹章」这个真正驱动养成的信息一个字都没有。
-   * 现在每样东西只出现一次，多出来的版面全给了纹章解锁链。
+   * 招牌技能是这一页存在的理由，却曾经被纹章解锁链挤到三屏之外——
+   * 打开详情先看到的是普攻射程，技能本身要滚过一整份通用纹章名单才露出来。
+   * 技能和纹章拆成两个 tab 之后，默认页就是「这一招怎么打」，
+   * 养成链留给真要规划升级的人去翻。
    */
   function fillDetail(md: ModalHandle, m: Character): void {
     const w = md.bodySize.width;
     let y = 0;
     y += addOverviewBlock(md, m, w, y);
     y += addGrowthBlock(md, m, w, y);
-    y += addModChainBlock(md, m, w, y);
-    y += addDetailBlock(md, m, w, y);
+    y += addDetailTabs(md, m, w, y);
+    y += detailTab === 'skill' ? addSkillBlock(md, m, w, y) : addModChainBlock(md, m, w, y);
     md.refresh();
   }
 
@@ -298,41 +301,87 @@ export function createRosterView(
     stats.y = role.height + 4;
     box.addChild(stats);
 
+    // 招式名贴在四维右侧：这一页最重要的信息不能只活在默认折叠的分页里。
+    const spec = signatureSpec(m);
+    if (spec) {
+      const chip = new PIXI.Container();
+      const icon = createUiIcon(`skill_${spec.id}`, 22);
+      if (icon) chip.addChild(icon);
+      const nm = makeText(spec.name, 'uiStrong', { fill: 0xcc8833, fontSize: 12 });
+      nm.x = icon ? 26 : 0;
+      nm.y = 1;
+      chip.addChild(nm);
+      const cd = makeText(`CD ${spec.cooldown}回合`, 'caption', { fill: C.muted, fontSize: 10 });
+      cd.x = nm.x;
+      cd.y = nm.height + 2;
+      chip.addChild(cd);
+      chip.x = Math.max(stats.x + stats.width + 12, w - Math.max(nm.width + (icon ? 26 : 0), cd.width + (icon ? 26 : 0)));
+      chip.y = 4;
+      box.addChild(chip);
+    }
+
     return Math.max(48, stats.y + stats.height) + 10;
   }
 
-  /**
-   * 详细资料：普攻 + 招牌技能，和布阵页、战斗页完全同一块渲染。
-   *
-   * 头像、姓名、四维在这里全关掉（上面的概览已经写过一次），
-   * 留下的正是这一页原来最缺的东西——技能打多远、打几个、附带什么。
-   */
-  function addDetailBlock(md: ModalHandle, m: Character, w: number, top: number): number {
+  /** 技能 / 纹章分页条。返回占用高度 */
+  function addDetailTabs(md: ModalHandle, m: Character, w: number, top: number): number {
     const box = new PIXI.Container();
     box.y = top;
     md.body.addChild(box);
 
-    const label = makeText('招牌技能', 'uiStrong', { fill: C.text, fontSize: 13 });
-    box.addChild(label);
-    let y = label.height + 4;
+    const gap = 6;
+    const tw = Math.floor((w - gap) / 2);
+    const h = 32;
+    const tabs: { id: typeof detailTab; label: string }[] = [
+      { id: 'skill', label: '技能' },
+      { id: 'mods', label: '纹章' },
+    ];
+    for (const [i, t] of tabs.entries()) {
+      const on = t.id === detailTab;
+      const btn = makeButton(
+        t.label,
+        () => {
+          if (md.wasDragging() || t.id === detailTab) return;
+          detailTab = t.id;
+          refillDetail(m);
+        },
+        {
+          variant: on ? 'secondary' : 'ghost',
+          width: tw,
+          height: h,
+          fontSize: 13,
+          radius: 8,
+        },
+      );
+      btn.x = i * (tw + gap);
+      box.addChild(btn);
+    }
+    return h + 10;
+  }
 
-    const line = new PIXI.Graphics();
-    line.lineStyle(1, C.ink, 0.12);
-    line.moveTo(0, y);
-    line.lineTo(w, y);
-    box.addChild(line);
-    y += 4;
+  /**
+   * 技能分页：招牌招式在前，普攻垫底。
+   *
+   * 和布阵页、战斗页共用同一块渲染，数值和格子图不会各写一套。
+   * 头像、姓名、四维关掉——概览已经写过一次。
+   */
+  function addSkillBlock(md: ModalHandle, m: Character, w: number, top: number): number {
+    const box = new PIXI.Container();
+    box.y = top;
+    md.body.addChild(box);
 
-    const info = createUnitInfoPanel(characterInfoModel(state, m), w, {
+    const model = characterInfoModel(state, m);
+    if (model.skills[0]) model.skills[0].title = '招牌技能';
+    const info = createUnitInfoPanel(model, w, {
       drawBg: false,
       showHeader: false,
       showStats: false,
+      skillsBeforeStrike: true,
     });
-    info.view.y = y;
     box.addChild(info.view);
     stopPanel = info.stop;
 
-    return y + info.height + 8;
+    return info.height + 8;
   }
 
   /** 升级区：花多少、升完加多少、下一档解锁什么。返回占用高度 */
@@ -372,11 +421,11 @@ export function createRosterView(
     // 而数值那几点在战棋里基本感觉不到。放在按钮上方，玩家按下去之前就看得见。
     const spec = signatureSpec(m);
     if (spec && !maxed) {
-      const upcoming = modChainForSkill(spec).filter((d) => d.minLevel > m.level);
+      const upcoming = exclusiveChainForSkill(spec).filter((d) => d.minLevel > m.level);
       const nextLv = upcoming[0]?.minLevel;
       if (nextLv !== undefined) {
         const names = upcoming.filter((d) => d.minLevel === nextLv).map((d) => d.name);
-        const tx = makeText(`Lv.${nextLv} 解锁纹章：${names.join('、')}`, 'caption', {
+        const tx = makeText(`Lv.${nextLv} 解锁专属纹章：${names.join('、')}`, 'caption', {
           fill: nextLv === m.level + 1 ? 0xa5561f : C.muted,
           wordWrap: true,
           wordWrapWidth: w,
@@ -423,16 +472,7 @@ export function createRosterView(
   }
 
   /**
-   * 纹章解锁链：按等级分段列出这名角色的招牌技能**将来**吃得到的纹章。
-   *
-   * 这是整页新增的核心内容。在此之前，纹章只在战斗中的三选一里一闪而过，
-   * 局外完全看不见——玩家既不知道自己那一招还能变成什么样，也就没有理由
-   * 挑某个人练。现在等级是闸门（见 `SkillModDef.minLevel`），这一栏就是闸门后面
-   * 那扇门的玻璃：升到几级会开出什么，开的是不是他这一招的招牌，都写在脸上。
-   *
-   * **只有专属纹章逐条展开**。通用纹章一档能有七八条，全展开会把这一栏拉到三屏，
-   * 而它们大多是「伤害 +25%」这类不改变打法的加成，玩家不需要在局外逐条读——
-   * 招牌强化才是他决定练谁的理由，所以那几条给足描述，其余只报名字。
+   * 专属纹章解锁链。通用纹章不出现在这里——它们按技能类型进三选一，不跟等级绑。
    */
   function addModChainBlock(md: ModalHandle, m: Character, w: number, top: number): number {
     const spec = signatureSpec(m);
@@ -443,49 +483,36 @@ export function createRosterView(
     md.body.addChild(box);
 
     let y = 0;
-    const title = makeText('纹章解锁', 'uiStrong', { fill: C.text, fontSize: 13 });
+    const title = makeText('专属纹章', 'uiStrong', { fill: C.text, fontSize: 13 });
     box.addChild(title);
-    const hint = makeText('战斗中三选一时出现', 'caption', { fill: C.muted });
+    const hint = makeText('升级解锁，战斗中三选一出现', 'caption', { fill: C.muted });
     hint.anchor.set(1, 0);
     hint.x = w;
     hint.y = 2;
     box.addChild(hint);
     y += title.height + 6;
 
-    const chain = modChainForSkill(spec);
-    const levels = [...new Set(chain.map((d) => d.minLevel))].sort((a, b) => a - b);
+    const note = makeText('通用纹章按技能类型进池，不需要升级。', 'micro', {
+      fill: C.muted,
+      fontSize: 9,
+      wordWrap: true,
+      wordWrapWidth: w,
+    });
+    note.y = y;
+    box.addChild(note);
+    y += note.height + 8;
 
-    for (const lv of levels) {
-      const group = chain.filter((d) => d.minLevel === lv);
-      const unlocked = m.level >= lv;
-
-      const head = makeText(unlocked ? `Lv.${lv}　已解锁` : `Lv.${lv}　未解锁`, 'caption', {
+    const chain = exclusiveChainForSkill(spec);
+    for (const mod of chain) {
+      const unlocked = m.level >= mod.minLevel;
+      const head = makeText(unlocked ? `Lv.${mod.minLevel}　已解锁` : `Lv.${mod.minLevel}　未解锁`, 'caption', {
         fill: unlocked ? 0x3a8a5a : C.muted,
         fontWeight: 'bold',
       });
       head.y = y;
       box.addChild(head);
       y += head.height + 4;
-
-      for (const mod of group.filter(isExclusiveMod)) {
-        y += addModRow(box, mod, w, y, unlocked);
-      }
-
-      const generic = group.filter((d) => !isExclusiveMod(d));
-      if (generic.length > 0) {
-        const names = makeText(`通用：${generic.map((d) => d.name).join('、')}`, 'micro', {
-          fill: C.muted,
-          fontSize: 9,
-          lineHeight: 13,
-          wordWrap: true,
-          wordWrapWidth: w - 8,
-        });
-        names.x = 8;
-        names.y = y;
-        names.alpha = unlocked ? 1 : 0.5;
-        box.addChild(names);
-        y += names.height + 4;
-      }
+      y += addModRow(box, mod, w, y, unlocked);
       y += 4;
     }
 

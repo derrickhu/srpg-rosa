@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DUNGEON_DEFS } from '@/data/dungeonCatalog';
-import { allSkillMods, getSkillMod } from '@/data/skillModCatalog';
+import { allSkillMods, getSkillMod, isExclusiveMod } from '@/data/skillModCatalog';
 import { rollLoot, startRun } from '../ProgressManager';
 import { playerDeployRowRange } from '@/battle/constants';
 import { gridSize } from '@/battle/grid';
@@ -28,9 +28,8 @@ function newRun(): MvpGameState {
 /**
  * 把全队拉到 `level` 级。
  *
- * 纹章按角色等级开闸（见 `SkillModDef.minLevel`），而新档角色是 1 级——
- * 不拉等级的话稀有 / 史诗 / 专属一条都抽不到，那几条统计断言会全数落空，
- * 而落空的原因和它们想测的「权重」毫无关系。
+ * 专属纹章按角色等级开闸。测权重 / 出率时拉到满级，否则专属进不了池，
+ * 「史诗比普通少」那条会因为池子里根本没有史诗专属而变形。
  */
 function levelAll(s: MvpGameState, level: number): void {
   for (const m of s.meta.roster) m.level = level;
@@ -113,22 +112,23 @@ describe('战后三选一的池子', () => {
   });
 
   /**
-   * 等级闸门：这是局外成长唯一能改变局内构筑的地方。
-   *
-   * 两头都要钉住。只钉「低级抽不到高级纹章」的话，把 `minLevel` 全填 1 也能过；
-   * 只钉「升级后抽得到」的话，闸门形同虚设也能过。
+   * 等级闸门只挡专属。通用按技能类型进池，1 级也该能抽到稀有通用；
+   * 专属要练到对应台阶才进池。
    */
-  describe('角色等级决定池子里有什么', () => {
-    it('1 级角色只抽得到 1 级就开放的纹章', () => {
+  describe('角色等级只决定专属纹章', () => {
+    it('1 级抽得到通用，抽不到专属', () => {
       const s = newRun();
       const rng = seeded(4242);
+      let genericRare = 0;
       for (let i = 0; i < 200; i += 1) {
         for (const p of rollLoot(s, rng)) {
           if (p.kind !== 'skillMod') continue;
           const mod = getSkillMod(p.modId)!;
-          expect(mod.minLevel, `「${mod.name}」不该出现在 1 级角色的池子里`).toBe(1);
+          expect(isExclusiveMod(mod), `1 级不该抽到专属「${mod.name}」`).toBe(false);
+          if (mod.rarity !== 'common') genericRare += 1;
         }
       }
+      expect(genericRare, '1 级连通用稀有都抽不到，升级前三选一会空得只剩普通').toBeGreaterThan(0);
     });
 
     it('练到满级之后，同一个人开始出现专属纹章', () => {

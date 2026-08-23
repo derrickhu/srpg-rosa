@@ -4,6 +4,7 @@ import { allPlayerSkillSpecs, getSkillSpec } from '@/data/skillCatalog';
 import {
   allSkillMods,
   effectiveSkillSpec,
+  exclusiveChainForSkill,
   exclusiveModsForSkill,
   getSkillMod,
   isExclusiveMod,
@@ -49,7 +50,7 @@ describe('词条折进技能规格', () => {
   });
 
   it('横扫对选点 AoE 扩大爆炸半径而不是改成绕身', () => {
-    const ring = getSkillSpec('flame_ring')!;
+    const ring = getSkillSpec('frost_ring')!;
     expect(ring.shape).toEqual({ type: 'groundPickAoE', castRange: 3, blastRadius: 1 });
     expect(effectiveSkillSpec(ring, ['wide_swing']).shape).toEqual({
       type: 'groundPickAoE',
@@ -212,6 +213,37 @@ describe('专属词条', () => {
     expect(effectiveSkillSpec(getSkillSpec('bash')!, ['ex_bash_hurl']).onHitDisplace)
       .toEqual({ who: 'target', cells: 3 });
     expect(hurl.canApply(whirl())).toBe(false);
+  });
+
+  it('炎弹爆炎溅到周围八格，并换成炎环特效键', () => {
+    const ember = getSkillSpec('ember')!;
+    const bloom = effectiveSkillSpec(ember, ['ex_ember_bloom']);
+    expect(bloom.splashRatio).toBeCloseTo(0.25, 6);
+    expect(bloom.splashChebyshev).toBe(true);
+    expect(bloom.vfxId).toBe('ember_bloom');
+    expect(ember.splashRatio).toBeUndefined();
+    expect(ember.vfxId).toBeUndefined();
+  });
+
+  it('芙洛改冰系后，旧炎环专属落到霜环上', () => {
+    const frost = getSkillSpec('frost_ring')!;
+    const ignite = getSkillMod('ex_flame_ignite')!;
+    expect(ignite.canApply(frost)).toBe(true);
+    expect(ignite.canApply(getSkillSpec('ember')!)).toBe(false);
+    expect(exclusiveModsForSkill('flame_ring').map((m) => m.id)).toContain('ex_flame_ignite');
+    expect(effectiveSkillSpec(frost, ['ex_flame_ignite']).onCastFoeEffects)
+      .toContainEqual({ kind: 'poison', dmgPerRound: 4, rounds: 2, theme: 'frost' });
+  });
+
+  it('震击专属不把冷却收到 1，减益和底招一样是 2 回合', () => {
+    const bash = getSkillSpec('bash')!;
+    const dread = effectiveSkillSpec(bash, ['ex_bash_dread']);
+    expect(dread.cooldown).toBe(bash.cooldown);
+    expect(dread.onCastFoeEffects).toContainEqual({ kind: 'spdDown', subSpd: 4, rounds: 2 });
+
+    const bone = effectiveSkillSpec(bash, ['ex_hammer_bonebreak']);
+    expect(bone.onCastFoeEffects).toContainEqual({ kind: 'atkDown', subAtk: 6, rounds: 2 });
+    expect(bone.onCastFoeEffects).toContainEqual({ kind: 'spdDown', subSpd: 5, rounds: 2 });
   });
 
   /** 射程类专属同理：技能没有射程上限时，「延长到 7 格」是把它**削弱**了 */
@@ -388,5 +420,26 @@ describe('词条描述', () => {
   it('词条 id 不重复', () => {
     const ids = allSkillMods().map((m) => m.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+describe('升级只开门专属纹章', () => {
+  it('通用纹章不跟角色等级绑', () => {
+    for (const m of allSkillMods()) {
+      if (isExclusiveMod(m)) continue;
+      expect(m.minLevel, `通用纹章「${m.name}」不该设等级闸门`).toBe(1);
+    }
+  });
+
+  it('同一招的专属按档位错开，同一级不超过一条', () => {
+    for (const id of mainSlotSkillIds()) {
+      const spec = getSkillSpec(id)!;
+      const chain = exclusiveChainForSkill(spec);
+      const levels = chain.map((m) => m.minLevel);
+      expect(new Set(levels).size, `「${spec.name}」有两条专属开在同一级：${chain.map((m) => m.name).join('、')}`).toBe(levels.length);
+      for (const lv of levels) {
+        expect(lv, `「${spec.name}」专属开在 1 级，升级就没有东西可开`).toBeGreaterThan(1);
+      }
+    }
   });
 });

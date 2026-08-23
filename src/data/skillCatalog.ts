@@ -72,24 +72,23 @@ export type SkillShape =
    * 打中心 `blastRadius` 格内（含中心格）所有敌人。
    *
    * 和 `discAoE` 的区别是中心可以不在自己脚下——战棋远程法师的标准用法。
-   * 「炎环」从绕身一圈改成这个形状之后，奥莉的炎弹（点杀）和芙洛的炎环（选点群伤）
-   * 才真正是两种打法，而不是同一招差一个半径。
+   * 奥莉的炎弹是 3 格内点杀，芙洛的霜环是选点群伤，才真正是两种打法。
    */
   | { type: 'groundPickAoE'; castRange: number; blastRadius: number }
   /**
    * 选**一个**敌人。点谁由玩家或 AI 决定，技能只规定够得着哪里。
    *
-   * - `reach: 'exact'`（缺省）：距离**正好等于** d 的环上。近战突刺型要的就是这个——
-   *   「长驱突刺」取 2 表示得隔着一格才捅得到，贴脸反而不行，这是它的代价。
-   * - `reach: 'within'`：距离 <= d 的整片区域内，含贴脸格。远程点杀要的是这个——
-   *   弓手站 3 格外能射、被贴脸了也能射，射程是个范围而不是一条环。
+   * - `reach: 'exact'`（缺省）：距离**正好等于** d 的环上。
+   * - `reach: 'within'`：距离 <= d 的整片区域内，含贴脸格。远程点杀和长驱突刺
+   *   要的是这个——够得着远处，被贴脸了也能打。
    *
-   * 缺省留在 `exact` 是因为先有近战突刺才有远程点杀，改默认值会静默挪动
-   * 「长驱突刺」和「野草缠足」的可打范围。
+   * 缺省留在 `exact` 是因为先有环状点杀才有整片射程，改默认值会静默挪动
+   * 「野草缠足」这类邻格技以外、仍按环理解的技能。
    *
    * `axisOnly`：只能打**同行或同列**的目标。带 `onHitDisplace` 的技能必须开它——
    * 位移方向是「施法者 → 目标」的延长线，而格子是四向的，斜向目标算不出唯一的
-   * 「背后一格」。开了之后曼哈顿 2 的环从 8 格收成 4 格，这是突刺该有的样子。
+   * 「背后一格」。开了之后曼哈顿 2 的环从 8 格收成十字 4 格；`reach: 'within'`
+   * 则是十字 8 格（贴脸 4 + 隔一格 4）。
    */
   | {
       type: 'neighborPickFoe';
@@ -127,8 +126,11 @@ export type SkillCastSelfEffect =
 export type SkillCastFoeEffect =
   | { kind: 'atkDown'; subAtk: number; rounds: number }
   | { kind: 'spdDown'; subSpd: number; rounds: number }
-  /** 中毒：每轮开始扣血，无视克制与地形，见 `tickTimedBattleEffects` */
-  | { kind: 'poison'; dmgPerRound: number; rounds: number };
+  /**
+   * 持续扣血。结算同一条（每轮开始、无视克制与地形），**玩家看到的名字和特效按 `theme` 分**：
+   * 缺省 / `poison` = 中毒（紫雾）；`frost` = 冻伤（霜噬，冰系特效后做，现在不叠紫雾）。
+   */
+  | { kind: 'poison'; dmgPerRound: number; rounds: number; theme?: 'poison' | 'frost' };
 
 /** 对选中友方单位施加的限时 buff（成功施放且命中目标后） */
 export type SkillCastAllyEffect =
@@ -258,6 +260,19 @@ export interface SkillSpec {
    */
   splashRatio?: number;
   /**
+   * 溅射尺子。缺省只打曼哈顿 = 1 的正交四格；`true` 改切比雪夫 = 1，即周围八格含斜角。
+   *
+   * 通用「溅射」词条保持四格，避免把贯枪 / 叠层溅射静默加大一圈。要八格的专属自己打开。
+   */
+  splashChebyshev?: boolean;
+  /**
+   * `SKILL_VFX` 查找键。缺省 = 技能 id。
+   *
+   * 词条可以改这一项：炎弹挂上「爆炎」之后，命中从火球爆炸换成炎环铺开，
+   * 结算形状没变、画面要能看出这是质变。只影响回放，不参与伤害。
+   */
+  vfxId?: string;
+  /**
    * 施放后对**作用范围内的格子**做什么（点燃可燃地形）。见 `skills.applyCastTerrainEffects`。
    *
    * 只能挂在 AoE 形状的技能上：单体点名技能的作用范围是整个瞄准环，
@@ -332,6 +347,9 @@ const SPECS: Record<string, SkillSpec> = {
    * 而减益是所有人都能通过纹章拿到的东西；击退是只有他能做的**改变棋盘**的事：
    * 把即将咬到弥尔的那个顶开两格，等于凭空造出一回合。减速仍然留着，
    * 它俩指向同一件事——被格隆盯上的那个永远差一步。
+   *
+   * 倍率必须压过普攻：单体招牌和普攻并排放时，写成 70% 读起来像这一招更弱。
+   * 格隆攻击是全队最低，1.2 打出来的绝对数仍然不大，爽感靠「比普攻疼」和击退本身。
    */
   bash: {
     id: 'bash',
@@ -342,7 +360,7 @@ const SPECS: Record<string, SkillSpec> = {
     role: 'damage',
     displayKind: 'singleBash',
     shape: { type: 'neighborPickFoe', manhattan: 1, axisOnly: true },
-    damage: { kind: 'scaledAtk', atkMul: 0.7 },
+    damage: { kind: 'scaledAtk', atkMul: 1.2 },
     onCastFoeEffects: [{ kind: 'spdDown', subSpd: 2, rounds: 2 }],
     onHitDisplace: { who: 'target', cells: 2 },
   },
@@ -364,26 +382,32 @@ const SPECS: Record<string, SkillSpec> = {
     onCastFoeEffects: [{ kind: 'atkDown', subAtk: 4, rounds: 2 }],
   },
   /**
-   * 岚骑招牌：**隔一格突刺 + 突进到目标背后**，`timing: 'beforeMove'` 所以捅完还能走。
+   * 岚骑招牌：**同行同列 1～2 格突刺 + 突进到目标背后**，`timing: 'beforeMove'` 所以捅完还能走。
    *
    * 这一招原先只是「弥补骑兵只有被动」的填充位——2 格外点一下，0.9 倍率，没别的。
    * 收编成招牌后补上了骑兵该有的东西：命中即穿过目标落到它背后 2 格
    * （`onHitDisplace.who: 'self'`）。三件事同时发生，都是别人做不到的：
    * 一次施放跨了 4 格、绕到敌阵背后、并且因为算「移动过」而点亮冲锋纹章的普攻加成。
    *
-   * `axisOnly` 是这一招的**代价**也是它的语法：可打格从曼哈顿 2 的 8 格收成 4 格
-   * （正上下左右各隔一格），因为斜向目标没有唯一的「背后」。
+   * `axisOnly` 是这一招的**代价**也是它的语法：可打格是同行同列 1～2 格
+   * （十字 8 格），因为斜向目标没有唯一的「背后」。
+   *
+   * `reach: 'within'`：贴脸和隔一格都能捅。原先「正好 2 格」在敌人贴上来之后
+   * 反而点不出来，而突进本身贴脸同样成立（落到身后 2 格）。
+   *
+   * 单体必须压过普攻。突进已经附赠走位和冲锋普攻，再把冷却留在 2 会变成每回合捅穿，
+   * 所以倍率收到 1.25、冷却收到 3——爽在那一记，不在频率。
    */
   lance_thrust: {
     id: 'lance_thrust',
     name: '长驱突刺',
-    cooldown: 2,
+    cooldown: 3,
     exclusiveProfession: 'cavalry',
     timing: 'beforeMove',
     role: 'damage',
     displayKind: 'singleBash',
-    shape: { type: 'neighborPickFoe', manhattan: 2, axisOnly: true },
-    damage: { kind: 'scaledAtk', atkMul: 0.9 },
+    shape: { type: 'neighborPickFoe', manhattan: 2, reach: 'within', axisOnly: true },
+    damage: { kind: 'scaledAtk', atkMul: 1.25 },
     onHitDisplace: { who: 'self', cells: 2 },
   },
   /**
@@ -578,9 +602,9 @@ const SPECS: Record<string, SkillSpec> = {
     timing: 'beforeMove',
     role: 'control',
     displayKind: 'whirlwind',
-    // 邻格而不是 2 格环：`neighborPickFoe` 的距离是**正好等于**，取 2 的话
+    // 邻格而不是 2 格环：缺省 reach 是正好等于，取 2 的话
     // 贴到脸上的敌人反而缠不住，而那恰恰是最需要缠住的那个。
-    // 已有的 lance_thrust / hex_mark 是 2 格环，那两个是「够得着远处」的定位，不一样。
+    // hex_mark 仍是 2 格环；长驱突刺已经改成 2 格内。
     shape: { type: 'neighborPickFoe', manhattan: 1 },
     damage: { kind: 'none' },
     shopPrice: 6,
@@ -1115,6 +1139,9 @@ const SPECS: Record<string, SkillSpec> = {
   /**
    * 法师默认：3 格内点杀。和弓手「速射」同形，差在职业和倍率；
    * 点谁由玩家或 AI 决定，不写进技能。
+   *
+   * 单体招牌必须压过普攻。奥莉攻击高、这一招又没有附带位移，1.4 是「就是一发火球」
+   * 该有的数字；冷却仍是 2——法师的爽感是频繁砸出比普攻明显更疼的一发，不是等很久。
    */
   ember: {
     id: 'ember',
@@ -1125,19 +1152,34 @@ const SPECS: Record<string, SkillSpec> = {
     role: 'damage',
     displayKind: 'lineShot',
     shape: { type: 'neighborPickFoe', manhattan: 3, reach: 'within' },
-    damage: { kind: 'scaledAtk', atkMul: 0.75 },
+    damage: { kind: 'scaledAtk', atkMul: 1.4 },
     shopPrice: 7,
   },
   /**
-   * 芙洛招牌：3 格内任选一点，对该点周围 1 格（含落点）的敌人放火。
-   *
-   * 原先是绕身正好 2 格外的环——贴脸反而漏，和炎弹的「3 格内点名」互为另一头，
-   * 但中心锁在自己脚下。改成选点之后它才是远程法师该有的招：站在后排把火圈
-   * 扣到敌群中间，而不是自己走进去炸。
+   * 旧「炎环」：选点火圈。芙洛改走冰系之后这招没有主人，特效图集留给奥莉的
+   * 「爆炎」纹章复用——火球打中再铺一圈火舌，才看得出那条纹章把单体变成了辐射。
    */
   flame_ring: {
     id: 'flame_ring',
     name: '炎环',
+    cooldown: 3,
+    exclusiveProfession: 'mage',
+    timing: 'beforeMove',
+    role: 'damage',
+    reserved: true,
+    displayKind: 'whirlwind',
+    shape: { type: 'groundPickAoE', castRange: 3, blastRadius: 1 },
+    damage: { kind: 'scaledAtk', atkMul: 0.5 },
+  },
+  /**
+   * 芙洛招牌：3 格内任选一点，对该点周围 1 格（含落点）的敌人放霜。
+   *
+   * 形状和旧炎环一样，差在元素。冰系特效还没重做，配方先用冰蓝收束 + 星爆占位，
+   * 不要再穿火舌环的皮——那张图已经给奥莉的爆炎用了。
+   */
+  frost_ring: {
+    id: 'frost_ring',
+    name: '霜环',
     cooldown: 3,
     exclusiveProfession: 'mage',
     timing: 'beforeMove',
@@ -1220,14 +1262,14 @@ const DEFAULT_SKILL_ID_BY_KIND: Record<UnitKind, string> = {
 /**
  * 老存档 id 的搬迁表。
  *
- * - `arcane_pulse`：奥莉从「奥术脉冲」收成炎系「炎环」之前的存档
+ * - `arcane_pulse`：奥莉从「奥术脉冲」收成炎系之前的存档；芙洛改冰系后落到霜环
  * - `charge`：「冲锋」不再是一个占技能位的招，改成岚骑的**被动纹章**
  *   （`ex_lance_charge`）。老档里带着 charge 的岚骑读进来直接变成带长驱突刺，
  *   而不是落到一个查不到的 id 上——`resolveBattleSkillIdForCharacter` 的兜底
  *   会静默换招，那正是我们要避免的「不报错但玩家发现自己的招没了」。
  */
 const LEGACY_SKILL_IDS: Record<string, string> = {
-  arcane_pulse: 'flame_ring',
+  arcane_pulse: 'frost_ring',
   charge: 'lance_thrust',
 };
 
@@ -1268,7 +1310,13 @@ export function defaultSkillId(kind: UnitKind): string {
 export function skillDefForId(id: string): SkillDef | undefined {
   const s = SPECS[remapLegacySkillId(id)];
   if (!s) return undefined;
-  return { id: s.id, name: s.name, cooldown: s.cooldown, kind: s.displayKind };
+  return {
+    id: s.id,
+    name: s.name,
+    cooldown: s.cooldown,
+    kind: s.displayKind,
+    ...(s.vfxId ? { vfxId: s.vfxId } : {}),
+  };
 }
 
 /** 某职业是否允许学习/携带该技能（通用技 exclusiveProfession === null 恒为 true） */

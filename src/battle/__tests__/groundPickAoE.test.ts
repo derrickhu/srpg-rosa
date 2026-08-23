@@ -15,7 +15,7 @@ function mage(pos: { x: number; y: number }): UnitState {
     pos: { ...pos },
     skillCd: 0,
     movedInTurn: false,
-    battleSkill: skillDefForId('flame_ring') ?? undefined,
+    battleSkill: skillDefForId('frost_ring') ?? undefined,
   };
 }
 
@@ -32,7 +32,7 @@ function slime(uid: string, pos: { x: number; y: number }): UnitState {
   };
 }
 
-describe('炎环 groundPickAoE', () => {
+describe('霜环 groundPickAoE', () => {
   it('瞄准给的是落点格而不是点名敌人', () => {
     const self = mage({ x: 1, y: 3 });
     const e1 = slime('e1', { x: 1, y: 0 });

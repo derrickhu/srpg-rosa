@@ -52,7 +52,12 @@ export function tickTimedBattleEffects(units: UnitState[]): PoisonTick[] {
           next.push({ kind: 'spdBonus', addSpd: e.addSpd, roundsLeft: left });
           break;
         case 'poison':
-          next.push({ kind: 'poison', dmgPerRound: e.dmgPerRound, roundsLeft: left });
+          next.push({
+            kind: 'poison',
+            dmgPerRound: e.dmgPerRound,
+            roundsLeft: left,
+            ...(e.theme === 'frost' ? { theme: 'frost' as const } : {}),
+          });
           break;
         case 'guard':
           next.push({ kind: 'guard', reduceRatio: e.reduceRatio, roundsLeft: left });
@@ -148,7 +153,15 @@ function mergeFoeCastEffect(list: TimedBattleEffect[], e: SkillCastFoeEffect): T
     // 毒也是新盖旧：多层「淬毒」在词条侧已经合成一条更高的 dmgPerRound，
     // 这里再叠加就成了同一个词条按施放次数无限翻倍。
     const rest = list.filter((x) => x.kind !== 'poison');
-    return [...rest, { kind: 'poison', dmgPerRound: e.dmgPerRound, roundsLeft: e.rounds }];
+    return [
+      ...rest,
+      {
+        kind: 'poison',
+        dmgPerRound: e.dmgPerRound,
+        roundsLeft: e.rounds,
+        ...(e.theme === 'frost' ? { theme: 'frost' as const } : {}),
+      },
+    ];
   }
   const rest = list.filter((x) => x.kind !== 'spdDown');
   return [...rest, { kind: 'spdDown', subSpd: e.subSpd, roundsLeft: e.rounds }];

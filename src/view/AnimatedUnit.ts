@@ -18,7 +18,7 @@ import {
   hitKnockDisplacement,
   syncHitFlashOverlay,
 } from '@/view/battle/hitFeel';
-import { isDisplayLive } from '@/view/pixiLive';
+import { isDisplayLive, safeDestroy } from '@/view/pixiLive';
 import { attachCorePass } from '@/view/vfxBlend';
 
 /** 缺 metrics 的旧清单回退用的源尺寸基准（Godot 帧为 512px 方图） */
@@ -401,11 +401,10 @@ export function playFxAnimation(
   const speed = opts.playbackSpeed ?? 1;
   sprite.animationSpeed = ((clip.fps || 16) / 60) * speed;
   sprite.onComplete = () => {
-    if (!sprite.destroyed) {
-      layer.removeChild(sprite);
-      // 核心层是子节点，跟着一起回收
-      sprite.destroy({ children: true });
-    }
+    if (!isDisplayLive(sprite)) return;
+    sprite.parent?.removeChild(sprite);
+    // 核心层是子节点，跟着一起回收。父层若已整棵拆掉，safeDestroy 会直接跳过。
+    safeDestroy(sprite, { children: true });
   };
   layer.addChild(sprite);
   sprite.gotoAndPlay(0);

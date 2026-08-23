@@ -153,6 +153,8 @@ export const UI_BUNDLE: AssetBundleDef = {
     skill_field_bless: 'images/ui/skill_field_bless.png',
     skill_ember: 'images/ui/skill_ember.png',
     skill_flame_ring: 'images/ui/skill_flame_ring.png',
+    // 霜环图标待重做，先借用炎环那张，避免面板先变成灰圆
+    skill_frost_ring: 'images/ui/skill_flame_ring.png',
     skill_heal_touch: 'images/ui/skill_heal_touch.png',
     skill_ward_prayer: 'images/ui/skill_ward_prayer.png',
     skill_temp_gl_snare: 'images/ui/skill_temp_gl_snare.png',

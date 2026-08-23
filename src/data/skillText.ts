@@ -22,9 +22,9 @@ export function describeSkillRole(role: SkillRole): string {
 /**
  * 选单体技能够得着哪里。
  *
- * `exact`（缺省）和 `within` 必须在文案里读得出来：「长驱突刺」要正好隔一格才捅得到、
- * 贴脸反而不行，「速射」则是 3 格内随便站都能射。这个区别直接决定玩家怎么站位，
- * 而原先两种都写成「周围 N 格」，把突刺的那条限制彻底藏掉了。
+ * `exact`（缺省）和 `within` 必须在文案里读得出来：「长驱突刺」是同行同列 2 格内、
+ * 「速射」是 3 格内随便站都能射。这个区别直接决定玩家怎么站位，
+ * 而原先两种都写成「周围 N 格」，把轴向 / 环状限制彻底藏掉了。
  */
 export function describeReach(manhattan: number, reach: 'exact' | 'within' | undefined): string {
   if (reach === 'within') return `${manhattan} 格内`;
@@ -45,7 +45,7 @@ export function describeSkillShape(spec: SkillSpec): string {
         : `周围 ${shape.radius} 格方形内所有敌人（含斜角）`;
     case 'neighborPickFoe':
       return shape.axisOnly
-        ? `同行或同列${describeReach(shape.manhattan, shape.reach)}选一个敌人`
+        ? `同行或同列 ${describeReach(shape.manhattan, shape.reach)} 选一个敌人`
         : `${describeReach(shape.manhattan, shape.reach)}选一个敌人`;
     case 'neighborPickAlly':
       return `${describeReach(shape.manhattan, shape.reach)}选一个友方`;
@@ -102,7 +102,11 @@ export function describeSkillSpec(spec: SkillSpec): string[] {
     out.push(`处决: 目标血量低于 ${line}% 时伤害 +${plus}%`);
   }
   if (spec.splashRatio) {
-    out.push(`溅射: 目标周围敌人受到 ${Math.round(spec.splashRatio * 100)}% 伤害`);
+    out.push(
+      spec.splashChebyshev
+        ? `溅射: 目标周围八格敌人受到 ${Math.round(spec.splashRatio * 100)}% 伤害`
+        : `溅射: 目标邻格敌人受到 ${Math.round(spec.splashRatio * 100)}% 伤害`,
+    );
   }
   // 位移是这一招在棋盘上做的事，比伤害数字更影响玩家怎么用它——不写出来，
   // 玩家只会在第一次施放时被自己突然出现在敌阵后面吓一跳
@@ -128,7 +132,13 @@ export function describeSkillSpec(spec: SkillSpec): string[] {
     switch (e.kind) {
       case 'atkDown': out.push(`敌方攻击 -${e.subAtk}，${e.rounds} 回合`); break;
       case 'spdDown': out.push(`敌方速度 -${e.subSpd}，${e.rounds} 回合`); break;
-      case 'poison': out.push(`中毒: 每回合 -${e.dmgPerRound} 血，${e.rounds} 回合`); break;
+      case 'poison':
+        out.push(
+          e.theme === 'frost'
+            ? `冻伤: 每回合 -${e.dmgPerRound} 血，${e.rounds} 回合`
+            : `中毒: 每回合 -${e.dmgPerRound} 血，${e.rounds} 回合`,
+        );
+        break;
       default: exhausted(e);
     }
   }

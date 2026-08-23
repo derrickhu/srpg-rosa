@@ -71,7 +71,12 @@ function cloneUnits(units: UnitState[]): UnitState[] {
         case 'spdBonus':
           return { kind: 'spdBonus' as const, addSpd: e.addSpd, roundsLeft: e.roundsLeft };
         case 'poison':
-          return { kind: 'poison' as const, dmgPerRound: e.dmgPerRound, roundsLeft: e.roundsLeft };
+          return {
+            kind: 'poison' as const,
+            dmgPerRound: e.dmgPerRound,
+            roundsLeft: e.roundsLeft,
+            ...(e.theme === 'frost' ? { theme: 'frost' as const } : {}),
+          };
         case 'guard':
           return { kind: 'guard' as const, reduceRatio: e.reduceRatio, roundsLeft: e.roundsLeft };
       }

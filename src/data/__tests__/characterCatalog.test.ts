@@ -122,6 +122,22 @@ describe('角色之间的打法不能撞车', () => {
       seen.set(key, c.name);
     }
   });
+
+  /**
+   * 单体招牌必须压过普攻。范围技可以低于 100%（按人头均价），
+   * 但点杀写成 70% 和普攻并排放，读起来像这一招更弱。
+   */
+  it('招牌单体伤害技的倍率高于普攻', () => {
+    for (const c of CHARACTER_DEFS) {
+      const spec = getSkillSpec(c.defaultSkillId)!;
+      if (spec.damage.kind !== 'scaledAtk') continue;
+      if (spec.shape.type !== 'neighborPickFoe') continue;
+      expect(
+        spec.damage.atkMul,
+        `${c.name} 的「${spec.name}」是单体却只有攻击力×${Math.round(spec.damage.atkMul * 100)}%`,
+      ).toBeGreaterThan(1);
+    }
+  });
 });
 
 /**

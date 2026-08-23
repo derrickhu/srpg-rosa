@@ -177,7 +177,7 @@ function buildRangeRow(
   } else if (shape.type === 'neighborPickFoe') {
     gridR = shape.manhattan + 1;
     rangeDesc = shape.axisOnly
-      ? `同行或同列${describeReach(shape.manhattan, shape.reach)}\n点选一个敌人`
+      ? `同行或同列 ${describeReach(shape.manhattan, shape.reach)}\n点选一个敌人`
       : `${describeReach(shape.manhattan, shape.reach)}\n点选一个敌人`;
   } else if (shape.type === 'neighborPickAlly') {
     gridR = shape.manhattan + 1;
@@ -220,9 +220,9 @@ function buildRangeRow(
      * 整片（曼哈顿 <= md）还是一圈环（正好 = md）。
      *
      * 这里原先无条件按整片画，而除 `discAoE` 和 `reach: 'within'` 以外的形状都是环：
-     * 「长驱突刺」（正好 2 格）的图因此多画了 4 个贴脸格，玩家照图走到敌人旁边，
+     * 「咒印」这类正好 2 格的环，图若多画 4 个贴脸格，玩家照图走到敌人旁边，
      * 技能却点不出来。md 为 1 时环和整片恰好一样，所以这个错一直被邻格技能盖着，
-     * 只有 2 格以上的技能会露出来。
+     * 只有 2 格以上的 exact 技能会露出来。
      */
     const solid = shape.type === 'discAoE'
       || (shape.type === 'neighborPickFoe' && shape.reach === 'within');
@@ -456,6 +456,13 @@ export interface UnitInfoPanelOptions {
    * 同一屏里出现两处生命值是这一页原来最大的噪音来源。
    */
   showStats?: boolean;
+  /**
+   * 技能段画在普攻前面。
+   *
+   * 角色详情默认打开的是「技能」分页，玩家进来就是要看这一招怎么打；
+   * 普攻那两行（射程 / 近战）是次要信息，再放在技能上面等于把真正的内容顶出首屏。
+   */
+  skillsBeforeStrike?: boolean;
 }
 
 export function createUnitInfoPanel(
@@ -526,69 +533,90 @@ export function createUnitInfoPanel(
     cy += 8;
   }
 
-  const secStrike = new PIXI.Text(model.strikeTitle, SECTION_STYLE);
-  secStrike.x = 12;
-  secStrike.y = cy;
-  panel.addChild(secStrike);
-  cy += LINE_H + 2;
-  cy += addStatGrid(panel, model.strike, panelW, cy) + 8;
-
-  for (const sk of model.skills) {
-    panel.addChild(separator(panelW, cy));
-    cy += 8;
-
-    const sec = new PIXI.Text(sk.title, SECTION_STYLE);
-    sec.x = 12;
-    sec.y = cy;
-    panel.addChild(sec);
+  const drawStrike = (): void => {
+    const secStrike = new PIXI.Text(model.strikeTitle, SECTION_STYLE);
+    secStrike.x = 12;
+    secStrike.y = cy;
+    panel.addChild(secStrike);
     cy += LINE_H + 2;
+    cy += addStatGrid(panel, model.strike, panelW, cy) + 8;
+  };
 
-    // 技能图标：战斗操作条、三选一卡片、这里用的是同一张图。
-    // 玩家在这三处认的是同一个符号，换到战斗里那排无字圆钮才不用重新学。
-    const icon = createUiIcon(sk.iconKey, 22);
-    if (icon) {
-      icon.x = 16;
-      icon.y = cy - 3;
-      panel.addChild(icon);
-    }
-    const nameX = icon ? 42 : 16;
+  const drawSkills = (): void => {
+    for (const [i, sk] of model.skills.entries()) {
+      if (i > 0) {
+        panel.addChild(separator(panelW, cy));
+        cy += 8;
+      }
+      const sec = new PIXI.Text(sk.title, SECTION_STYLE);
+      sec.x = 12;
+      sec.y = cy;
+      panel.addChild(sec);
+      cy += LINE_H + 2;
 
-    const skName = makeText(sk.name, 'uiStrong', { fill: sk.nameColor, fontSize: 13 });
-    skName.x = nameX;
-    skName.y = cy;
-    panel.addChild(skName);
+      // 技能图标：战斗操作条、三选一卡片、这里用的是同一张图。
+      // 玩家在这三处认的是同一个符号，换到战斗里那排无字圆钮才不用重新学。
+      const icon = createUiIcon(sk.iconKey, 22);
+      if (icon) {
+        icon.x = 16;
+        icon.y = cy - 3;
+        panel.addChild(icon);
+      }
+      const nameX = icon ? 42 : 16;
 
-    const cdText = `CD: ${sk.spec.cooldown}回合${sk.cooldownNote ?? ''}`;
-    const cdTx = makeText(cdText, 'caption', {
-      fill: sk.spec.cooldown < sk.baseSpec.cooldown ? 0x3a8a5a : 0x888888,
-    });
-    cdTx.x = nameX + skName.width + 10;
-    cdTx.y = cy + 2;
-    panel.addChild(cdTx);
-    cy += LINE_H;
+      const skName = makeText(sk.name, 'uiStrong', { fill: sk.nameColor, fontSize: 13 });
+      skName.x = nameX;
+      skName.y = cy;
+      panel.addChild(skName);
 
-    const descTx = makeText([...describeSkillSpec(sk.spec), ...(sk.extraDesc ?? [])].join('\n'), 'body', {
-      fill: 0x555544, fontSize: 10, lineHeight: 16,
-      wordWrap: true, wordWrapWidth: panelW - 32,
-    });
-    descTx.x = 16;
-    descTx.y = cy;
-    panel.addChild(descTx);
-    cy += descTx.height + 8;
-
-    if (sk.showRange) {
-      const { view, height } = buildRangeRow(sk.spec, sk.modIds, panelW, (hitCells) => {
-        let phase = 0;
-        tickers.push(() => {
-          phase += 0.06;
-          const a = 0.45 + 0.35 * Math.sin(phase);
-          for (const c of hitCells) c.alpha = a;
-        });
+      const cdText = `CD: ${sk.spec.cooldown}回合${sk.cooldownNote ?? ''}`;
+      const cdTx = makeText(cdText, 'caption', {
+        fill: sk.spec.cooldown < sk.baseSpec.cooldown ? 0x3a8a5a : 0x888888,
       });
-      view.y = cy;
-      panel.addChild(view);
-      cy += height + 8;
+      cdTx.x = nameX + skName.width + 10;
+      cdTx.y = cy + 2;
+      panel.addChild(cdTx);
+      cy += LINE_H;
+
+      const descTx = makeText([...describeSkillSpec(sk.spec), ...(sk.extraDesc ?? [])].join('\n'), 'body', {
+        fill: 0x555544, fontSize: 10, lineHeight: 16,
+        wordWrap: true, wordWrapWidth: panelW - 32,
+      });
+      descTx.x = 16;
+      descTx.y = cy;
+      panel.addChild(descTx);
+      cy += descTx.height + 8;
+
+      if (sk.showRange) {
+        const { view, height } = buildRangeRow(sk.spec, sk.modIds, panelW, (hitCells) => {
+          let phase = 0;
+          tickers.push(() => {
+            phase += 0.06;
+            const a = 0.45 + 0.35 * Math.sin(phase);
+            for (const c of hitCells) c.alpha = a;
+          });
+        });
+        view.y = cy;
+        panel.addChild(view);
+        cy += height + 8;
+      }
     }
+  };
+
+  if (opts?.skillsBeforeStrike) {
+    drawSkills();
+    if (model.skills.length > 0) {
+      panel.addChild(separator(panelW, cy));
+      cy += 8;
+    }
+    drawStrike();
+  } else {
+    drawStrike();
+    if (model.skills.length > 0) {
+      panel.addChild(separator(panelW, cy));
+      cy += 8;
+    }
+    drawSkills();
   }
 
   cy += 12;

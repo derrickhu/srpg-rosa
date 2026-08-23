@@ -10,8 +10,10 @@ import { computeBoardLayout } from '@/view/boardLayout';
 import { UNIT_DEFS } from '@/data/unitDefs';
 import { POTION_DEFS } from '@/data/potionCatalog';
 import { getSkillSpec } from '@/data/skillCatalog';
+import { specAppliesPoison, unitSkillSpec } from '@/battle/skills';
 import {
   CHARGE_VFX,
+  POISON_HIT_VFX,
   SKILL_VFX,
   attackRecipeFor,
   recipeAnimSets,
@@ -163,9 +165,11 @@ export function animSetsForUnits(units: readonly UnitState[]): string[] {
     // 主槽 / 临时槽 / 敌方皮肤：按实际挂上的技能预取（漏掉临时技能会静默退回静态贴图）
     for (const sk of [u.battleSkill, u.tempSkill]) {
       if (!sk) continue;
-      const vfxKey = sk.vfxId ?? sk.id;
+      const spec = unitSkillSpec(u, sk.id);
+      const vfxKey = spec?.vfxId ?? sk.vfxId ?? sk.id;
       const recipe = SKILL_VFX[vfxKey] ?? SKILL_VFX[sk.id];
       if (recipe) for (const id of recipeAnimSets(recipe)) ids.add(id);
+      if (spec && specAppliesPoison(spec)) ids.add(POISON_HIT_VFX.set);
     }
   }
   return [...ids];
@@ -1805,7 +1809,7 @@ export function createBattlePlaybackView(
         showSkillLabel(cx, cy - Math.max(42, cell * 0.6), ev.skillName);
         floatAtkTerrain(cx, cy - Math.max(22, cell * 0.32), ev.atkTerrainNote);
 
-        const vfxKey = skillVfxOverride.get(`${ev.uid}:${ev.skillId}`) ?? ev.skillId;
+        const vfxKey = ev.vfxId ?? skillVfxOverride.get(`${ev.uid}:${ev.skillId}`) ?? ev.skillId;
         const recipe = SKILL_VFX[vfxKey] ?? SKILL_VFX[ev.skillId];
         /**
          * 按离施法者的距离排序。两处都要用：贯穿技能靠它决定途经顺序，
@@ -1832,6 +1836,17 @@ export function createBattlePlaybackView(
               floatDamage(tt.x, tt.y, h.damage);
               floatTerrainNote(tt.x, tt.y, h.defTerrainNote, h.guardNote);
               floatModNote(tt.x, tt.y, h.modNote);
+              // 处决是逐目标的：一圈里只有残血的那个身上多一记斩杀闪光
+              if (h.modNote === '处决' && recipe?.executeImpact) {
+                playFlash(recipe.executeImpact, { x: cx, y: cy }, { x: tt.x, y: tt.y });
+              }
+              if (h.splash && recipe?.splashImpact) {
+                playFlash(recipe.splashImpact, { x: cx, y: cy }, { x: tt.x, y: tt.y });
+              }
+            }
+            // 毒是状态，不是伤害：无伤上毒（万一有）也要爆雾，否则淬毒看起来没挂上
+            if (h.poisoned) {
+              playFlash(POISON_HIT_VFX, { x: cx, y: cy }, { x: tt.x, y: tt.y });
             }
           }
         };

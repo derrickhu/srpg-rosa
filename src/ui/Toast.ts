@@ -1,5 +1,6 @@
 import * as PIXI from 'pixi.js';
 import { textStyle } from '@/theme/typography';
+import { isDisplayLive, safeDestroy } from '@/view/pixiLive';
 
 export function showToast(
   parent: PIXI.Container,
@@ -14,7 +15,10 @@ export function showToast(
   t.y = opts?.y ?? 24;
   parent.addChild(t);
   setTimeout(() => {
-    if (!t.destroyed) parent.removeChild(t);
-    t.destroy();
+    // 这 1.6s 里玩家已经切走了页面：父节点会把 Text 一起拆掉。
+    // 再无条件 destroy 就会在空贴图上调 off，微信直接抛 MiniProgramError。
+    if (!isDisplayLive(t)) return;
+    t.parent?.removeChild(t);
+    safeDestroy(t);
   }, opts?.durationMs ?? 1600);
 }

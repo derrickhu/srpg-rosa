@@ -64,6 +64,7 @@ import { createTabBar, tabBarHeight, type TabId } from '@/view/TabBar';
 import { C } from '@/view/mvpTheme';
 import { loadGameFonts } from '@/core/FontLoader';
 import { makeText } from '@/theme/typography';
+import { showToast as showSceneToast } from '@/ui/Toast';
 import { SceneManager } from '@/scene/SceneManager';
 import type { Scene } from '@/scene/Scene';
 import { makeButton } from '@/ui/Button';
@@ -838,13 +839,6 @@ export class GameFlow {
   private showToast(msg: string): void {
     const current = this.scenes.current;
     if (!current) return;
-    const t = makeText(msg, 'ui', { fill: 0xffcc66 });
-    t.x = 16;
-    t.y = 24;
-    current.root.addChild(t);
-    setTimeout(() => {
-      if (!t.destroyed) current.root.removeChild(t);
-      t.destroy();
-    }, 1600);
+    showSceneToast(current.root, msg);
   }
 }

@@ -45,7 +45,7 @@ export interface UnitBaseBlock {
  */
 export type TimedBattleEffect =
   | { kind: 'taunt'; roundsLeft: number }
-  | { kind: 'poison'; dmgPerRound: number; roundsLeft: number }
+  | { kind: 'poison'; dmgPerRound: number; roundsLeft: number; theme?: 'poison' | 'frost' }
   | { kind: 'atkBonus'; addAtk: number; roundsLeft: number }
   | { kind: 'atkDown'; subAtk: number; roundsLeft: number }
   | { kind: 'spdDown'; subSpd: number; roundsLeft: number }
@@ -200,6 +200,16 @@ export type SkillHit = {
   modNote?: string;
   /** 该目标身上限时减伤对这一下的影响，如「减伤 -25%」；逐目标记录，同 `defTerrainNote` */
   guardNote?: string;
+  /**
+   * 这一击给目标挂上了中毒。回放层据此叠紫雾，不事后再去读规格——
+   * 溅射只溅伤害不溅 debuff，溅射 hit 不会带这个。
+   */
+  poisoned?: true;
+  /**
+   * 溅射命中（不是主目标）。回放层据此叠「周围伤」闪光，
+   * 主目标只播技能自己的命中，避免主目标身上两套特效糊在一起。
+   */
+  splash?: true;
 };
 
 export type BattleEvent =
@@ -239,6 +249,11 @@ export type BattleEvent =
        * 空地点火时根本没有 hit，不写这个字段特效会落到施法者脚上。
        */
       aimCell?: Vec2;
+      /**
+       * 词条改过特效键时写在这里（如炎弹「爆炎」→ `ember_bloom`）。
+       * 回放层优先读它，不要事后再去折规格——自动模式整场跑完再播，那时再算会偏。
+       */
+      vfxId?: string;
       hits: SkillHit[];
       /** 施法者所站地形对伤害的影响，如「高地 +25%」；无影响时缺省 */
       atkTerrainNote?: string;

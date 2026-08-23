@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js';
 import { makeText, type TextRole } from '@/theme/typography';
-import { isDisplayLive } from '@/view/pixiLive';
+import { isDisplayLive, safeDestroy } from '@/view/pixiLive';
 
 /**
  * 战斗飘字——打击反馈的文字层。
@@ -213,9 +213,9 @@ export function spawnCombatFloat(
         t.scale.set(startScale * 1.08);
       }
     });
-    if (!t.destroyed) {
-      host.layer.removeChild(t);
-      t.destroy();
+    if (isDisplayLive(t)) {
+      t.parent?.removeChild(t);
+      safeDestroy(t);
     }
   })();
 }
@@ -273,9 +273,9 @@ export function spawnSkillNameTag(
         tx.scale.set(1.02);
       }
     });
-    if (!tx.destroyed) {
-      host.layer.removeChild(tx);
-      tx.destroy();
+    if (isDisplayLive(tx)) {
+      tx.parent?.removeChild(tx);
+      safeDestroy(tx);
     }
   })();
 }
@@ -326,8 +326,8 @@ export async function spawnRoundBanner(
       banner.alpha = 1 - (k - 0.72) / 0.28;
     }
   });
-  if (!banner.destroyed) {
-    host.layer.removeChild(banner);
-    banner.destroy({ children: true });
+  if (isDisplayLive(banner)) {
+    banner.parent?.removeChild(banner);
+    safeDestroy(banner, { children: true });
   }
 }

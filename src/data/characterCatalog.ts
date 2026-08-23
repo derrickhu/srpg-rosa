@@ -137,7 +137,7 @@ export const CHARACTER_DEFS: CharacterDef[] = [
     skillRoute: 'damage',
     base: { maxHp: 54, atk: 23, spd: 5, move: 2 },
     growth: { maxHp: 4, atk: 3, spd: 0, move: 0 },
-    defaultSkillId: 'flame_ring',
+    defaultSkillId: 'frost_ring',
     unlock: { kind: 'clearDungeon', dungeonId: 'dungeon_fortress' },
   },
 ];

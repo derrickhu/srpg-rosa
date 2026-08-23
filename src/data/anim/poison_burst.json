@@ -1,0 +1,156 @@
+{
+  "id": "poison_burst",
+  "source": "art/vfx-runs/poison_burst",
+  "blend": "add",
+  "image": "images/anim/poison_burst.png",
+  "meta": {
+    "size": {
+      "w": 512,
+      "h": 1024
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 76,
+    "baselineY": 256,
+    "ref": "poison_burst/poison_burst-1.png"
+  },
+  "frames": {
+    "poison_burst/poison_burst-1.png": {
+      "frame": {
+        "x": 177,
+        "y": 260,
+        "w": 51,
+        "h": 89
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 109,
+        "y": 167,
+        "w": 51,
+        "h": 89
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "poison_burst/poison_burst-2.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 157,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 45,
+        "y": 0,
+        "w": 157,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "poison_burst/poison_burst-3.png": {
+      "frame": {
+        "x": 161,
+        "y": 2,
+        "w": 173,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 27,
+        "y": 0,
+        "w": 173,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "poison_burst/poison_burst-4.png": {
+      "frame": {
+        "x": 336,
+        "y": 2,
+        "w": 108,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 82,
+        "y": 0,
+        "w": 108,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "poison_burst/poison_burst-5.png": {
+      "frame": {
+        "x": 2,
+        "y": 260,
+        "w": 103,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 73,
+        "y": 0,
+        "w": 103,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "poison_burst/poison_burst-6.png": {
+      "frame": {
+        "x": 107,
+        "y": 260,
+        "w": 68,
+        "h": 253
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 88,
+        "y": 3,
+        "w": 68,
+        "h": 253
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "poison_burst": {
+      "loop": false,
+      "fps": 20,
+      "frames": [
+        "poison_burst/poison_burst-1.png",
+        "poison_burst/poison_burst-2.png",
+        "poison_burst/poison_burst-3.png",
+        "poison_burst/poison_burst-4.png",
+        "poison_burst/poison_burst-5.png",
+        "poison_burst/poison_burst-6.png"
+      ]
+    }
+  }
+}

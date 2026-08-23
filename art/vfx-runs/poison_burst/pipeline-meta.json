@@ -1,0 +1,53 @@
+{
+  "source": "scripts/vfx-sheet.py",
+  "input": "/Users/rosa/rosa_games/srpg-rosa/art/vfx-runs/poison_burst/raw-sheet.png",
+  "target": "vfx",
+  "mode": "vfx_sheet",
+  "rows": 2,
+  "cols": 3,
+  "cell_size": 256,
+  "threshold": 22,
+  "frame_labels": [
+    "poison_burst-1",
+    "poison_burst-2",
+    "poison_burst-3",
+    "poison_burst-4",
+    "poison_burst-5",
+    "poison_burst-6"
+  ],
+  "align": "center",
+  "key": "black",
+  "alpha_gamma": 2.0,
+  "shared_crop_side": 341,
+  "crop_offsets": [
+    {
+      "x": 0,
+      "y": 86
+    },
+    {
+      "x": 0,
+      "y": 86
+    },
+    {
+      "x": 0,
+      "y": 86
+    },
+    {
+      "x": 0,
+      "y": 86
+    },
+    {
+      "x": 0,
+      "y": 86
+    },
+    {
+      "x": 0,
+      "y": 86
+    }
+  ],
+  "empty_frames": [],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}
