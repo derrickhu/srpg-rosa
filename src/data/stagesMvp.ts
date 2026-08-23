@@ -311,6 +311,8 @@ export interface MookTemplate {
   animSet: string;
   /** 底层 `SkillSpec` id（`enemyOnly`）。缺省 = 只普攻 */
   skillId?: string;
+  /** 敌方技能皮肤。有皮肤时优先于 `skillId`，面板不会读成玩家招的名字 */
+  skillSkin?: string;
 }
 
 function mook(t: MookTemplate, defId: TroopKind, x: number, y: number): StageEnemySpawn {
@@ -318,7 +320,7 @@ function mook(t: MookTemplate, defId: TroopKind, x: number, y: number): StageEne
     defId, x, y, uid: euid(),
     name: t.name,
     animSet: t.animSet,
-    ...(t.skillId ? { skillId: t.skillId } : {}),
+    ...(t.skillSkin ? { skillSkin: t.skillSkin } : t.skillId ? { skillId: t.skillId } : {}),
   };
 }
 

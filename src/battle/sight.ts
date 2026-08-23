@@ -70,11 +70,21 @@ function lineCells(a: Vec2, b: Vec2): Vec2[] {
  * 射线技能的命中判定和高亮范围都用它，两边共用一个终点是关键：
  * 分开算的话会出现「高亮画到墙后面，但打不到那里的人」，
  * 而玩家只会得出「这个技能的范围提示是骗人的」这个结论。
+ *
+ * `maxCells` 是**最多推进几格**，缺省不限（一路走到出界）。
+ * 玩家的射线技能一律传有限值：棋盘只有 7×9，不限等于整行整列全覆盖。
+ * 上限判定必须在这一个函数里，理由和上面一样——命中和高亮不能各算各的。
  */
-export function rayCellsUntilBlocked(from: Vec2, dir: Vec2, grid: TerrainGrid): Vec2[] {
+export function rayCellsUntilBlocked(
+  from: Vec2,
+  dir: Vec2,
+  grid: TerrainGrid,
+  maxCells?: number,
+): Vec2[] {
+  const limit = maxCells === undefined ? Infinity : Math.max(0, maxCells);
   const cells: Vec2[] = [];
   let p = { x: from.x + dir.x, y: from.y + dir.y };
-  while (inBounds(p, grid)) {
+  while (inBounds(p, grid) && cells.length < limit) {
     if (blocksSightAt(grid, p)) break;
     cells.push({ ...p });
     p = { x: p.x + dir.x, y: p.y + dir.y };

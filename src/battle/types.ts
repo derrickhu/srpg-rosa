@@ -214,6 +214,18 @@ export type BattleEvent =
   /** 移动前：本回合单位可达格（与程序决策相同 BFS 规则） */
   | { type: 'moveRange'; uid: string; cells: Vec2[] }
   | { type: 'moveStep'; uid: string; from: Vec2; to: Vec2 }
+  /**
+   * 技能造成的**强制位移**：长驱突刺的突进（移动的是施法者）、震击的击退（移动的是目标）。
+   *
+   * 和 `moveStep` 分开是因为这两件事在每一层都不一样：
+   * - 结算上它不花移动力、不受 `move` 上限约束、可以把人推到本来走不到的格子上；
+   * - 回放上它是一次**整段滑行**而不是逐格走，脚步动画也不该播；
+   * - 引擎里它会让 `pending.startPos` 失效（见 `engine.applyDisplacements`）。
+   *
+   * `from` / `to` 都写全而不是只写终点：回放层要拿它插值，而它拿到这个事件时
+   * 单位的 `pos` 早已是终点了（自动模式先跑完整场再逐条播）。
+   */
+  | { type: 'displace'; uid: string; from: Vec2; to: Vec2; reason: 'dash' | 'knockback' }
   | {
       type: 'skillCast';
       uid: string;
@@ -222,6 +234,11 @@ export type BattleEvent =
       kind: SkillKind;
       /** 施放前展示的技能作用/瞄准范围（格子坐标） */
       rangeCells: Vec2[];
+      /**
+       * 选点 AoE 的爆炸中心。回放层拿它锚特效，而不是锚第一个被打到的人——
+       * 空地点火时根本没有 hit，不写这个字段特效会落到施法者脚上。
+       */
+      aimCell?: Vec2;
       hits: SkillHit[];
       /** 施法者所站地形对伤害的影响，如「高地 +25%」；无影响时缺省 */
       atkTerrainNote?: string;

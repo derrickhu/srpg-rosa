@@ -152,6 +152,15 @@ function buildRangeRow(
   let gridR = 2;
   let rangeDesc = '';
   const isLine = shape.type === 'lineBestRayAllFoes';
+  /**
+   * 射线的实际射程；`undefined` = 不限。
+   *
+   * 画到几格必须跟着它走，而不是恒定画三格再补四个箭头：箭头的意思是「还会继续延伸」，
+   * 而穿透箭现在是 5 格就到头了。老画法会让玩家以为整行整列都在范围里，
+   * 于是站到 5 格外按下技能——按不出来，还找不到原因。
+   */
+  const rayRange = shape.type === 'lineBestRayAllFoes' ? shape.range : undefined;
+  const rayUnbounded = isLine && rayRange === undefined;
   if (shape.type === 'neighborAoE') {
     gridR = shape.manhattan + 1;
     rangeDesc = `周围${shape.manhattan}格范围\n命中所有敌人`;
@@ -167,7 +176,9 @@ function buildRangeRow(
       : `周围${shape.radius}格方形\n含斜角，命中所有敌人`;
   } else if (shape.type === 'neighborPickFoe') {
     gridR = shape.manhattan + 1;
-    rangeDesc = `${describeReach(shape.manhattan, shape.reach)}\n点选一个敌人`;
+    rangeDesc = shape.axisOnly
+      ? `同行或同列${describeReach(shape.manhattan, shape.reach)}\n点选一个敌人`
+      : `${describeReach(shape.manhattan, shape.reach)}\n点选一个敌人`;
   } else if (shape.type === 'neighborPickAlly') {
     gridR = shape.manhattan + 1;
     rangeDesc = `${describeReach(shape.manhattan, shape.reach)}\n点选一个友方`;
@@ -175,8 +186,14 @@ function buildRangeRow(
     gridR = 1;
     rangeDesc = '对自己释放\n无需选择目标';
   } else if (isLine) {
-    gridR = 3;
-    rangeDesc = '上下左右四方向\n射线穿透所有敌人';
+    // 不限射程时画 3 格再补箭头示意「一直延伸」；有上限就照着上限画满
+    gridR = rayRange ?? 3;
+    rangeDesc = rayUnbounded
+      ? '上下左右四方向\n射线穿透，不限射程'
+      : `上下左右四方向 ${rayRange} 格\n射线穿透所有敌人`;
+  } else if (shape.type === 'groundPickAoE') {
+    gridR = shape.castRange;
+    rangeDesc = `${shape.castRange}格内选一点\n对该点周围${shape.blastRadius}格敌人`;
   }
   const gridD = gridR * 2 + 1;
 
@@ -209,9 +226,12 @@ function buildRangeRow(
      */
     const solid = shape.type === 'discAoE'
       || (shape.type === 'neighborPickFoe' && shape.reach === 'within');
+    // 轴向约束的技能（长驱突刺、震击）只打得到同行同列，斜角一律不画
+    const axisOnly = shape.type === 'neighborPickFoe' && shape.axisOnly === true;
     for (let dy = -md; dy <= md; dy++) {
       for (let dx = -md; dx <= md; dx++) {
         if (dx === 0 && dy === 0) continue;
+        if (axisOnly && dx !== 0 && dy !== 0) continue;
         const d = Math.abs(dx) + Math.abs(dy);
         if (solid ? d <= md : d === md) cells[gridR + dy]![gridR + dx] = 'hit';
       }
@@ -222,6 +242,27 @@ function buildRangeRow(
         const gx = gridR + ddx! * s;
         const gy = gridR + ddy! * s;
         if (gx >= 0 && gx < gridD && gy >= 0 && gy < gridD) cells[gy]![gx] = 'ray';
+      }
+    }
+  } else if (shape.type === 'groundPickAoE') {
+    // 蓝点是自己；橙色是能点的落点；红色是「假如点在正上方那一格」的爆炸范围。
+    // 不画爆炸的话玩家会以为整片射程都是伤害区。
+    const sampleDy = -Math.min(2, shape.castRange);
+    for (let dy = -shape.castRange; dy <= shape.castRange; dy++) {
+      for (let dx = -shape.castRange; dx <= shape.castRange; dx++) {
+        if (dx === 0 && dy === 0) continue;
+        if (Math.abs(dx) + Math.abs(dy) > shape.castRange) continue;
+        const gx = gridR + dx;
+        const gy = gridR + dy;
+        if (gx >= 0 && gx < gridD && gy >= 0 && gy < gridD) cells[gy]![gx] = 'ray';
+      }
+    }
+    for (let dy = -shape.blastRadius; dy <= shape.blastRadius; dy++) {
+      for (let dx = -shape.blastRadius; dx <= shape.blastRadius; dx++) {
+        if (Math.abs(dx) + Math.abs(dy) > shape.blastRadius) continue;
+        const gx = gridR + dx;
+        const gy = gridR + sampleDy + dy;
+        if (gx >= 0 && gx < gridD && gy >= 0 && gy < gridD) cells[gy]![gx] = 'hit';
       }
     }
   }
@@ -256,8 +297,9 @@ function buildRangeRow(
     }
   }
 
-  // 射线技能在四个边缘画箭头，表示延伸
-  if (isLine) {
+  // 箭头的意思是「还会往外延伸」，所以只给不限射程的射线画。
+  // 有上限的射线格子图本身就是完整范围，再补箭头等于在说谎。
+  if (rayUnbounded) {
     const arrowStyle = textStyle('micro', { fill: 0xdd6633, fontSize: 8 });
     const arrowOffsets: [number, number, string][] = [
       [gridR * st2 + cs / 2, -6, '▲'],
@@ -400,6 +442,20 @@ export interface UnitInfoPanelOptions {
    * 深浅不一的边，读起来像没对齐。角色页的详情弹窗就是这种嵌套。
    */
   drawBg?: boolean;
+  /**
+   * 画头部（头像 + 名字 + 副标题）。默认画。
+   *
+   * 角色详情弹窗关掉它：那里标题栏已经写着「雷恩 Lv.5」，面板再写一遍名字，
+   * 玩家滚动时会以为自己看的是另一个人的卡片。
+   */
+  showHeader?: boolean;
+  /**
+   * 画「基础属性」四维。默认画。
+   *
+   * 同上——角色页把四维放在了培养区（升级前后对比就在那儿），
+   * 同一屏里出现两处生命值是这一页原来最大的噪音来源。
+   */
+  showStats?: boolean;
 }
 
 export function createUnitInfoPanel(
@@ -413,32 +469,37 @@ export function createUnitInfoPanel(
   const tickers: (() => void)[] = [];
   let cy = 16;
 
-  const portrait = model.createPortrait();
-  portrait.x = 30;
-  portrait.y = cy + 24;
-  panel.addChild(portrait);
+  if (opts?.showHeader ?? true) {
+    const portrait = model.createPortrait();
+    portrait.x = 30;
+    portrait.y = cy + 24;
+    panel.addChild(portrait);
 
-  const nameTx = makeText(model.name, 'title', { fill: 0x3a3a2a, fontSize: 16 });
-  nameTx.x = 62;
-  nameTx.y = cy + 6;
-  panel.addChild(nameTx);
+    const nameTx = makeText(model.name, 'title', { fill: 0x3a3a2a, fontSize: 16 });
+    nameTx.x = 62;
+    nameTx.y = cy + 6;
+    panel.addChild(nameTx);
 
-  const subTx = makeText(model.subtitle, 'body', { fill: 0x8a7a5a });
-  subTx.x = 62;
-  subTx.y = cy + 28;
-  panel.addChild(subTx);
+    const subTx = makeText(model.subtitle, 'body', { fill: 0x8a7a5a });
+    subTx.x = 62;
+    subTx.y = cy + 28;
+    panel.addChild(subTx);
 
-  cy += 56;
+    cy += 56;
+    panel.addChild(separator(panelW, cy));
+    cy += 8;
+  } else {
+    cy = 4;
+  }
 
-  panel.addChild(separator(panelW, cy));
-  cy += 8;
-
-  const secBase = new PIXI.Text('基础属性', SECTION_STYLE);
-  secBase.x = 12;
-  secBase.y = cy;
-  panel.addChild(secBase);
-  cy += LINE_H + 2;
-  cy += addStatGrid(panel, model.stats, panelW, cy) + 8;
+  if (opts?.showStats ?? true) {
+    const secBase = new PIXI.Text('基础属性', SECTION_STYLE);
+    secBase.x = 12;
+    secBase.y = cy;
+    panel.addChild(secBase);
+    cy += LINE_H + 2;
+    cy += addStatGrid(panel, model.stats, panelW, cy) + 8;
+  }
 
   // 限时状态。战斗中点开才有内容——「他为什么突然打这么疼」只能在这里回答。
   if (model.statuses?.length) {
@@ -459,8 +520,11 @@ export function createUnitInfoPanel(
     cy += tx.height + 8;
   }
 
-  panel.addChild(separator(panelW, cy));
-  cy += 8;
+  // 上面什么都没画时（角色页把头部和四维都关了）就别拿一条分割线开场
+  if (cy > 4) {
+    panel.addChild(separator(panelW, cy));
+    cy += 8;
+  }
 
   const secStrike = new PIXI.Text(model.strikeTitle, SECTION_STYLE);
   secStrike.x = 12;

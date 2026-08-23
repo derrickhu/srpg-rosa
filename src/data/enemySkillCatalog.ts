@@ -86,6 +86,43 @@ export const ENEMY_SKILL_SKINS: Record<string, EnemySkillSkin> = {
    * 而冲撞是整条线同时亮。玩家分不清「一条线」和「另一条线」，但分得清
    * 「从他嘴里喷出来的」和「他整个人撞过来的」。
    */
+  /**
+   * 从玩家池转过来的四招。底层 SkillSpec 原样复用，换一张皮就不会在面板上
+   * 读成「这个杂兵会旋风斩」。图标也沿用原技能图——新画四张 26px 图标在这个
+   * 尺寸上认不出区别，而缺图标会让点开面板变成灰圆。
+   *
+   * 先不挂上第二、三章的整兵种模板。投放曲线是「0 → 各 1 → 2 → 4」
+   * （见 `stagesMvp` 的 `MookTemplate`），整种加上去会把已回归的胜率窗打穿。
+   * 皮肤留在表里，等有空槽的精英或后续章再挂。
+   */
+  fang_cleave: {
+    id: 'fang_cleave',
+    implementsId: 'cleave',
+    name: '血牙劈斩',
+    iconKey: 'skill_cleave',
+    vfxId: 'cleave',
+  },
+  gate_hammer: {
+    id: 'gate_hammer',
+    implementsId: 'hammer',
+    name: '破门重锤',
+    iconKey: 'skill_hammer',
+    vfxId: 'hammer',
+  },
+  panther_trample: {
+    id: 'panther_trample',
+    implementsId: 'trample',
+    name: '扑踏',
+    iconKey: 'skill_trample',
+    vfxId: 'trample',
+  },
+  wall_snap: {
+    id: 'wall_snap',
+    implementsId: 'snap',
+    name: '连弩急射',
+    iconKey: 'skill_snap',
+    vfxId: 'snap',
+  },
   drake_cataclysm: {
     id: 'drake_cataclysm',
     implementsId: 'dragon_breath',

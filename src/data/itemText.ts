@@ -29,7 +29,9 @@ function briefShape(spec: SkillSpec): string {
     case 'neighborPickAlly':
       return `${describeReach(shape.manhattan, shape.reach)}·点一个友军`;
     case 'lineBestRayAllFoes':
-      return '直线穿透';
+      return shape.range === undefined ? '直线穿透（不限）' : `直线穿透 ${shape.range} 格`;
+    case 'groundPickAoE':
+      return `${shape.castRange}格内选点·周围${shape.blastRadius}格`;
     case 'selfCast':
       return '对自己释放';
   }

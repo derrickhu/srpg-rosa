@@ -3,104 +3,73 @@ import { CHARACTER_DEFS, canCharacterUseSkill, mainSlotSkillIds } from '@/data/c
 import { canProfessionEquipSkill, getSkillSpec } from '@/data/skillCatalog';
 
 /**
- * 角色技能路线：一个角色能带的**所有**技能定位必须一致。
+ * 一人一招：每个角色有且只有一个招牌技能，路线标签必须和它对得上。
  *
- * 这组测试守的是一条玩法口径，不是数据洁癖。词条按人存、按当前主技能判定生效，
- * 而主技能在布阵页随时能免费换——如果一个角色的可学列表里混着不同定位的技能，
- * 玩家换一次主技能就会让攒了一路的词条批量静默休眠，界面上只有背包页一行小字。
- * 路线内定位一致之后这个状态根本进不去，那个切换按钮才是纯战术选择。
- *
- * 这条最容易在**加角色**时破：复制上一个角色的定义再改数值，可学列表跟着复制过来，
- * 而新角色的路线可能压根不一样。
+ * 曾经每个角色还带一条「可学技能列表」，在布阵页免费轮换。那套东西和纹章系统
+ * 有个解不开的矛盾——纹章按角色存、按当前主技能判定生效，中途换招会让攒了一路的
+ * 专属纹章批量静默休眠。当时用「同路线内定位一致」去压，压不住：专属纹章咬的是
+ * 具体机制（AoE 才有横扫、点杀才有处决），同定位的两招照样互不兼容。
+ * 收成一招之后矛盾从根上没了，`skillRoute` 退化成一个身份标签，
+ * 它唯一的职责就是在数据表和技能表对不上时立刻报错。
  */
-describe('角色技能路线', () => {
-  it('默认技能的定位就是这个角色的路线', () => {
+describe('角色招牌技能', () => {
+  it('招牌技能存在，且定位等于角色路线', () => {
     for (const c of CHARACTER_DEFS) {
       const spec = getSkillSpec(c.defaultSkillId);
-      expect(spec, `${c.name} 的默认技能 ${c.defaultSkillId} 不在技能表里`).toBeDefined();
+      expect(spec, `${c.name} 的招牌技能 ${c.defaultSkillId} 不在技能表里`).toBeDefined();
       expect(
         spec!.role,
-        `${c.name} 路线是 ${c.skillRoute}，默认技能「${spec!.name}」却是 ${spec!.role}`,
+        `${c.name} 路线是 ${c.skillRoute}，招牌技能「${spec!.name}」却是 ${spec!.role}`,
       ).toBe(c.skillRoute);
     }
   });
 
-  it('可学技能的定位全部等于路线', () => {
-    for (const c of CHARACTER_DEFS) {
-      for (const id of c.unlockableSkillIds) {
-        const spec = getSkillSpec(id);
-        expect(spec, `${c.name} 的可学技能 ${id} 不在技能表里`).toBeDefined();
-        expect(
-          spec!.role,
-          `${c.name} 路线是 ${c.skillRoute}，可学的「${spec!.name}」却是 ${spec!.role}——` +
-            '换到它身上会让伤害类词条批量休眠',
-        ).toBe(c.skillRoute);
-      }
-    }
-  });
-
-  it('可学技能不能是预留技能：那些在等对应路线的角色', () => {
-    for (const c of CHARACTER_DEFS) {
-      for (const id of c.unlockableSkillIds) {
-        const spec = getSkillSpec(id)!;
-        expect(
-          spec.reserved ?? false,
-          `${c.name} 可学「${spec.name}」，但它标了 reserved（在等 ${spec.role} 路线的角色）`,
-        ).toBe(false);
-      }
-    }
-  });
-
-  it('可学技能这个职业带得动，且不重复、不含默认技能', () => {
+  it('招牌技能这个职业带得动', () => {
     for (const c of CHARACTER_DEFS) {
       expect(
-        c.unlockableSkillIds,
-        `${c.name} 的可学列表里有默认技能，学了等于什么都没换`,
-      ).not.toContain(c.defaultSkillId);
-      expect(new Set(c.unlockableSkillIds).size, `${c.name} 的可学列表有重复`).toBe(
-        c.unlockableSkillIds.length,
-      );
-      for (const id of c.unlockableSkillIds) {
-        expect(
-          canProfessionEquipSkill(c.profession, id),
-          `${c.name}（${c.profession}）学不了 ${id}`,
-        ).toBe(true);
-      }
+        canProfessionEquipSkill(c.profession, c.defaultSkillId),
+        `${c.name}（${c.profession}）带不了 ${c.defaultSkillId}`,
+      ).toBe(true);
     }
   });
 
   /**
-   * 换招要能换出花样来。只有一个选择时布阵页那个切换按钮直接不显示
-   * （`cycleSkillForRoster` 在 `valid.length <= 1` 时返回），等于这个角色没有战术维度。
+   * `reserved` 的意思是「已实现但当前没有主人」。它同时出现在某个角色的招牌位上，
+   * 说明有人把一招从别人身上摘下来时忘了把标记撤掉——而这不报错，
+   * 只会让那一招同时处于「在等新角色」和「已经有角色了」两种状态。
    */
-  it('每个角色至少有两个能带的技能', () => {
+  it('招牌技能不能是预留技能或敌方专属技能', () => {
     for (const c of CHARACTER_DEFS) {
-      const total = 1 + c.unlockableSkillIds.length;
-      expect(total, `${c.name} 只有 ${total} 个技能可选`).toBeGreaterThanOrEqual(2);
+      const spec = getSkillSpec(c.defaultSkillId)!;
+      expect(spec.reserved ?? false, `${c.name} 的招牌「${spec.name}」还标着 reserved`).toBe(false);
+      expect(spec.enemyOnly ?? false, `${c.name} 的招牌「${spec.name}」标了 enemyOnly`).toBe(false);
     }
   });
 
-  it('主槽技能池不含预留技能', () => {
-    for (const id of mainSlotSkillIds()) {
+  it('主槽技能池就是每个角色的招牌技能，不含预留技能', () => {
+    const ids = mainSlotSkillIds();
+    expect(ids).toHaveLength(CHARACTER_DEFS.length);
+    for (const id of ids) {
       expect(getSkillSpec(id)!.reserved ?? false, `${id} 标了 reserved 却进了主槽池`).toBe(false);
     }
   });
 });
 
 /**
- * 一个角色能带的招之间必须有**结构**差异，不能只差数值。
+ * 角色之间必须有**结构**差异，不能只差数值。
  *
- * 路线一致解决了「换招会废掉词条」，但顺手带来了反面风险：同定位的招很容易被写成
- * 同一招的两个数值档。「震击」和「铁锤」就这么并存过很久——同为邻格点杀、
- * 同为 3 回合冷却、同样挂一个（对盾卫无效的）自嘲讽，区别只有 0.85 对 0.9 的倍率，
- * 价钱还一样。那不叫两个选择，叫一个升级；可学列表摆着它等于告诉玩家「买就对了」。
- * 「穿透箭」和「速射」也曾同为射线穿透，只差 0.03 倍率和一回合冷却。
+ * 这条纪律原先守的是「同一个角色的可学列表里不要摆两个数值档」——「震击」和「铁锤」
+ * 就那么并存过很久：同为邻格点杀、同为 3 回合冷却、同样挂一个（对盾卫无效的）自嘲讽，
+ * 区别只有 0.85 对 0.9 的倍率，价钱还一样。那不叫两个选择，叫一个升级。
  *
- * 所以差异必须落在**打法**上：形状、够得着哪里、什么时机、附带什么效果。
- * 倍率和冷却是在打法差异之上调味用的，不能拿来充当唯一的区别——
- * 玩家换招时先感知到的是「这一招打的格子不一样」，而不是「这一招高 3 点伤害」。
+ * 一人一招之后，同一个角色内部已经没有「两招」可比了，这条纪律该守的东西整个平移到
+ * **角色之间**，而且变得更硬：招牌技能就是角色的玩法本身，两个角色打法指纹一样，
+ * 意味着队伍里带谁都一个样，那是比「换招换不出花样」严重得多的问题。
+ *
+ * 差异必须落在**打法**上：形状、够得着哪里、什么时机、附带什么效果、有没有位移。
+ * 倍率和冷却是在打法差异之上调味用的，不能拿来充当唯一的区别。
  */
-describe('同一路线内的技能要有实质差异', () => {
+describe('角色之间的打法不能撞车', () => {
   /** 一招的打法指纹，**刻意不含**伤害数值和冷却 */
   function playstyleKey(id: string): string {
     const spec = getSkillSpec(id)!;
@@ -117,11 +86,13 @@ describe('同一路线内的技能要有实质差异', () => {
         case 'squareAoE':
           return `square:${shape.radius}`;
         case 'neighborPickFoe':
-          return `pickFoe:${shape.manhattan}:${shape.reach ?? 'exact'}`;
+          return `pickFoe:${shape.manhattan}:${shape.reach ?? 'exact'}:${shape.axisOnly ? 'axis' : 'free'}`;
         case 'neighborPickAlly':
           return `pickAlly:${shape.manhattan}:${shape.reach ?? 'exact'}`;
         case 'lineBestRayAllFoes':
-          return 'line';
+          return `line:${shape.range ?? 'inf'}`;
+        case 'groundPickAoE':
+          return `ground:${shape.castRange}:${shape.blastRadius}`;
         case 'selfCast':
           return 'self';
       }
@@ -134,24 +105,21 @@ describe('同一路线内的技能要有实质差异', () => {
       kinds(spec.onCastFoeEffects),
       kinds(spec.onCastSelfEffects),
       kinds(spec.onCastAllyEffects),
+      spec.onHitDisplace ? `push:${spec.onHitDisplace.who}` : '-',
       spec.passiveBasicAttackMulIfMoved === undefined ? '-' : 'movePassive',
     ].join(' | ');
   }
 
-  it('每个角色的可带技能两两之间打法不同', () => {
+  it('任意两个角色的招牌技能打法不同', () => {
+    const seen = new Map<string, string>();
     for (const c of CHARACTER_DEFS) {
-      const ids = [c.defaultSkillId, ...c.unlockableSkillIds];
-      const seen = new Map<string, string>();
-      for (const id of ids) {
-        const key = playstyleKey(id);
-        const prev = seen.get(key);
-        expect(
-          prev,
-          `${c.name} 的「${getSkillSpec(id)!.name}」和「${prev ? getSkillSpec(prev)!.name : ''}」`
-            + `打法完全一样（${key}），只差数值——换招换不出花样`,
-        ).toBeUndefined();
-        seen.set(key, id);
-      }
+      const key = playstyleKey(c.defaultSkillId);
+      const prev = seen.get(key);
+      expect(
+        prev,
+        `${c.name} 和 ${prev} 的招牌技能打法完全一样（${key}），只差数值——带谁都一个样`,
+      ).toBeUndefined();
+      seen.set(key, c.name);
     }
   });
 });
@@ -159,9 +127,9 @@ describe('同一路线内的技能要有实质差异', () => {
 /**
  * 路线约束必须**在运行时**也拦得住，不能只靠数据表配得对。
  *
- * 具体要防的是老存档：可学列表收紧后，已经存进 `ownedSkillIds` 的越界技能不会自己消失。
- * 只查 `ownedSkillIds` 的话它照样装得上、带得上场，路线约束在老档上等于没有，
- * 而这种漏法不报错——只会让那个角色的词条莫名休眠。
+ * 具体要防的是老存档：一人一招之后 `activeSkillId` 不再入档，但存档里其它地方
+ * （比如试炼场的 `runEquip`）仍可能留着当年学到的越界技能。只查职业的话它照样带得上场，
+ * 而这种漏法不报错——只会让那个角色的纹章莫名休眠。
  */
 describe('带得动这一招吗（canCharacterUseSkill）', () => {
   const gron = CHARACTER_DEFS.find((c) => c.id === 'hero_shield_gron')!;
@@ -169,14 +137,11 @@ describe('带得动这一招吗（canCharacterUseSkill）', () => {
   const mir = CHARACTER_DEFS.find((c) => c.id === 'hero_healer_mir')!;
   const aoli = CHARACTER_DEFS.find((c) => c.id === 'hero_mage_aoli')!;
 
-  it('自己路线内的技能可以带', () => {
+  it('自己的招牌技能可以带', () => {
     expect(canCharacterUseSkill(gron, 'bash')).toBe(true);
-    expect(canCharacterUseSkill(gron, 'hammer')).toBe(true);
-    expect(canCharacterUseSkill(rein, 'blade_rush')).toBe(true);
+    expect(canCharacterUseSkill(rein, 'whirl')).toBe(true);
     expect(canCharacterUseSkill(mir, 'heal_touch')).toBe(true);
-    expect(canCharacterUseSkill(mir, 'field_bless')).toBe(true);
     expect(canCharacterUseSkill(aoli, 'ember')).toBe(true);
-    expect(canCharacterUseSkill(aoli, 'flame_ring')).toBe(true);
   });
 
   it('挡掉跨定位的技能：老档学过的战场祝福不能再装', () => {
@@ -185,9 +150,16 @@ describe('带得动这一招吗（canCharacterUseSkill）', () => {
     expect(canCharacterUseSkill(gron, 'field_bless')).toBe(false);
   });
 
-  it('挡掉预留技能：盾墙震慑在等控制路线的盾卫', () => {
+  it('挡掉预留技能：盾墙震慑在等控制路线的盾卫，破阵斩在等第二个剑士', () => {
     expect(canProfessionEquipSkill(gron.profession, 'shield_wall')).toBe(true);
     expect(canCharacterUseSkill(gron, 'shield_wall')).toBe(false);
+    expect(canCharacterUseSkill(rein, 'blade_rush')).toBe(false);
+  });
+
+  it('挡掉已经转给敌人的那几招：老档里格隆的铁锤带不上场了', () => {
+    expect(canProfessionEquipSkill(gron.profession, 'hammer')).toBe(true);
+    expect(canCharacterUseSkill(gron, 'hammer')).toBe(false);
+    expect(canCharacterUseSkill(rein, 'cleave')).toBe(false);
   });
 
   it('挡掉别的职业的技能', () => {

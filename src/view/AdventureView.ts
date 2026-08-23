@@ -8,7 +8,6 @@ import {
 import {
   dungeonClearSoul,
   gmAddSoul,
-  gmLearnAllSkills,
   gmUnlockAllCharacters,
   isDungeonUnlocked,
   unlockDungeonWithMeta,
@@ -329,13 +328,14 @@ export function createAdventureView(
     if (!unlocked) return;
 
     if (isSandboxDungeon(d.id)) {
-      const gmW = Math.floor((W - 96 - 16) / 3);
+      // 「学满技能」这个按钮没了：一人一招之后技能不入档，试炼场的技能池由
+      // `effectiveOwnedSkillIds` 按职业现算，进去就是全的
+      const gmW = Math.floor((W - 96 - 8) / 2);
       const gmH = 34;
       const gmY = btnY - 46;
       const row = [
         { label: '解锁全角色', run: () => gmUnlockAllCharacters(state) },
         { label: '魂晶 +99', run: () => gmAddSoul(state, 99) },
-        { label: '学满技能', run: () => gmLearnAllSkills(state) },
       ];
       row.forEach((item, i) => {
         const b = makeButton(item.label, () => {

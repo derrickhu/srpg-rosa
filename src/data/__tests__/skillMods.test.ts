@@ -48,14 +48,13 @@ describe('词条折进技能规格', () => {
     expect(s.shape).toEqual({ type: 'discAoE', radius: 2 });
   });
 
-  it('横扫对环形 AoE 仍是「摊成整片」而不是把环往外推', () => {
-    // `neighborAoE` 这条路径还有炎环在走（正好 2 格外的一圈）。
-    // 直接把 manhattan 从 2 加到 3 会漏掉近处的敌人，那是位移不是扩大。
+  it('横扫对选点 AoE 扩大爆炸半径而不是改成绕身', () => {
     const ring = getSkillSpec('flame_ring')!;
-    expect(ring.shape).toEqual({ type: 'neighborAoE', manhattan: 2 });
+    expect(ring.shape).toEqual({ type: 'groundPickAoE', castRange: 3, blastRadius: 1 });
     expect(effectiveSkillSpec(ring, ['wide_swing']).shape).toEqual({
-      type: 'discAoE',
-      radius: 3,
+      type: 'groundPickAoE',
+      castRange: 3,
+      blastRadius: 2,
     });
   });
 
@@ -106,9 +105,13 @@ describe('词条适用性', () => {
     expect(wide.canApply(getSkillSpec('pierce')!)).toBe(false);
   });
 
-  it('迅捷不挂本来就没冷却的被动', () => {
+  // 现在所有技能冷却都 >= 2，所以只能拿一份改过冷却的规格来验闸门本身。
+  // 不验的话，哪天加了一招 CD 1 的技能，「迅捷」会变成一张什么都不改的死牌。
+  it('迅捷不挂冷却已经压到 1 的技能', () => {
     const quick = getSkillMod('quick_cast')!;
-    expect(quick.canApply(getSkillSpec('charge')!)).toBe(false);
+    const bash = getSkillSpec('bash')!;
+    expect(quick.canApply(bash)).toBe(true);
+    expect(quick.canApply({ ...bash, cooldown: 1 })).toBe(false);
   });
 
   it('汲取只挂有伤害的技能', () => {
@@ -117,21 +120,29 @@ describe('词条适用性', () => {
     expect(siphon.canApply(getSkillSpec('field_bless')!)).toBe(false);
   });
 
-  // 冲锋永远不走 cast*，挂在「施放后」上的词条对它是死牌：发出来只能被弃掉。
-  it('施放型词条不挂被动技能', () => {
-    const charge = getSkillSpec('charge')!;
-    for (const id of ['battle_fury', 'haste', 'rout', 'hobble', 'venom', 'guard_stance']) {
-      expect(getSkillMod(id)!.canApply(charge), `${id} 不该挂到被动上`).toBe(false);
+  /**
+   * 被动技能（原「冲锋」）已经不存在了：它占着一个技能位，却因为不走 `cast*`
+   * 而对所有「施放后……」的词条免疫，那个角色的三选一常年开天窗。
+   * 现在它是长驱突刺的一条专属纹章，闸门反过来由这里守——
+   * 被动效果必须是**纹章**给的，不能再有技能拿 `timing: 'passive'` 进主槽。
+   */
+  it('没有被动技能进得了主槽', () => {
+    for (const id of mainSlotSkillIds()) {
+      const spec = getSkillSpec(id)!;
+      expect(spec.timing, `「${spec.name}」是被动技能，词条挂不上去`).not.toBe('passive');
     }
   });
 
-  // 反过来，被动也不能一条词条都挂不上——那个角色的三选一会开天窗。
-  it('被动技能至少有可挂的词条', () => {
-    const charge = getSkillSpec('charge')!;
-    const usable = allSkillMods().filter((m) => m.canApply(charge));
-    expect(usable.length).toBeGreaterThan(0);
-    expect(effectiveSkillSpec(charge, ['momentum', 'momentum']).passiveBasicAttackMulIfMoved)
-      .toBeCloseTo(1.35 + 0.3, 6);
+  it('冲锋降级成纹章之后，践地仍叠在它上面', () => {
+    const lance = getSkillSpec('lance_thrust')!;
+    expect(lance.passiveBasicAttackMulIfMoved).toBeUndefined();
+    expect(effectiveSkillSpec(lance, ['ex_lance_charge']).passiveBasicAttackMulIfMoved)
+      .toBeCloseTo(1.35, 6);
+    // 践地排在冲锋之后，两条都拿到时是 1.35 + 0.55；顺序反了会被冲锋覆盖掉
+    expect(
+      effectiveSkillSpec(lance, ['ex_charge_trample', 'ex_lance_charge'])
+        .passiveBasicAttackMulIfMoved,
+    ).toBeCloseTo(1.9, 6);
   });
 
   it('嘲讽类词条不挂弓手技能（那是陷阱牌不是强化）', () => {
@@ -173,17 +184,47 @@ describe('同类效果相加而不是互相顶掉', () => {
 });
 
 describe('专属词条', () => {
-  it('只在它指名的那一招上生效，换招即休眠', () => {
+  it('只在它指名的那一招上生效，落到别的技能上就是空的', () => {
+    // 斩残原本挂在重劈上；重劈转给敌方之后它搬到了雷恩现在的招牌旋风斩上
     const reap = getSkillMod('ex_cleave_reap')!;
-    expect(reap.canApply(getSkillSpec('cleave')!)).toBe(true);
-    expect(reap.canApply(whirl())).toBe(false);
+    expect(reap.canApply(whirl())).toBe(true);
+    expect(reap.canApply(getSkillSpec('pierce')!)).toBe(false);
 
-    // 休眠不是丢失：词条按角色记，换回重劈就恢复
+    const onPierce = effectiveSkillSpec(getSkillSpec('pierce')!, ['ex_cleave_reap']);
+    expect(onPierce.executeBonus).toBeUndefined();
+    expect(onPierce.mods).toEqual([]);
     const onWhirl = effectiveSkillSpec(whirl(), ['ex_cleave_reap']);
-    expect(onWhirl.executeBonus).toBeUndefined();
-    expect(onWhirl.mods).toEqual([]);
-    const onCleave = effectiveSkillSpec(getSkillSpec('cleave')!, ['ex_cleave_reap']);
-    expect(onCleave.executeBonus).toEqual({ belowHpRatio: 0.5, mul: 1.8 });
+    expect(onWhirl.executeBonus).toEqual({ belowHpRatio: 0.5, mul: 1.8 });
+  });
+
+  /**
+   * 位移类专属（长驱 / 冲垒）必须挂在**真有位移**的技能上。
+   * 挂错的话卡面写着「突进距离改为 3 格」，而那一招根本不推人——
+   * 这种空词条在战斗里没有任何提示，玩家只会以为自己看错了。
+   */
+  it('加位移距离的专属只挂带位移的技能', () => {
+    const far = getSkillMod('ex_lance_farcharge')!;
+    expect(far.canApply(getSkillSpec('lance_thrust')!)).toBe(true);
+    expect(effectiveSkillSpec(getSkillSpec('lance_thrust')!, ['ex_lance_farcharge']).onHitDisplace)
+      .toEqual({ who: 'self', cells: 3 });
+
+    const hurl = getSkillMod('ex_bash_hurl')!;
+    expect(effectiveSkillSpec(getSkillSpec('bash')!, ['ex_bash_hurl']).onHitDisplace)
+      .toEqual({ who: 'target', cells: 3 });
+    expect(hurl.canApply(whirl())).toBe(false);
+  });
+
+  /** 射程类专属同理：技能没有射程上限时，「延长到 7 格」是把它**削弱**了 */
+  it('加射程的专属只挂有射程上限的射线技能', () => {
+    const longshot = getSkillMod('ex_pierce_longshot')!;
+    const pierce = getSkillSpec('pierce')!;
+    expect(longshot.canApply(pierce)).toBe(true);
+    expect(effectiveSkillSpec(pierce, ['ex_pierce_longshot']).shape)
+      .toEqual({ type: 'lineBestRayAllFoes', range: 7 });
+    // 洞穿之后上限整个消失
+    expect(effectiveSkillSpec(pierce, ['ex_pierce_endless']).shape)
+      .toEqual({ type: 'lineBestRayAllFoes' });
+    expect(longshot.canApply({ ...pierce, shape: { type: 'lineBestRayAllFoes' } })).toBe(false);
   });
 
   /**
@@ -318,7 +359,8 @@ describe('抽卡权重', () => {
   });
 
   it('专属词条同稀有度下权重更高（每招只有一两条，不加权基本见不到）', () => {
-    expect(w('ex_cleave_reap')).toBeGreaterThan(w('venom'));
+    // 两条都是稀有：只差在专属加权上
+    expect(w('ex_whirl_momentum')).toBeGreaterThan(w('venom'));
   });
 
   it('节点越深，史诗相对普通越常见', () => {

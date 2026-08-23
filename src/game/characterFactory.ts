@@ -7,10 +7,9 @@ import {
   type CharacterDef,
 } from '@/data/characterCatalog';
 import { UNIT_DEFS } from '@/data/unitDefs';
-import { remapLegacySkillId } from '@/data/skillCatalog';
 import type { Character, CharacterBaseStats } from '@/game/characterTypes';
 
-/** 由固定角色定义生成运行时角色实例（1 级，初始仅默认技能） */
+/** 由固定角色定义生成运行时角色实例（1 级；招牌技能不落存档，见 `characterTypes`） */
 export function instantiateCharacter(def: CharacterDef): Character {
   const st = UNIT_DEFS[def.profession];
   return {
@@ -21,34 +20,22 @@ export function instantiateCharacter(def: CharacterDef): Character {
     level: 1,
     base: { ...def.base },
     strike: { ...st.strike, ...def.strike },
-    ownedSkillIds: [def.defaultSkillId],
-    activeSkillId: def.defaultSkillId,
   };
 }
 
 /**
- * 老档里的凯尔 / 薇恩换成奥莉 / 弥尔。只保留等级，技能和词条不跟着走——
- * 剑士招法师带不上，硬迁会让词条整批休眠。
+ * 老档里的凯尔 / 薇恩换成奥莉 / 弥尔。只保留等级——剑士招法师带不上。
+ *
+ * 技能字段（`ownedSkillIds` / `activeSkillId`）在一人一招之后不再入档，
+ * 老档带着它们读进来会被这里连同其它未知字段一起丢掉，招牌技能重新从角色表推导。
  */
-function remapCharacterSkills(m: Character): Character {
-  const ownedSkillIds = [...new Set(m.ownedSkillIds.map(remapLegacySkillId))];
-  return {
-    ...m,
-    ownedSkillIds,
-    activeSkillId: remapLegacySkillId(m.activeSkillId),
-  };
-}
-
 export function remapLegacyRosterMember(m: Character): Character {
   const newId = remapLegacyCharacterId(m.rosterId);
-  if (newId !== m.rosterId) {
-    const def = getCharacterDef(newId);
-    if (!def) return remapCharacterSkills(m);
-    const inst = instantiateCharacter(def);
-    inst.level = Math.max(1, m.level);
-    return inst;
-  }
-  return remapCharacterSkills(m);
+  const def = getCharacterDef(newId);
+  if (!def) return { ...m, rosterId: newId };
+  const inst = instantiateCharacter(def);
+  inst.level = Math.max(1, m.level);
+  return inst;
 }
 
 export function remapLegacyRoster(roster: Character[]): Character[] {

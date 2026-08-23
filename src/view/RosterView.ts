@@ -3,23 +3,24 @@ import { makeText } from '@/theme/typography';
 import { UNIT_DEFS } from '@/data/unitDefs';
 import {
   CHARACTER_DEFS,
-  canCharacterUseSkill,
   characterStatsAtLevel,
   getCharacterDef,
   levelUpCost,
 } from '@/data/characterCatalog';
-import { getSkillSpec } from '@/data/skillCatalog';
-import { describeSkillRole, describeSkillShape } from '@/data/skillText';
+import { getSkillSpec, type SkillSpec } from '@/data/skillCatalog';
+import {
+  isExclusiveMod,
+  modChainForSkill,
+  type SkillModDef,
+  type SkillModRarity,
+} from '@/data/skillModCatalog';
+import { describeSkillRole } from '@/data/skillText';
 import { characterEffectiveStats } from '@/game/characterFactory';
 import type { Character } from '@/game/characterTypes';
 import { resolveBattleSkillIdForCharacter } from '@/game/state/DeployManager';
 import {
   MAX_CHARACTER_LEVEL,
-  SKILL_LEARN_COST,
-  equipSkill,
-  learnSkill,
   levelUpCharacter,
-  unlockableSkillsFor,
   type MvpGameState,
 } from '@/game/MvpState';
 import { createHubHeader } from '@/view/hubHeader';
@@ -48,8 +49,6 @@ export interface RosterCallbacks {
 
 const PAD = 12;
 const GRID_GAP = 8;
-/** 技能行高：两行文字（名字 + 范围）加上下留白 */
-const SKILL_ROW_H = 40;
 
 /** 属性行的展示名，顺序即显示顺序 */
 const STAT_ROWS: { key: 'maxHp' | 'atk' | 'spd' | 'move'; label: string }[] = [
@@ -58,6 +57,13 @@ const STAT_ROWS: { key: 'maxHp' | 'atk' | 'spd' | 'move'; label: string }[] = [
   { key: 'spd', label: '速度' },
   { key: 'move', label: '移动' },
 ];
+
+/** 纹章名的颜色，和三选一卡、信息面板是同一套稀有度语言 */
+const MOD_COLOR: Record<SkillModRarity, number> = {
+  common: 0x5a6a7a,
+  rare: 0x2f6fae,
+  epic: 0xa5561f,
+};
 
 /**
  * 角色页：只管**已拥有**的角色，看板 + 养成。
@@ -233,33 +239,80 @@ export function createRosterView(
   }
 
   /**
-   * 弹窗内容的顺序：**能操作的在前，供查阅的在后**。
+   * 弹窗内容的顺序：**这个人是谁 → 练他会得到什么 → 他这一招具体怎么打**。
    *
-   * 反过来排过一版（详细资料在最上面），结果是资料面板本身就有三百多像素高，
-   * 把升级和学技能整个推到折叠线以下——功能还在，但玩家打开弹窗看不见它，
-   * 等于没有。查阅型内容晚一屏看到没有代价，操作入口晚一屏就是功能丢失。
+   * 原来这一页有三处四维、两处姓名等级、一份点了会拒的可学技能列表，
+   * 而「升一级会解锁什么纹章」这个真正驱动养成的信息一个字都没有。
+   * 现在每样东西只出现一次，多出来的版面全给了纹章解锁链。
    */
   function fillDetail(md: ModalHandle, m: Character): void {
     const w = md.bodySize.width;
     let y = 0;
+    y += addOverviewBlock(md, m, w, y);
     y += addGrowthBlock(md, m, w, y);
-    y += addSkillBlock(md, m, w, y);
+    y += addModChainBlock(md, m, w, y);
     y += addDetailBlock(md, m, w, y);
     md.refresh();
   }
 
+  /** 这一局带的招牌技能（含本局纹章前的原始规格） */
+  function signatureSpec(m: Character): SkillSpec | undefined {
+    return getSkillSpec(resolveBattleSkillIdForCharacter(state, m));
+  }
+
   /**
-   * 详细资料：和布阵页、战斗页完全同一块渲染。
+   * 概览：头像 + 定位 + 四维。**全页唯一一处四维**。
    *
-   * 技能图标、CD、效果说明、范围格子一次到位，而且**保证和战斗里结算的是同一个数**。
-   * 这页原来手写了一版只有文字 chip 的简版，技能打多远一个字都没有。
+   * 四维原来在这一页出现三次（培养区一行、详细资料的基础属性、升级预览的左值），
+   * 三处还各有各的排版，玩家得先确认这三块说的是不是同一件事。
+   */
+  function addOverviewBlock(md: ModalHandle, m: Character, w: number, top: number): number {
+    const def = getCharacterDef(m.catalogId ?? m.rosterId);
+    const box = new PIXI.Container();
+    box.y = top;
+    md.body.addChild(box);
+
+    const token = createUnitToken(m.profession, 'player', 44);
+    token.x = 24;
+    token.y = 24;
+    box.addChild(token);
+
+    const role = makeText(
+      def
+        ? `${UNIT_DEFS[m.profession].name} · ${describeSkillRole(def.skillRoute)}`
+        : UNIT_DEFS[m.profession].name,
+      'uiStrong',
+      { fill: C.text, fontSize: 12 },
+    );
+    role.x = 56;
+    role.y = 2;
+    box.addChild(role);
+
+    const cur = characterEffectiveStats(m);
+    const stats = makeText(
+      `生命 ${cur.maxHp}　攻击 ${cur.atk}\n速度 ${cur.spd}　移动 ${cur.move}`,
+      'caption',
+      { fill: C.muted, lineHeight: 16 },
+    );
+    stats.x = 56;
+    stats.y = role.height + 4;
+    box.addChild(stats);
+
+    return Math.max(48, stats.y + stats.height) + 10;
+  }
+
+  /**
+   * 详细资料：普攻 + 招牌技能，和布阵页、战斗页完全同一块渲染。
+   *
+   * 头像、姓名、四维在这里全关掉（上面的概览已经写过一次），
+   * 留下的正是这一页原来最缺的东西——技能打多远、打几个、附带什么。
    */
   function addDetailBlock(md: ModalHandle, m: Character, w: number, top: number): number {
     const box = new PIXI.Container();
     box.y = top;
     md.body.addChild(box);
 
-    const label = makeText('详细资料', 'uiStrong', { fill: C.text, fontSize: 13 });
+    const label = makeText('招牌技能', 'uiStrong', { fill: C.text, fontSize: 13 });
     box.addChild(label);
     let y = label.height + 4;
 
@@ -270,7 +323,11 @@ export function createRosterView(
     box.addChild(line);
     y += 4;
 
-    const info = createUnitInfoPanel(characterInfoModel(state, m), w, { drawBg: false });
+    const info = createUnitInfoPanel(characterInfoModel(state, m), w, {
+      drawBg: false,
+      showHeader: false,
+      showStats: false,
+    });
     info.view.y = y;
     box.addChild(info.view);
     stopPanel = info.stop;
@@ -278,7 +335,7 @@ export function createRosterView(
     return y + info.height + 8;
   }
 
-  /** 升级区：花多少、升完变成什么样。返回占用高度 */
+  /** 升级区：花多少、升完加多少、下一档解锁什么。返回占用高度 */
   function addGrowthBlock(md: ModalHandle, m: Character, w: number, top: number): number {
     const def = getCharacterDef(m.catalogId ?? m.rosterId);
     const box = new PIXI.Container();
@@ -288,54 +345,46 @@ export function createRosterView(
     let y = 0;
     const title = makeText('培养', 'uiStrong', { fill: C.text, fontSize: 13 });
     box.addChild(title);
-    const route = makeText(
-      def ? `${UNIT_DEFS[m.profession].name} · ${describeSkillRole(def.skillRoute)}` : '',
-      'caption',
-      { fill: C.muted },
-    );
-    route.anchor.set(1, 0);
-    route.x = w;
-    route.y = 2;
-    box.addChild(route);
     y += title.height + 6;
 
     const maxed = m.level >= MAX_CHARACTER_LEVEL;
     const cur = characterEffectiveStats(m);
     const next = def && !maxed ? characterStatsAtLevel(def, m.level + 1) : null;
 
-    // 当前四维摆在最前面：详细资料里也有，但那在下一屏，而「他现在多强」是
-    // 决定要不要花这笔魂晶的前提，不该需要先滚一趟再滚回来
-    const now = makeText(
-      `生命 ${cur.maxHp}   攻击 ${cur.atk}   速度 ${cur.spd}   移动 ${cur.move}`,
-      'caption',
-      { fill: C.text },
-    );
-    now.y = y;
-    box.addChild(now);
-    y += now.height + 6;
-
     if (next) {
-      // 「升级奖励」写成前后对比而不是一句「攻击+2」：玩家真正要判断的是
-      // 这几点加下去够不够跨过某个门槛（比如两刀砍死杂兵），只给增量他还得自己做加法。
-      for (const row of STAT_ROWS) {
-        const from = cur[row.key];
-        const to = next[row.key];
-        if (to === from) continue;
-        const line = new PIXI.Container();
-        line.y = y;
-        const lb = makeText(row.label, 'caption', { fill: C.muted });
-        line.addChild(lb);
-        const val = makeText(`${from} → ${to}`, 'uiStrong', { fill: C.text, fontSize: 12 });
-        val.x = 44;
-        line.addChild(val);
-        const delta = makeText(`+${to - from}`, 'uiStrong', { fill: 0x3a8a5a, fontSize: 12 });
-        delta.anchor.set(1, 0);
-        delta.x = w;
-        line.addChild(delta);
-        box.addChild(line);
-        y += 18;
+      // 只写增量，不再写 `40 → 44`：当前值就在上面那块概览里，
+      // 一屏之内把同一个数写两遍反而要玩家自己核对两处是不是一致。
+      const gains = STAT_ROWS
+        .map((r) => ({ label: r.label, d: next[r.key] - cur[r.key] }))
+        .filter((g) => g.d > 0)
+        .map((g) => `${g.label} +${g.d}`);
+      const gain = makeText(`升到 Lv.${m.level + 1}：${gains.join('　')}`, 'caption', {
+        fill: 0x3a8a5a,
+        wordWrap: true,
+        wordWrapWidth: w,
+      });
+      gain.y = y;
+      box.addChild(gain);
+      y += gain.height + 6;
+    }
+
+    // 下一档纹章解锁：这是升级除了数值之外真正能给到的东西，
+    // 而数值那几点在战棋里基本感觉不到。放在按钮上方，玩家按下去之前就看得见。
+    const spec = signatureSpec(m);
+    if (spec && !maxed) {
+      const upcoming = modChainForSkill(spec).filter((d) => d.minLevel > m.level);
+      const nextLv = upcoming[0]?.minLevel;
+      if (nextLv !== undefined) {
+        const names = upcoming.filter((d) => d.minLevel === nextLv).map((d) => d.name);
+        const tx = makeText(`Lv.${nextLv} 解锁纹章：${names.join('、')}`, 'caption', {
+          fill: nextLv === m.level + 1 ? 0xa5561f : C.muted,
+          wordWrap: true,
+          wordWrapWidth: w,
+        });
+        tx.y = y;
+        box.addChild(tx);
+        y += tx.height + 8;
       }
-      y += 4;
     }
 
     const cost = levelUpCost(m.level);
@@ -373,152 +422,117 @@ export function createRosterView(
     return y;
   }
 
-  /** 技能装配 + 学习。返回占用高度 */
-  function addSkillBlock(md: ModalHandle, m: Character, w: number, top: number): number {
-    const def = getCharacterDef(m.catalogId ?? m.rosterId);
+  /**
+   * 纹章解锁链：按等级分段列出这名角色的招牌技能**将来**吃得到的纹章。
+   *
+   * 这是整页新增的核心内容。在此之前，纹章只在战斗中的三选一里一闪而过，
+   * 局外完全看不见——玩家既不知道自己那一招还能变成什么样，也就没有理由
+   * 挑某个人练。现在等级是闸门（见 `SkillModDef.minLevel`），这一栏就是闸门后面
+   * 那扇门的玻璃：升到几级会开出什么，开的是不是他这一招的招牌，都写在脸上。
+   *
+   * **只有专属纹章逐条展开**。通用纹章一档能有七八条，全展开会把这一栏拉到三屏，
+   * 而它们大多是「伤害 +25%」这类不改变打法的加成，玩家不需要在局外逐条读——
+   * 招牌强化才是他决定练谁的理由，所以那几条给足描述，其余只报名字。
+   */
+  function addModChainBlock(md: ModalHandle, m: Character, w: number, top: number): number {
+    const spec = signatureSpec(m);
+    if (!spec) return 0;
+
     const box = new PIXI.Container();
     box.y = top;
     md.body.addChild(box);
 
     let y = 0;
-    const title = makeText('技能', 'uiStrong', { fill: C.text, fontSize: 13 });
+    const title = makeText('纹章解锁', 'uiStrong', { fill: C.text, fontSize: 13 });
     box.addChild(title);
-    const hint = makeText('点一条切换为出战技能', 'caption', { fill: C.muted });
+    const hint = makeText('战斗中三选一时出现', 'caption', { fill: C.muted });
     hint.anchor.set(1, 0);
     hint.x = w;
     hint.y = 2;
     box.addChild(hint);
     y += title.height + 6;
 
-    // 过一遍路线判定而不是直接列 `ownedSkillIds`：老存档里可能留着可学列表收紧前
-    // 学到的越界技能，列出来只会是一个点了没反应的按钮（`equipSkill` 会拒）。
-    const usable = m.ownedSkillIds.filter((id) => {
-      const spec = getSkillSpec(id);
-      return !!spec && (!def || canCharacterUseSkill(def, id));
-    });
-    for (const skId of usable) {
-      const spec = getSkillSpec(skId)!;
-      const active = m.activeSkillId === skId;
-      const row = makeCard({
-        width: w,
-        height: SKILL_ROW_H,
-        radius: 8,
-        tone: active ? 'selected' : 'normal',
-        guard: md.wasDragging,
-        onTap: () => {
-          if (active) return;
-          if (equipSkill(state, m.rosterId, skId)) {
-            dirty = true;
-            cb.onPersist();
-            refillDetail(m);
-          }
-        },
-      });
-      row.y = y;
-      const icon = createUiIcon(`skill_${skId}`, 22);
-      if (icon) {
-        icon.x = 8;
-        icon.y = (SKILL_ROW_H - 22) / 2;
-        row.addChild(icon);
-      }
-      const nm = makeText(spec.name, 'uiStrong', { fill: C.text, fontSize: 12 });
-      nm.x = 36;
-      nm.y = 6;
-      row.addChild(nm);
-      // 打哪儿、打几个直接写在行里。切换出战技能是个战术选择，
-      // 而光看名字选不出来——完整说明在下面的详细资料里，但选之前就得看得到区别
-      const shapeTx = makeText(describeSkillShape(spec), 'micro', { fill: C.muted, fontSize: 9 });
-      shapeTx.x = 36;
-      shapeTx.y = 24;
-      row.addChild(shapeTx);
-      const tag = makeText(active ? '出战中' : `CD ${spec.cooldown}`, 'micro', {
-        fill: active ? 0xa5561f : C.muted,
-        fontSize: 9,
-      });
-      tag.anchor.set(1, 0);
-      tag.x = w - 9;
-      tag.y = 8;
-      row.addChild(tag);
-      box.addChild(row);
-      y += SKILL_ROW_H + 6;
-    }
+    const chain = modChainForSkill(spec);
+    const levels = [...new Set(chain.map((d) => d.minLevel))].sort((a, b) => a - b);
 
-    const learnable = def ? unlockableSkillsFor(m) : [];
-    if (learnable.length > 0) {
+    for (const lv of levels) {
+      const group = chain.filter((d) => d.minLevel === lv);
+      const unlocked = m.level >= lv;
+
+      const head = makeText(unlocked ? `Lv.${lv}　已解锁` : `Lv.${lv}　未解锁`, 'caption', {
+        fill: unlocked ? 0x3a8a5a : C.muted,
+        fontWeight: 'bold',
+      });
+      head.y = y;
+      box.addChild(head);
+      y += head.height + 4;
+
+      for (const mod of group.filter(isExclusiveMod)) {
+        y += addModRow(box, mod, w, y, unlocked);
+      }
+
+      const generic = group.filter((d) => !isExclusiveMod(d));
+      if (generic.length > 0) {
+        const names = makeText(`通用：${generic.map((d) => d.name).join('、')}`, 'micro', {
+          fill: C.muted,
+          fontSize: 9,
+          lineHeight: 13,
+          wordWrap: true,
+          wordWrapWidth: w - 8,
+        });
+        names.x = 8;
+        names.y = y;
+        names.alpha = unlocked ? 1 : 0.5;
+        box.addChild(names);
+        y += names.height + 4;
+      }
       y += 4;
-      const lt = makeText(`可学习（每个魂晶 ${SKILL_LEARN_COST}）`, 'caption', { fill: C.muted });
-      lt.y = y;
-      box.addChild(lt);
-      y += lt.height + 6;
-
-      for (const skId of learnable) {
-        const spec = getSkillSpec(skId);
-        if (!spec) continue;
-        const row = makeCard({ width: w, height: SKILL_ROW_H, radius: 8, tone: 'normal' });
-        row.y = y;
-        const icon = createUiIcon(`skill_${skId}`, 22);
-        if (icon) {
-          icon.x = 8;
-          icon.y = (SKILL_ROW_H - 22) / 2;
-          // 还没学的压暗一档，和已有技能区分开
-          icon.alpha = 0.7;
-          row.addChild(icon);
-        }
-        const nm = makeText(spec.name, 'uiStrong', { fill: C.text, fontSize: 12 });
-        nm.x = 36;
-        nm.y = 6;
-        row.addChild(nm);
-        const shapeTx = makeText(describeSkillShape(spec), 'micro', { fill: C.muted, fontSize: 9 });
-        shapeTx.x = 36;
-        shapeTx.y = 24;
-        row.addChild(shapeTx);
-        const btn = makeButton(
-          '学习',
-          () => {
-            if (md.wasDragging()) return;
-            if (learnSkill(state, m.rosterId, skId)) {
-              dirty = true;
-              cb.onPersist();
-              refillDetail(m);
-            } else {
-              showToast(md.root, `魂晶不足（还差 ${SKILL_LEARN_COST - state.meta.metaCurrency}）`, {
-                x: PAD,
-                y: H - 40,
-                color: C.soulText,
-              });
-            }
-          },
-          {
-            variant: state.meta.metaCurrency >= SKILL_LEARN_COST ? 'primary' : 'secondary',
-            width: 62,
-            height: 28,
-            fontSize: 12,
-            radius: 6,
-          },
-        );
-        btn.x = w - 68;
-        btn.y = (SKILL_ROW_H - 28) / 2;
-        row.addChild(btn);
-        box.addChild(row);
-        y += SKILL_ROW_H + 6;
-      }
     }
 
-    // 满级 + 学完之后这一页就没有可花魂晶的地方了，明说一句，
-    // 否则玩家会一直回来找「还能升什么」
-    if (learnable.length === 0 && m.level >= MAX_CHARACTER_LEVEL) {
-      const done = makeText('这名角色已练满，魂晶留给别人吧。', 'caption', {
-        fill: C.muted,
-        wordWrap: true,
-        wordWrapWidth: w,
-      });
-      done.y = y;
-      box.addChild(done);
-      y += done.height + 4;
-    }
-    y += 6;
+    return y + 4;
+  }
 
-    return y;
+  /** 专属纹章一行：徽记 + 名字 + 完整效果。返回行高 */
+  function addModRow(
+    box: PIXI.Container,
+    mod: SkillModDef,
+    w: number,
+    top: number,
+    unlocked: boolean,
+  ): number {
+    const row = new PIXI.Container();
+    row.y = top;
+    // 未解锁压暗而不是藏起来：这一栏存在的意义就是让玩家看见还没拿到的东西
+    row.alpha = unlocked ? 1 : 0.45;
+
+    const icon = createUiIcon(mod.icon, 16);
+    if (icon) {
+      icon.x = 8;
+      row.addChild(icon);
+    }
+    const textX = icon ? 30 : 8;
+
+    const nm = makeText(`${mod.name}　专属`, 'uiStrong', {
+      fill: MOD_COLOR[mod.rarity],
+      fontSize: 11,
+    });
+    nm.x = textX;
+    row.addChild(nm);
+
+    // 效果按 1 层写：专属纹章 `maxStacks` 恒为 1，所以这就是它的最终形态
+    const desc = makeText(mod.describe(1), 'micro', {
+      fill: C.muted,
+      fontSize: 9,
+      lineHeight: 13,
+      wordWrap: true,
+      wordWrapWidth: Math.max(60, w - textX),
+    });
+    desc.x = textX;
+    desc.y = nm.height + 1;
+    row.addChild(desc);
+
+    box.addChild(row);
+    return nm.height + 1 + desc.height + 6;
   }
 
   return root;

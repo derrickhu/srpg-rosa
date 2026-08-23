@@ -27,8 +27,15 @@ export interface Character {
   /** 1 级基础面板（成长在其上叠加，见 characterStatsAtLevel） */
   base: CharacterBaseStats;
   strike: CharacterStrikeStats;
-  /** 已解锁技能 id（含初始） */
-  ownedSkillIds: string[];
-  /** 当前持久装配技能 */
-  activeSkillId: string;
 }
+
+/**
+ * 这里**刻意没有**技能字段。
+ *
+ * 曾经有 `ownedSkillIds` / `activeSkillId` 两个：前者记买过哪些招，后者记当前装配的。
+ * 一人一招之后招牌技能由 `CharacterDef.defaultSkillId` 唯一决定，
+ * 存一份可变副本只会制造两个真相——老档里那份副本正好是当年学过的越界技能，
+ * 而它不会自己失效，只会让那个角色的纹章莫名休眠。
+ *
+ * 需要「这个人打哪一招」时走 `signatureSkillId` / `resolveBattleSkillIdForCharacter`。
+ */

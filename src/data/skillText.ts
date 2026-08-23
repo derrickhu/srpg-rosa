@@ -44,11 +44,17 @@ export function describeSkillShape(spec: SkillSpec): string {
         ? '贴身一圈八格所有敌人（含斜角）'
         : `周围 ${shape.radius} 格方形内所有敌人（含斜角）`;
     case 'neighborPickFoe':
-      return `${describeReach(shape.manhattan, shape.reach)}选一个敌人`;
+      return shape.axisOnly
+        ? `同行或同列${describeReach(shape.manhattan, shape.reach)}选一个敌人`
+        : `${describeReach(shape.manhattan, shape.reach)}选一个敌人`;
     case 'neighborPickAlly':
       return `${describeReach(shape.manhattan, shape.reach)}选一个友方`;
     case 'lineBestRayAllFoes':
-      return '四方向直线穿透所有敌人';
+      return shape.range === undefined
+        ? '四方向直线穿透所有敌人（不限射程）'
+        : `四方向直线 ${shape.range} 格内穿透所有敌人`;
+    case 'groundPickAoE':
+      return `${shape.castRange} 格内选一点，对该点周围 ${shape.blastRadius} 格内所有敌人`;
     case 'selfCast':
       return '对自己释放';
   }
@@ -97,6 +103,16 @@ export function describeSkillSpec(spec: SkillSpec): string[] {
   }
   if (spec.splashRatio) {
     out.push(`溅射: 目标周围敌人受到 ${Math.round(spec.splashRatio * 100)}% 伤害`);
+  }
+  // 位移是这一招在棋盘上做的事，比伤害数字更影响玩家怎么用它——不写出来，
+  // 玩家只会在第一次施放时被自己突然出现在敌阵后面吓一跳
+  if (spec.onHitDisplace) {
+    const { who, cells } = spec.onHitDisplace;
+    out.push(
+      who === 'self'
+        ? `突进: 命中后穿过目标，落到它身后 ${cells} 格（算作已移动）`
+        : `击退: 将目标向后推开 ${cells} 格，遇墙或他人则停下`,
+    );
   }
 
   for (const e of spec.onCastSelfEffects ?? []) {

@@ -83,6 +83,18 @@ export interface SkillModDef {
   name: string;
   rarity: SkillModRarity;
   scope: SkillModScope;
+  /**
+   * 角色等级达到多少才可能抽到它（见 `ProgressManager.lootCandidatesFor`）。
+   *
+   * 这是把**局外成长**和**局内构筑**接起来的那根线。在此之前角色等级只加数值，
+   * 而数值成长在战棋里是最没有存在感的一种成长——玩家升到 10 级，感受到的是
+   * 「怪好像好打了一点」，没有任何一刻能指着说「我解锁了这个」。
+   * 纹章反过来：它改变这一招怎么用，而且解锁那一刻在角色页上是看得见的一行字。
+   *
+   * 仍然是 **run 级**的——等级解锁的是「这条能不能进三选一池」，不是永久拥有。
+   * 直接送的话每局开场就带满构筑，三选一那套「这一局我走哪条路」当场消失。
+   */
+  minLevel: number;
   /** 卡片图标资源 key，见 `core/assetBundles` */
   icon: string;
   /**
@@ -110,9 +122,25 @@ interface ModSeed {
   maxStacks: number;
   /** 只在这些技能上出现；缺省 = 普通词条 */
   only?: readonly string[];
+  /** 覆盖 `defaultMinLevel` 的档位；正常情况下不写，让稀有度决定 */
+  minLevel?: number;
   fits(spec: SkillSpec): boolean;
   describe(stacks: number): string;
   apply(spec: SkillSpec, stacks: number): SkillSpec;
+}
+
+/**
+ * 稀有度 → 解锁等级。专属纹章比同稀有度的普通纹章早得多，这是刻意的：
+ * 一个角色练到中段，先拿到的应该是**他自己那一招的招牌强化**，
+ * 而不是一条谁都能吃的通用加成。玩家记住的构筑是前者。
+ *
+ * 上限 16 级（`MAX_CHARACTER_LEVEL`），所以史诗普通纹章的 13 级基本是终局内容。
+ */
+const GENERIC_MIN_LEVEL: Record<SkillModRarity, number> = { common: 1, rare: 7, epic: 13 };
+const EXCLUSIVE_MIN_LEVEL: Record<SkillModRarity, number> = { common: 1, rare: 4, epic: 10 };
+
+function defaultMinLevel(seed: ModSeed): number {
+  return (seed.only ? EXCLUSIVE_MIN_LEVEL : GENERIC_MIN_LEVEL)[seed.rarity];
 }
 
 /**
@@ -155,12 +183,13 @@ function isActive(spec: SkillSpec): boolean {
   return spec.timing !== 'passive';
 }
 
-/** 环形/圆形/方形 AoE（「横扫」类词条只对这几种有意义） */
+/** 环形/圆形/方形/选点 AoE（「横扫」类词条只对这几种有意义） */
 function isAoE(spec: SkillSpec): boolean {
   return (
     spec.shape.type === 'neighborAoE' ||
     spec.shape.type === 'discAoE' ||
-    spec.shape.type === 'squareAoE'
+    spec.shape.type === 'squareAoE' ||
+    spec.shape.type === 'groundPickAoE'
   );
 }
 
@@ -206,9 +235,14 @@ function isInnateTaunter(spec: SkillSpec): boolean {
   return p !== null && UNIT_DEFS[p].strike.taunt;
 }
 
-/** 有「移动后普攻加成」的被动（目前只有冲锋，但这是被动系唯一的通用杠杆） */
-function hasMovePassive(spec: SkillSpec): boolean {
-  return spec.passiveBasicAttackMulIfMoved !== undefined;
+/** 命中后会推开谁（突进 / 击退）。「加大位移距离」类纹章的挂载前提 */
+function hasDisplace(spec: SkillSpec): boolean {
+  return spec.onHitDisplace !== undefined;
+}
+
+/** 有射程上限的射线技能。「加射程」类纹章的挂载前提 */
+function hasRayRange(spec: SkillSpec): boolean {
+  return spec.shape.type === 'lineBestRayAllFoes' && spec.shape.range !== undefined;
 }
 
 // ── 规格改写 ──────────────────────────────────────────────────────────────
@@ -245,6 +279,9 @@ function widenAoE(spec: SkillSpec, plus: number): SkillSpec {
    */
   if (s.type === 'squareAoE') {
     return { ...spec, shape: { type: 'discAoE', radius: s.radius + plus } };
+  }
+  if (s.type === 'groundPickAoE') {
+    return { ...spec, shape: { ...s, blastRadius: s.blastRadius + plus } };
   }
   return spec;
 }
@@ -516,20 +553,6 @@ const GENERIC_SEEDS: readonly ModSeed[] = [
     apply: (spec, n) => withExecute(spec, 0.4, 1 + 0.35 * n),
   },
   {
-    id: 'momentum',
-    name: '蓄势',
-    rarity: 'rare',
-    icon: 'mod_momentum',
-    maxStacks: 2,
-    // 被动系唯一的通用杠杆。冲锋型角色一条主动词条都挂不上，没有这条他抽卡会开天窗。
-    fits: hasMovePassive,
-    describe: (n) => `移动后普攻伤害再提升 ${15 * n}%`,
-    apply: (spec, n) => ({
-      ...spec,
-      passiveBasicAttackMulIfMoved: (spec.passiveBasicAttackMulIfMoved ?? 1) + 0.15 * n,
-    }),
-  },
-  {
     id: 'overwhelm',
     name: '势不可挡',
     rarity: 'epic',
@@ -626,17 +649,82 @@ const EXCLUSIVE_SEEDS: readonly ModSeed[] = [
         rounds: 2,
       }),
   },
+  /**
+   * 射程这条线是穿透箭独有的成长维度。
+   *
+   * 它原本**没有上限**——一路射到出界，7×9 的棋盘上等于整行整列全覆盖，
+   * 于是「希尔该站哪」这个弓手唯一的决策不存在。收到 5 格之后射程本身成了
+   * 值得投资的东西：先花一条纹章买到 7 格，终局那条把上限整个拿掉，
+   * 而拿掉的那一刻玩家能立刻感觉到棋盘变小了。
+   */
+  {
+    id: 'ex_pierce_longshot',
+    name: '远眺',
+    rarity: 'rare',
+    maxStacks: 1,
+    only: ['pierce'],
+    fits: hasRayRange,
+    describe: () => '穿透箭：射程由 5 格延长到 7 格',
+    apply: (spec) => ({ ...spec, shape: { type: 'lineBestRayAllFoes', range: 7 } }),
+  },
+  {
+    id: 'ex_pierce_endless',
+    name: '洞穿',
+    rarity: 'epic',
+    maxStacks: 1,
+    only: ['pierce'],
+    fits: hasRayRange,
+    describe: () => '穿透箭：射程不再有上限，一路贯穿到墙或战场边缘',
+    apply: (spec) => ({ ...spec, shape: { type: 'lineBestRayAllFoes' } }),
+  },
+  /**
+   * 「冲锋」曾经是骑兵占着一个技能位的**被动技**：不施放、不选目标，只是把移动后的
+   * 普攻打得更狠。作为一招它有个结构性毛病——被动没有「施放」这个挂载点，
+   * 一切挂在施放上的纹章对它都是死牌，带它的角色三选一常年开天窗。
+   *
+   * 降成纹章之后两头都通了：岚骑有了一招真正的招牌技（长驱突刺），
+   * 而冲锋回到它本来的样子——一个装上去就改变打法的强化。
+   * 引擎侧零改动，`basicAttack` 读的本来就是过完纹章的主技能规格。
+   */
+  {
+    id: 'ex_lance_charge',
+    name: '冲锋',
+    rarity: 'rare',
+    maxStacks: 1,
+    only: ['lance_thrust'],
+    fits: () => true,
+    describe: () => '长驱突刺：本回合移动过后，普攻伤害提升 35%',
+    apply: (spec) => ({ ...spec, passiveBasicAttackMulIfMoved: 1.35 }),
+  },
+  /**
+   * 践地必须排在冲锋**后面**：它是在冲锋的基础上再加一档。
+   * `DEFS` 按数组顺序应用，两条都拿到时结果是 1.35 + 0.55；
+   * 反过来的话冲锋的 `apply` 会把践地加的那 0.55 直接覆盖掉。
+   */
   {
     id: 'ex_charge_trample',
     name: '践地',
     rarity: 'epic',
     maxStacks: 1,
-    only: ['charge'],
+    only: ['lance_thrust'],
     fits: () => true,
-    describe: () => '冲锋：移动后普攻伤害再提升 55%',
+    describe: () => '长驱突刺：移动后的普攻伤害再提升 55%（需先有冲锋）',
     apply: (spec) => ({
       ...spec,
       passiveBasicAttackMulIfMoved: (spec.passiveBasicAttackMulIfMoved ?? 1) + 0.55,
+    }),
+  },
+  {
+    id: 'ex_lance_farcharge',
+    name: '长驱',
+    rarity: 'rare',
+    maxStacks: 1,
+    only: ['lance_thrust'],
+    fits: hasDisplace,
+    describe: () => '长驱突刺：突进距离改为穿到目标身后 3 格',
+    apply: (spec) => ({
+      ...spec,
+      onHitDisplace: { who: 'self', cells: 3 },
     }),
   },
   {
@@ -654,13 +742,29 @@ const EXCLUSIVE_SEEDS: readonly ModSeed[] = [
     apply: (spec) => setFoe(cutCooldown(spec, 1), { kind: 'spdDown', subSpd: 4, rounds: 3 }),
   },
   {
+    id: 'ex_bash_hurl',
+    name: '冲垒',
+    rarity: 'epic',
+    maxStacks: 1,
+    only: ['bash'],
+    fits: hasDisplace,
+    describe: () => '震击：击退距离改为 3 格',
+    apply: (spec) => ({ ...spec, onHitDisplace: { who: 'target', cells: 3 } }),
+  },
+  /**
+   * 原本挂在「重劈」上。重劈一人一招之后转给了敌方剑兵，这条处决就跟着搬到
+   * 雷恩现在的招牌旋风斩上——内容一个字没改，只是换了主人。
+   * 挂在 AoE 上时处决是逐个目标判的（见 `hitModNote`），所以「一刀清掉一圈残血」
+   * 这个读法照样成立，而且比在单体上更像雷恩会做的事。
+   */
+  {
     id: 'ex_cleave_reap',
     name: '斩残',
-    rarity: 'rare',
+    rarity: 'epic',
     maxStacks: 1,
-    only: ['cleave'],
+    only: ['whirl'],
     fits: () => true,
-    describe: () => '重劈：目标血量低于 50% 时，伤害提升 80%',
+    describe: () => '旋风斩：对血量低于 50% 的敌人，伤害提升 80%',
     apply: (spec) => withExecute(spec, 0.5, 1.8),
   },
   {
@@ -684,21 +788,6 @@ const EXCLUSIVE_SEEDS: readonly ModSeed[] = [
     apply: (spec) => addSplash(scaleDamage(spec, 1.2), 0.5),
   },
   {
-    id: 'ex_trample_crush',
-    name: '碎蹄',
-    rarity: 'rare',
-    maxStacks: 1,
-    only: ['trample'],
-    fits: () => true,
-    describe: () => '铁蹄践踏：减速改为 -5（3 回合），并附带中毒每回合 -3 血',
-    apply: (spec) =>
-      mergeFoe(setFoe(spec, { kind: 'spdDown', subSpd: 5, rounds: 3 }), {
-        kind: 'poison',
-        dmgPerRound: 3,
-        rounds: 3,
-      }),
-  },
-  {
     id: 'ex_shield_wall_bulwark',
     name: '铁壁',
     rarity: 'rare',
@@ -715,26 +804,22 @@ const EXCLUSIVE_SEEDS: readonly ModSeed[] = [
         rounds: 2,
       }),
   },
-  {
-    id: 'ex_snap_volley',
-    name: '连珠',
-    rarity: 'rare',
-    maxStacks: 1,
-    only: ['snap'],
-    fits: () => true,
-    describe: () => '速射：冷却缩短 1 回合，且伤害提升 20%',
-    apply: (spec) => scaleDamage(cutCooldown(spec, 1), 1.2),
-  },
+  /**
+   * 原本挂在「铁锤」上。铁锤转给敌方重装之后搬到震击上，方向一致——
+   * 盾卫打不死人，但能让被他盯上的那个既打不疼人也追不上人。
+   * 用 `mergeFoe` 而不是 `setFoe`：震击自带 -2 速，直接改写会把它顶掉，
+   * 结果是「装了削速纹章，速度惩罚反而只多了 1」。
+   */
   {
     id: 'ex_hammer_bonebreak',
     name: '碎骨',
     rarity: 'rare',
     maxStacks: 1,
-    only: ['hammer'],
+    only: ['bash'],
     fits: () => true,
-    describe: () => '铁锤：目标攻击 -6、速度 -3，持续 3 回合',
+    describe: () => '震击：额外使目标攻击 -6，且减速加深到 -5（3 回合）',
     apply: (spec) =>
-      setFoe(setFoe(spec, { kind: 'atkDown', subAtk: 6, rounds: 3 }), {
+      mergeFoe(setFoe(spec, { kind: 'atkDown', subAtk: 6, rounds: 3 }), {
         kind: 'spdDown',
         subSpd: 3,
         rounds: 3,
@@ -788,6 +873,17 @@ const EXCLUSIVE_SEEDS: readonly ModSeed[] = [
     describe: () => '炎弹：目标血量低于 50% 时，伤害提升 80%',
     apply: (spec) => withExecute(spec, 0.5, 1.8),
   },
+  /** 原本是速射的「连珠」。速射转给敌方弓兵之后，这条搬到炎弹上当奥莉的出手频率强化 */
+  {
+    id: 'ex_snap_volley',
+    name: '连爆',
+    rarity: 'rare',
+    maxStacks: 1,
+    only: ['ember'],
+    fits: () => true,
+    describe: () => '炎弹：冷却缩短 1 回合，且伤害提升 20%',
+    apply: (spec) => scaleDamage(cutCooldown(spec, 1), 1.2),
+  },
   {
     id: 'ex_flame_ignite',
     name: '点燃',
@@ -807,6 +903,20 @@ const EXCLUSIVE_SEEDS: readonly ModSeed[] = [
     fits: () => true,
     describe: () => '圣疗：治疗量提升 16，且目标速度 +2（2 回合）',
     apply: (spec) => mergeAlly(boostHeal(spec, 16), { kind: 'spdBonus', addSpd: 2, rounds: 2 }),
+  },
+  /**
+   * 弥尔的终局纹章。圣疗原本是纯抬血，抬完那个人下一回合照样会被打回去；
+   * 减伤把「救回来」变成「救得住」，这是治疗职业真正的天花板。
+   */
+  {
+    id: 'ex_heal_aegis',
+    name: '庇佑',
+    rarity: 'epic',
+    maxStacks: 1,
+    only: ['heal_touch'],
+    fits: () => true,
+    describe: () => '圣疗：目标额外获得 40% 减伤，持续 3 回合',
+    apply: (spec) => setAlly(spec, { kind: 'guard', reduceRatio: 0.4, rounds: 3 }),
   },
   {
     id: 'ex_ward_aegis',
@@ -837,6 +947,7 @@ function toDef(seed: ModSeed): SkillModDef {
     name: seed.name,
     rarity: seed.rarity,
     scope,
+    minLevel: seed.minLevel ?? defaultMinLevel(seed),
     icon: seed.icon ?? EXCLUSIVE_ICON,
     maxStacks: seed.maxStacks,
     describe: seed.describe,
@@ -861,6 +972,24 @@ export function allSkillMods(): SkillModDef[] {
 
 export function isExclusiveMod(def: SkillModDef): boolean {
   return def.scope.kind === 'exclusive';
+}
+
+/**
+ * 这条技能能吃到的**全部**纹章，按解锁等级、稀有度排好序。
+ *
+ * 角色页的解锁链读它：玩家在那一页问的是「我把这个人练上去，会多出什么」，
+ * 而答案恰好是这个列表按 `minLevel` 切成的几段。排序放在目录里而不是界面里，
+ * 是因为「专属排在同级普通之前」是词条自身的定位决定的（专属才是招牌强化），
+ * 换个界面来问也该得到同一个顺序。
+ */
+export function modChainForSkill(spec: SkillSpec): SkillModDef[] {
+  const rank: Record<SkillModRarity, number> = { common: 0, rare: 1, epic: 2 };
+  return DEFS.filter((d) => d.canApply(spec)).sort((a, b) =>
+    a.minLevel - b.minLevel
+    || Number(isExclusiveMod(b)) - Number(isExclusiveMod(a))
+    || rank[a.rarity] - rank[b.rarity]
+    || a.name.localeCompare(b.name),
+  );
 }
 
 /** 这条技能有哪些专属词条（供测试与图鉴类界面用） */

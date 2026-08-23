@@ -1758,6 +1758,37 @@ export function createBattlePlaybackView(
         }
         break;
       }
+      /**
+       * 强制位移：**一段整滑**，不是逐格走。
+       *
+       * 走 `moveStep` 那条路的话，突进和击退会播出迈腿动画，看起来像被推的人
+       * 自己走过去的——而这一招的全部意思恰恰是「他不想动，是被顶开的」。
+       * 所以这里只做位置插值，动画状态一概不碰：突进时施法者身上正播着攻击动作，
+       * 那一段滑行接在挥枪后面才是「长驱」的读法。
+       *
+       * 时长按格数给（每格 90ms）而不是定长：3 格击退和 2 格击退用同一段时间的话，
+       * 玩家分辨不出「冲垒」有没有生效。
+       */
+      case 'displace': {
+        const tok = tokens.get(ev.uid);
+        if (tok) {
+          const fromC = cellCenter(originX, originY, cell, ev.from);
+          const toC = cellCenter(originX, originY, cell, ev.to);
+          const cells = Math.abs(ev.to.x - ev.from.x) + Math.abs(ev.to.y - ev.from.y);
+          tok.x = fromC.x;
+          tok.y = fromC.y;
+          await awaitEase(dur(90 * Math.max(1, cells)), (k) => {
+            if (!isDisplayLive(tok)) return;
+            // 先快后慢：被顶开的那一下没有加速过程，速度峰值在起手
+            const e = 1 - (1 - k) * (1 - k);
+            tok.x = fromC.x + (toC.x - fromC.x) * e;
+            tok.y = fromC.y + (toC.y - fromC.y) * e;
+          });
+          posByUid.set(ev.uid, { ...ev.to });
+          if (inspectUid === ev.uid) paintInspectRing(ev.uid);
+        }
+        break;
+      }
       case 'skillCast': {
         await flashRangeCells(ev.rangeCells, skillRangeColor(ev.kind), 460);
         const caster = tokens.get(ev.uid);
@@ -1843,10 +1874,13 @@ export function createBattlePlaybackView(
           await awaitEase(dur(180), () => {});
         } else if (recipe) {
           const aimTok = ev.hits[0] ? tokens.get(ev.hits[0].target) : undefined;
+          const groundAt = ev.aimCell
+            ? cellCenter(originX, originY, cell, ev.aimCell)
+            : undefined;
           await playRecipe(
             recipe,
             { x: cx, y: cy },
-            aimTok ? { x: aimTok.x, y: aimTok.y } : undefined,
+            groundAt ?? (aimTok ? { x: aimTok.x, y: aimTok.y } : undefined),
           );
           await awaitEase(dur(HIT_STOP_MS), () => {});
           // AoE 逐个中招，而不是同一帧四个人一起闪白。

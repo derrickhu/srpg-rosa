@@ -58,8 +58,24 @@ export type SkillShape =
    * 所以改的是尺子。`radius:1` 就是标准的「贴身一圈八格」。
    */
   | { type: 'squareAoE'; radius: number }
-  /** 四向射线穿透；玩家点方向，AI 才按策略挑一条线 */
-  | { type: 'lineBestRayAllFoes' }
+  /**
+   * 四向射线穿透；玩家点方向，AI 才按策略挑一条线。
+   *
+   * `range` 是**最多推进几格**，缺省无限（一路打到出界或撞上挡视线的墙）。
+   * 玩家技能必须写死一个有限值：棋盘只有 7×9，无限射程等于「整行整列全覆盖」，
+   * 那既让弓手的站位不再是个决策，也让「射程」这个词在面板上没有意义。
+   * Boss 的破阵冲撞 / 灭世龙息刻意留空——整条线的压迫感正是它们的卖点。
+   */
+  | { type: 'lineBestRayAllFoes'; range?: number }
+  /**
+   * 远程选点范围攻击：在自身 `castRange` 格内任选一格作中心（含空地），
+   * 打中心 `blastRadius` 格内（含中心格）所有敌人。
+   *
+   * 和 `discAoE` 的区别是中心可以不在自己脚下——战棋远程法师的标准用法。
+   * 「炎环」从绕身一圈改成这个形状之后，奥莉的炎弹（点杀）和芙洛的炎环（选点群伤）
+   * 才真正是两种打法，而不是同一招差一个半径。
+   */
+  | { type: 'groundPickAoE'; castRange: number; blastRadius: number }
   /**
    * 选**一个**敌人。点谁由玩家或 AI 决定，技能只规定够得着哪里。
    *
@@ -70,11 +86,16 @@ export type SkillShape =
    *
    * 缺省留在 `exact` 是因为先有近战突刺才有远程点杀，改默认值会静默挪动
    * 「长驱突刺」和「野草缠足」的可打范围。
+   *
+   * `axisOnly`：只能打**同行或同列**的目标。带 `onHitDisplace` 的技能必须开它——
+   * 位移方向是「施法者 → 目标」的延长线，而格子是四向的，斜向目标算不出唯一的
+   * 「背后一格」。开了之后曼哈顿 2 的环从 8 格收成 4 格，这是突刺该有的样子。
    */
   | {
       type: 'neighborPickFoe';
       manhattan: number;
       reach?: 'exact' | 'within';
+      axisOnly?: boolean;
     }
   /**
    * 选**一个**友方（不含自身）。`reach` 和 `neighborPickFoe` 同口径：
@@ -194,8 +215,24 @@ export interface SkillSpec {
   shape: SkillShape;
   /** 对单目标伤害规则；见 `battle/skillDamage` */
   damage: SkillDamageSpec;
-  /** 仅 passive：本回合若已沿路径移动，则普攻伤害再乘此倍率 */
+  /**
+   * 本回合若已沿路径移动，则普攻伤害再乘此倍率（「冲锋」）。
+   *
+   * 不限于被动技能：它读的是**过完词条之后**的主技能规格（见 `engine.basicAttack`），
+   * 所以一条给主技能写上这个字段的词条，就等于把冲锋这个被动装到了那个角色身上。
+   * 岚骑的冲锋就是这么实现的——它是一条纹章，不占技能位。
+   */
   passiveBasicAttackMulIfMoved?: number;
+  /**
+   * 命中后把某个单位沿「施法者 → 目标」方向推到 `目标格 + cells × 方向`。
+   *
+   * `who: 'self'` 是**突进**（施法者穿过目标落到它背后，长驱突刺），
+   * `who: 'target'` 是**击退**（把目标顶开，震击）。两者落点公式相同，只差移动的是谁，
+   * 所以共用 `engine.displaceUnit` 一个原语。
+   *
+   * 必须配 `shape.axisOnly`：斜向目标算不出唯一的「背后」。
+   */
+  onHitDisplace?: { who: 'self' | 'target'; cells: number };
   /** 商店技能报价，默认 7 */
   shopPrice?: number;
   /** 成功施放后对自身生效的限时 buff（含嘲讽）；缺省无 */
@@ -259,6 +296,14 @@ const SPECS: Record<string, SkillSpec> = {
     shape: { type: 'squareAoE', radius: 1 },
     damage: { kind: 'scaledAtk', atkMul: 0.4 },
   },
+  /**
+   * 弓手招牌：四向射线穿透。
+   *
+   * `range` 是后加的。原先没有上限，`rayCellsUntilBlocked` 一路走到出界，
+   * 棋盘只有 7×9——等于希尔站定就锁死整行整列，「往哪站」这个弓手唯一的决策消失了。
+   * 试过 3、4 格：第一章 Boss 图高 11，后排走满 3 步后仍差一格够不着祭坛，
+   * 裸打掉出设计窗。5 格是「走满一步刚好打到」的起点；两条专属纹章再把它抬到 7 和无限。
+   */
   pierce: {
     id: 'pierce',
     name: '穿透箭',
@@ -267,21 +312,8 @@ const SPECS: Record<string, SkillSpec> = {
     timing: 'afterMove',
     role: 'damage',
     displayKind: 'lineShot',
-    shape: { type: 'lineBestRayAllFoes' },
+    shape: { type: 'lineBestRayAllFoes', range: 5 },
     damage: { kind: 'scaledAtk', atkMul: 0.55 },
-  },
-  charge: {
-    id: 'charge',
-    name: '冲锋',
-    cooldown: 0,
-    exclusiveProfession: 'cavalry',
-    timing: 'passive',
-    // 定位是输出（它干的事是把普攻打得更狠），被动只是触发方式，写在 timing 上
-    role: 'damage',
-    displayKind: 'passiveCharge',
-    shape: { type: 'neighborAoE', manhattan: 1 },
-    damage: { kind: 'none' },
-    passiveBasicAttackMulIfMoved: 1.35,
   },
   /**
    * 盾卫基础：**短冷却拖慢**，靠出手频率而不是单发伤害。
@@ -295,6 +327,11 @@ const SPECS: Record<string, SkillSpec> = {
    * 所以两招按**频率 / 爆发**分开：震击每 2 回合就能出手，减速让对面永远差一步；
    * 「铁锤」（见下）三回合一发重击 + 削攻。盾卫自己慢（spd 3），
    * 让对面更慢是它唯一能主动创造的位置优势。
+   *
+   * 一人一招之后又加了**击退 2 格**。理由是收编前盾卫的独特性全在两个减益数字上，
+   * 而减益是所有人都能通过纹章拿到的东西；击退是只有他能做的**改变棋盘**的事：
+   * 把即将咬到弥尔的那个顶开两格，等于凭空造出一回合。减速仍然留着，
+   * 它俩指向同一件事——被格隆盯上的那个永远差一步。
    */
   bash: {
     id: 'bash',
@@ -304,11 +341,15 @@ const SPECS: Record<string, SkillSpec> = {
     timing: 'beforeMove',
     role: 'damage',
     displayKind: 'singleBash',
-    shape: { type: 'neighborPickFoe', manhattan: 1 },
+    shape: { type: 'neighborPickFoe', manhattan: 1, axisOnly: true },
     damage: { kind: 'scaledAtk', atkMul: 0.7 },
     onCastFoeEffects: [{ kind: 'spdDown', subSpd: 2, rounds: 2 }],
+    onHitDisplace: { who: 'target', cells: 2 },
   },
-  /** 剑士进阶：邻格单体高倍率 + 削攻，和重劈的纯伤害点杀分开 */
+  /**
+   * 剑士进阶：邻格单体高倍率 + 削攻，和重劈的纯伤害点杀分开。
+   * `reserved`：一人一招之后它从雷恩身上摘下来了，在等第二个剑士角色。
+   */
   blade_rush: {
     id: 'blade_rush',
     name: '破阵斩',
@@ -319,10 +360,20 @@ const SPECS: Record<string, SkillSpec> = {
     displayKind: 'singleBash',
     shape: { type: 'neighborPickFoe', manhattan: 1 },
     damage: { kind: 'scaledAtk', atkMul: 1.15 },
-    shopPrice: 8,
+    reserved: true,
     onCastFoeEffects: [{ kind: 'atkDown', subAtk: 4, rounds: 2 }],
   },
-  /** 骑兵主动：2 格外单体突刺，弥补骑兵只有被动的问题 */
+  /**
+   * 岚骑招牌：**隔一格突刺 + 突进到目标背后**，`timing: 'beforeMove'` 所以捅完还能走。
+   *
+   * 这一招原先只是「弥补骑兵只有被动」的填充位——2 格外点一下，0.9 倍率，没别的。
+   * 收编成招牌后补上了骑兵该有的东西：命中即穿过目标落到它背后 2 格
+   * （`onHitDisplace.who: 'self'`）。三件事同时发生，都是别人做不到的：
+   * 一次施放跨了 4 格、绕到敌阵背后、并且因为算「移动过」而点亮冲锋纹章的普攻加成。
+   *
+   * `axisOnly` 是这一招的**代价**也是它的语法：可打格从曼哈顿 2 的 8 格收成 4 格
+   * （正上下左右各隔一格），因为斜向目标没有唯一的「背后」。
+   */
   lance_thrust: {
     id: 'lance_thrust',
     name: '长驱突刺',
@@ -331,14 +382,14 @@ const SPECS: Record<string, SkillSpec> = {
     timing: 'beforeMove',
     role: 'damage',
     displayKind: 'singleBash',
-    shape: { type: 'neighborPickFoe', manhattan: 2 },
+    shape: { type: 'neighborPickFoe', manhattan: 2, axisOnly: true },
     damage: { kind: 'scaledAtk', atkMul: 0.9 },
-    shopPrice: 7,
+    onHitDisplace: { who: 'self', cells: 2 },
   },
   /**
-   * 骑兵主动：绕身一圈踏过去 + 减速，反集群。
-   * 形状同「旋风斩」改成 `squareAoE radius:1`：马绕身踏过一圈却漏掉斜角说不通。
-   * 倍率 0.5 → 0.45 抵掉多出来的四格。
+   * 绕身一圈踏过去 + 减速，反集群。
+   * 形状同「旋风斩」是 `squareAoE radius:1`：马绕身踏过一圈却漏掉斜角说不通。
+   * `enemyOnly`：一人一招之后从岚骑身上摘下来，转给敌方骑兵换皮用。
    */
   trample: {
     id: 'trample',
@@ -347,10 +398,10 @@ const SPECS: Record<string, SkillSpec> = {
     exclusiveProfession: 'cavalry',
     timing: 'beforeMove',
     role: 'damage',
+    enemyOnly: true,
     displayKind: 'whirlwind',
     shape: { type: 'squareAoE', radius: 1 },
     damage: { kind: 'scaledAtk', atkMul: 0.45 },
-    shopPrice: 8,
     onCastFoeEffects: [{ kind: 'spdDown', subSpd: 2, rounds: 2 }],
   },
   /**
@@ -395,6 +446,7 @@ const SPECS: Record<string, SkillSpec> = {
     damage: { kind: 'scaledAtk', atkMul: 0.52 },
     onCastSelfEffects: [{ kind: 'atkBonus', addAtk: 6, rounds: 2 }],
   },
+  /** `enemyOnly`：一人一招之后从雷恩身上摘下来，转给敌方剑兵换皮用 */
   cleave: {
     id: 'cleave',
     name: '重劈',
@@ -402,10 +454,10 @@ const SPECS: Record<string, SkillSpec> = {
     exclusiveProfession: 'sword',
     timing: 'beforeMove',
     role: 'damage',
+    enemyOnly: true,
     displayKind: 'singleBash',
     shape: { type: 'neighborPickFoe', manhattan: 1 },
     damage: { kind: 'scaledAtk', atkMul: 0.88 },
-    shopPrice: 7,
   },
   /**
    * 弓手进阶：**3 格内点名单体**，和「穿透箭」的整条线群伤是两种打法。
@@ -417,6 +469,8 @@ const SPECS: Record<string, SkillSpec> = {
    *
    * `reach: 'within'` 而不是缺省的 `exact`：射程该是一片区域，
    * 被贴脸了也得能射，否则近身反而成了弓手的无解格。
+   *
+   * `enemyOnly`：一人一招之后从希尔身上摘下来，转给敌方弓兵换皮用。
    */
   snap: {
     id: 'snap',
@@ -425,15 +479,17 @@ const SPECS: Record<string, SkillSpec> = {
     exclusiveProfession: 'bow',
     timing: 'afterMove',
     role: 'damage',
+    enemyOnly: true,
     displayKind: 'lineShot',
     shape: { type: 'neighborPickFoe', manhattan: 3, reach: 'within' },
     damage: { kind: 'scaledAtk', atkMul: 0.8 },
-    shopPrice: 7,
   },
   /**
    * 盾卫进阶：**低频重击 + 削攻**，和「震击」的高频拖慢互为另一头。
    * 自嘲讽同样删掉（对盾卫是死效果，理由见 `bash`）。削攻的方向和它的专属词条
    * 「碎骨」（攻 -6 / 速 -3）一致：盾卫打不死人，但能让被它盯上的那个打不疼人。
+   *
+   * `enemyOnly`：一人一招之后从格隆身上摘下来，转给敌方重装换皮用。
    */
   hammer: {
     id: 'hammer',
@@ -442,10 +498,10 @@ const SPECS: Record<string, SkillSpec> = {
     exclusiveProfession: 'shield',
     timing: 'beforeMove',
     role: 'damage',
+    enemyOnly: true,
     displayKind: 'singleBash',
     shape: { type: 'neighborPickFoe', manhattan: 1 },
     damage: { kind: 'scaledAtk', atkMul: 1.15 },
-    shopPrice: 7,
     onCastFoeEffects: [{ kind: 'atkDown', subAtk: 4, rounds: 2 }],
   },
   /**
@@ -1073,8 +1129,11 @@ const SPECS: Record<string, SkillSpec> = {
     shopPrice: 7,
   },
   /**
-   * 法师进阶：正好 2 格外的炎环。贴脸反而漏，和炎弹的「3 格内点名」互为另一头。
-   * 奥莉是炎系法师，两招都是火；冰系等以后另开角色，不要在她身上混元素。
+   * 芙洛招牌：3 格内任选一点，对该点周围 1 格（含落点）的敌人放火。
+   *
+   * 原先是绕身正好 2 格外的环——贴脸反而漏，和炎弹的「3 格内点名」互为另一头，
+   * 但中心锁在自己脚下。改成选点之后它才是远程法师该有的招：站在后排把火圈
+   * 扣到敌群中间，而不是自己走进去炸。
    */
   flame_ring: {
     id: 'flame_ring',
@@ -1084,9 +1143,8 @@ const SPECS: Record<string, SkillSpec> = {
     timing: 'beforeMove',
     role: 'damage',
     displayKind: 'whirlwind',
-    shape: { type: 'neighborAoE', manhattan: 2 },
+    shape: { type: 'groundPickAoE', castRange: 3, blastRadius: 1 },
     damage: { kind: 'scaledAtk', atkMul: 0.5 },
-    shopPrice: 8,
   },
   /**
    * 祭司默认：2 格内点一名友军，纯治疗。`reach: 'within'` 才能贴脸也救到人。
@@ -1108,6 +1166,7 @@ const SPECS: Record<string, SkillSpec> = {
   /**
    * 祭司进阶：邻格点一名友军，小治疗 + 减伤。
    * 和圣疗的分工是「2 格内大抬」对「贴身护盾」，不是自动点谁。
+   * `reserved`：一人一招之后从弥尔身上摘下来，在等第二个辅助角色接手。
    */
   ward_prayer: {
     id: 'ward_prayer',
@@ -1116,6 +1175,7 @@ const SPECS: Record<string, SkillSpec> = {
     exclusiveProfession: 'healer',
     timing: 'beforeMove',
     role: 'support',
+    reserved: true,
     displayKind: 'whirlwind',
     shape: { type: 'neighborPickAlly', manhattan: 1 },
     damage: { kind: 'none' },
@@ -1126,7 +1186,8 @@ const SPECS: Record<string, SkillSpec> = {
     ],
   },
   /**
-   * 通用辅助：邻格点一名友军加攻加速。弥尔可学；仍在二至五章商店临时槽卖。
+   * 通用辅助：邻格点一名友军加攻加速。仍在四至五章商店临时槽卖。
+   * `reserved` 只管主槽——一人一招之后没有角色以它为招牌，但临时技能照卖不误。
    */
   field_bless: {
     id: 'field_bless',
@@ -1135,6 +1196,7 @@ const SPECS: Record<string, SkillSpec> = {
     exclusiveProfession: null,
     timing: 'beforeMove',
     role: 'support',
+    reserved: true,
     displayKind: 'whirlwind',
     shape: { type: 'neighborPickAlly', manhattan: 1 },
     damage: { kind: 'none' },
@@ -1149,15 +1211,24 @@ const SPECS: Record<string, SkillSpec> = {
 const DEFAULT_SKILL_ID_BY_KIND: Record<UnitKind, string> = {
   sword: 'whirl',
   bow: 'pierce',
-  cavalry: 'charge',
+  cavalry: 'lance_thrust',
   shield: 'bash',
   mage: 'ember',
   healer: 'heal_touch',
 };
 
-/** 奥莉从「奥术脉冲」收成炎系「炎环」之前的存档 id */
+/**
+ * 老存档 id 的搬迁表。
+ *
+ * - `arcane_pulse`：奥莉从「奥术脉冲」收成炎系「炎环」之前的存档
+ * - `charge`：「冲锋」不再是一个占技能位的招，改成岚骑的**被动纹章**
+ *   （`ex_lance_charge`）。老档里带着 charge 的岚骑读进来直接变成带长驱突刺，
+ *   而不是落到一个查不到的 id 上——`resolveBattleSkillIdForCharacter` 的兜底
+ *   会静默换招，那正是我们要避免的「不报错但玩家发现自己的招没了」。
+ */
 const LEGACY_SKILL_IDS: Record<string, string> = {
   arcane_pulse: 'flame_ring',
+  charge: 'lance_thrust',
 };
 
 export function remapLegacySkillId(id: string): string {

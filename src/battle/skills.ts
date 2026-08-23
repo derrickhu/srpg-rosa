@@ -20,6 +20,7 @@ import { canProfessionEquipSkill, getSkillSpec, type SkillSpec } from '@/data/sk
 import { effectiveSkillSpec } from '@/data/skillModCatalog';
 import { gridSize, inBounds, manhattan, neighbors4, type TerrainGrid } from './grid';
 import { rayCellsUntilBlocked } from './sight';
+import { axisDirection, displaceLanding, displaceUnit } from './displace';
 import type { TerrainRuntime } from './terrainDynamics';
 
 const RAY_DIRS: Vec2[] = [
@@ -41,25 +42,37 @@ function pushDeathIfNeeded(events: BattleEvent[], t: UnitState): void {
   if (t.hp <= 0) events.push({ type: 'death', uid: t.uid });
 }
 
+/**
+ * 这一招的射线最多推进几格；`undefined` = 不限。
+ *
+ * 单开一个取值口是因为射程要经过词条：`effectiveSkillSpec` 之后 `shape` 上的
+ * `range` 才是这一场真正的射程（希尔的两条专属纹章分别把它抬到 5 和无限）。
+ * 任何一处直接读技能表原值，表现就是「装了纹章但射不到那么远」。
+ */
+function rayRangeOf(spec: SkillSpec): number | undefined {
+  return spec.shape.type === 'lineBestRayAllFoes' ? spec.shape.range : undefined;
+}
+
 function enemiesOnRay(
   self: UnitState,
   from: Vec2,
   dir: Vec2,
   units: UnitState[],
   terrain: TerrainGrid,
+  range?: number,
 ): UnitState[] {
   const out: UnitState[] = [];
   // 和 `rayCellsFrom` 共用同一条「到哪里为止」的规则：命中判定和高亮范围必须同源，
   // 否则会出现「高亮画到墙后面但打不到那儿的人」，玩家只会认为范围提示是骗人的
-  for (const p of rayCellsUntilBlocked(from, dir, terrain)) {
+  for (const p of rayCellsUntilBlocked(from, dir, terrain, range)) {
     const occ = units.find((u) => u.hp > 0 && u.pos.x === p.x && u.pos.y === p.y);
     if (occ && occ.faction !== self.faction) out.push(occ);
   }
   return out;
 }
 
-function rayCellsFrom(from: Vec2, dir: Vec2, terrain: TerrainGrid): Vec2[] {
-  return rayCellsUntilBlocked(from, dir, terrain);
+function rayCellsFrom(from: Vec2, dir: Vec2, terrain: TerrainGrid, range?: number): Vec2[] {
+  return rayCellsUntilBlocked(from, dir, terrain, range);
 }
 
 function bestLinePick(
@@ -67,13 +80,14 @@ function bestLinePick(
   from: Vec2,
   units: UnitState[],
   terrain: TerrainGrid,
+  range?: number,
 ): { targets: UnitState[]; rangeCells: Vec2[] } {
   let bestTargets: UnitState[] = [];
   let bestCells: Vec2[] = [];
   let bestScore = -1;
   for (const d of RAY_DIRS) {
-    const line = enemiesOnRay(self, from, d, units, terrain);
-    const cells = rayCellsFrom(from, d, terrain);
+    const line = enemiesOnRay(self, from, d, units, terrain, range);
+    const cells = rayCellsFrom(from, d, terrain, range);
     const score = line.reduce((s, t) => s + t.hp, 0);
     if (score > bestScore) {
       bestScore = score;
@@ -99,6 +113,24 @@ function cellsAtManhattan(center: Vec2, dist: number, terrain: TerrainGrid): Vec
 
 function foesAtManhattan(self: UnitState, units: UnitState[], dist: number): UnitState[] {
   return livingFoes(self, units).filter((t) => manhattan(t.pos, self.pos) === dist);
+}
+
+/** 同行或同列（含重合，调用方自行排除自身格） */
+function onAxis(a: Vec2, b: Vec2): boolean {
+  return a.x === b.x || a.y === b.y;
+}
+
+/**
+ * `axisOnly` 的收窄：只留同行同列的格 / 敌人。
+ *
+ * 带 `onHitDisplace` 的技能必须走这一层，因为位移方向是「施法者 → 目标」的延长线，
+ * 而格子是四向的：斜向目标算不出唯一的「背后」。收窄要同时作用在**候选目标**和
+ * **高亮格**上——只收其一的表现是「高亮画了 8 格但点其中 4 格没反应」，
+ * 玩家只会认为这一招时灵时不灵。
+ */
+function axisFilter<T>(items: T[], self: Vec2, posOf: (t: T) => Vec2, axisOnly?: boolean): T[] {
+  if (!axisOnly) return items;
+  return items.filter((t) => onAxis(posOf(t), self));
 }
 
 /** 覆盖整片区域（曼哈顿 <= r），含贴脸格；「横扫」词条用 */
@@ -149,6 +181,51 @@ function foesWithinChebyshev(self: UnitState, units: UnitState[], radius: number
     const dy = Math.abs(t.pos.y - self.pos.y);
     return (dx !== 0 || dy !== 0) && dx <= radius && dy <= radius;
   });
+}
+
+/** 含中心格的曼哈顿圆盘。选点爆炸打得到落点上站着的人，所以中心必须算进去 */
+function cellsDiscInclusive(center: Vec2, radius: number, terrain: TerrainGrid): Vec2[] {
+  const { w, h } = gridSize(terrain);
+  const out: Vec2[] = [];
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (manhattan({ x, y }, center) <= radius) out.push({ x, y });
+    }
+  }
+  return out;
+}
+
+function foesInDisc(center: Vec2, radius: number, self: UnitState, units: UnitState[]): UnitState[] {
+  return livingFoes(self, units).filter((t) => manhattan(t.pos, center) <= radius);
+}
+
+/**
+ * AI 选爆炸中心：优先命中人数，同分打总血量更高的那一簇。
+ *
+ * 没有这一步的话 `castByShape` 在 AI 路径上拿不到 `aimCell`，选点 AoE 会一声不响地不放。
+ */
+function pickBestGroundCell(
+  self: UnitState,
+  units: UnitState[],
+  terrain: TerrainGrid,
+  castRange: number,
+  blastRadius: number,
+): Vec2 | null {
+  const candidates = [{ ...self.pos }, ...cellsWithinManhattan(self.pos, castRange, terrain)];
+  let best: Vec2 | null = null;
+  let bestCount = 0;
+  let bestHp = -1;
+  for (const c of candidates) {
+    const foes = foesInDisc(c, blastRadius, self, units);
+    if (foes.length === 0) continue;
+    const hp = foes.reduce((s, t) => s + t.hp, 0);
+    if (foes.length > bestCount || (foes.length === bestCount && hp > bestHp)) {
+      best = c;
+      bestCount = foes.length;
+      bestHp = hp;
+    }
+  }
+  return best;
 }
 
 function alliesAtManhattanExcludingSelf(self: UnitState, units: UnitState[], dist: number): UnitState[] {
@@ -465,6 +542,52 @@ function castAreaAoE(
   return events;
 }
 
+function castGroundPickAoE(
+  self: UnitState,
+  def: UnitDef,
+  spec: SkillSpec,
+  units: UnitState[],
+  terrain: TerrainGrid,
+  defs: Record<UnitKind, UnitArchetypeDef>,
+  castRange: number,
+  blastRadius: number,
+  aimCell: Vec2 | undefined,
+  allowNoFoes: boolean,
+): BattleEvent[] {
+  const inRange = (p: Vec2): boolean => manhattan(p, self.pos) <= castRange && inBounds(p, terrain);
+  const center = aimCell && inRange(aimCell)
+    ? { ...aimCell }
+    : pickBestGroundCell(self, units, terrain, castRange, blastRadius);
+  if (!center) return [];
+  const foes = foesInDisc(center, blastRadius, self, units);
+  if (foes.length === 0 && !allowNoFoes) return [];
+  const hits: SkillHit[] = [];
+  for (const t of foes) {
+    if (spec.damage.kind !== 'none') {
+      hits.push(resolveHit(self, def, spec, t, terrain, defs));
+    }
+    applySkillCastFoeEffects(t, spec);
+  }
+  const events: BattleEvent[] = [
+    {
+      type: 'skillCast',
+      uid: self.uid,
+      skillId: spec.id,
+      skillName: skillCastName(self, spec),
+      kind: spec.displayKind,
+      rangeCells: cellsDiscInclusive(center, blastRadius, terrain),
+      aimCell: { ...center },
+      hits,
+      atkTerrainNote: terrainAttackNote(terrain, self.pos) ?? undefined,
+    },
+  ];
+  pushAttrNotes(events, spec, { self, foes });
+  for (const t of foes) pushDeathIfNeeded(events, t);
+  applySkillCastSelfEffects(self, spec);
+  pushLifesteal(self, spec, hits, defs, events);
+  return events;
+}
+
 /** 只对自己放的号角 / 自 buff：无需目标，点技能即放 */
 function castSelfCast(
   self: UnitState,
@@ -520,11 +643,13 @@ function castNeighborPickFoe(
   dist: number,
   chosenUid?: string,
   reach: 'exact' | 'within' = 'exact',
+  axisOnly?: boolean,
 ): BattleEvent[] {
   const within = reach === 'within';
-  const foes = within
+  const all = within
     ? foesWithinManhattan(self, units, dist)
     : foesAtManhattan(self, units, dist);
+  const foes = axisFilter(all, self.pos, (t) => t.pos, axisOnly);
   const tgt = resolveChoice(foes, chosenUid, () => fallbackSkillTarget(spec, foes, defs));
   if (!tgt) return [];
   // 纯 debuff（破甲/缠足）：保留 hit 供回放对准目标，但不走扣血
@@ -535,6 +660,9 @@ function castNeighborPickFoe(
           resolveHit(self, def, spec, tgt, terrain, defs),
           ...resolveSplashHits(self, def, spec, tgt, units, terrain, defs),
         ];
+  const baseCells = within
+    ? cellsWithinManhattan(self.pos, dist, terrain)
+    : cellsAtManhattan(self.pos, dist, terrain);
   const events: BattleEvent[] = [
     {
       type: 'skillCast',
@@ -542,11 +670,9 @@ function castNeighborPickFoe(
       skillId: spec.id,
       skillName: skillCastName(self, spec),
       kind: spec.displayKind,
-      // 跟着 reach 走：回放高亮的格子和实际打得到的格子不一致，
+      // 跟着 reach / axisOnly 走：回放高亮的格子和实际打得到的格子不一致，
       // 玩家会照着高亮记这一招的射程，然后在下一场里点空
-      rangeCells: within
-        ? cellsWithinManhattan(self.pos, dist, terrain)
-        : cellsAtManhattan(self.pos, dist, terrain),
+      rangeCells: axisFilter(baseCells, self.pos, (c) => c, axisOnly),
       hits,
       atkTerrainNote: terrainAttackNote(terrain, self.pos) ?? undefined,
     },
@@ -556,7 +682,82 @@ function castNeighborPickFoe(
   applySkillCastSelfEffects(self, spec);
   pushAttrNotes(events, spec, { self, foes: [tgt] });
   pushLifesteal(self, spec, hits, defs, events);
+  const push = resolveOnHitDisplace(self, spec, tgt, units, terrain, defs, Boolean(chosenUid));
+  if (push) events.push(push);
   return events;
+}
+
+/**
+ * 命中后的强制位移：突进（移动施法者）或击退（移动目标）。
+ *
+ * 两者的落点都从**目标格**往外量，所以突进要走的总格数是
+ * 「到目标的距离 + 穿过去几格」，并且允许穿过目标本人（`ignoreUids`）——
+ * 只写 `cells` 格的话岚骑会停在目标脸上，那不是突刺是撞车。
+ *
+ * 突进后置 `movedInTurn`：岚骑的固定连招是「捅穿过去 + 顺势冲锋一刀」，
+ * 冲锋纹章因此近乎每回合生效。这是刻意的，它不再是一个条件判断，
+ * 而是这个角色的身份。
+ */
+function resolveOnHitDisplace(
+  self: UnitState,
+  spec: SkillSpec,
+  tgt: UnitState,
+  units: UnitState[],
+  terrain: TerrainGrid,
+  defs: Record<UnitKind, UnitArchetypeDef>,
+  playerPicked: boolean,
+): BattleEvent | null {
+  const push = spec.onHitDisplace;
+  if (!push) return null;
+  const dir = axisDirection(self.pos, tgt.pos);
+  if (!dir) return null;
+  if (push.who === 'target') {
+    if (!playerPicked && !aiWantsKnockback(self, tgt, dir, push.cells, units, terrain, defs)) {
+      return null;
+    }
+    return displaceUnit(tgt, dir, push.cells, units, terrain, 'knockback');
+  }
+  const total = manhattan(self.pos, tgt.pos) + push.cells;
+  const ev = displaceUnit(self, dir, total, units, terrain, 'dash', [tgt.uid]);
+  if (ev) self.movedInTurn = true;
+  return ev;
+}
+
+/**
+ * 托管 / 自动不会点名，震击「够得着就放」会把唯一的敌人往角落推。
+ * 第一章 Boss 是消耗战，多走两格就是多挨一整轮——裸打从设计窗掉到 10% 以下。
+ *
+ * 玩家点了谁就照推：他自己看见落点。AI 只在击退不拆掉围殴、或能保后排时才推。
+ */
+function aiWantsKnockback(
+  self: UnitState,
+  tgt: UnitState,
+  dir: Vec2,
+  cells: number,
+  units: UnitState[],
+  terrain: TerrainGrid,
+  defs: Record<UnitKind, UnitArchetypeDef>,
+): boolean {
+  const occupied = new Set(
+    units.filter((u) => u.hp > 0 && u.uid !== tgt.uid).map((u) => `${u.pos.x},${u.pos.y}`),
+  );
+  const landing = displaceLanding(tgt.pos, dir, cells, terrain, occupied);
+  if (!landing) return false;
+  const traveled = manhattan(tgt.pos, landing);
+  if (traveled < cells) return true;
+
+  for (const u of livingAllies(self, units)) {
+    if (u.uid === self.uid) continue;
+    const d = effectiveUnitDef(u, defs);
+    if ((d.isRanged || u.defId === 'healer') && manhattan(u.pos, tgt.pos) <= 1) {
+      return true;
+    }
+  }
+
+  const mates = livingAllies(self, units);
+  const ax = mates.reduce((s, u) => s + u.pos.x, 0) / mates.length;
+  const ay = mates.reduce((s, u) => s + u.pos.y, 0) / mates.length;
+  return manhattan({ x: ax, y: ay }, landing) <= manhattan({ x: ax, y: ay }, tgt.pos);
 }
 
 /** 友方即时治疗（`onCastAllyEffects` 里的 `heal`）；超过上限的部分丢弃 */
@@ -627,11 +828,12 @@ function rayPickThrough(
   chosenUid: string,
   units: UnitState[],
   terrain: TerrainGrid,
+  range?: number,
 ): { targets: UnitState[]; rangeCells: Vec2[] } | null {
   for (const d of RAY_DIRS) {
-    const line = enemiesOnRay(self, from, d, units, terrain);
+    const line = enemiesOnRay(self, from, d, units, terrain, range);
     if (line.some((t) => t.uid === chosenUid)) {
-      return { targets: line, rangeCells: rayCellsFrom(from, d, terrain) };
+      return { targets: line, rangeCells: rayCellsFrom(from, d, terrain, range) };
     }
   }
   return null;
@@ -644,12 +846,13 @@ function rayPickThroughCell(
   cell: Vec2,
   units: UnitState[],
   terrain: TerrainGrid,
+  range?: number,
 ): { targets: UnitState[]; rangeCells: Vec2[] } | null {
   for (const d of RAY_DIRS) {
-    const cells = rayCellsFrom(from, d, terrain);
+    const cells = rayCellsFrom(from, d, terrain, range);
     if (!cells.some((c) => c.x === cell.x && c.y === cell.y)) continue;
     return {
-      targets: enemiesOnRay(self, from, d, units, terrain),
+      targets: enemiesOnRay(self, from, d, units, terrain, range),
       rangeCells: cells,
     };
   }
@@ -666,12 +869,14 @@ function castLineBestRay(
   chosenUid?: string,
   aimCell?: Vec2,
 ): BattleEvent[] {
+  const range = rayRangeOf(spec);
   const picked = aimCell
-    ? rayPickThroughCell(self, self.pos, aimCell, units, terrain)
+    ? rayPickThroughCell(self, self.pos, aimCell, units, terrain, range)
     : chosenUid
-      ? rayPickThrough(self, self.pos, chosenUid, units, terrain)
+      ? rayPickThrough(self, self.pos, chosenUid, units, terrain, range)
       : null;
-  const { targets: line, rangeCells } = picked ?? bestLinePick(self, self.pos, units, terrain);
+  const { targets: line, rangeCells } =
+    picked ?? bestLinePick(self, self.pos, units, terrain, range);
   if (line.length === 0) return [];
   const hits: SkillHit[] = [];
   for (const t of line) {
@@ -924,13 +1129,16 @@ export function skillAiming(
     case 'neighborPickFoe': {
       const within = spec.shape.reach === 'within';
       const d = spec.shape.manhattan;
-      const foes = within ? foesWithinManhattan(self, units, d) : foesAtManhattan(self, units, d);
+      const axis = spec.shape.axisOnly;
+      const all = within ? foesWithinManhattan(self, units, d) : foesAtManhattan(self, units, d);
+      const foes = axisFilter(all, self.pos, (f) => f.pos, axis);
       if (foes.length === 0) return null;
+      const cells = within
+        ? cellsWithinManhattan(self.pos, d, terrain)
+        : cellsAtManhattan(self.pos, d, terrain);
       return {
         ...base,
-        rangeCells: within
-          ? cellsWithinManhattan(self.pos, d, terrain)
-          : cellsAtManhattan(self.pos, d, terrain),
+        rangeCells: axisFilter(cells, self.pos, (c) => c, axis),
         candidates: foes.map((f) => f.uid),
         autoTargets: [],
       };
@@ -951,14 +1159,35 @@ export function skillAiming(
         autoTargets: [],
       };
     }
+    case 'groundPickAoE': {
+      const { castRange, blastRadius } = spec.shape;
+      const pickCells = [{ ...self.pos }, ...cellsWithinManhattan(self.pos, castRange, terrain)];
+      const hitUids = new Set<string>();
+      const useful: Vec2[] = [];
+      for (const c of pickCells) {
+        const foes = foesInDisc(c, blastRadius, self, units);
+        if (foes.length === 0 && !changesTerrain(spec)) continue;
+        useful.push(c);
+        for (const f of foes) hitUids.add(f.uid);
+      }
+      if (useful.length === 0) return null;
+      return {
+        ...base,
+        rangeCells: pickCells,
+        candidates: [],
+        aimCells: useful,
+        autoTargets: [...hitUids],
+      };
+    }
     case 'lineBestRayAllFoes': {
       // 点射线上的格子选方向；该方向上所有敌人生效（不是点某个敌人打单体）
+      const range = spec.shape.range;
       const cells: Vec2[] = [];
       const hitUids: string[] = [];
       for (const d of RAY_DIRS) {
-        const line = enemiesOnRay(self, self.pos, d, units, terrain);
+        const line = enemiesOnRay(self, self.pos, d, units, terrain, range);
         if (line.length === 0) continue;
-        cells.push(...rayCellsFrom(self.pos, d, terrain));
+        cells.push(...rayCellsFrom(self.pos, d, terrain, range));
         hitUids.push(...line.map((t) => t.uid));
       }
       if (cells.length === 0) return null;
@@ -1069,12 +1298,17 @@ function castByShape(
     case 'neighborPickFoe':
       return castNeighborPickFoe(
         self, def, spec, units, terrain, defs,
-        spec.shape.manhattan, targetUid, spec.shape.reach,
+        spec.shape.manhattan, targetUid, spec.shape.reach, spec.shape.axisOnly,
       );
     case 'neighborPickAlly':
       return castNeighborPickAlly(
         self, def, spec, units, terrain, defs,
         spec.shape.manhattan, targetUid, spec.shape.reach,
+      );
+    case 'groundPickAoE':
+      return castGroundPickAoE(
+        self, def, spec, units, terrain, defs,
+        spec.shape.castRange, spec.shape.blastRadius, aimCell, allowNoFoes,
       );
     case 'lineBestRayAllFoes':
       return castLineBestRay(self, def, spec, units, terrain, defs, targetUid, aimCell);

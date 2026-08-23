@@ -3,9 +3,9 @@ import { playerDeployRowRange } from '@/battle/constants';
 import { gridSize, inBounds } from '@/battle/grid';
 import { enemyBaseStats } from '@/data/enemyCatalog';
 import type { StageEnemySpawn } from '@/data/stagesMvp';
-import { canCharacterUseSkill, getCharacterDef } from '@/data/characterCatalog';
+import { getCharacterDef } from '@/data/characterCatalog';
 import { isSandboxDungeon } from '@/data/sandboxLab';
-import { allPlayerSkillSpecs } from '@/data/skillCatalog';
+import { allPlayerSkillSpecs, allSkillSpecs } from '@/data/skillCatalog';
 import { canProfessionEquipSkill, defaultSkillId, skillDefForId } from '@/data/skillCatalog';
 import { resolveEnemyBattleSkill } from '@/data/enemySkillCatalog';
 import { characterEffectiveStats } from '@/game/characterFactory';
@@ -105,26 +105,31 @@ export function removePlacement(state: MvpGameState, pos: Vec2): void {
 }
 
 /**
- * 本局某角色主槽可选的技能。
+ * 这个角色的招牌技能，一人一招。唯一真相是角色表。
  *
- * 只有局外用魂晶学到的技能进得来：商店买的临时技能走的是**另一个槽**
- * （`run.runTempSkill`），不参与主槽轮换。两个池子混在一起时，
- * 「换主技能」和「买到新技能」这两件事在布阵页长得一模一样，
- * 但前者是可逆的选择、后者是花过钱的既成事实。
- *
- * 再按**技能路线**过一遍（`canCharacterUseSkill`）：老存档里可能留着可学列表收紧前
- * 学到的越界技能，不滤掉的话换到它身上会让词条批量休眠，而这条路是静默的。
- * 兜底保证至少留一个——全被滤掉时交给 `resolveBattleSkillIdForCharacter` 的
- * 默认技能兜底，那一招的定位一定在路线上。
+ * 兜底到职业默认技只为名册里出现了表外角色（GM / 脏档）的情况，正常路径走不到。
  */
-export function effectiveOwnedSkillIds(_state: MvpGameState, m: Character): string[] {
+export function signatureSkillId(m: Character): string {
   const def = getCharacterDef(m.catalogId ?? m.rosterId);
-  const sandbox = isSandboxDungeon(_state.run?.dungeonId);
-  const all = sandbox && def
-    ? [...new Set([def.defaultSkillId, ...def.unlockableSkillIds])]
-    : [...new Set(m.ownedSkillIds)];
-  if (!def) return all;
-  return all.filter((id) => canCharacterUseSkill(def, id));
+  return def?.defaultSkillId ?? defaultSkillId(m.profession);
+}
+
+/**
+ * 本局某角色主槽可选的技能。正式副本里只有招牌技能一个——主槽没有选择余地了。
+ *
+ * **试炼场**是例外，那里给出这个职业的全部专属招，**包括** `reserved`（在等新角色的）
+ * 和 `enemyOnly`（转给敌人的）。试炼场存在的意义就是拿来试特效和手感，
+ * 用正式规则约束它等于让它试不了东西；它不产出任何持久收益，放开不影响正式局。
+ * 通用技（`exclusiveProfession === null`）不在这里，它们走临时槽的 `sandboxTempSkillIds`。
+ */
+export function effectiveOwnedSkillIds(state: MvpGameState, m: Character): string[] {
+  const sig = signatureSkillId(m);
+  const def = getCharacterDef(m.catalogId ?? m.rosterId);
+  if (!def || !isSandboxDungeon(state.run?.dungeonId)) return [sig];
+  const own = allSkillSpecs()
+    .filter((s) => s.exclusiveProfession === def.profession)
+    .map((s) => s.id);
+  return [...new Set([sig, ...own])];
 }
 
 /** 本局某角色的临时技能（第二槽）id；没买过则 undefined */
@@ -132,9 +137,9 @@ export function tempSkillIdForRoster(state: MvpGameState, rosterId: string): str
   return state.run?.runTempSkill[rosterId];
 }
 
-/** 本局某角色当前装配技能 = 局内覆盖 ?? 持久装配 */
+/** 本局某角色当前装配技能 = 试炼场的局内覆盖 ?? 招牌技能 */
 export function activeSkillIdForRun(state: MvpGameState, m: Character): string {
-  return state.run?.runEquip[m.rosterId] ?? m.activeSkillId;
+  return state.run?.runEquip[m.rosterId] ?? signatureSkillId(m);
 }
 
 /** 本局某角色实际会带上场的两个技能槽 */
@@ -181,8 +186,10 @@ export function cycleTempSkillForRoster(state: MvpGameState, rosterId: string): 
   run.runTempSkill[rosterId] = next;
 }
 
+/** 主槽轮换，只在试炼场存在（正式副本一人一招，`effectiveOwnedSkillIds` 只返回一个） */
 export function cycleSkillForRoster(state: MvpGameState, rosterId: string): void {
   const run = requireRun(state);
+  if (!isSandboxDungeon(run.dungeonId)) return;
   const m = getCharacter(state, rosterId);
   if (!m) return;
   const valid = effectiveOwnedSkillIds(state, m).filter((id) =>

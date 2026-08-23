@@ -154,12 +154,9 @@ describe('词条在实际战斗中生效', () => {
   });
 
   it('处决只在目标残血时加伤，满血目标一点不多', () => {
-    const mk = (mods?: string[]): UnitState => ({
-      ...hero({ x: 3, y: 3 }, mods),
-      battleSkill: { id: 'cleave', name: '重劈', cooldown: 2, kind: 'singleBash' },
-    });
+    // 斩残现在是旋风斩的专属（重劈已转给敌方），所以直接用 hero 自带的招
     const dmgOn = (hp: number, mods?: string[]): number => {
-      const self = mk(mods);
+      const self = hero({ x: 3, y: 3 }, mods);
       const foe = dummy('e1', { x: 3, y: 2 }, hp);
       return skillHits(castSkillManual(self, DEFS, [self, foe], FLAT, 'e1'))[0]!.damage;
     };
@@ -175,10 +172,7 @@ describe('词条在实际战斗中生效', () => {
    */
   it('处决触发时给回放层一条注记，没触发时不给', () => {
     const noteOn = (hp: number): string | undefined => {
-      const self: UnitState = {
-        ...hero({ x: 3, y: 3 }, ['ex_cleave_reap']),
-        battleSkill: { id: 'cleave', name: '重劈', cooldown: 2, kind: 'singleBash' },
-      };
+      const self = hero({ x: 3, y: 3 }, ['ex_cleave_reap']);
       const foe = dummy('e1', { x: 3, y: 2 }, hp);
       return rawSkillHits(castSkillManual(self, DEFS, [self, foe], FLAT, 'e1'))[0]!.modNote;
     };

@@ -1449,18 +1449,16 @@ export const SKILL_VFX: Record<string, VfxRecipe> = {
     shake: SHAKE_BLAST,
   },
   /**
-   * 炎环：自身 2 格外的火环，盖住 5×5。不是旋风刃、不是奥术星。
-   *
-   * 蓄力从 2 格外往里收（`fromCells: 2.1`），正好是火环随后要炸开的那一圈——
-   * 「先吸进来再放出去」让这一招的作用范围在开打之前就被画了一遍。
-   * 这也是这一招唯一能补上的说明：它的伤害在 2 格外，贴脸的敌人其实打不到。
+   * 炎环：选点爆炸，impact 锚在落点而不是自己脚下。
+   * `cells: 3` 盖住 blastRadius 1（直径 3 格）；横扫把它摊到半径 2 时会略小，
+   * 但比锚在施法者身上、火圈开在后排空地要诚实。
    */
   flame_ring: {
-    windup: windupImplode(FIRE, 2.1, 340),
+    windup: windupImplode(FIRE, 1.4, 280),
     impact: {
       set: 'flame_ring',
-      anchor: 'caster',
-      cells: 5,
+      anchor: 'target',
+      cells: 3,
       mode: 'burst',
       playbackSpeed: 0.7,
       sparks: skillSparks(FIRE),

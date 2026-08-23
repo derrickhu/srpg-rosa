@@ -49,6 +49,7 @@ export {
   cycleSkillForRoster,
   cycleTempSkillForRoster,
   effectiveOwnedSkillIds,
+  signatureSkillId,
   activeSkillIdForRun,
   tempSkillIdForRoster,
   buildBattleUnits,
@@ -94,11 +95,7 @@ export {
 
 export {
   MAX_CHARACTER_LEVEL,
-  SKILL_LEARN_COST,
   levelUpCharacter,
-  equipSkill,
-  unlockableSkillsFor,
-  learnSkill,
   unlockCharacterWithMeta,
   unlockDungeonWithMeta,
   isDungeonUnlocked,
@@ -107,6 +104,5 @@ export {
 export {
   gmUnlockAllCharacters,
   gmAddSoul,
-  gmLearnAllSkills,
   gmPrepareSandboxRoster,
 } from './state/gmCheats';

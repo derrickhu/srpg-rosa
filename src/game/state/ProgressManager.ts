@@ -241,6 +241,9 @@ function lootCandidatesFor(state: MvpGameState, m: Character, depth: number): We
   const out: WeightedLoot[] = [];
   for (const mod of allSkillMods()) {
     if (!mod.canApply(spec)) continue;
+    // 等级闸门：这是局外成长唯一能改变局内构筑的地方（见 `SkillModDef.minLevel`）。
+    // 练一个角色不再只是数值变大，而是他的三选一里会开始出现新东西。
+    if (m.level < mod.minLevel) continue;
     const next = modStacks(owned, mod.id) + 1;
     if (next > mod.maxStacks) continue;
     out.push({

@@ -719,6 +719,27 @@ export function createBattleSim(
     return { events, done: false, winner: null };
   }
 
+  /**
+   * 技能把施法者自己挪走之后（长驱突刺的突进），把撤销点挪到新位置。
+   *
+   * `MutablePending.startPos` 那条注释里的不变量是「移动只改 `pos` 和 `movedInTurn`」，
+   * 强制位移打破了它：不改的话，玩家突刺穿过去、发现走错了点撤销，
+   * 会连**突刺造成的位移**一起回滚——人回到出招前的格子，但伤害和冷却都已经结算了。
+   * 那是白嫖一次走位，而且界面上完全看不出发生了什么。
+   *
+   * 撤销的语义是「收回我自己走的那一段」，技能打出来的位移是既成事实，
+   * 所以正确做法是把起点重设到落点，而不是禁掉撤销。
+   */
+  function rebaseStartPosAfterDisplace(
+    p: MutablePending,
+    u: UnitState,
+    events: readonly BattleEvent[],
+  ): void {
+    if (events.some((e) => e.type === 'displace' && e.uid === u.uid)) {
+      p.startPos = { ...u.pos };
+    }
+  }
+
   function commandSkill(
     uid: string,
     targetUid?: string,
@@ -734,6 +755,7 @@ export function createBattleSim(
     );
     if (events.length === 0) return noop();
     cur.p.usedSkill = true;
+    rebaseStartPosAfterDisplace(cur.p, cur.u, events);
     if (cur.p.moved) cur.p.actedAfterMove = true;
     if (opts.sandboxFreeCast) {
       cur.u.skillCd = 0;

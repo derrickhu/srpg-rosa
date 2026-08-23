@@ -51,13 +51,14 @@ describe('副本商店池', () => {
     }
   });
 
-  it('敌方专属技能不在任何角色的可学列表里', () => {
+  it('敌方专属技能不会是任何角色的招牌技能', () => {
     const enemyOnly = new Set(allSkillSpecs().filter((s) => s.enemyOnly).map((s) => s.id));
     expect(enemyOnly.size, '一个敌方专属技能都没有，这条断言就形同虚设').toBeGreaterThan(0);
     for (const c of CHARACTER_DEFS) {
-      for (const id of [c.defaultSkillId, ...c.unlockableSkillIds]) {
-        expect(enemyOnly.has(id), `${c.name} 能学到敌方专属技能 ${id}`).toBe(false);
-      }
+      expect(
+        enemyOnly.has(c.defaultSkillId),
+        `${c.name} 的招牌技能 ${c.defaultSkillId} 是敌方专属技能`,
+      ).toBe(false);
     }
   });
 });

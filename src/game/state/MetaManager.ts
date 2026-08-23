@@ -1,13 +1,7 @@
-import {
-  canCharacterUseSkill,
-  getCharacterDef,
-  levelUpCost,
-  type CharacterDef,
-} from '@/data/characterCatalog';
+import { getCharacterDef, levelUpCost, type CharacterDef } from '@/data/characterCatalog';
 import { getDungeonDef } from '@/data/dungeonCatalog';
 import { isSandboxDungeon } from '@/data/sandboxLab';
 import { instantiateCharacter } from '@/game/characterFactory';
-import type { Character } from '@/game/characterTypes';
 import type { MetaState, MvpGameState } from './GameState';
 
 /**
@@ -35,44 +29,6 @@ export function levelUpCharacter(state: MvpGameState, rosterId: string): boolean
   if (state.meta.metaCurrency < cost) return false;
   state.meta.metaCurrency -= cost;
   m.level += 1;
-  return true;
-}
-
-/**
- * 持久装配一个已解锁技能（meta 层；不消耗货币，纯装配切换）。
- *
- * 路线校验走 `canCharacterUseSkill`，不只看职业：老存档里可能留着可学列表收紧前
- * 学到的越界技能（比如输出路线角色学过的战场祝福），只查 `ownedSkillIds`
- * 会让它照样装得上，而那正是词条批量休眠的入口。
- */
-export function equipSkill(state: MvpGameState, rosterId: string, skillId: string): boolean {
-  const m = state.meta.roster.find((x) => x.rosterId === rosterId);
-  if (!m) return false;
-  const def = getCharacterDef(m.catalogId ?? m.rosterId);
-  if (!def || !canCharacterUseSkill(def, skillId)) return false;
-  if (!m.ownedSkillIds.includes(skillId)) return false;
-  m.activeSkillId = skillId;
-  return true;
-}
-
-/** 解锁角色可装配技能列表：默认技能 + characterCatalog.unlockableSkillIds（用 meta 货币购买学习） */
-export function unlockableSkillsFor(m: Character): string[] {
-  const def = getCharacterDef(m.catalogId ?? m.rosterId);
-  if (!def) return [];
-  return def.unlockableSkillIds.filter((id) => !m.ownedSkillIds.includes(id));
-}
-
-export const SKILL_LEARN_COST = 8;
-
-/** 用 meta 货币学习（解锁）一个技能到持久技能池 */
-export function learnSkill(state: MvpGameState, rosterId: string, skillId: string): boolean {
-  const m = state.meta.roster.find((x) => x.rosterId === rosterId);
-  if (!m) return false;
-  if (m.ownedSkillIds.includes(skillId)) return false;
-  if (!unlockableSkillsFor(m).includes(skillId)) return false;
-  if (state.meta.metaCurrency < SKILL_LEARN_COST) return false;
-  state.meta.metaCurrency -= SKILL_LEARN_COST;
-  m.ownedSkillIds.push(skillId);
   return true;
 }
 

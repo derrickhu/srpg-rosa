@@ -76,13 +76,15 @@ describe('无尽掉落与待机拾取', () => {
     expect(waited.events.some((e) => e.type === 'pickup')).toBe(false);
   });
 
-  it('走上去之后回合自动收尾，也算待机，会捡起来', () => {
+  it('先出手再走上掉落格时留着撤销，点待机才捡', () => {
     const sim = setupDrops({ x: 1, y: 1 }, { x: 1, y: 0 });
     stepUntilPending(sim);
     sim.commandAttack('p1', 'e1');
     const moved = sim.commandMove('p1', { x: 1, y: 0 });
-    expect(moved.events.some((e) => e.type === 'pickup' && e.potionId)).toBe(true);
-    expect(sim.pending()).toBeNull();
+    expect(moved.events.some((e) => e.type === 'pickup')).toBe(false);
+    expect(sim.pending()?.canUndoMove).toBe(true);
+    const waited = sim.commandWait('p1');
+    expect(waited.events.some((e) => e.type === 'pickup' && e.potionId)).toBe(true);
   });
 
   it('主线不开掉落', () => {

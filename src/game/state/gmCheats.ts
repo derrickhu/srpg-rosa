@@ -1,4 +1,4 @@
-import { CHARACTER_DEFS, getCharacterDef } from '@/data/characterCatalog';
+import { CHARACTER_DEFS } from '@/data/characterCatalog';
 import { instantiateCharacter } from '@/game/characterFactory';
 import type { MvpGameState } from './GameState';
 
@@ -24,23 +24,12 @@ export function gmAddSoul(state: MvpGameState, amount = SOUL_GRANT): number {
   return add;
 }
 
-/** 每名已有角色学会自己路线上的全部可学技能 */
-export function gmLearnAllSkills(state: MvpGameState): number {
-  let n = 0;
-  for (const m of state.meta.roster) {
-    const def = getCharacterDef(m.catalogId ?? m.rosterId);
-    if (!def) continue;
-    for (const id of [def.defaultSkillId, ...def.unlockableSkillIds]) {
-      if (m.ownedSkillIds.includes(id)) continue;
-      m.ownedSkillIds.push(id);
-      n += 1;
-    }
-  }
-  return n;
-}
-
-/** 进试炼前一次性备齐：全角色 + 全技能 */
+/**
+ * 进试炼前一次性备齐名册。
+ *
+ * 一人一招之后不需要再「学会全部技能」了：试炼场的技能池由
+ * `effectiveOwnedSkillIds` 直接按角色路线现算（见那里的说明），不走存档。
+ */
 export function gmPrepareSandboxRoster(state: MvpGameState): void {
   gmUnlockAllCharacters(state);
-  gmLearnAllSkills(state);
 }

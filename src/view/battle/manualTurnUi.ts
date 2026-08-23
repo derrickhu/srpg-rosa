@@ -645,7 +645,7 @@ export function createManualTurnUi(opts: ManualTurnUiOptions): ManualTurnUi {
   function hintText(s: ManualUiState): string {
     if (s.phase === 'aim') {
       if (s.skillCandidateCells.length > 0) return '点高亮目标释放';
-      if (s.skillAimCells.length > 0) return '点高亮范围确认方向';
+      if (s.skillAimCells.length > 0) return '点高亮格子确认释放';
       return '点任意处确认释放';
     }
     if (s.phase === 'attackAim') {
