@@ -1,19 +1,21 @@
 import * as PIXI from 'pixi.js';
 import { makeText } from '@/theme/typography';
-import { CHARACTER_DEFS, type CharacterDef } from '@/data/characterCatalog';
+import { CHARACTER_DEFS, characterArtKey, type CharacterDef } from '@/data/characterCatalog';
 import { getDungeonDef } from '@/data/dungeonCatalog';
 import { getSkillSpec } from '@/data/skillCatalog';
 import { describeSkillRole } from '@/data/skillText';
 import { UNIT_DEFS } from '@/data/unitDefs';
 import { unlockCharacterWithMeta, type MvpGameState } from '@/game/MvpState';
 import { createHubHeader } from '@/view/hubHeader';
-import { C } from '@/view/mvpTheme';
+import { C, PROFESSION_ACCENT } from '@/view/mvpTheme';
 import { createBackground, createUiIcon, createUnitToken } from '@/view/renderHelpers';
 import { makeButton } from '@/ui/Button';
 import { makeCard } from '@/ui/Card';
 import { makeSection } from '@/ui/Section';
 import { createScrollList } from '@/ui/ScrollList';
 import { showToast } from '@/ui/Toast';
+import { createCharacterRevealOverlay } from '@/view/characterReveal';
+import { staggerPop } from '@/view/fx/celebration';
 
 export interface RecruitCallbacks {
   onChanged: () => void;
@@ -50,7 +52,7 @@ export function createRecruitView(
   const W = screen.screenWidth;
   const H = screen.screenHeight;
   const root = new PIXI.Container();
-  root.addChild(createBackground(W, H));
+  root.addChild(createBackground(W, H, 'hub_bg'));
 
   const header = createHubHeader({
     screenWidth: W,
@@ -80,12 +82,19 @@ export function createRecruitView(
    * 完全看不出一个是高机动突击、一个是远程法术。
    */
   function characterCard(def: CharacterDef, w: number, canBuy: boolean): PIXI.Container {
-    const card = makeCard({ width: w, height: CARD_H, tone: canBuy ? 'normal' : 'locked' });
+    const card = makeCard({
+      width: w,
+      height: CARD_H,
+      tone: canBuy ? 'normal' : 'locked',
+      accent: PROFESSION_ACCENT[def.profession],
+      press: true,
+      guard: scroll.wasDragging,
+    });
     const dark = !canBuy;
     const nameColor = dark ? C.textOnDark : C.text;
     const subColor = dark ? 0xc8d0e0 : C.muted;
 
-    const token = createUnitToken(def.profession, 'player', TOKEN);
+    const token = createUnitToken(characterArtKey({ rosterId: def.id, profession: def.profession }), 'player', TOKEN);
     token.x = 8 + TOKEN / 2;
     token.y = CARD_H / 2;
     // 未拥有的角色压暗成剪影感，一眼能看出「这个还不是我的」
@@ -138,13 +147,22 @@ export function createRecruitView(
           // 不拦的话滚一次页面就会买掉一个角色
           if (scroll.wasDragging()) return;
           if (unlockCharacterWithMeta(state, def.id)) {
-            cb.onChanged();
+            const reveal = createCharacterRevealOverlay({
+              screenW: W,
+              screenH: H,
+              rosterId: def.id,
+              onConfirm: () => {
+                if (reveal.parent) reveal.parent.removeChild(reveal);
+                reveal.destroy({ children: true });
+                cb.onChanged();
+              },
+            });
+            root.addChild(reveal);
           } else {
             // 买不起时给的是解释而不是无反应：按钮照样可点，因为「点了没动静」
             // 会被读成 bug，而这里真正的信息是差多少魂晶
             showToast(root, `魂晶不足（还差 ${cost - state.meta.metaCurrency}）`, {
-              x: PAD,
-              y: H - 40,
+              screenWidth: W,
               color: C.soulText,
             });
           }
@@ -185,6 +203,7 @@ export function createRecruitView(
 
   const sectionW = W - PAD * 2;
   let y = 4;
+  const pops: PIXI.Container[] = [];
 
   function addSection(title: string, note: string | undefined, rows: PIXI.Container[]): void {
     const contentH = rows.length === 0
@@ -219,7 +238,9 @@ export function createRecruitView(
       `持有 ${state.meta.metaCurrency}`,
       buyable.map((def) => {
         const cost = def.unlock.kind === 'meta' ? def.unlock.cost : 0;
-        return characterCard(def, sectionW - PAD * 2, state.meta.metaCurrency >= cost);
+        const card = characterCard(def, sectionW - PAD * 2, state.meta.metaCurrency >= cost);
+        pops.push(card);
+        return card;
       }),
     );
   }
@@ -228,7 +249,11 @@ export function createRecruitView(
     addSection(
       '战绩解锁',
       undefined,
-      conditional.map((def) => characterCard(def, sectionW - PAD * 2, false)),
+      conditional.map((def) => {
+        const card = characterCard(def, sectionW - PAD * 2, false);
+        pops.push(card);
+        return card;
+      }),
     );
   }
 
@@ -247,6 +272,7 @@ export function createRecruitView(
     ),
   ]);
 
-  scroll.refresh();
+  scroll.refresh(y + 16);
+  staggerPop(pops.slice(0, 6), 45);
   return root;
 }

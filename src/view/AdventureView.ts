@@ -13,6 +13,7 @@ import {
   unlockDungeonWithMeta,
   type MvpGameState,
 } from '@/game/MvpState';
+import { characterArtKey } from '@/data/characterCatalog';
 import { AssetManager } from '@/core/AssetManager';
 import {
   createBackground,
@@ -25,7 +26,9 @@ import { createHubHeader } from '@/view/hubHeader';
 import { C, shade } from '@/view/mvpTheme';
 import { createNodeStrip } from '@/view/NodeStrip';
 import { isDisplayLive } from '@/view/pixiLive';
+import { attachPress } from '@/ui/press';
 import { makeButton } from '@/ui/Button';
+import { staggerPop } from '@/view/fx/celebration';
 
 export interface AdventureCallbacks {
   onStartRun: (dungeonId: string, party: string[]) => void;
@@ -110,7 +113,7 @@ export function createAdventureView(
   const W = screen.screenWidth;
   const H = screen.screenHeight;
   const root = new PIXI.Container();
-  root.addChild(createBackground(W, H));
+  root.addChild(createBackground(W, H, 'hub_bg'));
 
   const chapters = adventureChapterList(DUNGEON_DEFS);
   let chapter = Math.max(0, Math.min(chapterIndex, chapters.length - 1));
@@ -198,17 +201,18 @@ export function createAdventureView(
       // 上阵角色小队立绘（用棋子代替插画）
       const roster = state.meta.roster.slice(0, 3);
       roster.forEach((m, i) => {
-        const token = createUnitToken(m.profession, 'player', 56);
+        const token = createUnitToken(characterArtKey(m), 'player', 56);
         token.x = W / 2 + (i - (roster.length - 1) / 2) * 64;
         token.y = cardY + cardH * 0.52;
         c.addChild(token);
       });
+      const descPad = 24;
+      const descWrap = cardW - descPad * 2;
       const desc = makeText(d.desc, 'body', {
         fill: C.paper, fontSize: 13,
-        wordWrap: true, wordWrapWidth: cardW - 48, align: 'center',
+        wordWrap: true, wordWrapWidth: descWrap, breakWords: true, align: 'center',
       });
-      desc.anchor.set(0.5, 0);
-      desc.x = W / 2;
+      desc.x = cardX + descPad + Math.max(0, (descWrap - desc.width) / 2);
       desc.y = cardY + cardH * 0.66;
       c.addChild(desc);
 
@@ -299,6 +303,7 @@ export function createAdventureView(
       a.eventMode = 'static';
       a.cursor = 'pointer';
       a.hitArea = new PIXI.Circle(0, 0, 26);
+      attachPress(a);
       a.on('pointertap', () => slideToChapter(target, dir));
       c.addChild(a);
     };
@@ -385,6 +390,7 @@ export function createAdventureView(
 
   let currentCard = buildChapterCard(currentDef());
   chapterLayer.addChild(currentCard);
+  staggerPop([currentCard], 40);
   rebuildActions();
 
   let sliding = false;

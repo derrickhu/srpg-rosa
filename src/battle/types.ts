@@ -206,6 +206,11 @@ export type SkillHit = {
    */
   poisoned?: true;
   /**
+   * 这一击给目标挂上了冻伤（霜噬）。回放层据此叠霜晶，不叠紫雾。
+   * 和 `poisoned` 互斥：结算都走 poison，画面按 theme 分开。
+   */
+  frostbitten?: true;
+  /**
    * 溅射命中（不是主目标）。回放层据此叠「周围伤」闪光，
    * 主目标只播技能自己的命中，避免主目标身上两套特效糊在一起。
    */

@@ -34,8 +34,13 @@ export interface ChallengeEntry {
   kind: ChallengeKind;
   name: string;
   desc: string;
-  /** `UI_BUNDLE` 里的图标 key；由 challengeCatalog.test.ts 保证已登记 */
+  /** `UI_BUNDLE` 里的小图标 key；插图缺失时的降级 */
   icon: string;
+  /**
+   * 列表卡左侧大插图，`UI_BUNDLE` 的 key。
+   * 章节重打不写这里——走 `DungeonDef.art`，避免同一章在两页各挂一张图。
+   */
+  illust?: string;
   /** 一句话奖励说明。玩家决定要不要打，看的就是这行 */
   reward: string;
   /** 开放时间描述，如「常驻」「每周六 · 周日」 */
@@ -59,6 +64,7 @@ export const CHALLENGE_ENTRIES: readonly ChallengeEntry[] = [
     name: '草原围猎',
     desc: '限时活动：草原魔物成群出没，全程无补给点，一口气打完五场。',
     icon: 'tab_challenge',
+    illust: 'illust_hunt',
     reward: '魂晶 ×15 · 稀有纹章保底 1 次',
     window: '每周六 · 周日',
   },
@@ -68,6 +74,7 @@ export const CHALLENGE_ENTRIES: readonly ChallengeEntry[] = [
     name: '首领连战',
     desc: '限时活动：连续挑战三名章节首领，中途不回血、不换人。',
     icon: 'node_boss',
+    illust: 'illust_boss',
     reward: '魂晶 ×25',
     window: '每月首周',
   },
@@ -77,6 +84,7 @@ export const CHALLENGE_ENTRIES: readonly ChallengeEntry[] = [
     name: '无尽试炼',
     desc: '波次递增，敌人越打越强，直到全队倒下。记录你到过的最深层数。',
     icon: 'tab_challenge',
+    illust: 'illust_endless',
     reward: '按层数结算魂晶，每层都算',
     window: '常驻',
     dungeonId: ENDLESS_DUNGEON_ID,
@@ -115,4 +123,22 @@ export function endlessBestFloor(meta: MetaState): number {
 /** `chapterRepeat` 条目对应的章节定义 */
 export function challengeDungeon(entry: ChallengeEntry) {
   return entry.dungeonId ? getDungeonDef(entry.dungeonId) : undefined;
+}
+
+/**
+ * 列表卡左侧该画哪张图。
+ *
+ * 章节重打用章节卡同一张插图（`DungeonDef.art`），活动和无尽用各自的 illust。
+ * 两路都没有才返回 null，卡片退回小图标。
+ */
+export function challengeArt(
+  entry: ChallengeEntry,
+): { bundle: 'bg' | 'ui'; key: string; mode: 'cover' | 'contain' } | null {
+  if (entry.kind === 'chapterRepeat') {
+    const art = challengeDungeon(entry)?.art;
+    if (art) return { bundle: 'bg', key: art, mode: 'cover' };
+    return { bundle: 'ui', key: 'illust_repeat', mode: 'cover' };
+  }
+  if (entry.illust) return { bundle: 'ui', key: entry.illust, mode: 'cover' };
+  return null;
 }

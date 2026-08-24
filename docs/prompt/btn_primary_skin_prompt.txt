@@ -1,0 +1,15 @@
+大厅主 CTA 金按钮皮（可横向九宫格）
+产出 → images/ui/btn_primary_skin.png
+生成器：Cursor GenerateImage，aspect_ratio 16:9
+后处理：品红抠底、trim、pngquant。无文字。
+
+---
+
+A single mobile-game primary button SKIN on a solid flat MAGENTA #FF00FF background (chroma key).
+
+Shape: one wide horizontal CAPSULE (fully rounded semicircle ends). Simple 3D gold only: sunny yellow #F6D35A on the top half, richer gold #C99212 on the bottom half, a thin pale-yellow highlight along the inner top edge, a darker orange lip along the bottom. Even thick black outline all around.
+
+The center 60% MUST be a perfectly uniform horizontal gold band (same pixels left-to-right) so the middle can stretch. Empty face — no icon, no gem, no pattern.
+
+NO text, NO letters, NO numbers, NO wings, NO corner ornaments, NO jewels, NO extra decorations, NO watermark.
+Style: polished casual-cartoon mobile RPG.

@@ -3,6 +3,7 @@ import { DUNGEON_DEFS } from '@/data/dungeonCatalog';
 import {
   abandonRun,
   advanceNode,
+  applyDungeonClearUnlocks,
   applyVictory,
   finishRunVictory,
   isRunComplete,
@@ -35,7 +36,7 @@ function clearWholeDungeon(state: MvpGameState): number {
   startRun(state, DUNGEON_ID, party(state));
   while (!isRunComplete(state)) winCurrentNode(state);
   applyVictory(state);
-  return finishRunVictory(state);
+  return finishRunVictory(state).soul;
 }
 
 describe('击杀拆金币', () => {
@@ -156,5 +157,14 @@ describe('整章通关奖励', () => {
     const before = s.meta.metaCurrency;
     clearWholeDungeon(s);
     expect(s.meta.metaCurrency).toBeGreaterThan(before);
+  });
+
+  it('首通草原解锁奥莉，再调一次不再重复入队', () => {
+    const s = newGame();
+    expect(s.meta.roster.some((m) => m.rosterId === 'hero_mage_aoli')).toBe(false);
+    const first = applyDungeonClearUnlocks(s.meta, 'dungeon_grassland');
+    expect(first).toEqual(['hero_mage_aoli']);
+    expect(s.meta.roster.some((m) => m.rosterId === 'hero_mage_aoli')).toBe(true);
+    expect(applyDungeonClearUnlocks(s.meta, 'dungeon_grassland')).toEqual([]);
   });
 });

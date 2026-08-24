@@ -1,0 +1,56 @@
+# 芙洛 —— 4x4 行走。身份锁 art/sprite-runs/floe/identity.png
+# 风格段落原样粘贴 _style_block_v2.txt。迈腿段落原样粘贴 _walk_motion_block.txt。
+# 右向由代码镜像，第 3 行仍要画（模型要填满 4x4），但打包时 mirrorRight 丢弃。
+
+A 4x4 sprite sheet, full 4-direction walk cycle, top-down tactics RPG.
+
+The attached image is the EXACT character identity. Copy her: giant round head, stubby body,
+honey-gold chunky hair, three ice-blue triangles on the bangs, ice-blue robe, cream collar,
+jagged 4-triangle icicle hem, brown shoes, thick near-black outlines, flat cel fills.
+Keep the ONE-HANDED open brown book hovering just above her raised mitten (viewer's left
+when facing down). The book must slightly overlap the top of the palm so they stay ONE
+connected silhouette. Left arm is a stub hanging down.
+
+Do NOT redesign her. Do NOT make her prettier, slimmer, or more detailed.
+Only facing and walk pose change.
+
+ART STYLE (project style bible — do not deviate):
+hand-drawn cartoon game sprite, thick near-black outlines (pure black or very dark warm
+brown — never a mid-tone or colorful outline), flat saturated fills with light cel shading
+(one highlight tone, one shadow tone), no gradients, no texture noise, no painterly
+rendering, no photographic detail, 3/4 top-down camera matching a tactics grid.
+
+PROPORTIONS — HEAD INCLUDING HAIR is about HALF total height. Tiny stubby body.
+1.5-head mascot, square box. NOT a 2.5-head chibi. NOT a slim standing person.
+
+WALK MOTION — the walk must be readable from the SILHOUETTE ALONE at 44 pixels tall.
+Columns 1 and 3 must look obviously different from columns 2 and 4 even with all interior
+detail removed. Understating this is the single most common failure:
+  Column 1: neutral. Both feet together directly under the body, legs straight, body at its
+            FULL standing height.
+  Column 2: LEFT foot planted far FORWARD, right foot trailing far BEHIND, with a clearly
+            VISIBLE GAP between the two feet — the stride is wide, not a shuffle. The whole
+            body drops noticeably, squashing down about one tenth of its height. Arms swing
+            opposite to the legs. Book stays glued to the raised-hand side.
+  Column 3: neutral again, identical to column 1.
+  Column 4: mirror of column 2 — RIGHT foot far forward, left foot trailing behind, same
+            heavy body drop, arms swung the other way.
+Exaggerate far past realism. A subtle, realistic walk reads as a statue sliding across the
+board. If in doubt, make the stride wider and the body drop deeper.
+
+ROWS:
+  Row 1 top:    facing DOWN, face visible, book on viewer's left
+  Row 2:        facing LEFT, left profile, book leading toward the left
+  Row 3:        facing RIGHT, mirrored from row 2
+  Row 4 bottom: facing UP, back of gold hair AND the open book still visible
+
+RULES:
+1. EXACTLY 16 equal cells, 4x4. No borders, no lines between cells.
+2. Background 100% solid magenta #FF00FF. No shadow, no gradient.
+3. Identical body scale and camera in every cell. Body never zooms.
+4. Body fills about 50% of cell height, centered. Generous magenta margin.
+5. Nothing crosses a cell edge. Same foot baseline.
+6. Face: two dark oval eyes, two brows, tiny mouth. No nose, no blush.
+7. 6 colors: ice blue, cream, gold hair, skin, book brown, outline.
+8. NO purple/pink on costume. NO wizard hat. NO staff. NO fire orb.
+9. NO TEXT, no labels, no watermark.

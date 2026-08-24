@@ -1,0 +1,68 @@
+{
+  "source": "scripts/vfx-sheet.py",
+  "input": "/Users/rosa/rosa_games/srpg-rosa/.tmp-floe-vfx/frost_ring_raw_sheet.png",
+  "target": "vfx",
+  "mode": "vfx_sheet",
+  "rows": 3,
+  "cols": 3,
+  "cell_size": 256,
+  "threshold": 22,
+  "frame_labels": [
+    "frost_ring-1",
+    "frost_ring-2",
+    "frost_ring-3",
+    "frost_ring-4",
+    "frost_ring-5",
+    "frost_ring-6",
+    "frost_ring-7",
+    "frost_ring-8",
+    "frost_ring-9"
+  ],
+  "align": "center",
+  "key": "black",
+  "alpha_gamma": 2.0,
+  "shared_crop_side": 269,
+  "crop_offsets": [
+    {
+      "x": 36,
+      "y": 36
+    },
+    {
+      "x": 36,
+      "y": 36
+    },
+    {
+      "x": 36,
+      "y": 36
+    },
+    {
+      "x": 36,
+      "y": 36
+    },
+    {
+      "x": 36,
+      "y": 36
+    },
+    {
+      "x": 36,
+      "y": 36
+    },
+    {
+      "x": 36,
+      "y": 36
+    },
+    {
+      "x": 36,
+      "y": 36
+    },
+    {
+      "x": 36,
+      "y": 36
+    }
+  ],
+  "empty_frames": [],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}

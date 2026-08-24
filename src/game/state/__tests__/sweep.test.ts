@@ -146,7 +146,7 @@ describe('扫荡的奖励和手打一样', () => {
 
     const before = s.meta.metaCurrency;
     const gained = finishRunVictory(s);
-    expect(gained).toBe(DUNGEON_REPEAT_SOUL);
+    expect(gained.soul).toBe(DUNGEON_REPEAT_SOUL);
     expect(s.meta.metaCurrency).toBe(before + DUNGEON_REPEAT_SOUL);
   });
 });

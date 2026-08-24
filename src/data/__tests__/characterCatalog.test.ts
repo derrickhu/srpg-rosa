@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { CHARACTER_DEFS, canCharacterUseSkill, mainSlotSkillIds } from '@/data/characterCatalog';
+import { CHARACTER_DEFS, canCharacterUseSkill, characterArtKey, mainSlotSkillIds } from '@/data/characterCatalog';
 import { canProfessionEquipSkill, getSkillSpec } from '@/data/skillCatalog';
+import { hasAnimSet } from '@/view/animSets';
 
 /**
  * 一人一招：每个角色有且只有一个招牌技能，路线标签必须和它对得上。
@@ -21,6 +22,17 @@ describe('角色招牌技能', () => {
         spec!.role,
         `${c.name} 路线是 ${c.skillRoute}，招牌技能「${spec!.name}」却是 ${spec!.role}`,
       ).toBe(c.skillRoute);
+    }
+  });
+
+  it('角色外观图集已注册，同职业两人不能共用一张脸', () => {
+    const seen = new Map<string, string>();
+    for (const c of CHARACTER_DEFS) {
+      const key = characterArtKey({ rosterId: c.id, profession: c.profession });
+      expect(hasAnimSet(key), `${c.name} 的外观 ${key} 没登记`).toBe(true);
+      const prev = seen.get(key);
+      expect(prev, `${c.name} 和 ${prev} 共用外观 ${key}`).toBeUndefined();
+      seen.set(key, c.name);
     }
   });
 

@@ -1,0 +1,12 @@
+角色获得亮相厅
+产出 → images/bg/reveal_hall.png + images/ui/platform_gold.png
+生成器：Cursor GenerateImage
+参考：用户给的角色亮相厅截图（不要抄具体角色）
+
+---
+
+A) 9:16 hall backdrop: cream columns with gold trim, stained-glass window (geometry only, no letters), a hanging blue-gold banner WITHOUT symbols, polished floor. Soft god-rays from above. Center of the floor is a clear empty circle for a character to stand. No people, no UI, no text.
+
+B) 1:1 gold ceremonial platform: concentric gold rings on MAGENTA #FF00FF, thick ink outline, empty center. Chunky cartoon, no text.
+
+NO watermarks.

@@ -1,9 +1,21 @@
+import type { UnitKind } from '@/battle/types';
+
 /**
  * 全局配色。数值出处见 `docs/美术风格圣经.md` §2.2 地形色板与 §2.3 UI 色板。
  *
  * §2.3 的语义色是锁死的：金 = 局内金币、紫 = 魂晶、薄荷 = 精华、红 = 生命。
  * 不要拿它们做装饰性配色，否则玩家会把装饰误读成资源。
  */
+
+/** 职业顶条，色值锁在圣经 §2.1，大厅卡和三选一用同一套 */
+export const PROFESSION_ACCENT: Record<UnitKind, number> = {
+  sword: 0x2b6cdb,
+  bow: 0x549c0c,
+  shield: 0xa8a8a8,
+  cavalry: 0xfcb40c,
+  mage: 0x0e7a7a,
+  healer: 0xf5e6c8,
+};
 export const C = {
   // --- 战场 ---
   /** 平原格与背景兜底色，取自战斗背景实测主色 */

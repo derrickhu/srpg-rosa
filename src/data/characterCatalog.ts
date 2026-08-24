@@ -65,6 +65,11 @@ export interface CharacterDef {
    */
   defaultSkillId: string;
   unlock: CharacterUnlock;
+  /**
+   * 战场 / token 用的动画集合。缺省等于 `profession`。
+   * 同职业两个角色（奥莉 / 芙洛）必须各写各的，否则会共用一张脸。
+   */
+  animSet?: string;
 }
 
 const sid = (k: UnitKind) => defaultSkillId(k);
@@ -139,8 +144,14 @@ export const CHARACTER_DEFS: CharacterDef[] = [
     growth: { maxHp: 4, atk: 3, spd: 0, move: 0 },
     defaultSkillId: 'frost_ring',
     unlock: { kind: 'clearDungeon', dungeonId: 'dungeon_fortress' },
+    animSet: 'floe',
   },
 ];
+
+/** 角色卡片 / 战场 token 的图集 id。同职业两人各有各的脸时走 `animSet`。 */
+export function characterArtKey(m: { rosterId: string; profession: string }): string {
+  return getCharacterDef(m.rosterId)?.animSet ?? m.profession;
+}
 
 /** 老档里凯尔 / 薇恩换成法师奥莉 / 祭司弥尔 */
 export const LEGACY_CHARACTER_IDS: Readonly<Record<string, string>> = {

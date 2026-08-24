@@ -1,0 +1,21 @@
+第 3 章「要塞攻防」章节卡插图
+产出 → images/bg/chapter_fortress.png（654x272）
+生成器：Cursor 内置 GenerateImage，aspect_ratio 16:9
+后处理同 chapter_grassland：宽幅中间带裁成 654×272
+
+---
+
+A wide banner illustration for a chapter select card in a cartoon fantasy tactics mobile game. The chapter is called "Fortress Siege" — walls block roads and arrows; a gate is the only thing you can operate.
+
+COMPOSITION — very wide letterbox, cropped top and bottom. EVERY important element sits in the CENTRAL HORIZONTAL BAND. Top strip: pale dusty sky. Bottom strip: packed earth. Nothing important near the top or bottom edge.
+
+SCENE, left to right across the central band:
+- LEFT: a low friendly siege camp — two brown timber palisades, a cream-and-blue pennant, a simple wooden ram or ladder lying unused (chunky, toy-like).
+- MIDDLE: open packed-earth approach, warm tan #C4A878, a pale road leading to the gate. Keep this band open.
+- RIGHT: a grey stone fortress wall with one heavy wooden gate in a U-shaped stone frame, two square towers, warm brown gate planks. The wall is the star. No tiny battlement lace.
+
+COLOUR: stone grey #7E7B77 #6F6358, timber brown, dusty tan ground, cream-blue friendly flags vs the fortress. Sky a dry pale blue.
+
+ART STYLE: hand-drawn cartoon, flat saturated fills, simple cel shading. Soft rounded outlines in a darker shade of each colour — no heavy black outlines. No texture noise, no photographic detail.
+
+Displayed about 330 pixels wide. BIG simple shapes. No people, no text, no UI, no frame, no watermark.

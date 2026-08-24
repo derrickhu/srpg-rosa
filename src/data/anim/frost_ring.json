@@ -1,0 +1,219 @@
+{
+  "id": "frost_ring",
+  "source": "art/vfx-runs/frost_ring",
+  "blend": "add",
+  "image": "images/anim/frost_ring.png",
+  "meta": {
+    "size": {
+      "w": 1024,
+      "h": 512
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 83,
+    "baselineY": 176,
+    "ref": "frost_ring/frost_ring-1.png"
+  },
+  "frames": {
+    "frost_ring/frost_ring-1.png": {
+      "frame": {
+        "x": 761,
+        "y": 230,
+        "w": 87,
+        "h": 92
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 90,
+        "y": 88,
+        "w": 87,
+        "h": 92
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "frost_ring/frost_ring-2.png": {
+      "frame": {
+        "x": 612,
+        "y": 230,
+        "w": 147,
+        "h": 143
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 54,
+        "y": 64,
+        "w": 147,
+        "h": 143
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "frost_ring/frost_ring-3.png": {
+      "frame": {
+        "x": 437,
+        "y": 230,
+        "w": 173,
+        "h": 176
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 40,
+        "y": 50,
+        "w": 173,
+        "h": 176
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "frost_ring/frost_ring-4.png": {
+      "frame": {
+        "x": 234,
+        "y": 230,
+        "w": 201,
+        "h": 211
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 30,
+        "y": 12,
+        "w": 201,
+        "h": 211
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "frost_ring/frost_ring-5.png": {
+      "frame": {
+        "x": 720,
+        "y": 2,
+        "w": 215,
+        "h": 217
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 19,
+        "y": 14,
+        "w": 215,
+        "h": 217
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "frost_ring/frost_ring-6.png": {
+      "frame": {
+        "x": 476,
+        "y": 2,
+        "w": 242,
+        "h": 223
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 6,
+        "y": 12,
+        "w": 242,
+        "h": 223
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "frost_ring/frost_ring-7.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 233,
+        "h": 226
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 15,
+        "y": 0,
+        "w": 233,
+        "h": 226
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "frost_ring/frost_ring-8.png": {
+      "frame": {
+        "x": 2,
+        "y": 230,
+        "w": 230,
+        "h": 213
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 11,
+        "y": 0,
+        "w": 230,
+        "h": 213
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "frost_ring/frost_ring-9.png": {
+      "frame": {
+        "x": 237,
+        "y": 2,
+        "w": 237,
+        "h": 226
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 10,
+        "y": 0,
+        "w": 237,
+        "h": 226
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "frost_ring": {
+      "loop": false,
+      "fps": 20,
+      "frames": [
+        "frost_ring/frost_ring-1.png",
+        "frost_ring/frost_ring-2.png",
+        "frost_ring/frost_ring-3.png",
+        "frost_ring/frost_ring-4.png",
+        "frost_ring/frost_ring-5.png",
+        "frost_ring/frost_ring-6.png",
+        "frost_ring/frost_ring-7.png",
+        "frost_ring/frost_ring-8.png",
+        "frost_ring/frost_ring-9.png"
+      ]
+    }
+  }
+}

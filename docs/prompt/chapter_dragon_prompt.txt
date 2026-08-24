@@ -1,0 +1,21 @@
+第 5 章「龙岭绝巅」章节卡插图
+产出 → images/bg/chapter_dragon.png（654x272）
+生成器：Cursor 内置 GenerateImage，aspect_ratio 16:9
+后处理同 chapter_grassland：宽幅中间带裁成 654×272
+
+---
+
+A wide banner illustration for a chapter select card in a cartoon fantasy tactics mobile game. The chapter is called "Dragon Ridge" — cliffs cut retreat, a dragon waits on the highest peak.
+
+COMPOSITION — very wide letterbox, cropped top and bottom. EVERY important element sits in the CENTRAL HORIZONTAL BAND. Top strip: clear cold sky. Bottom strip: empty rock shelf. Nothing important near the top or bottom edge.
+
+SCENE, left to right across the central band:
+- LEFT: a steep warm-grey cliff path, a few red-brown rocks, one broken stone cairn marking the climb.
+- MIDDLE: a deep canyon gap (the abyss), dark violet-brown #140322 in the crack, rock rims #84846C. The gap must read as "cannot walk". Keep it simple, not a maze of needles.
+- RIGHT: the highest peak with a BIG cartoon dragon perched — chunky red-orange body #8A3A3A / #D2543C, one pair of wings folded, a blunt horned head in profile. Toy-like, not realistic, not gory. The dragon is the memory point and must be huge.
+
+COLOUR: rock greys and warm browns, cold pale blue sky, the dragon is the only saturated red. No neon lava oceans.
+
+ART STYLE: hand-drawn cartoon, flat saturated fills, simple cel shading. Soft rounded outlines in a darker shade of each colour — no heavy black outlines. No texture noise, no photographic detail.
+
+Displayed about 330 pixels wide. BIG simple shapes. No soldiers, no text, no UI, no frame, no watermark.

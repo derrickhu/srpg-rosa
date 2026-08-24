@@ -7,6 +7,7 @@ import bowManifest from '@/data/anim/bow.json';
 import shieldManifest from '@/data/anim/shield.json';
 import cavalryManifest from '@/data/anim/cavalry.json';
 import mageManifest from '@/data/anim/mage.json';
+import floeManifest from '@/data/anim/floe.json';
 import healerManifest from '@/data/anim/healer.json';
 import bloodfangManifest from '@/data/anim/bloodfang.json';
 import slimeManifest from '@/data/anim/slime.json';
@@ -79,6 +80,10 @@ import mookSpitManifest from '@/data/anim/mook_spit.json';
 import mookThudManifest from '@/data/anim/mook_thud.json';
 import mookPuffManifest from '@/data/anim/mook_puff.json';
 import poisonBurstManifest from '@/data/anim/poison_burst.json';
+import frostRingManifest from '@/data/anim/frost_ring.json';
+import frostOrbManifest from '@/data/anim/frost_orb.json';
+import frostSplatManifest from '@/data/anim/frost_splat.json';
+import frostBurstManifest from '@/data/anim/frost_burst.json';
 // 第二、三章临时技能专属图。这两组原先全是借角色技能的图（见 docs/特效圣经 §7.1），
 // 于是「每章的专属第二技能」在屏幕上全是别人的招
 import tempFoTorchManifest from '@/data/anim/temp_fo_torch.json';
@@ -158,6 +163,7 @@ const MANIFESTS: Record<string, AnimManifest> = {
   shield: shieldManifest as AnimManifest,
   cavalry: cavalryManifest as AnimManifest,
   mage: mageManifest as AnimManifest,
+  floe: floeManifest as AnimManifest,
   healer: healerManifest as AnimManifest,
   bloodfang: bloodfangManifest as AnimManifest,
   // 第一章杂兵，单帧静止怪：只有 idle，呼吸和出手位移由 AnimatedUnit 用代码做
@@ -248,6 +254,10 @@ const MANIFESTS: Record<string, AnimManifest> = {
   mook_thud: mookThudManifest as AnimManifest,
   mook_puff: mookPuffManifest as AnimManifest,
   poison_burst: poisonBurstManifest as AnimManifest,
+  frost_ring: frostRingManifest as AnimManifest,
+  frost_orb: frostOrbManifest as AnimManifest,
+  frost_splat: frostSplatManifest as AnimManifest,
+  frost_burst: frostBurstManifest as AnimManifest,
 };
 
 /**

@@ -3,6 +3,7 @@ import { makeText } from '@/theme/typography';
 import { getSafeAreaInsets } from '@/core/safeArea';
 import { C, shade } from '@/view/mvpTheme';
 import { createUiIcon } from '@/view/renderHelpers';
+import { attachPress } from '@/ui/press';
 
 /**
  * 底部常驻导航 Tab。
@@ -27,8 +28,7 @@ interface TabSpec {
 }
 
 const TABS: TabSpec[] = [
-  // 图标暂时沿用店铺摊位那张。语义已经不符（招募的是人不是货），欠一张专门的招募图标
-  { id: 'recruit', label: '招募', icon: 'tab_shop' },
+  { id: 'recruit', label: '招募', icon: 'tab_recruit' },
   { id: 'roster', label: '角色', icon: 'tab_roster' },
   { id: 'adventure', label: '冒险', icon: 'tab_adventure' },
   { id: 'challenge', label: '副本', icon: 'tab_challenge' },
@@ -101,9 +101,12 @@ export function createTabBar(
     c.addChild(label);
 
     c.eventMode = 'static';
-    c.cursor = 'pointer';
+    c.cursor = isActive ? 'default' : 'pointer';
     c.hitArea = new PIXI.Rectangle(0, -10, slotW, H + 10);
-    if (!isActive) c.on('pointertap', () => onSelect(t.id));
+    if (!isActive) {
+      attachPress(c);
+      c.on('pointertap', () => onSelect(t.id));
+    }
     root.addChild(c);
   });
 

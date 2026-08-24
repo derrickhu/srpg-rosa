@@ -38,6 +38,7 @@ export const UNIT_BUNDLE: AssetBundleDef = {
     shield: 'images/units/shield.png',
     mage: 'images/units/mage.png',
     healer: 'images/units/healer.png',
+    floe: 'images/units/floe.png',
     // 杂兵 / 精英·Boss 专属外观，key = spawn 的 animSet（见 src/data/stagesMvp.ts）。
     // 每章一批，图鉴见 docs/敌人图鉴.md。漏登记的表现是布阵格里那只怪只剩一个阵营色圆圈。
     // 第一章 · 草原野地魔物
@@ -80,14 +81,25 @@ export const UNIT_BUNDLE: AssetBundleDef = {
 };
 
 /**
- * 按钮和面板**没有贴图**：它们要在任意宽高下拉伸，而九宫格的四角必须像素级一致，
- * 生图模型给不了这个精度。扁平色块 + 粗描边这种风格用 Graphics 画更准也更省包体，
- * 见 `src/ui/Button.ts`。以前那三张 392x440 的 btn/panel 母版从未被任何代码引用，已删。
+ * 大厅壳（卡框 / 绶带 / 金按钮皮 / 金台 / 副本插图）是画出来的贴图，
+ * 由 `src/ui/chrome.ts` 做九宫格拉伸。战场上的矮按钮、信息条仍走 Graphics：
+ * 那些控件太矮，角花会被压扁。
  */
 export const UI_BUNDLE: AssetBundleDef = {
   name: 'ui',
   assets: {
     icon_gold: 'images/ui/icon_gold.png',
+    // 大厅壳。键名对齐 chrome.ts
+    frame_panel: 'images/ui/frame_panel.png',
+    ribbon_title: 'images/ui/ribbon_title.png',
+    btn_primary_skin: 'images/ui/btn_primary_skin.png',
+    platform_gold: 'images/ui/platform_gold.png',
+    illust_endless: 'images/ui/illust_endless.png',
+    illust_hunt: 'images/ui/illust_hunt.png',
+    illust_boss: 'images/ui/illust_boss.png',
+    illust_repeat: 'images/ui/illust_repeat.png',
+    roster_card: 'images/ui/roster_card.png',
+    roster_card_locked: 'images/ui/roster_card_locked.png',
     icon_deploy: 'images/ui/icon_deploy.png',
     icon_terrain: 'images/ui/icon_terrain.png',
     icon_gear: 'images/ui/icon_gear.png',
@@ -101,9 +113,9 @@ export const UI_BUNDLE: AssetBundleDef = {
     // 节点进度条上的补给点与 Boss 点，直径只有 20px
     node_supply: 'images/ui/node_supply.png',
     node_boss: 'images/ui/node_boss.png',
-    // 底部导航。曾对齐 TabId，招募 tab 暂时借用 tab_shop（欠一张专门的招募图标）；
-    // 背包 tab 已删，tab_inventory 随之下架
+    // 底部导航。背包 tab 已删，tab_inventory 随之下架
     tab_shop: 'images/ui/tab_shop.png',
+    tab_recruit: 'images/ui/tab_recruit.png',
     tab_roster: 'images/ui/tab_roster.png',
     tab_adventure: 'images/ui/tab_adventure.png',
     tab_challenge: 'images/ui/tab_challenge.png',
@@ -153,8 +165,7 @@ export const UI_BUNDLE: AssetBundleDef = {
     skill_field_bless: 'images/ui/skill_field_bless.png',
     skill_ember: 'images/ui/skill_ember.png',
     skill_flame_ring: 'images/ui/skill_flame_ring.png',
-    // 霜环图标待重做，先借用炎环那张，避免面板先变成灰圆
-    skill_frost_ring: 'images/ui/skill_flame_ring.png',
+    skill_frost_ring: 'images/ui/skill_frost_ring.png',
     skill_heal_touch: 'images/ui/skill_heal_touch.png',
     skill_ward_prayer: 'images/ui/skill_ward_prayer.png',
     skill_temp_gl_snare: 'images/ui/skill_temp_gl_snare.png',
@@ -243,10 +254,18 @@ export const BG_BUNDLE: AssetBundleDef = {
   name: 'bg',
   assets: {
     battle_bg: 'images/bg/battle_bg.png',
+    // 大厅四页专属底。不能复用 battle_bg：草地是战场，大厅叠在上面会永远像半成品
+    hub_bg: 'images/bg/hub_bg.png',
+    // 角色获得亮相厅
+    reveal_hall: 'images/bg/reveal_hall.png',
     // 补给点场景底：平视草地空地（商人正视，不能用俯视 battle_bg）
     shop_bg: 'images/bg/shop_bg.png',
     // 章节卡插图，key 对应 DungeonDef.art
     chapter_grassland: 'images/bg/chapter_grassland.png',
+    chapter_forest: 'images/bg/chapter_forest.png',
+    chapter_fortress: 'images/bg/chapter_fortress.png',
+    chapter_swamp: 'images/bg/chapter_swamp.png',
+    chapter_dragon: 'images/bg/chapter_dragon.png',
   },
 };
 

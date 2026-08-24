@@ -122,6 +122,20 @@ const SETS = [
       { dir: 'mage/attack_up', preset: 'attack', facing: 'up', fps: 12 },
     ],
   },
+  // 芙洛：冰蓝袍 + 单手浮书。prompt 见 docs/prompt/unit_floe_*.txt。右向由左向镜像。
+  {
+    id: 'floe',
+    blend: 'normal',
+    downscale: 1,
+    runs: [
+      { dir: 'floe/walk', preset: 'player_sheet', fps: 10, mirrorRight: true },
+      { dir: 'floe/walk', preset: 'idle_from_walk', mirrorRight: true },
+      { dir: 'floe/attack_down', preset: 'attack', facing: 'down', fps: 12 },
+      { dir: 'floe/attack_left', preset: 'attack', facing: 'left', fps: 12 },
+      { dir: 'floe/attack_left', preset: 'attack', facing: 'right', fps: 12, mirror: true },
+      { dir: 'floe/attack_up', preset: 'attack', facing: 'up', fps: 12 },
+    ],
+  },
   // 祭司 v1：prompt 见 docs/prompt/unit_healer_v1_*.txt。右向由左向镜像。
   {
     id: 'healer',
@@ -406,6 +420,12 @@ const SETS = [
     { id: 'mook_thud', frames: 4, fps: 18 },
     { id: 'mook_puff', frames: 4, fps: 16 },
     { id: 'poison_burst', frames: 6, fps: 20 },
+    // 芙洛冰系：招牌霜环 / 普攻弹体 / 普攻溅冰 / 霜噬叠层。四套形态互不撞——
+    // 环、泪滴、向上溅、竖冰棱。色相同族，靠形状分。
+    { id: 'frost_ring', frames: 9, fps: 20 },
+    { id: 'frost_orb', frames: 6, fps: 16 },
+    { id: 'frost_splat', frames: 6, fps: 24 },
+    { id: 'frost_burst', frames: 6, fps: 20 },
     // 第二、三章临时技能专属图。这两组原先全是借的（火把借法师炎环、绞缠借第一章缠足、
     // 庇护和守林人共用祭司的圣光盾、撞城槌的尾迹居然是火系的 ember_wave、
     // 压制借狂暴战吼、战旗借祭司祝福、钩索借骑兵冲锋光环），

@@ -324,9 +324,17 @@ export function createUnitToken(
   return c;
 }
 
+const BG_FALLBACK: Record<string, number> = {
+  battle_bg: C.bg,
+  shop_bg: C.bg,
+  hub_bg: 0x6a5a8c,
+  reveal_hall: 0xf0e4c4,
+};
+
 /**
- * 全屏背景。默认 `battle_bg`（俯视空草地）；补给点传 `shop_bg`（平视草地，
- * 和正视商人机位对齐）。资源未加载时回退纯色草地。
+ * 全屏背景。默认 `battle_bg`（俯视空草地）；大厅四页传 `hub_bg`；
+ * 角色亮相传 `reveal_hall`；补给点传 `shop_bg`。
+ * 资源未加载时回退该场景的主色，避免大厅先闪一帧草地。
  */
 export function createBackground(
   screenW: number,
@@ -350,7 +358,7 @@ export function createBackground(
     c.addChild(sprite);
   } else {
     const g = new PIXI.Graphics();
-    g.beginFill(C.bg, 1);
+    g.beginFill(BG_FALLBACK[bundleKey] ?? C.bg, 1);
     g.drawRect(0, 0, screenW, screenH);
     g.endFill();
     c.addChild(g);

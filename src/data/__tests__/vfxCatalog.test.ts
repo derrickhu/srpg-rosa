@@ -7,6 +7,8 @@ import { STAGES_MVP } from '@/data/stagesMvp';
 import {
   ATTACK_VFX,
   CHARGE_VFX,
+  FLOE_ATTACK_VFX,
+  FROST_HIT_VFX,
   MOOK_ATTACK_VFX,
   POISON_HIT_VFX,
   SKILL_VFX,
@@ -29,6 +31,7 @@ function allRecipes(): Array<[string, VfxRecipe]> {
     ...Object.entries(MOOK_ATTACK_VFX).map(([k, v]): [string, VfxRecipe] => [`杂兵普攻:${k}`, v]),
     ...Object.entries(SKILL_VFX).map(([k, v]): [string, VfxRecipe] => [`技能:${k}`, v]),
     ['冲锋', CHARGE_VFX],
+    ['普攻:floe', FLOE_ATTACK_VFX],
   ];
 }
 
@@ -210,6 +213,9 @@ describe('特效登记表', () => {
     expect(ATTACK_VFX.mage.impact?.set, '法师普攻命中不能拿弹体图充当，会拐弯').toBe(
       'ember_splat',
     );
+    expect(FLOE_ATTACK_VFX.travel?.glowSet, '芙洛普攻没有冰弹发光图').toBe('frost_orb');
+    expect(FLOE_ATTACK_VFX.impact?.set, '芙洛普攻命中不能拿弹体图充当').toBe('frost_splat');
+    expect(SKILL_VFX.frost_ring!.impact?.set, '霜环命中应是冰棱环').toBe('frost_ring');
     expect(SKILL_VFX.ember!.impact?.set, '炎弹技能命中应是爆炸').toBe('ember_burst');
     expect(SKILL_VFX.ember_bloom!.travel?.glowSet, '爆炎还是那颗火球飞过去').toBe('ember_orb');
     expect(SKILL_VFX.ember_bloom!.impact?.set, '爆炎命中应复用炎环').toBe('flame_ring');
@@ -263,6 +269,7 @@ describe('特效登记表', () => {
       ...Object.values(ATTACK_VFX),
       ...Object.values(MOOK_ATTACK_VFX),
       ...Object.values(SKILL_VFX),
+      FLOE_ATTACK_VFX,
     ]) {
       if (r?.travel?.glowSet) projArt.add(r.travel.glowSet);
     }
@@ -270,6 +277,7 @@ describe('特效登记表', () => {
       ...Object.entries(ATTACK_VFX),
       ...Object.entries(MOOK_ATTACK_VFX),
       ...Object.entries(SKILL_VFX),
+      ['floe', FLOE_ATTACK_VFX],
     ] as [string, (typeof ATTACK_VFX)[keyof typeof ATTACK_VFX] | undefined][]) {
       const set = r?.impact?.set;
       if (!set) continue;
@@ -384,6 +392,7 @@ describe('特效登记表', () => {
       ...Object.entries(ATTACK_VFX),
       ...Object.entries(MOOK_ATTACK_VFX),
       ...Object.entries(SKILL_VFX),
+      ['floe', FLOE_ATTACK_VFX],
     ] as [string, (typeof ATTACK_VFX)[keyof typeof ATTACK_VFX] | undefined][]) {
       const cells = r?.travel?.cells;
       if (cells === undefined) continue;
@@ -399,6 +408,22 @@ describe('特效登记表', () => {
     );
     expect(getAnimManifest('poison_burst'), 'poison_burst 图集没登记').not.toBeNull();
     expect(getAnimManifest('poison_burst')!.blend).toBe('add');
+  });
+
+  it('霜噬叠层是竖冰，不穿紫雾也不穿霜环', () => {
+    expect(FROST_HIT_VFX.set).toBe('frost_burst');
+    expect(FROST_HIT_VFX.anchor).toBe('target');
+    expect(FROST_HIT_VFX.set).not.toBe(POISON_HIT_VFX.set);
+    expect(FROST_HIT_VFX.set).not.toBe(SKILL_VFX.frost_ring!.impact?.set);
+    expect(getAnimManifest('frost_burst'), 'frost_burst 图集没登记').not.toBeNull();
+    expect(getAnimManifest('frost_burst')!.blend).toBe('add');
+  });
+
+  it('芙洛普攻走冰弹，不跟奥莉共用火球', () => {
+    expect(attackRecipeFor('mage', 'floe')).toBe(FLOE_ATTACK_VFX);
+    expect(attackRecipeFor('mage', 'mage')).toBe(ATTACK_VFX.mage);
+    expect(FLOE_ATTACK_VFX.impact?.set).not.toBe(SKILL_VFX.frost_ring!.impact?.set);
+    expect(FLOE_ATTACK_VFX.travel?.glowSet).not.toBe(ATTACK_VFX.mage.travel?.glowSet);
   });
 
   it('长驱贯枪的周围伤复用践踏扬尘，锚在溅射目标身上', () => {

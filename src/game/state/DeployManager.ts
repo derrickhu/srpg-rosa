@@ -3,7 +3,7 @@ import { playerDeployRowRange } from '@/battle/constants';
 import { gridSize, inBounds } from '@/battle/grid';
 import { enemyBaseStats } from '@/data/enemyCatalog';
 import type { StageEnemySpawn } from '@/data/stagesMvp';
-import { getCharacterDef } from '@/data/characterCatalog';
+import { characterArtKey, getCharacterDef } from '@/data/characterCatalog';
 import { isSandboxDungeon } from '@/data/sandboxLab';
 import { allPlayerSkillSpecs, allSkillSpecs } from '@/data/skillCatalog';
 import { canProfessionEquipSkill, defaultSkillId, skillDefForId } from '@/data/skillCatalog';
@@ -277,6 +277,7 @@ export function buildBattleUnits(state: MvpGameState): UnitState[] {
     units.push({
       uid: carry?.uid ?? p.uid,
       defId: m.profession,
+      animSet: characterArtKey(m),
       faction: 'player',
       hp: carry ? carry.hp : eff.maxHp,
       pos: carry ? { ...carry.pos } : { ...p.pos },

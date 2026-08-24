@@ -1,0 +1,21 @@
+第 4 章「毒沼泥潭」章节卡插图
+产出 → images/bg/chapter_swamp.png（654x272）
+生成器：Cursor 内置 GenerateImage，aspect_ratio 16:9
+后处理同 chapter_grassland：宽幅中间带裁成 654×272
+
+---
+
+A wide banner illustration for a chapter select card in a cartoon fantasy tactics mobile game. The chapter is called "Poison Mire" — rivers slow you, mud drains HP every turn.
+
+COMPOSITION — very wide letterbox, cropped top and bottom. EVERY important element sits in the CENTRAL HORIZONTAL BAND. Top strip: sickly pale sky. Bottom strip: flat murky water. Nothing important near the top or bottom edge.
+
+SCENE, left to right across the central band:
+- LEFT: a rotting wooden boardwalk starting on slightly firmer olive-brown ground, a few round cattail clumps.
+- MIDDLE: a wide murky green-brown river cutting across, still and opaque, one pale fallen log as a bridge hint. Keep the water band simple and readable.
+- RIGHT: deeper swamp — two fat cartoon mangrove knees or dead trees, a low purple-green mist, one giant red-capped mushroom (the chapter's spore theme) sitting on a hummock. Cartoon, not horror.
+
+COLOUR: swamp #545424 #3A4A20, river a dull teal-brown #2A6A5A, one red mushroom cap #E42418 as the single memory point. Sky a pale yellow-grey haze, not bright blue.
+
+ART STYLE: hand-drawn cartoon, flat saturated fills, simple cel shading. Soft rounded outlines in a darker shade of each colour — no heavy black outlines. No texture noise, no photographic detail.
+
+Displayed about 330 pixels wide. BIG simple shapes. No people, no text, no UI, no frame, no watermark.

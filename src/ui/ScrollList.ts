@@ -3,15 +3,39 @@ import * as PIXI from 'pixi.js';
 /** 超过这个位移（逻辑像素）才算拖动，之内视为点击 */
 const DRAG_THRESHOLD = 6;
 
+/**
+ * 可滚距离。内容比窗口矮时为 0。
+ *
+ * 不能读挂了 mask 的 `content.height`：Pixi 算包围盒会和裁剪框求交，
+ * 结果永远等于窗口高，列表就会「看得见底下被裁掉、却拖不动」。
+ */
+export function scrollOverflow(viewHeight: number, contentHeight: number): number {
+  if (contentHeight <= viewHeight) return 0;
+  return viewHeight - contentHeight;
+}
+
+/** 按子节点的 y + 高度取最底边。hitArea 优先——带 mask 的卡自己的 height 不可信 */
+export function measureStackedBottom(
+  children: readonly { y: number; height: number; hitArea?: unknown }[],
+): number {
+  let bottom = 0;
+  for (const child of children) {
+    const ha = child.hitArea as { y?: number; height?: number } | undefined;
+    const h = typeof ha?.height === 'number' ? (ha.y ?? 0) + ha.height : child.height;
+    bottom = Math.max(bottom, child.y + h);
+  }
+  return bottom;
+}
+
 export interface ScrollListHandle {
   root: PIXI.Container;
   /** 把列表项加到这里；超出可视区会被裁掉 */
   content: PIXI.Container;
   /**
    * 内容高度变了之后调一次，用来重新夹紧滚动位置并更新滚动条。
-   * 不自动监听是有意的：Pixi 没有布局事件，每帧去读 `content.height` 会白算一遍包围盒。
+   * 能提供排版算出来的高度就传进来，避免再去读带 mask 的包围盒。
    */
-  refresh(): void;
+  refresh(contentHeight?: number): void;
   /**
    * 刚才那一下是拖动而不是点击。
    *
@@ -59,10 +83,15 @@ export function createScrollList(opts: {
   let moved = false;
   let startY = 0;
   let contentStartY = 0;
+  let laidOutHeight = 0;
+
+  function contentSpan(): number {
+    if (laidOutHeight > 0) return laidOutHeight;
+    return measureStackedBottom(content.children);
+  }
 
   function maxScroll(): number {
-    // content.height 是包围盒，比可视区短时不允许滚（否则会把内容拽出去）
-    return Math.min(0, opts.height - content.height);
+    return scrollOverflow(opts.height, contentSpan());
   }
 
   function clamp(): void {
@@ -70,7 +99,7 @@ export function createScrollList(opts: {
   }
 
   function drawBar(): void {
-    const span = content.height;
+    const span = contentSpan();
     if (!opts.showBar || span <= opts.height) {
       bar.visible = false;
       return;
@@ -86,7 +115,8 @@ export function createScrollList(opts: {
     bar.visible = true;
   }
 
-  function refresh(): void {
+  function refresh(contentHeight?: number): void {
+    if (contentHeight != null && contentHeight > 0) laidOutHeight = contentHeight;
     clamp();
     drawBar();
   }

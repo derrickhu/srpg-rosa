@@ -1,0 +1,309 @@
+{
+  "target": "player",
+  "mode": "attack",
+  "prompt": "",
+  "role": "",
+  "input": "art/sprite-runs/floe/attack_left/raw-sheet.png",
+  "threshold": 120,
+  "edge_threshold": 240,
+  "duration": 200,
+  "rows": 2,
+  "cols": 2,
+  "cell_size": 256,
+  "fit_scale": 0.85,
+  "trim_border": 4,
+  "edge_clean_depth": 3,
+  "align": "feet",
+  "shared_scale": true,
+  "scale_strategy": "fit",
+  "component_mode": "largest",
+  "component_padding": 0,
+  "min_component_area": 1,
+  "edge_touch_margin": 0,
+  "frame_labels": [
+    "attack-1",
+    "attack-2",
+    "attack-3",
+    "attack-4"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 55476,
+      "selected_component_bbox": [
+        128,
+        136,
+        400,
+        454
+      ],
+      "crop_bbox": [
+        128,
+        136,
+        400,
+        454
+      ],
+      "source_frame_size": [
+        504,
+        504
+      ],
+      "is_empty": false,
+      "subject_area": 55476,
+      "body_core_area": 54034,
+      "body_area_fraction": 0.21271888384983623,
+      "anchor_source": [
+        296.0,
+        445.0
+      ],
+      "source_edge_touch": false,
+      "output_edge_touch": false,
+      "edge_touch": false,
+      "output_size": [
+        160,
+        188
+      ],
+      "paste_position": [
+        48,
+        49
+      ],
+      "paste_clamped": false,
+      "aligned_bbox": [
+        48,
+        49,
+        208,
+        237
+      ],
+      "source_to_output_scale": 0.5913043478260869,
+      "bbox_scale_applied": true,
+      "scale_strategy": "fit",
+      "scale_changed": true
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        512,
+        0,
+        1024,
+        512
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 58994,
+      "selected_component_bbox": [
+        2,
+        139,
+        357,
+        454
+      ],
+      "crop_bbox": [
+        2,
+        139,
+        357,
+        454
+      ],
+      "source_frame_size": [
+        504,
+        504
+      ],
+      "is_empty": false,
+      "subject_area": 58994,
+      "body_core_area": 49326,
+      "body_area_fraction": 0.19418461829176115,
+      "anchor_source": [
+        257.0,
+        445.0
+      ],
+      "source_edge_touch": false,
+      "output_edge_touch": false,
+      "edge_touch": false,
+      "output_size": [
+        209,
+        186
+      ],
+      "paste_position": [
+        23,
+        51
+      ],
+      "paste_clamped": false,
+      "aligned_bbox": [
+        23,
+        51,
+        232,
+        237
+      ],
+      "source_to_output_scale": 0.5913043478260869,
+      "bbox_scale_applied": true,
+      "scale_strategy": "fit",
+      "scale_changed": true
+    },
+    {
+      "grid": [
+        1,
+        0
+      ],
+      "source_box": [
+        0,
+        512,
+        512,
+        1024
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 57114,
+      "selected_component_bbox": [
+        57,
+        56,
+        425,
+        365
+      ],
+      "crop_bbox": [
+        57,
+        56,
+        425,
+        365
+      ],
+      "source_frame_size": [
+        504,
+        504
+      ],
+      "is_empty": false,
+      "subject_area": 57114,
+      "body_core_area": 44888,
+      "body_area_fraction": 0.1767132779037541,
+      "anchor_source": [
+        338.0,
+        356.0
+      ],
+      "source_edge_touch": false,
+      "output_edge_touch": false,
+      "edge_touch": false,
+      "output_size": [
+        217,
+        182
+      ],
+      "paste_position": [
+        19,
+        55
+      ],
+      "paste_clamped": false,
+      "aligned_bbox": [
+        19,
+        55,
+        236,
+        237
+      ],
+      "source_to_output_scale": 0.5913043478260869,
+      "bbox_scale_applied": true,
+      "scale_strategy": "fit",
+      "scale_changed": true
+    },
+    {
+      "grid": [
+        1,
+        1
+      ],
+      "source_box": [
+        512,
+        512,
+        1024,
+        1024
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 54562,
+      "selected_component_bbox": [
+        68,
+        54,
+        347,
+        365
+      ],
+      "crop_bbox": [
+        68,
+        54,
+        347,
+        365
+      ],
+      "source_frame_size": [
+        504,
+        504
+      ],
+      "is_empty": false,
+      "subject_area": 54562,
+      "body_core_area": 50548,
+      "body_area_fraction": 0.19899533887629126,
+      "anchor_source": [
+        246.0,
+        356.0
+      ],
+      "source_edge_touch": false,
+      "output_edge_touch": false,
+      "edge_touch": false,
+      "output_size": [
+        164,
+        183
+      ],
+      "paste_position": [
+        46,
+        54
+      ],
+      "paste_clamped": false,
+      "aligned_bbox": [
+        46,
+        54,
+        210,
+        237
+      ],
+      "source_to_output_scale": 0.5913043478260869,
+      "bbox_scale_applied": true,
+      "scale_strategy": "fit",
+      "scale_changed": true
+    }
+  ],
+  "edge_touch_frames": [],
+  "source_edge_touch_frames": [],
+  "output_edge_touch_frames": [],
+  "empty_frames": [],
+  "paste_clamped_frames": [],
+  "qc_summary": {
+    "frame_count": 4,
+    "valid_frame_count": 4,
+    "empty_count": 0,
+    "edge_touch_count": 0,
+    "paste_clamped_count": 0,
+    "body_scale_mean": 0.44208503333269944,
+    "output_subject_height_mean": 184.75,
+    "body_scale_cv": 0.033078963697262556,
+    "anchor_x_std": 0.07176364035830006,
+    "anchor_y_std": 0.08829365079365076,
+    "anchor_y_mean": 0.7946428571428572,
+    "profile_body_scale_drift": 0.22153737236103233
+  },
+  "scale_profile": {
+    "path": "art/sprite-runs/floe/scale-profile.json",
+    "version": 1,
+    "name": "floe",
+    "reference_mode": "player_sheet",
+    "processing_contract_applied": true
+  },
+  "qc_config": {
+    "strict_qc": false,
+    "reject_edge_touch": false,
+    "allow_source_edge_touch": false,
+    "max_body_scale_cv": null,
+    "max_anchor_y_std": null,
+    "max_profile_scale_drift": 0.6
+  }
+}

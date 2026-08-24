@@ -1,5 +1,6 @@
 import { effectiveUnitDef } from '@/battle/effectiveUnit';
 import type { TimedBattleEffect, UnitState } from '@/battle/types';
+import { characterArtKey } from '@/data/characterCatalog';
 import { getSkillSpec } from '@/data/skillCatalog';
 import { effectiveSkillSpec } from '@/data/skillModCatalog';
 import { UNIT_DEFS } from '@/data/unitDefs';
@@ -78,7 +79,7 @@ export function characterInfoModel(state: MvpGameState, m: Character): UnitInfoM
   return {
     name: m.name,
     subtitle: `${UNIT_DEFS[m.profession].name} · Lv.${m.level}`,
-    createPortrait: () => createUnitToken(m.profession, 'player', 48),
+    createPortrait: () => createUnitToken(characterArtKey(m), 'player', 48),
     stats: [
       { label: '生命', value: `${eff.maxHp}` },
       { label: '攻击', value: `${eff.atk}` },

@@ -19,6 +19,9 @@ import {
 } from '@/view/renderHelpers';
 import { AssetManager } from '@/core/AssetManager';
 import { makeButton } from '@/ui/Button';
+import { makeCard } from '@/ui/Card';
+import { createModal, type ModalHandle } from '@/ui/Modal';
+import { attachPress } from '@/ui/press';
 import { makeSpeechBubble } from '@/ui/SpeechBubble';
 import { makeStatDescBlock } from '@/ui/statDescText';
 import { C } from '@/view/mvpTheme';
@@ -321,6 +324,7 @@ export function createShopView(
       slot.eventMode = 'static';
       slot.cursor = 'pointer';
       slot.hitArea = new PIXI.Rectangle(-padSize / 2 - 4, -padSize / 2 - 4, padSize + 8, padSize + tagH + 14);
+      attachPress(slot);
       const idx = i;
       slot.on('pointertap', () => {
         selected = idx;
@@ -402,7 +406,6 @@ export function createShopView(
 
     const afford = (state.run?.gold ?? 0) >= o.price;
     const buyBtn = makeButton(afford ? '购买' : '金币不足', () => {
-      if (!afford) return;
       if (o.type === 'tempSkill') {
         openTempSkillPicker(o);
         return;
@@ -410,79 +413,53 @@ export function createShopView(
       callbacks.onBuy(o);
     }, {
       variant: afford ? 'primary' : 'secondary',
+      disabled: !afford,
       width: 88,
       height: 36,
       fontSize: 14,
     });
     buyBtn.x = panelW - 88 - 12;
     buyBtn.y = Math.max(12, (detailH - 36) / 2);
-    buyBtn.alpha = afford ? 1 : 0.55;
     detail.addChild(buyBtn);
     layoutMainBlock();
   }
 
-  // --- 临时技能选人 ---
-  const overlay = new PIXI.Container();
-  overlay.visible = false;
-  overlay.eventMode = 'static';
+  let picker: ModalHandle | null = null;
 
   function closePicker(): void {
-    overlay.visible = false;
-    overlay.removeChildren();
+    picker?.close();
+    picker = null;
   }
 
   function openTempSkillPicker(offer: Extract<ShopOffer, { type: 'tempSkill' }>): void {
-    overlay.removeChildren();
-    overlay.visible = true;
-
-    const dim = new PIXI.Graphics();
-    dim.beginFill(0x000000, 0.55);
-    dim.drawRect(0, 0, W, H);
-    dim.endFill();
-    dim.eventMode = 'static';
-    dim.on('pointertap', (e) => { if (e.target === dim) closePicker(); });
-    overlay.addChild(dim);
-
+    closePicker();
     const mercs = rosterEligibleForTempSkill(state, offer.skillId);
-    const panelH = 80 + mercs.length * 50 + 50;
-    const panelW = W - 40;
-    const panel = new PIXI.Container();
-    panel.x = 20;
-    panel.y = Math.max(60, (H - panelH) / 2);
-
-    const pbg = new PIXI.Graphics();
-    pbg.beginFill(C.paper, 0.98);
-    pbg.lineStyle(2, C.ink, 0.5);
-    pbg.drawRoundedRect(0, 0, panelW, panelH, 12);
-    pbg.endFill();
-    panel.addChild(pbg);
-
-    const ptitle = makeText(`将「${offer.name}」交给谁？`, 'uiStrong', {
-      fill: C.text, fontSize: 15,
+    const rowH = 44;
+    const ph = Math.min(H - 80, 100 + mercs.length * 52);
+    picker = createModal({
+      screenWidth: W,
+      screenHeight: H,
+      panelWidth: W - 40,
+      panelHeight: Math.max(180, ph),
+      light: true,
+      title: `将「${offer.name}」交给谁？`,
+      showClose: true,
+      scrollable: true,
+      onClose: () => { picker = null; },
     });
-    ptitle.x = PAD;
-    ptitle.y = PAD;
-    panel.addChild(ptitle);
-
-    const pprice = makeText(`消耗 ${offer.price} 金币`, 'body', { fill: C.gold });
-    pprice.x = PAD;
-    pprice.y = 40;
-    panel.addChild(pprice);
-
-    let py = 66;
+    const note = makeText(`消耗 ${offer.price} 金币`, 'body', { fill: C.gold });
+    picker.body.addChild(note);
+    let py = note.height + 10;
     for (const m of mercs) {
-      const row = new PIXI.Container();
-      row.x = PAD;
+      const row = makeCard({
+        width: picker.bodySize.width,
+        height: rowH,
+        onTap: () => {
+          callbacks.onBuy(offer, { tempSkillTargetRosterId: m.rosterId });
+          closePicker();
+        },
+      });
       row.y = py;
-      const rowW = panelW - PAD * 2;
-      const rowH = 40;
-
-      const rg = new PIXI.Graphics();
-      rg.beginFill(C.secondary, 0.15);
-      rg.drawRoundedRect(0, 0, rowW, rowH, 8);
-      rg.endFill();
-      row.addChild(rg);
-
       const cur = state.run?.runTempSkill[m.rosterId];
       const curName = cur ? getSkillSpec(cur)?.name : undefined;
       const rlab = makeText(
@@ -491,29 +468,13 @@ export function createShopView(
         { fill: C.text, fontSize: 13 },
       );
       rlab.x = 12;
-      rlab.y = (rowH - rlab.height) / 2 + 2;
+      rlab.y = (rowH - rlab.height) / 2;
       row.addChild(rlab);
-
-      row.eventMode = 'static';
-      row.cursor = 'pointer';
-      row.hitArea = new PIXI.Rectangle(0, 0, rowW, rowH);
-      row.on('pointertap', () => {
-        callbacks.onBuy(offer, { tempSkillTargetRosterId: m.rosterId });
-        closePicker();
-      });
-      panel.addChild(row);
-      py += 50;
+      picker.body.addChild(row);
+      py += rowH + 8;
     }
-
-    const cancel = makeText('取消', 'ui', { fill: C.muted, fontSize: 13 });
-    cancel.x = PAD;
-    cancel.y = py + 6;
-    cancel.eventMode = 'static';
-    cancel.cursor = 'pointer';
-    cancel.on('pointertap', () => closePicker());
-    panel.addChild(cancel);
-
-    overlay.addChild(panel);
+    picker.refresh();
+    root.addChild(picker.root);
   }
 
   // --- 离开（紧贴详情下方） ---
@@ -528,7 +489,6 @@ export function createShopView(
 
   rebuildSlots();
   refreshDetail();
-  root.addChild(overlay);
 
   return root;
 }

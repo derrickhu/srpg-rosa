@@ -1,0 +1,53 @@
+{
+  "source": "scripts/vfx-sheet.py",
+  "input": "/Users/rosa/rosa_games/srpg-rosa/.tmp-floe-vfx/frost_orb_raw_sheet.png",
+  "target": "vfx",
+  "mode": "vfx_sheet",
+  "rows": 2,
+  "cols": 3,
+  "cell_size": 256,
+  "threshold": 22,
+  "frame_labels": [
+    "frost_orb-1",
+    "frost_orb-2",
+    "frost_orb-3",
+    "frost_orb-4",
+    "frost_orb-5",
+    "frost_orb-6"
+  ],
+  "align": "center",
+  "key": "black",
+  "alpha_gamma": 2.0,
+  "shared_crop_side": 338,
+  "crop_offsets": [
+    {
+      "x": 1,
+      "y": 87
+    },
+    {
+      "x": 1,
+      "y": 87
+    },
+    {
+      "x": 1,
+      "y": 87
+    },
+    {
+      "x": 1,
+      "y": 87
+    },
+    {
+      "x": 1,
+      "y": 87
+    },
+    {
+      "x": 1,
+      "y": 87
+    }
+  ],
+  "empty_frames": [],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}

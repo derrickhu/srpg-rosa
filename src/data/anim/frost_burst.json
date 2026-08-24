@@ -1,0 +1,156 @@
+{
+  "id": "frost_burst",
+  "source": "art/vfx-runs/frost_burst",
+  "blend": "add",
+  "image": "images/anim/frost_burst.png",
+  "meta": {
+    "size": {
+      "w": 512,
+      "h": 1024
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 64,
+    "baselineY": 256,
+    "ref": "frost_burst/frost_burst-1.png"
+  },
+  "frames": {
+    "frost_burst/frost_burst-1.png": {
+      "frame": {
+        "x": 168,
+        "y": 260,
+        "w": 83,
+        "h": 104
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 89,
+        "y": 152,
+        "w": 83,
+        "h": 104
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "frost_burst/frost_burst-2.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 165,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 40,
+        "y": 0,
+        "w": 165,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "frost_burst/frost_burst-3.png": {
+      "frame": {
+        "x": 169,
+        "y": 2,
+        "w": 163,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 41,
+        "y": 0,
+        "w": 163,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "frost_burst/frost_burst-4.png": {
+      "frame": {
+        "x": 334,
+        "y": 2,
+        "w": 134,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 60,
+        "y": 0,
+        "w": 134,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "frost_burst/frost_burst-5.png": {
+      "frame": {
+        "x": 2,
+        "y": 260,
+        "w": 85,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 74,
+        "y": 0,
+        "w": 85,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "frost_burst/frost_burst-6.png": {
+      "frame": {
+        "x": 89,
+        "y": 260,
+        "w": 77,
+        "h": 108
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 94,
+        "y": 0,
+        "w": 77,
+        "h": 108
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "frost_burst": {
+      "loop": false,
+      "fps": 20,
+      "frames": [
+        "frost_burst/frost_burst-1.png",
+        "frost_burst/frost_burst-2.png",
+        "frost_burst/frost_burst-3.png",
+        "frost_burst/frost_burst-4.png",
+        "frost_burst/frost_burst-5.png",
+        "frost_burst/frost_burst-6.png"
+      ]
+    }
+  }
+}

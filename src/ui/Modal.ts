@@ -1,7 +1,11 @@
 import * as PIXI from 'pixi.js';
 import { makeText } from '@/theme/typography';
 import { C, shade } from '@/view/mvpTheme';
+import { fadeScrim } from '@/view/fx/celebration';
+import { isDisplayLive } from '@/view/pixiLive';
+import { awaitEase } from '@/view/fx/tween';
 import { makePanel } from './Panel';
+import { attachPress } from './press';
 import { createScrollList, type ScrollListHandle } from './ScrollList';
 
 export interface ModalOptions {
@@ -78,6 +82,7 @@ function makeCloseButton(size: number, onTap: () => void): PIXI.Container {
   c.cursor = 'pointer';
   // 命中区比图形大一圈：44px 是拇指的最小舒适命中尺寸，而这个叉只有 24px
   c.hitArea = new PIXI.Circle(size / 2, size / 2, size / 2 + 10);
+  attachPress(c);
   c.on('pointertap', onTap);
   return c;
 }
@@ -92,23 +97,36 @@ export function createModal(opts: ModalOptions): ModalHandle {
   const root = new PIXI.Container();
   root.eventMode = 'static';
 
-  const dim = new PIXI.Graphics();
-  dim.beginFill(0x000000, opts.dimAlpha ?? 0.55);
-  dim.drawRect(0, 0, opts.screenWidth, opts.screenHeight);
-  dim.endFill();
-  dim.eventMode = 'static';
+  const dim = fadeScrim(opts.screenWidth, opts.screenHeight, opts.dimAlpha ?? 0.55);
   root.addChild(dim);
 
   const pw = opts.panelWidth ?? 300;
   const ph = opts.panelHeight ?? 400;
   const radius = 14;
+  const restX = Math.floor((opts.screenWidth - pw) / 2);
+  const restY = Math.floor((opts.screenHeight - ph) / 2);
   const panel = makePanel({
     width: pw,
     height: ph,
-    x: Math.floor((opts.screenWidth - pw) / 2),
-    y: Math.floor((opts.screenHeight - ph) / 2),
+    x: restX,
+    y: restY,
     light: opts.light ?? false,
     radius,
+  });
+  panel.pivot.set(pw / 2, ph / 2);
+  panel.x = restX + pw / 2;
+  panel.y = restY + ph / 2;
+  panel.scale.set(0.88);
+  panel.alpha = 0;
+  void awaitEase(220, (t) => {
+    if (!isDisplayLive(panel)) return;
+    panel.alpha = t;
+    const s = t < 0.7 ? 0.88 + 0.18 * (t / 0.7) : 1.06 - 0.06 * ((t - 0.7) / 0.3);
+    panel.scale.set(s);
+  }, { live: () => isDisplayLive(panel) }).then(() => {
+    if (!isDisplayLive(panel)) return;
+    panel.alpha = 1;
+    panel.scale.set(1);
   });
   root.addChild(panel);
 

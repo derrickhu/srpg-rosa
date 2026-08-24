@@ -101,6 +101,7 @@ describe('词条在实际战斗中生效', () => {
       castSkillManual(self, DEFS, [self, foe], FLAT, undefined, 'main', { x: 3, y: 2 }),
     );
     expect(hits[0]?.poisoned).toBeUndefined();
+    expect(hits[0]?.frostbitten).toBe(true);
     expect(foe.timedBattleEffects?.some((e) => e.kind === 'poison' && e.theme === 'frost')).toBe(true);
   });
 

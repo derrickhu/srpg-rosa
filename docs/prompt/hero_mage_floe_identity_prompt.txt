@@ -1,0 +1,98 @@
+芙洛身份锁帧（已确认：art/sprite-runs/floe/identity.png）
+产出 → art/sprite-runs/floe → images/anim/floe.png + images/units/floe.png
+行走 / 出手 prompt：unit_floe_walk_sheet_prompt.txt、unit_floe_attack_prompt.txt
+生成器：Cursor 内置 GenerateImage，aspect_ratio 1:1
+风格段落原样粘贴 `_style_block_v2.txt`，只在其后指定颜色和动作。
+
+主色：冰蓝袍 `#3EC8E0`（H191 L56）。对剑士 H221 色相差 30°；对奥莉青绿 H180 明度差 29。
+高光锚：霜白领 `#F0F0E0`（约 10–15%）。
+金发 `#F0C84C` 是剪影，不是身体主色。
+肤色 `#EEC49A`。描边 `#1A1410`。书皮棕。
+禁止紫 / 粉 / 品红。书页禁止可读文字。
+
+剪影一句话：大头短肢的法师小人，一侧掌上浮着一本摊开的厚书。
+唯一记忆点：那本打开的浮书（放大、加厚）。其余全部压平。
+头饰：额上三块粗冰晶，当一个形状，不要冕、不要尖帽。
+冰雪感只靠两处形状：袍摆 4 个粗三角冰棱 + 额上三块冰晶。不要雪花纹、不要冰甲肩、不要多层花瓣裙。
+
+动作：右手（画面左侧）抬起、掌心向上；书漂在这只掌上方。左手自然下垂。不要双手托书。
+
+---
+
+ART STYLE (project style bible — do not deviate):
+hand-drawn cartoon game sprite, thick near-black outlines (pure black or very dark warm
+brown — never a mid-tone or colorful outline), flat saturated fills with light cel shading
+(one highlight tone, one shadow tone), no gradients, no texture noise, no painterly
+rendering, no photographic detail, 3/4 top-down camera matching a tactics grid.
+
+PROPORTIONS — check against this, drawing them too tall is the most common failure:
+- Extreme super-deformed mascot. The HEAD INCLUDING HAIR OR HELMET is about HALF the
+  character's total height. Body, arms and legs together are the other half: short,
+  stubby, chunky.
+- The whole character fits in a roughly SQUARE box — total width is about 0.9 to 1.0
+  times total height. If it looks like a slim standing person, it is wrong.
+- This is NOT a 2-head or 2.5-head chibi. Think 1.5-head mascot: giant head, tiny body.
+
+PROPS may extend beyond the body — an upright spear, a tall staff, horns or a plume are all
+fine and will not be cropped in game. The square-box rule above is measured on the BODY
+(top of the head down to the feet), not on the props. Props should still be big in MASS,
+not just long and thin, so they survive at small size.
+
+SIMPLIFY — characterise with a few bold strokes and colours, never by piling on detail.
+At the size this is displayed, detail becomes noise and makes the character read smaller:
+- Only 4 to 6 flat colours on the whole character. ONE of them dominates the body and is
+  that character's identity colour.
+- NO belts, straps, buckles, pouches, rivets, armour seams, laces, stitching, patterns,
+  engraving or trim. Delete every small accessory.
+- Face is minimal: two simple dark eyes, two eyebrows, at most a tiny mouth line. No nose,
+  no ear detail, no blush.
+- Arms and legs are simple rounded stubs; hands are mitten shapes, no fingers.
+- The signature prop is ONE big clean simple silhouette with no ornament on it.
+- The character must read as a handful of bold flat shapes, not as an illustration.
+
+BRIGHTNESS AND VALUE RANGE — this is what separates a cheerful palette from a muddy
+one, and it is the most common failure:
+- The palette must be BRIGHT and span a wide value range. Saturated mid-tones plus a
+  genuine near-white highlight.
+- Every character carries ONE clearly light area — cream, off-white or white (cloak,
+  collar, sash, plume, mount) — covering roughly 10-15% of the body. This is what the
+  eye locks onto at small size.
+- Never render a character in uniformly dark or muted tones.
+- Avoid grey, avoid dusty, chalky or desaturated colors. Avoid olive-drab and khaki.
+- Cream highlight anchors: #F0F0E0, #E0E0D0, #F0E0C0. Warm gold accent: #F0C060.
+
+The sprite must stay readable at 40 pixels tall: silhouette first, exaggerate the
+weapon and the one signature feature, drop everything that needs zoom to appreciate.
+NO TEXT, no labels, no captions, no watermark anywhere in the image.
+
+MATCH THE ATTACHED EXISTING UNIT SPRITES EXACTLY in line weight, head-to-body ratio,
+stubby limbs, face language, and simplification. This must look like she belongs on
+the same tactics board as the attached mage / priest / swordsman. Do not make a
+pretty illustration, anime girl, or fashion design sheet.
+
+CRITICAL BACKGROUND: 100% solid flat MAGENTA hex #FF00FF filling the entire image.
+No white, no grey, no ground shadow, no drop shadow, no gradient.
+
+CAMERA: 3/4 view from slightly above, full body, idle facing slightly toward the camera.
+Same camera as the attached mage token.
+
+COLORS AND POSE ONLY (do not change the art system):
+- Identity color: ice-blue robe #3EC8E0 covering most of the tiny body.
+- Cream collar #F0F0E0 (the one light anchor).
+- Hair: chunky honey-gold #F0C84C, long enough to read as long hair but drawn as 3–4
+  big rounded masses, not strands. Same hair language as the swordsman's blocky hair.
+- Skin #EEC49A. Simple round brown shoes.
+- Head decoration: THREE chunky ice-blue triangles on the forehead hairline, one shape.
+  Not a tall wizard hat (that is Aoli). Not a detailed crown.
+- Ice hem: the robe bottom is 4 big downward triangles (icicles), same bold geometry
+  as the priest's sun-disc rays. No snowflake prints, no crystal armor, no layered petals.
+- POSE: right hand (viewer's left) raised as a mitten, palm up. ONE fat OPEN book
+  floats just above that palm — brown cover, two cream page slabs, no letters.
+  Left arm hangs as a stub by her side. Not two hands. Book is the only memory point
+  and should be almost as big as her head.
+
+6 colors total: ice blue, cream, gold hair, skin, book brown, outline.
+NO purple, magenta, pink on the character. NO fire orb. NO staff. NO wizard hat.
+
+LAYOUT: centered, feet in the lower third, generous magenta margin, nothing touches edges.
+NO TEXT, no labels, no watermark.

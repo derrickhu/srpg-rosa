@@ -16,6 +16,7 @@ import {
 } from '@/data/endlessCatalog';
 import { getSkillMod, isExclusiveMod } from '@/data/skillModCatalog';
 import {
+  createDefeatOverlay,
   createLootOverlay,
   createRewardOverlay,
   type LootCard,
@@ -63,18 +64,18 @@ import { createChallengeView } from '@/view/ChallengeView';
 import { createTabBar, tabBarHeight, type TabId } from '@/view/TabBar';
 import { C } from '@/view/mvpTheme';
 import { loadGameFonts } from '@/core/FontLoader';
-import { makeText } from '@/theme/typography';
 import { showToast as showSceneToast } from '@/ui/Toast';
 import { SceneManager } from '@/scene/SceneManager';
 import type { Scene } from '@/scene/Scene';
-import { makeButton } from '@/ui/Button';
 import { PersistService } from '@/core/PersistService';
 import { SaveManager } from '@/core/SaveManager';
 import { CloudSyncManager } from '@/managers/CloudSyncManager';
 import { AssetManager } from '@/core/AssetManager';
 import { ALL_BUNDLES, LOADING_BUNDLE, UI_BUNDLE } from '@/core/assetBundles';
 import { animSetReady, ensureAnimSets, loadAnimSets } from '@/view/animSets';
-import { createBackground, createUiIcon, createUnitToken } from '@/view/renderHelpers';
+import { characterArtKey } from '@/data/characterCatalog';
+import { createBackground, createUnitToken } from '@/view/renderHelpers';
+import { createCharacterRevealOverlay } from '@/view/characterReveal';
 import { createInitialState, getCharacter } from '@/game/state/GameState';
 import { getSkillSpec } from '@/data/skillCatalog';
 import { Platform } from '@/platform/wxPlatform';
@@ -107,7 +108,7 @@ function lootToCard(state: MvpGameState, o: LootOption): LootCard {
   const spec = getSkillSpec(o.skillId);
   return {
     // 头像用棋盘上那套 token，玩家不用在两种画法之间做二次对应
-    portrait: m ? createUnitToken(m.profession, 'player', 40) : null,
+    portrait: m ? createUnitToken(characterArtKey(m), 'player', 40) : null,
     who: m?.name ?? '',
     iconKey: `skill_${o.skillId}`,
     skillName: spec?.name ?? '',
@@ -218,10 +219,6 @@ export class GameFlow {
     this.renderShell();
   }
 
-  private cx(): number {
-    return this.app.screen.width / 2;
-  }
-
   private get screen(): { screenWidth: number; screenHeight: number } {
     return { screenWidth: this.app.screen.width, screenHeight: this.app.screen.height };
   }
@@ -273,7 +270,11 @@ export class GameFlow {
         // 重绘推迟到关窗时由它自己发起（见 RosterCallbacks.onPersist）
         return createRosterView(
           this.state,
-          { onChanged: persistAndRedraw, onPersist: persist },
+          {
+            onChanged: persistAndRedraw,
+            onPersist: persist,
+            onGoRecruit: () => this.renderShell('recruit'),
+          },
           screen,
         );
       case 'recruit':
@@ -419,7 +420,6 @@ export class GameFlow {
     applyVictory(this.state);
     const last = isRunComplete(this.state);
     SaveManager.save(this.state);
-    // 扫荡也不弹中途胜利：金币已入账，直接三选一；通关才出魂精面板。
     this.presentBattleWin(last);
   }
 
@@ -511,7 +511,7 @@ export class GameFlow {
     const win = winner === 'player';
     if (!win) {
       SaveManager.save(this.state);
-      this.scenes.replaceAll(containerScene(this.buildResultPanel(false, false, 'reward')));
+      this.showDefeatOverlay();
       return;
     }
     if (isEndlessRun(this.state)) {
@@ -528,8 +528,8 @@ export class GameFlow {
   }
 
   /**
-   * 普通场次：金币已经在击杀时飞进栏里，不再弹「胜利 + 奖励」。
-   * 直接三选一纹章。整章通关才出胜利面板，只展示魂精。
+   * 中途胜利和三选一合成一屏（横幅 + 入账条 + 选纹章）。
+   * 没有三选一时仍要出胜利拍，不能直接切走。整章通关走魂晶结算。
    */
   private presentBattleWin(isRunFinal: boolean): void {
     if (isRunFinal) {
@@ -538,7 +538,7 @@ export class GameFlow {
     }
     const loot = this.state.run?.pendingLoot ?? [];
     if (loot.length > 0) this.showLootOverlay();
-    else this.advanceAfterVictory();
+    else this.showRewardOverlay(false);
   }
 
   /** 无尽战后弹层的底板。不能直接盖在已销毁的战场上，也不该把人送回布阵改站位 */
@@ -660,10 +660,10 @@ export class GameFlow {
               this.showToast(bonus > 0 ? `试炼完成，额外魂晶 +${bonus}` : '试炼结束');
               this.renderShell('challenge');
             } else {
-              const gained = finishRunVictory(this.state);
+              const result = finishRunVictory(this.state);
               SaveManager.save(this.state);
-              this.showToast(`通关「${dungeon.name}」，魂晶 +${gained}`);
-              this.renderShell('adventure');
+              this.showToast(`通关「${dungeon.name}」，魂晶 +${result.soul}`);
+              this.presentUnlocksThen(result.unlockedRosterIds, () => this.renderShell('adventure'));
             }
           } else {
             this.advanceAfterVictory();
@@ -673,17 +673,47 @@ export class GameFlow {
     );
   }
 
-  /** 结算第二屏：纹章三选一 */
+  /** 通关新入队的角色先亮相，其余用 Toast；关完再回大厅 */
+  private presentUnlocksThen(unlockedRosterIds: string[], then: () => void): void {
+    const [first, ...rest] = unlockedRosterIds;
+    if (!first) {
+      then();
+      return;
+    }
+    for (const id of rest) {
+      const def = this.state.meta.roster.find((m) => m.rosterId === id);
+      this.showToast(def ? `${def.name} 已加入队伍` : '新同伴已加入队伍');
+    }
+    let close = (): void => undefined;
+    close = this.pushOverlay(
+      createCharacterRevealOverlay({
+        screenW: this.app.screen.width,
+        screenH: this.app.screen.height,
+        rosterId: first,
+        onConfirm: () => {
+          close();
+          then();
+        },
+      }),
+    );
+  }
+
+  /** 中途胜利 + 纹章三选一 */
   private showLootOverlay(): void {
     const run = this.state.run!;
     const loot = run.pendingLoot ?? [];
+    const v = run.lastVictory;
     let close = (): void => undefined;
     close = this.pushOverlay(
       createLootOverlay({
         screenW: this.app.screen.width,
         screenH: this.app.screen.height,
         cards: loot.map((o) => lootToCard(this.state, o)),
-        onPick: (i: number) => {
+        summary: {
+          gold: v?.gold ?? 0,
+          soul: v?.soul ?? 0,
+        },
+        onConfirm: (i: number) => {
           const opt = loot[i];
           if (!opt || !claimLoot(this.state, opt)) return;
           close();
@@ -697,100 +727,51 @@ export class GameFlow {
           close();
           this.advanceAfterVictory();
         },
+        onNeedPick: () => this.showToast('先选一张纹章'),
       }),
     );
   }
 
   /**
-   * 战败屏。胜利那条路径走的是盖在战场上的弹层（`showRewardOverlay`），
-   * 这里之所以仍然换整页，是因为输了以后玩家要做的是**重新布阵**——
-   * 让他继续盯着那张打输的棋盘没有意义，反而挡住了「回去改」这个动作。
+   * 战败盖在棋盘上：保留「刚输掉那一局」的上下文，再给回去改站位的出口。
+   * 失败不撒彩纸。放弃按钮用 secondary——ghost 在深色遮罩上读不出来。
    */
-  private buildResultPanel(
-    _win: boolean,
-    _isRunFinal: boolean,
-    _stage: 'reward' | 'loot',
-  ): PIXI.Container {
-    const W = this.app.screen.width;
-    const H = this.app.screen.height;
-    const c = new PIXI.Container();
-    const mid = this.cx();
-
-    c.addChild(createBackground(W, H));
-
-    const bannerH = 60;
-    const bannerY = H * 0.12;
-    const banner = new PIXI.Graphics();
-    banner.beginFill(0x8a3a3a, 0.92);
-    banner.drawRect(0, bannerY, W, bannerH);
-    banner.endFill();
-    c.addChild(banner);
-
-    const title = makeText('失  败', 'display', { fill: 0xffffff });
-    title.anchor.set(0.5);
-    title.x = mid;
-    title.y = bannerY + bannerH / 2;
-    c.addChild(title);
-
-    const cardW = W - 40;
-    const cardY = bannerY + bannerH + 24;
-
-    const cardBg = new PIXI.Graphics();
-    cardBg.beginFill(C.paper, 0.95);
-    cardBg.drawRoundedRect(0, 0, cardW, 64, 12);
-    cardBg.endFill();
-    cardBg.x = 20;
-    cardBg.y = cardY;
-    c.addChild(cardBg);
-
+  private showDefeatOverlay(): void {
     const endless = isEndlessRun(this.state);
     const waves = endlessWavesCleared(this.state);
-    const sub = makeText(
-      endless ? `撑到第 ${waves} 波` : '本节点可重新布阵再试',
-      'ui',
-      { fill: C.text },
+    let close = (): void => undefined;
+    close = this.pushOverlay(
+      createDefeatOverlay({
+        screenW: this.app.screen.width,
+        screenH: this.app.screen.height,
+        subtitle: endless ? `撑到第 ${waves} 波` : '本节点可重新布阵再试',
+        primaryLabel: endless ? '离开试炼（保留已得魂晶）' : '返回布阵',
+        onPrimary: () => {
+          close();
+          if (endless) {
+            finishEndlessRun(this.state);
+            SaveManager.saveRun(null);
+            SaveManager.save(this.state);
+            this.showToast(`试炼结束，最高记录 ${this.state.meta.endlessBestFloor ?? waves} 波`);
+            this.renderShell('challenge');
+            return;
+          }
+          undoDeployForRetry(this.state);
+          this.renderDeploy();
+        },
+        secondaryLabel: endless ? undefined : '放弃副本（保留已得魂晶）',
+        onSecondary: endless
+          ? undefined
+          : () => {
+              close();
+              abandonRun(this.state);
+              SaveManager.saveRun(null);
+              SaveManager.save(this.state);
+              this.showToast('已放弃副本，局内物资清空');
+              this.renderShell('adventure');
+            },
+      }),
     );
-    sub.x = 36;
-    sub.y = cardY + 22;
-    c.addChild(sub);
-
-    if (endless) {
-      const btnLeave = makeButton('离开试炼（保留已得魂晶）', () => {
-        finishEndlessRun(this.state);
-        SaveManager.saveRun(null);
-        SaveManager.save(this.state);
-        this.showToast(`试炼结束，最高记录 ${this.state.meta.endlessBestFloor ?? waves} 波`);
-        this.renderShell('challenge');
-      }, { variant: 'primary', width: cardW, height: 46, fontSize: 16, radius: 12 });
-      btnLeave.x = 20;
-      btnLeave.y = cardY + 64 + 16;
-      c.addChild(btnLeave);
-      return c;
-    }
-
-    const btnNext = makeButton('返回布阵', () => {
-      undoDeployForRetry(this.state);
-      this.renderDeploy();
-    }, { variant: 'primary', width: cardW, height: 46, fontSize: 16, radius: 12 });
-    btnNext.x = 20;
-    btnNext.y = cardY + 64 + 16;
-    c.addChild(btnNext);
-
-    // 放弃不再扣任何东西：沿途每个首通节点的魂晶当场就发过了，丢的只是这一局的
-    // 局内物资（金币 / 药剂 / 词条）。把这句写在按钮上，玩家才不会以为退出会
-    // 没收已经到手的永久收益。
-    const btnAbandon = makeButton('放弃副本（保留已得魂晶）', () => {
-      abandonRun(this.state);
-      SaveManager.saveRun(null);
-      SaveManager.save(this.state);
-      this.showToast('已放弃副本，局内物资清空');
-      this.renderShell('adventure');
-    }, { variant: 'ghost', width: cardW, height: 40, fontSize: 14 });
-    btnAbandon.x = 20;
-    btnAbandon.y = btnNext.y + 56;
-    c.addChild(btnAbandon);
-
-    return c;
   }
 
   private advanceAfterVictory(): void {
@@ -839,6 +820,6 @@ export class GameFlow {
   private showToast(msg: string): void {
     const current = this.scenes.current;
     if (!current) return;
-    showSceneToast(current.root, msg);
+    showSceneToast(current.root, msg, { screenWidth: this.app.screen.width });
   }
 }

@@ -10,9 +10,10 @@ import { computeBoardLayout } from '@/view/boardLayout';
 import { UNIT_DEFS } from '@/data/unitDefs';
 import { POTION_DEFS } from '@/data/potionCatalog';
 import { getSkillSpec } from '@/data/skillCatalog';
-import { specAppliesPoison, unitSkillSpec } from '@/battle/skills';
+import { specAppliesFrost, specAppliesPoison, unitSkillSpec } from '@/battle/skills';
 import {
   CHARGE_VFX,
+  FROST_HIT_VFX,
   POISON_HIT_VFX,
   SKILL_VFX,
   attackRecipeFor,
@@ -170,6 +171,7 @@ export function animSetsForUnits(units: readonly UnitState[]): string[] {
       const recipe = SKILL_VFX[vfxKey] ?? SKILL_VFX[sk.id];
       if (recipe) for (const id of recipeAnimSets(recipe)) ids.add(id);
       if (spec && specAppliesPoison(spec)) ids.add(POISON_HIT_VFX.set);
+      if (spec && specAppliesFrost(spec)) ids.add(FROST_HIT_VFX.set);
     }
   }
   return [...ids];
@@ -1847,6 +1849,9 @@ export function createBattlePlaybackView(
             // 毒是状态，不是伤害：无伤上毒（万一有）也要爆雾，否则淬毒看起来没挂上
             if (h.poisoned) {
               playFlash(POISON_HIT_VFX, { x: cx, y: cy }, { x: tt.x, y: tt.y });
+            }
+            if (h.frostbitten) {
+              playFlash(FROST_HIT_VFX, { x: cx, y: cy }, { x: tt.x, y: tt.y });
             }
           }
         };

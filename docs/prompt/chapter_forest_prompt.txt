@@ -1,0 +1,21 @@
+第 2 章「密林深处」章节卡插图
+产出 → images/bg/chapter_forest.png（654x272）
+生成器：Cursor 内置 GenerateImage，aspect_ratio 16:9
+后处理同 chapter_grassland：宽幅中间带裁成 654×272
+
+---
+
+A wide banner illustration for a chapter select card in a cartoon fantasy tactics mobile game. The chapter is called "Deep Forest" — dense woods that can hide you or burn.
+
+COMPOSITION — very wide letterbox, cropped top and bottom. EVERY important element sits in the CENTRAL HORIZONTAL BAND. Top strip and bottom strip nearly empty: a bit of canopy/sky above, dark forest floor below. Nothing important near the top or bottom edge.
+
+SCENE, left to right across the central band:
+- LEFT: a mossy stone trail shrine or broken wooden trail marker, warm and a little safer, a pale dirt path starting here.
+- MIDDLE: a tunnel of huge round cartoon tree crowns, deep leaf-green, a few shafts of warm light. Keep the center fairly open so it does not turn into noise.
+- RIGHT: darker woods with one tree already catching orange fire on its crown — the forest can burn. Cartoon fire, not realistic disaster. No people.
+
+COLOUR: deep leaf greens #2D7A4D #3C8424, warm sun shafts, one orange fire accent #F07818. Not olive khaki. Sky only a thin strip of cooler blue-green above the canopy.
+
+ART STYLE: hand-drawn cartoon, flat saturated fills, simple cel shading. Soft rounded organic outlines in a darker shade of each object's colour — no heavy black outlines. No texture noise, no photographic detail, no pixel art.
+
+Displayed about 330 pixels wide. BIG simple shapes. No crowds, no soldiers, no text, no UI, no frame, no watermark.

@@ -7,6 +7,7 @@ import { UNIT_DEFS } from '@/data/unitDefs';
 import { skillDefForId } from '@/data/skillCatalog';
 import { PLACEABLE_TERRAIN_IDS, terrainTicketName } from '@/data/dungeonCatalog';
 import { isSandboxDungeon } from '@/data/sandboxLab';
+import { characterArtKey } from '@/data/characterCatalog';
 import type { Character } from '@/game/characterTypes';
 import { characterEffectiveStats } from '@/game/characterFactory';
 import type { BattleMode } from '@/battle/engine';
@@ -17,7 +18,6 @@ import {
   canSweep,
   nodeClearedBefore,
   sweepLeftToday,
-  sweepQuota,
   currentDungeon,
   currentNode,
   currentEnemyScale,
@@ -53,6 +53,8 @@ import { ENDLESS_MAX_WAVES, isEndlessDungeon } from '@/data/endlessCatalog';
 import { createNodeStrip } from '@/view/NodeStrip';
 import { AssetManager } from '@/core/AssetManager';
 import { makeButton } from '@/ui/Button';
+import { attachPress } from '@/ui/press';
+import { attachGlowRing } from '@/view/fx/celebration';
 import { unitHeadLocalY } from '@/view/AnimatedUnit';
 
 export interface DeployLayoutScreen {
@@ -543,7 +545,7 @@ export function createDeployView(
           wrap.x = px + (CELL - 2) / 2;
           wrap.y = py + (CELL - 2) / 2;
           if (m) {
-            const token = createUnitToken(m.profession, 'player', CELL);
+            const token = createUnitToken(characterArtKey(m), 'player', CELL);
             wrap.addChild(token);
             const effHp = characterEffectiveStats(m).maxHp;
             const oh = createUnitOverhead({
@@ -644,8 +646,12 @@ export function createDeployView(
 
     c.eventMode = 'static';
     c.cursor = enabled ? 'pointer' : 'default';
-    if (enabled) c.on('pointertap', onPress);
     c.hitArea = new PIXI.Rectangle(0, 0, chipW, chipH);
+    if (enabled) {
+      attachPress(c);
+      c.on('pointertap', onPress);
+    }
+    if (active) attachGlowRing(c, chipW, chipH).setActive(true);
     return c;
   }
 
@@ -838,7 +844,7 @@ export function createDeployView(
       g.endFill();
       c.addChild(g);
 
-      const token = createUnitToken(m.profession, 'player', imgSize);
+      const token = createUnitToken(characterArtKey(m), 'player', imgSize);
       token.x = slotW / 2;
       token.y = slotH * 0.38;
       c.addChild(token);
@@ -856,6 +862,8 @@ export function createDeployView(
       c.eventMode = 'static';
       c.cursor = 'pointer';
       c.hitArea = new PIXI.Rectangle(0, 0, slotW, slotH);
+      attachPress(c);
+      if (isSelected) attachGlowRing(c, slotW, slotH).setActive(true);
       c.on('pointertap', () => {
         selectedRosterId = m.rosterId;
         deployTool = 'unit';
@@ -947,15 +955,11 @@ export function createDeployView(
   root.addChild(fightC);
 
   if (cleared && !endless) {
-    const quota = sweepQuota(run.dungeonId);
     const sweepBtn = makeButton(canSweepNow ? `扫荡 (${sweepLeft})` : '扫荡 (0)', () => {
-      if (!canSweep(state)) {
-        callbacks.onWarn?.(`今天这个副本的扫荡次数用完了（每天 ${quota} 次），明天恢复`);
-        return;
-      }
       callbacks.onSweep();
     }, {
       variant: canSweepNow ? 'primary' : 'secondary',
+      disabled: !canSweepNow,
       width: btnW,
       height: fh,
       fontSize: 15,
@@ -963,7 +967,6 @@ export function createDeployView(
     });
     sweepBtn.x = fightX + btnW + gapBtn;
     sweepBtn.y = fightY;
-    sweepBtn.alpha = canSweepNow ? 1 : 0.5;
     root.addChild(sweepBtn);
   }
 

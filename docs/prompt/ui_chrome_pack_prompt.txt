@@ -1,0 +1,16 @@
+大厅 UI 壳：九宫格面板、绶带、金按钮（无字）
+产出 → images/ui/frame_panel.png, ribbon_title.png, btn_primary_skin.png
+生成器：Cursor GenerateImage
+后处理：按连通域或单独出图；面板要能九宫格拉伸（四角纹样对称）
+
+---
+
+Three separate UI chrome pieces for a cartoon fantasy mobile game, each on SOLID MAGENTA #FF00FF.
+
+1) PANEL FRAME: a square cream (#FCFCF6) rounded rectangle, thick near-black #1A1410 outline, inner gold #EEC462 filigree ONLY in the four corners (identical corners), center completely empty flat cream. Border thickness about 12% of the square. This will be 9-sliced — corners must be pixel-similar.
+
+2) TITLE RIBBON: a wide gold #EEC462 horizontal banner with notched / swallow-tail ends, thick ink outline, empty center for text, slightly darker gold underside. No letters.
+
+3) PRIMARY BUTTON SKIN: a wide pill / rounded-rect gold button, empty of text, 3D lip (darker gold along the bottom), cream outer rim, ink outline. Center empty.
+
+STYLE: chunky cartoon, same family as the game's victory banner. No gradients beyond one cel shade, no photo, no text, no watermark.

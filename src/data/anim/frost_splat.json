@@ -1,0 +1,156 @@
+{
+  "id": "frost_splat",
+  "source": "art/vfx-runs/frost_splat",
+  "blend": "add",
+  "image": "images/anim/frost_splat.png",
+  "meta": {
+    "size": {
+      "w": 512,
+      "h": 1024
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 30,
+    "baselineY": 141,
+    "ref": "frost_splat/frost_splat-1.png"
+  },
+  "frames": {
+    "frost_splat/frost_splat-1.png": {
+      "frame": {
+        "x": 193,
+        "y": 385,
+        "w": 78,
+        "h": 41
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 90,
+        "y": 102,
+        "w": 78,
+        "h": 41
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "frost_splat/frost_splat-2.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 197,
+        "h": 200
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 28,
+        "y": 0,
+        "w": 197,
+        "h": 200
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "frost_splat/frost_splat-3.png": {
+      "frame": {
+        "x": 201,
+        "y": 2,
+        "w": 189,
+        "h": 188
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 39,
+        "y": 0,
+        "w": 189,
+        "h": 188
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "frost_splat/frost_splat-4.png": {
+      "frame": {
+        "x": 2,
+        "y": 204,
+        "w": 192,
+        "h": 179
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 37,
+        "y": 0,
+        "w": 192,
+        "h": 179
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "frost_splat/frost_splat-5.png": {
+      "frame": {
+        "x": 196,
+        "y": 204,
+        "w": 181,
+        "h": 151
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 43,
+        "y": 12,
+        "w": 181,
+        "h": 151
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "frost_splat/frost_splat-6.png": {
+      "frame": {
+        "x": 2,
+        "y": 385,
+        "w": 189,
+        "h": 135
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 35,
+        "y": 36,
+        "w": 189,
+        "h": 135
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "frost_splat": {
+      "loop": false,
+      "fps": 24,
+      "frames": [
+        "frost_splat/frost_splat-1.png",
+        "frost_splat/frost_splat-2.png",
+        "frost_splat/frost_splat-3.png",
+        "frost_splat/frost_splat-4.png",
+        "frost_splat/frost_splat-5.png",
+        "frost_splat/frost_splat-6.png"
+      ]
+    }
+  }
+}

@@ -4,8 +4,10 @@ import { UNIT_DEFS } from '@/data/unitDefs';
 import {
   CHARACTER_DEFS,
   characterStatsAtLevel,
+  characterArtKey,
   getCharacterDef,
   levelUpCost,
+  type CharacterDef,
 } from '@/data/characterCatalog';
 import { getSkillSpec, type SkillSpec } from '@/data/skillCatalog';
 import {
@@ -22,17 +24,19 @@ import {
   levelUpCharacter,
   type MvpGameState,
 } from '@/game/MvpState';
+import { getDungeonDef } from '@/data/dungeonCatalog';
 import { createHubHeader } from '@/view/hubHeader';
-import { C } from '@/view/mvpTheme';
+import { C, PROFESSION_ACCENT } from '@/view/mvpTheme';
 import { createBackground, createUiIcon, createUnitToken } from '@/view/renderHelpers';
 import { characterInfoModel } from '@/view/unitInfoModel';
 import { createUnitInfoPanel } from '@/view/unitInfoPanel';
 import { makeButton } from '@/ui/Button';
-import { makeCard } from '@/ui/Card';
+import { makeRosterCardFace } from '@/ui/chrome';
 import { createModal, type ModalHandle } from '@/ui/Modal';
+import { attachPress } from '@/ui/press';
 import { createScrollList } from '@/ui/ScrollList';
-import { makeSection } from '@/ui/Section';
 import { showToast } from '@/ui/Toast';
+import { flashPop, staggerPop } from '@/view/fx/celebration';
 
 export interface RosterCallbacks {
   /** meta 状态变更后持久化并重绘整页 */
@@ -44,10 +48,13 @@ export interface RosterCallbacks {
    * 而玩家的真实操作是「连升三级再关掉」，每点一次就被弹回网格根本没法用。
    */
   onPersist: () => void;
+  /** 空名单时「去招募」 */
+  onGoRecruit?: () => void;
 }
 
 const PAD = 12;
 const GRID_GAP = 8;
+const FOOTER_H = 28;
 
 /** 属性行的展示名，顺序即显示顺序 */
 const STAT_ROWS: { key: 'maxHp' | 'atk' | 'spd' | 'move'; label: string }[] = [
@@ -64,12 +71,20 @@ const MOD_COLOR: Record<SkillModRarity, number> = {
   epic: 0xa5561f,
 };
 
+export function rosterUnlockHint(def: CharacterDef): string {
+  if (def.unlock.kind === 'meta') return `魂晶 ${def.unlock.cost}`;
+  if (def.unlock.kind === 'clearDungeon') {
+    const d = getDungeonDef(def.unlock.dungeonId);
+    return d ? `通关${d.name}` : '通关解锁';
+  }
+  return '开局拥有';
+}
+
 /**
- * 角色页：只管**已拥有**的角色，看板 + 养成。
+ * 角色页：图鉴网格 + 已拥有的养成。
  *
- * 未拥有的角色整块搬到招募页了。原来这里有个「收藏」区，点一下也是花魂晶解锁，
- * 和商店页是同一件事的两个入口——同一个操作有两个地方能做，玩家得先猜哪边是正的，
- * 而两边的价格万一哪天写歪了还会对不上。
+ * 未拥有的人画成灰卡、点进去招募页，不在这里花魂晶——避免和招募页各开一个入口。
+ * 卡直接压在厅堂上，不再套一层空白大面板。
  */
 export function createRosterView(
   state: MvpGameState,
@@ -79,7 +94,7 @@ export function createRosterView(
   const W = screen.screenWidth;
   const H = screen.screenHeight;
   const root = new PIXI.Container();
-  root.addChild(createBackground(W, H));
+  root.addChild(createBackground(W, H, 'hub_bg'));
 
   const header = createHubHeader({
     screenWidth: W,
@@ -96,50 +111,59 @@ export function createRosterView(
   });
   root.addChild(scroll.root);
 
-  const sectionW = W - PAD * 2;
-  const bodyW = sectionW - PAD * 2;
-  const cols = Math.max(3, Math.floor(bodyW / 100));
-  const cardW = Math.floor((bodyW - GRID_GAP * (cols - 1)) / cols);
-  const cardH = cardW + 40;
+  const gridW = W - PAD * 2;
+  const cols = 3;
+  const cardW = Math.floor((gridW - GRID_GAP * (cols - 1)) / cols);
+  const cardH = Math.round(cardW * 1.34);
 
   const owned = state.meta.roster;
-  const rows = Math.ceil(owned.length / cols);
-  const gridH = rows === 0 ? 24 : rows * cardH + (rows - 1) * GRID_GAP;
+  const ownedIds = new Set(owned.map((m) => m.rosterId));
+  const lockedDefs = CHARACTER_DEFS.filter((d) => !ownedIds.has(d.id));
 
-  const grid = makeSection({
-    title: '我的角色',
-    note: `${owned.length} 名`,
-    width: sectionW,
-    contentHeight: gridH,
-    x: PAD,
-    y: 4,
+  const heading = makeText('我的角色', 'title', {
+    fill: 0xfff8e8,
+    fontSize: 17,
+    stroke: 0x2a2010,
+    strokeThickness: 4,
   });
-  owned.forEach((m, i) => {
-    const card = buildOwnedCard(m, cardW, cardH);
-    card.x = (i % cols) * (cardW + GRID_GAP);
-    card.y = Math.floor(i / cols) * (cardH + GRID_GAP);
-    grid.body.addChild(card);
-  });
-  scroll.content.addChild(grid.root);
+  heading.x = PAD;
+  heading.y = 6;
+  scroll.content.addChild(heading);
+  const countTx = makeText(`${owned.length}/${CHARACTER_DEFS.length}`, 'caption', { fill: 0xf0e0c8 });
+  countTx.x = PAD + heading.width + 10;
+  countTx.y = 10;
+  scroll.content.addChild(countTx);
 
-  const notOwned = CHARACTER_DEFS.length - owned.length;
-  if (notOwned > 0) {
-    const hint = makeSection({
-      title: '还能招人',
-      width: sectionW,
-      contentHeight: 22,
-      x: PAD,
-      y: 4 + grid.height + 10,
-    });
-    const t = makeText(`还有 ${notOwned} 名角色没有加入，去「招募」看获取方式。`, 'caption', {
-      fill: C.muted,
+  const pops: PIXI.Container[] = [];
+  const gridY = heading.y + heading.height + 10;
+  const cards: PIXI.Container[] = [];
+
+  owned.forEach((m) => cards.push(buildOwnedCard(m, cardW, cardH)));
+  lockedDefs.forEach((def) => cards.push(buildLockedCard(def, cardW, cardH)));
+
+  if (cards.length === 0) {
+    const empty = makeText('还没有角色。去招募页看看谁能加入。', 'caption', {
+      fill: 0xf0e0c8,
       wordWrap: true,
-      wordWrapWidth: bodyW,
+      wordWrapWidth: gridW,
     });
-    hint.body.addChild(t);
-    scroll.content.addChild(hint.root);
+    empty.x = PAD;
+    empty.y = gridY;
+    scroll.content.addChild(empty);
+  } else {
+    cards.forEach((card, i) => {
+      card.x = PAD + (i % cols) * (cardW + GRID_GAP);
+      card.y = gridY + Math.floor(i / cols) * (cardH + GRID_GAP);
+      scroll.content.addChild(card);
+      pops.push(card);
+    });
   }
-  scroll.refresh();
+  const rows = Math.ceil(cards.length / cols);
+  const bottom = cards.length === 0
+    ? gridY + 48
+    : gridY + rows * (cardH + GRID_GAP);
+  scroll.refresh(bottom + 8);
+  staggerPop(pops.slice(0, cols * 2), 40);
 
   /**
    * 网格卡。
@@ -148,46 +172,115 @@ export function createRosterView(
    * 主要依据，原来卡上只有名字和等级，这件事必须一个个点开才知道。图标和战斗操作条、
    * 三选一卡片是同一张图，所以这里认过的符号在战斗里直接能用。
    */
-  function buildOwnedCard(m: Character, w: number, h: number): PIXI.Container {
-    const card = makeCard({
-      width: w,
-      height: h,
-      onTap: () => openDetail(m),
-      guard: scroll.wasDragging,
-    });
+  function paintCardShell(w: number, h: number, locked: boolean): PIXI.Container {
+    const card = new PIXI.Container();
+    const shadow = new PIXI.Graphics();
+    shadow.beginFill(0x000000, 0.28);
+    shadow.drawRoundedRect(2, 4, w, h, 16);
+    shadow.endFill();
+    card.addChild(shadow);
+    card.addChild(makeRosterCardFace(w, h, locked));
+    return card;
+  }
 
-    const token = createUnitToken(m.profession, 'player', Math.min(w - 16, 54));
-    token.x = w / 2;
-    token.y = h / 2 - 12;
-    card.addChild(token);
+  function paintFooter(card: PIXI.Container, w: number, h: number, name: string, sub: string): void {
+    const bar = new PIXI.Graphics();
+    bar.beginFill(0x1a1410, 0.82);
+    bar.drawRoundedRect(3, h - FOOTER_H, w - 6, FOOTER_H - 3, 10);
+    bar.drawRect(3, h - FOOTER_H, w - 6, 12);
+    bar.endFill();
+    card.addChild(bar);
 
-    const skillId = resolveBattleSkillIdForCharacter(state, m);
-    const icon = createUiIcon(`skill_${skillId}`, 20);
-    if (icon) {
-      // 右上角：贴图角色本身居中，右上是唯一不会压到脸的位置
-      const ring = new PIXI.Graphics();
-      ring.lineStyle(1.5, C.ink, 0.9, 0);
-      ring.beginFill(C.paper, 1);
-      ring.drawCircle(w - 16, 16, 13);
-      ring.endFill();
-      card.addChild(ring);
-      icon.x = w - 16 - 10;
-      icon.y = 16 - 10;
-      card.addChild(icon);
-    }
-
-    const nameTx = makeText(m.name, 'uiStrong', { fill: C.text, fontSize: 12 });
+    const nameTx = makeText(name, 'uiStrong', { fill: 0xfff8e8, fontSize: 12 });
     nameTx.anchor.set(0.5, 0);
     nameTx.x = w / 2;
-    nameTx.y = h - 34;
+    nameTx.y = h - FOOTER_H + 2;
     card.addChild(nameTx);
 
-    const lvTx = makeText(`Lv.${m.level}`, 'caption', { fill: C.muted, fontSize: 10 });
-    lvTx.anchor.set(0.5, 0);
-    lvTx.x = w / 2;
-    lvTx.y = h - 18;
-    card.addChild(lvTx);
+    const subTx = makeText(sub, 'caption', { fill: 0xe8d0a0, fontSize: 10 });
+    subTx.anchor.set(0.5, 0);
+    subTx.x = w / 2;
+    subTx.y = h - 13;
+    card.addChild(subTx);
+  }
 
+  function paintSkillBadge(card: PIXI.Container, skillId: string, accent: number): void {
+    const icon = createUiIcon(`skill_${skillId}`, 18);
+    const ring = new PIXI.Graphics();
+    ring.lineStyle(1.5, C.ink, 0.9, 0);
+    ring.beginFill(accent, 1);
+    ring.drawCircle(18, 18, 13);
+    ring.endFill();
+    card.addChild(ring);
+    if (icon) {
+      icon.x = 18 - 9;
+      icon.y = 18 - 9;
+      card.addChild(icon);
+    }
+  }
+
+  /**
+   * 网格卡。棋子尽量铺满卡面、压在底栏上——参考页的质感来自立绘占卡，不是白底小图标。
+   */
+  function buildOwnedCard(m: Character, w: number, h: number): PIXI.Container {
+    const card = paintCardShell(w, h, false);
+    const token = createUnitToken(characterArtKey(m), 'player', Math.min(w - 6, h - FOOTER_H + 8));
+    token.x = w / 2;
+    token.y = (h - FOOTER_H) * 0.56;
+    card.addChild(token);
+
+    paintSkillBadge(card, resolveBattleSkillIdForCharacter(state, m), PROFESSION_ACCENT[m.profession]);
+    paintFooter(card, w, h, m.name, `Lv.${m.level}`);
+
+    card.eventMode = 'static';
+    card.cursor = 'pointer';
+    card.hitArea = new PIXI.Rectangle(0, 0, w, h);
+    attachPress(card, { guard: scroll.wasDragging });
+    card.on('pointertap', () => {
+      if (scroll.wasDragging()) return;
+      openDetail(m);
+    });
+    return card;
+  }
+
+  function buildLockedCard(def: CharacterDef, w: number, h: number): PIXI.Container {
+    const card = paintCardShell(w, h, true);
+    const token = createUnitToken(
+      characterArtKey({ rosterId: def.id, profession: def.profession }),
+      'player',
+      Math.min(w - 6, h - FOOTER_H + 8),
+    );
+    token.x = w / 2;
+    token.y = (h - FOOTER_H) * 0.56;
+    token.alpha = 0.4;
+    card.addChild(token);
+
+    paintSkillBadge(card, def.defaultSkillId, 0x8a8a90);
+
+    const hint = makeText(rosterUnlockHint(def), 'micro', {
+      fill: 0xffffff,
+      fontSize: 11,
+      stroke: 0x1a1410,
+      strokeThickness: 4,
+      wordWrap: true,
+      wordWrapWidth: w - 12,
+      align: 'center',
+    });
+    hint.anchor.set(0.5, 0.5);
+    hint.x = w / 2;
+    hint.y = (h - FOOTER_H) * 0.72;
+    card.addChild(hint);
+
+    paintFooter(card, w, h, def.name, '未加入');
+
+    card.eventMode = 'static';
+    card.cursor = 'pointer';
+    card.hitArea = new PIXI.Rectangle(0, 0, w, h);
+    attachPress(card, { guard: scroll.wasDragging });
+    card.on('pointertap', () => {
+      if (scroll.wasDragging()) return;
+      cb.onGoRecruit?.();
+    });
     return card;
   }
 
@@ -275,7 +368,7 @@ export function createRosterView(
     box.y = top;
     md.body.addChild(box);
 
-    const token = createUnitToken(m.profession, 'player', 44);
+    const token = createUnitToken(characterArtKey(m), 'player', 44);
     token.x = 24;
     token.y = 24;
     box.addChild(token);
@@ -448,16 +541,17 @@ export function createRosterView(
           cb.onPersist();
           md.setTitle(`${m.name}  Lv.${m.level}`);
           refillDetail(m);
+          flashPop(md.body, md.bodySize.width, 48);
         } else {
           showToast(md.root, `魂晶不足（还差 ${cost - state.meta.metaCurrency}）`, {
-            x: PAD,
-            y: H - 40,
+            screenWidth: W,
             color: C.soulText,
           });
         }
       },
       {
         variant: maxed || !affordable ? 'secondary' : 'primary',
+        disabled: maxed,
         width: w,
         height: 38,
         fontSize: 14,

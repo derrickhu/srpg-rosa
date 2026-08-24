@@ -1,0 +1,23 @@
+底栏「招募」图标（替换曾借用的 tab_shop）
+产出 → images/ui/tab_recruit.png（64px 长边）
+生成器：Cursor 内置 GenerateImage，aspect_ratio 1:1
+参考：images/ui/tab_roster.png 的描边厚度与简化程度
+
+后处理：缩到 64、品红抠底（与 v3 nav 同一套）
+
+---
+
+A single GAME UI ICON for a cartoon fantasy tactics mobile game tab labeled Recruit.
+
+CRITICAL BACKGROUND: the entire background must be 100% solid flat MAGENTA, hex #FF00FF. No white, no grey, no gradient, no drop shadows onto the background.
+
+CRITICAL SIZE: displayed at only 22 to 28 pixels. ONE bold chunky silhouette. No thin lines, no small parts, no text, no numbers.
+
+CRITICAL — MUST READ ON TWO BACKGROUNDS: dark blue-grey bar (#465470) and bright gold highlight (#EEC462). Thick near-black outline (#1A1410) all the way around AND a bright saturated fill. Do NOT fill with gold or pale yellow.
+
+STYLE: solid filled silhouette, thick near-black outline, flat saturated fills, at most 3 colours plus outline, one simple cel highlight. Chunky, rounded, toy-like. No gradients, no glow, no bevel.
+
+SUBJECT: a chunky recruitment pennant / rally flag seen from the front. Teal-cyan flag cloth (#2A9A8C) with a lighter cream stripe (#F2E6C8), hanging from a thick warm-brown pole. The flag is a simple swallow-tail pennant, wide and readable. No people, no helmet (roster already owns the helmet), no shop stall, no swords, no demon.
+
+The icon fills about 70% of the square, centered, upright, facing the viewer.
+NO text, NO watermark.

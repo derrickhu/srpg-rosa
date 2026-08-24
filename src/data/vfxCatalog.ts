@@ -851,9 +851,35 @@ export function usesMookCombatVfx(animSet?: string): boolean {
   return isMookArt(animSet) || CHAPTER3_MOOK_SETS.has(animSet);
 }
 
-/** 回放查普攻配方：杂兵走糙的一套，其余走职业表。 */
+/**
+ * 芙洛普攻：冰弹飞过去再溅开。职业表 `ATTACK_VFX.mage` 是奥莉的火球，
+ * 不能按 `UnitKind` 一把抓——否则芙洛在战场上仍喷火。
+ */
+export const FLOE_ATTACK_VFX: VfxRecipe = {
+  travel: {
+    glowSet: 'frost_orb',
+    cells: 1.7,
+    speedPxPerSec: 210,
+    minMs: 420,
+    lingerMs: 60,
+    trail: trailSparks(FROST),
+    ribbon: ribbonGlow(FROST, 6),
+  },
+  impact: {
+    set: 'frost_splat',
+    anchor: 'target',
+    cells: 1.45,
+    mode: 'burst',
+    playbackSpeed: 0.95,
+    sparks: hitSparks(FROST, 1.0),
+  },
+  shake: SHAKE_TAP,
+};
+
+/** 回放查普攻配方：杂兵走糙的一套，芙洛走冰弹，其余走职业表。 */
 export function attackRecipeFor(kind: UnitKind, animSet?: string): VfxRecipe {
   if (usesMookCombatVfx(animSet)) return MOOK_ATTACK_VFX[kind] ?? MOOK_ATTACK_VFX.sword;
+  if (animSet === 'floe') return FLOE_ATTACK_VFX;
   return ATTACK_VFX[kind] ?? ATTACK_VFX.sword;
 }
 
@@ -1543,14 +1569,20 @@ export const SKILL_VFX: Record<string, VfxRecipe> = {
     shake: SHAKE_BLAST,
   },
   /**
-   * 霜环：形状同旧炎环，冰系图集还没做。
+   * 霜环：选点爆炸，impact 锚在落点。`cells: 3` 盖住 blastRadius 1。
    *
-   * 占位只用冰蓝收束 + 代码星爆，不穿 `flame_ring` 火舌——那张图已经给奥莉的爆炎了。
+   * 图集是向外戳的三角冰棱环，不穿 `flame_ring` 火舌——那张已经给奥莉的爆炎了。
    */
   frost_ring: {
     windup: windupImplode(FROST, 1.4, 280),
-    castBurst: castBurst(FROST, 2.2),
-    hitBurst: hitBurst(FROST, 2.4),
+    impact: {
+      set: 'frost_ring',
+      anchor: 'target',
+      cells: 3,
+      mode: 'burst',
+      playbackSpeed: 0.7,
+      sparks: skillSparks(FROST),
+    },
     shake: SHAKE_BLAST,
   },
   // ══════════════ 祭司 · 青绿 ══════════════
@@ -1944,7 +1976,7 @@ export const SKILL_VFX: Record<string, VfxRecipe> = {
 /**
  * 中毒命中叠层：技能自己的斩 / 箭 / 火球照播，挨毒的那个身上再爆一团紫雾。
  *
- * 不写进各招配方，是因为毒来自词条（淬毒、贯钉、霜噬），配方是静态的。
+ * 不写进各招配方，是因为毒来自词条（淬毒、贯钉），配方是静态的。
  * 回放层看 `SkillHit.poisoned`，有就叠这一下。
  */
 export const POISON_HIT_VFX: FlashDef = {
@@ -1954,6 +1986,19 @@ export const POISON_HIT_VFX: FlashDef = {
   mode: 'burst',
   playbackSpeed: 0.7,
   sparks: hitSparks(POISON),
+};
+
+/**
+ * 霜噬叠层：冻伤也走 poison 结算，但描述不是中毒，不能叠紫雾。
+ * 回放层看 `SkillHit.frostbitten`。形态是身上长出一丛竖冰，不是霜环。
+ */
+export const FROST_HIT_VFX: FlashDef = {
+  set: 'frost_burst',
+  anchor: 'target',
+  cells: 2.35,
+  mode: 'burst',
+  playbackSpeed: 0.7,
+  sparks: hitSparks(FROST),
 };
 
 export const CHARGE_VFX: VfxRecipe = {

@@ -128,7 +128,7 @@ export type SkillCastFoeEffect =
   | { kind: 'spdDown'; subSpd: number; rounds: number }
   /**
    * 持续扣血。结算同一条（每轮开始、无视克制与地形），**玩家看到的名字和特效按 `theme` 分**：
-   * 缺省 / `poison` = 中毒（紫雾）；`frost` = 冻伤（霜噬，冰系特效后做，现在不叠紫雾）。
+   * 缺省 / `poison` = 中毒（紫雾）；`frost` = 冻伤（霜噬，竖向霜晶）。
    */
   | { kind: 'poison'; dmgPerRound: number; rounds: number; theme?: 'poison' | 'frost' };
 
@@ -1174,8 +1174,7 @@ const SPECS: Record<string, SkillSpec> = {
   /**
    * 芙洛招牌：3 格内任选一点，对该点周围 1 格（含落点）的敌人放霜。
    *
-   * 形状和旧炎环一样，差在元素。冰系特效还没重做，配方先用冰蓝收束 + 星爆占位，
-   * 不要再穿火舌环的皮——那张图已经给奥莉的爆炎用了。
+   * 形状和炎环一样，差在元素。特效走 `frost_ring` 冰棱环，不穿火舌。
    */
   frost_ring: {
     id: 'frost_ring',

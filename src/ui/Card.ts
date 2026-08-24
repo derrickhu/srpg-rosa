@@ -1,5 +1,7 @@
 import * as PIXI from 'pixi.js';
 import { C } from '@/view/mvpTheme';
+import { attachGlowRing } from '@/view/fx/celebration';
+import { attachPress } from './press';
 
 /**
  * 列表项卡片的三种状态。
@@ -16,6 +18,10 @@ export interface CardOptions {
   y?: number;
   tone?: CardTone;
   radius?: number;
+  /** 顶条色（职业 / 稀有度）。和三选一卡同一套语言 */
+  accent?: number;
+  /** 只要按下缩放、不要整卡点击（招募行：购买走右侧按钮） */
+  press?: boolean;
   onTap?: () => void;
   /**
    * 返回 true 时忽略这次点击。
@@ -48,23 +54,51 @@ export function makeCard(opts: CardOptions): PIXI.Container {
   const c = new PIXI.Container();
   c.x = opts.x ?? 0;
   c.y = opts.y ?? 0;
+  const tone = opts.tone ?? 'normal';
+  const radius = opts.radius ?? 12;
+  const w = opts.width;
+  const h = opts.height;
 
-  const { fill, alpha, line, lineW } = toneStyle(opts.tone ?? 'normal');
+  const { fill, alpha, line, lineW } = toneStyle(tone);
   const g = new PIXI.Graphics();
   g.lineStyle(lineW, line, 1, 0);
   g.beginFill(fill, alpha);
-  g.drawRoundedRect(0, 0, opts.width, opts.height, opts.radius ?? 12);
+  g.drawRoundedRect(0, 0, w, h, radius);
   g.endFill();
   c.addChild(g);
 
-  if (opts.onTap) {
+  if (opts.accent != null) {
+    const stripH = 8;
+    const strip = new PIXI.Graphics();
+    strip.beginFill(opts.accent, tone === 'locked' ? 0.45 : 1);
+    strip.drawRoundedRect(0, 0, w, stripH + 8, radius);
+    strip.drawRect(0, stripH, w, 8);
+    strip.endFill();
+    const clip = new PIXI.Graphics();
+    clip.beginFill(0xffffff);
+    clip.drawRect(0, 0, w, stripH);
+    clip.endFill();
+    clip.renderable = false;
+    strip.addChild(clip);
+    strip.mask = clip;
+    c.addChild(strip);
+  }
+
+  if (tone === 'selected') {
+    attachGlowRing(c, w, h).setActive(true);
+  }
+
+  if (opts.onTap || opts.press) {
     c.eventMode = 'static';
-    c.cursor = 'pointer';
-    c.hitArea = new PIXI.Rectangle(0, 0, opts.width, opts.height);
-    c.on('pointertap', () => {
-      if (opts.guard?.()) return;
-      opts.onTap?.();
-    });
+    c.cursor = opts.onTap ? 'pointer' : 'default';
+    c.hitArea = new PIXI.Rectangle(0, 0, w, h);
+    attachPress(c, { guard: opts.guard });
+    if (opts.onTap) {
+      c.on('pointertap', () => {
+        if (opts.guard?.()) return;
+        opts.onTap?.();
+      });
+    }
   }
 
   return c;

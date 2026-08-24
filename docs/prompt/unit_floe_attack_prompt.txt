@@ -1,0 +1,32 @@
+# 芙洛 —— 单手推书 2x2，每朝向一张
+# 参考图：art/sprite-runs/floe/identity-ref-<朝向>.png（行走处理后的单帧）
+# 处理时 --scale-profile art/sprite-runs/floe/scale-profile.json
+# attack_right 由 attack_left 镜像，不出图。
+
+CRITICAL BACKGROUND: 100% solid flat MAGENTA #FF00FF. NOT black. NOT white.
+
+The attached reference is ONE SINGLE character frame. It defines IDENTITY and STYLE only.
+Do NOT copy its framing. Produce a 2x2 attack sheet, not a walk cycle, not a 4x4.
+
+Match the reference exactly: same giant-head stubby girl, honey-gold chunky hair, three
+ice-blue triangles on bangs, ice-blue robe, cream collar, icicle hem, brown shoes, thick
+outlines, flat cel fills. Book slightly overlaps the raised palm so they stay one silhouette.
+
+A 2x2 sprite sheet: 4 frames of a BOOK PUSH attack. She shoves the open book forward along
+her own centerline — NOT a wide sweep. The book is the thing that moves.
+
+FRAME ORDER, left-to-right then top-to-bottom:
+  Frame 1 (top-left):     WIND-UP. Book pulled back beside her shoulder, knees bent.
+  Frame 2 (top-right):    THRUST. Book driven forward to about chest height in front.
+  Frame 3 (bottom-left):  IMPACT. Full extension — book as far forward as it goes, still
+                          overlapping the mitten. Leading foot planted. Strongest pose.
+  Frame 4 (bottom-right): RECOVERY. Book back to idle hover above the raised palm.
+
+ABSOLUTE RULES:
+1. Magenta #FF00FF everywhere including between cells. No ground, no shadow.
+2. EXACTLY 4 equal cells in a 2x2. No borders, no gutters, no frames.
+3. IDENTICAL BODY SCALE and camera in all 4 cells.
+4. Body fills about 40% of cell height, wide magenta margin. Draw it small.
+5. NOTHING touches a cell edge — not hair, not book, not a boot.
+6. Same foot baseline. Body-only: no ice VFX, no trails, no spell circles.
+7. NO purple/pink on costume. NO text, no labels, no watermark.

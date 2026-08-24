@@ -274,6 +274,7 @@ export const DUNGEON_DEFS: DungeonDef[] = [
     maxParty: 4,
     unlock: { kind: 'clearDungeon', dungeonId: 'dungeon_grassland' },
     themeColor: 0x2d7a4d,
+    art: 'chapter_forest',
   },
   {
     id: 'dungeon_fortress',
@@ -286,6 +287,7 @@ export const DUNGEON_DEFS: DungeonDef[] = [
     maxParty: 5,
     unlock: { kind: 'clearDungeon', dungeonId: 'dungeon_forest' },
     themeColor: 0x8a7a5a,
+    art: 'chapter_fortress',
   },
   {
     id: 'dungeon_swamp',
@@ -298,6 +300,7 @@ export const DUNGEON_DEFS: DungeonDef[] = [
     maxParty: 5,
     unlock: { kind: 'clearDungeon', dungeonId: 'dungeon_fortress' },
     themeColor: 0x5a7a3a,
+    art: 'chapter_swamp',
   },
   {
     id: 'dungeon_dragon',
@@ -310,6 +313,7 @@ export const DUNGEON_DEFS: DungeonDef[] = [
     maxParty: 5,
     unlock: { kind: 'clearDungeon', dungeonId: 'dungeon_swamp' },
     themeColor: 0x8a3a3a,
+    art: 'chapter_dragon',
   },
 ];
 

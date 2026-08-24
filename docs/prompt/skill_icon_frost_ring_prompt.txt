@@ -1,0 +1,37 @@
+技能图标：霜环（芙洛招牌）
+产出 → images/ui/skill_frost_ring.png
+生成器：Cursor 内置 GenerateImage，aspect_ratio 1:1
+
+后处理：
+    python3 scripts/despill-magenta.py <raw.png>
+    再缩到约 72px，拷到 images/ui/skill_frost_ring.png
+
+约束同 A 组（见 skill_icons_a_3x3_prompt.txt）：品红底、粗近黑描边、指甲盖尺寸仍能认、坐在米白卡上。
+这是**一枚单独图标**，不是网格。不要画成炎环那圈火舌——玩家会把芙洛和奥莉认成同一招。
+
+语义：芙洛·霜环。3 格内选点，对该点周围 1 格放霜。空心冰棱环，不是火、不是书、不是人物。
+
+禁止紫色/品红/粉（despill 会当溢色）。禁止橙色火焰。
+
+---
+
+ONE SINGLE GAME UI ICON representing the FROST RING combat skill in a cartoon fantasy tactics mobile game.
+
+CRITICAL BACKGROUND: the entire background must be 100% solid flat MAGENTA, hex #FF00FF. It is a chroma key and will be deleted. No white, no grey, no gradient, no drop shadows onto the background. No black backdrop.
+
+CRITICAL SIZE CONSTRAINT — displayed at only 26 to 56 pixels. ONE bold, chunky, instantly readable silhouette. Think of a chess piece, not an illustration. NO thin lines, NO small parts, NO fine detail, NO tiny sparkles, NO text, NO numbers.
+
+CRITICAL — THIS SITS ON A CREAM WHITE CARD (#FCFCF6). Thick near-black outline (#1A1410) all the way around, saturated fill inside.
+
+STYLE — match the game's chunky cartoon figures: heavy black outlines, flat colours, toy-like:
+- SOLID FILLED SILHOUETTE with a thick near-black outline.
+- Flat saturated fills, at most 3 colours plus the outline, plus one simple lighter shade for a single cel-shaded highlight.
+- No gradients, no glow, no bevel, no gloss, no photographic detail, no pixel art.
+- Drawn straight-on, upright and centred.
+- NO purple, magenta, pink, or violet fills. NO orange. NO fire.
+
+SUBJECT: a closed HOLLOW RING of ICE, like a donut made of 6 to 8 chunky ice-crystal spikes pointing OUTWARD. Ice-blue (#3EC8E0) body, frost-white (#F0F0E0) inner edge, a few darker ice-blue (#2A8FB0) facets. No object in the center. Must read as an ice ring, clearly different from a fire ring (those have rounded flame tongues; these are sharp triangular ice prisms).
+
+The icon fills about 70% of the square, with a clear magenta margin on all four sides.
+
+NO text, no labels, no captions, no letters, no numbers, no watermark, no character, no book, no staff.

@@ -82,6 +82,7 @@ export {
   advanceNode,
   isRunComplete,
   finishRunVictory,
+  type FinishRunResult,
   dungeonClearSoul,
   abandonRun,
   applyDungeonClearUnlocks,

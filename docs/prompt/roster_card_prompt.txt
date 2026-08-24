@@ -1,0 +1,15 @@
+角色页网格卡底板（整卡缩放，不走九宫格）
+产出 → images/ui/roster_card.png、roster_card_locked.png
+生成器：Cursor GenerateImage，aspect_ratio 3:4
+后处理：品红抠底、trim、pngquant。无文字。
+
+---
+
+A single empty character-collection CARD FACE on solid MAGENTA #FF00FF.
+
+Portrait rounded rectangle, thick even black outline, large corner radius.
+Owned: warm sunny gold #F6D35A with a subtle radial sunburst from the center, slight top highlight, darker gold along the bottom. Completely empty center (no character, no icon, no gem).
+Locked variant: same shape, cool grey #8A8A90 with a faint grey sunburst.
+
+NO text, NO letters, NO numbers, NO portraits, NO UI buttons, NO watermark.
+Casual cartoon mobile RPG, polished cel shading.

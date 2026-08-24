@@ -1,12 +1,13 @@
 import * as PIXI from 'pixi.js';
 import { textStyle } from '@/theme/typography';
 import { C, shade } from '@/view/mvpTheme';
+import { makeButtonSkin } from './chrome';
 
 /**
  * 按钮语义档位。**优先用 variant，不要逐处传颜色**——散在各 View 里的一次性配色
  * 正是上一版 UI 看起来东拼西凑的原因。
  *
- * - `primary`  金色主行动。按风格圣经 §6，一屏最多一个。
+ * - `primary`  金色主行动。够宽的主 CTA 才套金皮；小钮走色块，避免九宫格把两头拉变形。
  * - `secondary` 蓝灰次行动。
  * - `danger`   破坏性操作（放弃副本一类）。
  * - `ghost`    透明底，只有描边，用于「关闭 / 取消」这种不该抢视线的操作。
@@ -24,7 +25,13 @@ export interface ButtonOptions {
   fillAlpha?: number;
   borderColor?: number;
   textColor?: number;
+  /** 禁用：发灰、点不动、不沉底 */
+  disabled?: boolean;
 }
+
+export type ButtonNode = PIXI.Container & {
+  setDisabled: (on: boolean) => void;
+};
 
 interface VariantStyle {
   /** 面色 */
@@ -58,12 +65,27 @@ const VARIANTS: Record<ButtonVariant, VariantStyle> = {
 
 /** 按下时下沉的像素数，也是静止时底部露出的深色下沿厚度 */
 const LIP = 3;
+const PRESS_SCALE = 0.97;
+
+/** 禁用态的外观与命中。Pixi 在 node 里建不了 Graphics，单测只测这一层 */
+export function buttonDisabledLook(disabled: boolean): {
+  alpha: number;
+  eventMode: 'none' | 'static';
+} {
+  return disabled
+    ? { alpha: 0.45, eventMode: 'none' }
+    : { alpha: 1, eventMode: 'static' };
+}
+
+export function shouldFireButtonPress(disabled: boolean): boolean {
+  return !disabled;
+}
 
 export function makeButton(
   label: string,
   onPress: () => void,
   opts?: ButtonOptions,
-): PIXI.Container {
+): ButtonNode {
   const variant = opts?.variant ?? 'secondary';
   const style = VARIANTS[variant];
   const w = opts?.width ?? Math.max(140, label.length * 14 + 24);
@@ -74,52 +96,90 @@ export function makeButton(
   const fontSize = opts?.fontSize ?? 15;
   const alpha = opts?.fillAlpha ?? style.alpha ?? 1;
 
-  const c = new PIXI.Container();
+  const c = new PIXI.Container() as ButtonNode;
+  // 视觉放在带中心 pivot 的内层，外层原点仍是左上角，各页 x/y 不用改
+  const inner = new PIXI.Container();
+  inner.pivot.set(w / 2, h / 2);
+  inner.x = w / 2;
+  inner.y = h / 2;
+  c.addChild(inner);
 
-  if (style.rim) {
-    const rim = new PIXI.Graphics();
-    rim.beginFill(C.paper, 1);
-    rim.drawRoundedRect(-RIM, -RIM, w + RIM * 2, h + RIM * 2, radius + RIM);
-    rim.endFill();
-    c.addChild(rim);
+  const skin = variant === 'primary' && opts?.fillColor == null ? makeButtonSkin(w, h) : null;
+  let face: PIXI.Container;
+
+  if (skin) {
+    // 主 CTA 用画出来的金皮。皮自己带高光和下沿，再套米白外圈会像贴了两层。
+    inner.addChild(skin);
+    face = skin;
+  } else {
+    if (style.rim) {
+      const rim = new PIXI.Graphics();
+      rim.beginFill(C.paper, 1);
+      rim.drawRoundedRect(-RIM, -RIM, w + RIM * 2, h + RIM * 2, radius + RIM);
+      rim.endFill();
+      inner.addChild(rim);
+    }
+
+    // 底座：比面色暗一档，只有底部 LIP 像素露出来，形成厚实的下沿。
+    const base = new PIXI.Graphics();
+    base.lineStyle(2, opts?.borderColor ?? C.ink, 1, 0);
+    base.beginFill(style.base ?? shade(fill, 0.72), alpha);
+    base.drawRoundedRect(0, 0, w, h, radius);
+    base.endFill();
+    inner.addChild(base);
+
+    const g = new PIXI.Graphics();
+    g.beginFill(fill, alpha);
+    g.drawRoundedRect(2, 2, w - 4, h - 4 - LIP, Math.max(2, radius - 2));
+    g.endFill();
+    inner.addChild(g);
+    face = g;
   }
-
-  // 底座：比面色暗一档，只有底部 LIP 像素露出来，形成厚实的下沿。
-  // 用「上下两个圆角矩形」而不是渐变或斜面，是为了和角色的平涂 + 硬描边保持同一套语言。
-  const base = new PIXI.Graphics();
-  base.lineStyle(2, opts?.borderColor ?? C.ink, 1, 0);
-  base.beginFill(style.base ?? shade(fill, 0.72), alpha);
-  base.drawRoundedRect(0, 0, w, h, radius);
-  base.endFill();
-  c.addChild(base);
-
-  const face = new PIXI.Graphics();
-  face.beginFill(fill, alpha);
-  face.drawRoundedRect(2, 2, w - 4, h - 4 - LIP, Math.max(2, radius - 2));
-  face.endFill();
-  c.addChild(face);
 
   // 按钮文案用展示字体，和正文系统字拉开层级
   const tx = new PIXI.Text(label, textStyle('title', { fill: textColor, fontSize }));
   tx.anchor.set(0.5);
   tx.x = w / 2;
-  tx.y = (h - LIP) / 2;
-  c.addChild(tx);
+  tx.y = (h - (skin ? 0 : LIP)) / 2;
+  inner.addChild(tx);
 
   c.eventMode = 'static';
   c.cursor = 'pointer';
   c.hitArea = new PIXI.Rectangle(0, 0, w, h);
 
-  // 按下时面板和文字整体下沉到底座里，抬手复位。手机上没有 hover，
-  // 这个位移是玩家唯一能拿到的「点到了」反馈。
+  let disabled = false;
+
+  const restTextY = (h - (skin ? 0 : LIP)) / 2;
   const press = (down: boolean): void => {
+    if (disabled) return;
     face.y = down ? LIP : 0;
-    tx.y = (h - LIP) / 2 + (down ? LIP : 0);
+    tx.y = restTextY + (down ? LIP : 0);
+    inner.scale.set(down ? PRESS_SCALE : 1);
   };
+
+  const applyDisabled = (on: boolean): void => {
+    disabled = on;
+    const look = buttonDisabledLook(on);
+    c.alpha = look.alpha;
+    c.eventMode = look.eventMode;
+    c.cursor = on ? 'default' : 'pointer';
+    if (on) {
+      face.y = 0;
+      tx.y = restTextY;
+      inner.scale.set(1);
+    }
+  };
+
   c.on('pointerdown', () => press(true));
   c.on('pointerup', () => press(false));
   c.on('pointerupoutside', () => press(false));
-  c.on('pointertap', onPress);
+  c.on('pointertap', () => {
+    if (!shouldFireButtonPress(disabled)) return;
+    onPress();
+  });
+
+  c.setDisabled = applyDisabled;
+  applyDisabled(opts?.disabled ?? false);
 
   return c;
 }
@@ -128,7 +188,7 @@ export function makeMiniButton(
   label: string,
   onPress: () => void,
   opts?: ButtonOptions,
-): PIXI.Container {
+): ButtonNode {
   return makeButton(label, onPress, {
     variant: 'ghost',
     ...opts,

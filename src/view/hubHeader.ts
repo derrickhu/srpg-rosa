@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js';
-import { makeText } from '@/theme/typography';
 import { getSafeAreaInsets } from '@/core/safeArea';
+import { makeRibbonTitle } from '@/ui/chrome';
 import { createCurrencyPill } from '@/view/renderHelpers';
 
 export interface HubHeaderOptions {
@@ -44,17 +44,13 @@ export function createHubHeader(opts: HubHeaderOptions): HubHeaderHandle {
   }
 
   if (opts.title) {
-    // 标题带描边：它压在草地上（不在面板里），而草地是高频纹理，
-    // 纯白字会和亮草点糊在一起。描边是这里唯一不占额外空间的可读性手段。
-    const t = makeText(opts.title, 'display', {
-      fill: 0xffffff,
-      stroke: 0x2a3a12,
-      strokeThickness: 4,
-    });
-    t.x = PAD;
-    t.y = y;
-    root.addChild(t);
-    y += t.height + 6;
+    // 金绶带压在大厅厅堂底上，贴左躲开微信胶囊。字叠在带子上，不烧进贴图。
+    const ribbonW = Math.min(200, Math.max(140, opts.screenWidth - 96));
+    const ribbon = makeRibbonTitle(opts.title, ribbonW, { fontSize: 22 });
+    ribbon.x = PAD;
+    ribbon.y = y;
+    root.addChild(ribbon);
+    y += ribbon.height + 4;
   }
 
   return { root, height: y };

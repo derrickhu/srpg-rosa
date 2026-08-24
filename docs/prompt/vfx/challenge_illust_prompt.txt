@@ -1,0 +1,10 @@
+副本列表卡左侧铺满插图（cover，不要抠成贴纸）
+产出 → images/ui/illust_{hunt,boss,endless}.png
+生成器：Cursor GenerateImage，aspect_ratio 4:3
+后处理：cover 裁切，不要品红抠底。无文字。
+
+---
+
+A filled rectangular cartoon-fantasy illustration that goes EDGE TO EDGE (no empty background, no sticker cutout, no black void).
+Casual mobile RPG, thick ink outlines, cel shading.
+NO text, NO letters, NO UI chrome, NO watermark, NO magenta key.

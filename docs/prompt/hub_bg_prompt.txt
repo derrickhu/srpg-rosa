@@ -1,0 +1,16 @@
+大厅四页共用背景（替换原先压在战斗草地上的大厅）
+产出 → images/bg/hub_bg.png
+生成器：Cursor GenerateImage，aspect_ratio 9:16
+参考：用户给的「历练大厅」截图
+
+后处理：cover 裁到竖屏，pngquant。无文字。
+
+---
+
+A full-screen mobile portrait background for a cartoon fantasy tactics game hub (not a battle map).
+
+COMPOSITION 9:16. Upper 40%: a grand cream-and-gold temple hall interior, soft purple dusk light, one large glowing white-gold archway / portal in the center distance (empty, no symbols, no letters). Marble columns, warm banners without text. Lower 55%: a calm open stone floor / carpet in muted cream-lilac, mostly empty so UI cards can sit on it. Soft vignette, no UI chrome.
+
+STYLE: polished casual-cartoon, flat cel shading, soft depth, rounded architecture. Colors: cream #F5E6C8, gold #EEC462, lilac-purple #6A5A8C, ink outlines only on architecture not on the floor. Not photoreal. Not grassy battlefield.
+
+NO text, NO letters, NO numbers, NO logos, NO UI buttons, NO characters, NO watermark, NO phone frame.

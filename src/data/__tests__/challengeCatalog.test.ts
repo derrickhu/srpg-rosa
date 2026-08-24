@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { UI_BUNDLE } from '@/core/assetBundles';
+import { BG_BUNDLE, UI_BUNDLE } from '@/core/assetBundles';
 import {
   CHALLENGE_ENTRIES,
+  challengeArt,
   challengeDungeon,
   challengeStatus,
   chapterRepeatEntries,
@@ -79,6 +80,25 @@ describe('副本页条目表', () => {
       expect(challengeStatus(e, meta)).toEqual({ kind: 'open' });
       expect(e.dungeonId).toBeTruthy();
       expect(challengeDungeon(e)?.id).toBe(e.dungeonId);
+    }
+  });
+
+  it('活动和无尽都有左侧插图，章节重打用章节卡同一张', () => {
+    for (const e of CHALLENGE_ENTRIES) {
+      const art = challengeArt(e);
+      expect(art, `${e.id} 缺插图`).toBeTruthy();
+      expect(art!.bundle).toBe('ui');
+      expect(UI_BUNDLE.assets[art!.key], `${e.id} 的 ${art!.key} 未登记`).toBeDefined();
+    }
+    const entries = chapterRepeatEntries({
+      ...createInitialMeta(),
+      clearedDungeonIds: DUNGEON_DEFS.map((d) => d.id),
+    });
+    expect(entries.length).toBeGreaterThan(0);
+    for (const e of entries) {
+      const art = challengeArt(e);
+      expect(art?.bundle, e.id).toBe('bg');
+      expect(BG_BUNDLE.assets[art!.key], `${e.id} 的章节插图未登记`).toBeDefined();
     }
   });
 

@@ -458,29 +458,30 @@ export function advanceNode(state: MvpGameState): void {
   state.phase = currentNode(state).kind === 'shop' ? 'shop' : 'deploy';
 }
 
-/**
- * 通关结算：兑现本局累计魂晶 + 通关大额奖励，解锁后续内容，并丢弃 run。
- * 返回实际入账的魂晶，供结算界面显示。
- */
+export interface FinishRunResult {
+  soul: number;
+  unlockedRosterIds: string[];
+}
+
 /**
  * 整章通关：首通给 `metaReward`（大额，一次性），之后每次重复通关给 `DUNGEON_REPEAT_SOUL`。
- * 返回本次入账的魂晶供结算界面显示。
+ * 返回本次入账的魂晶和刚入队的角色，供结算界面展示。
  */
-export function finishRunVictory(state: MvpGameState): number {
+export function finishRunVictory(state: MvpGameState): FinishRunResult {
   if (state.run && isSandboxDungeon(state.run.dungeonId)) {
     state.run = null;
     state.phase = 'hub';
-    return 0;
+    return { soul: 0, unlockedRosterIds: [] };
   }
   const d = currentDungeon(state);
   // 判首通要在 `applyDungeonClearUnlocks` 之前——它会把 id 写进 clearedDungeonIds
   const firstClear = !state.meta.clearedDungeonIds.includes(d.id);
-  applyDungeonClearUnlocks(state.meta, d.id);
-  const gained = firstClear ? d.metaReward : DUNGEON_REPEAT_SOUL;
-  state.meta.metaCurrency += gained;
+  const unlockedRosterIds = applyDungeonClearUnlocks(state.meta, d.id);
+  const soul = firstClear ? d.metaReward : DUNGEON_REPEAT_SOUL;
+  state.meta.metaCurrency += soul;
   state.run = null;
   state.phase = 'hub';
-  return gained;
+  return { soul, unlockedRosterIds };
 }
 
 /** 本局通关能拿多少魂晶（供结算/大厅提前告知，不产生副作用） */
@@ -502,8 +503,8 @@ export function abandonRun(state: MvpGameState): void {
   state.phase = 'hub';
 }
 
-/** 通关某副本后解锁的副本与角色 */
-export function applyDungeonClearUnlocks(meta: MetaState, dungeonId: string): void {
+/** 通关某副本后解锁的副本与角色。返回本次新入队的角色 id。 */
+export function applyDungeonClearUnlocks(meta: MetaState, dungeonId: string): string[] {
   if (!meta.clearedDungeonIds.includes(dungeonId)) {
     meta.clearedDungeonIds.push(dungeonId);
   }
@@ -516,6 +517,7 @@ export function applyDungeonClearUnlocks(meta: MetaState, dungeonId: string): vo
       meta.unlockedDungeonIds.push(dd.id);
     }
   }
+  const unlocked: string[] = [];
   for (const cd of CHARACTER_DEFS) {
     if (
       cd.unlock.kind === 'clearDungeon' &&
@@ -523,7 +525,11 @@ export function applyDungeonClearUnlocks(meta: MetaState, dungeonId: string): vo
       !meta.roster.some((m) => m.rosterId === cd.id)
     ) {
       const def = getCharacterDef(cd.id);
-      if (def) meta.roster.push(instantiateCharacter(def));
+      if (def) {
+        meta.roster.push(instantiateCharacter(def));
+        unlocked.push(cd.id);
+      }
     }
   }
+  return unlocked;
 }

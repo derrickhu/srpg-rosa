@@ -3,19 +3,23 @@ import { makeText } from '@/theme/typography';
 import { C } from '@/view/mvpTheme';
 import { makeButton } from '@/ui/Button';
 import { createUiIcon } from '@/view/renderHelpers';
-import { AssetManager } from '@/core/AssetManager';
 import type { SkillModRarity } from '@/data/skillModCatalog';
+import {
+  attachGlowRing,
+  confettiBurst,
+  createScrim,
+  createTitleBanner,
+  dropBanner,
+  fadeScrim,
+  flyTokenTo,
+  staggerPop,
+} from '@/view/fx/celebration';
 
 /**
  * 战后结算弹层。
  *
- * 关键决定：**盖在战场上，不换场景。** 以前是 `replaceAll` 一个新页面，
- * 战场连同刚才那一击的残影一起消失，胜利感也跟着断掉——玩家从「我赢了这一场」
- * 被瞬间搬到一个陌生的列表页。压一层半透明遮罩则保留了「刚刚发生了什么」的上下文。
- *
- * 分两屏也是同一个道理：第一屏只回答「我赚了什么」（已经到手的固定奖励），
- * 第二屏只回答「我选什么」（要玩家做决定的强化）。挤在一屏时这两类东西
- * 长得一样，玩家分不清哪些已经入账、哪些还等着他点。
+ * 盖在战场上，不换场景。中途胜利和三选一合成一屏：上面回答「我赢了、拿到了什么」，
+ * 下面才是「选哪张纹章」。通关只走奖励格；战败也盖一层，不再整页替换。
  */
 
 /** 结算第一屏里的一格奖励；点开有详情 */
@@ -52,10 +56,6 @@ export interface RewardOverlayOpts {
  * 卡面要在一眼之内回答三个问题，顺序也是视觉权重的顺序：
  *
  *   **给谁**（顶部头像 + 名字）→ **哪一招**（正中大图标 + 技能名）→ **加什么**（词条名 + 说明）
- *
- * 早先只画了词条图标，结果三张卡看上去是「三个抽象符号」，玩家得读完两行小字
- * 才知道这次强化落在谁身上。词条图标本质是**类型标记**（伤害/冷却/中毒…），
- * 它回答的是最后一个问题，所以退到右下角当小标签。
  */
 export interface LootCard {
   /** 顶部头像；null = 非角色类奖励（药剂兜底卡），此时不画头像区 */
@@ -72,19 +72,32 @@ export interface LootCard {
   modIconKey: string | null;
   desc: string;
   rarity: SkillModRarity;
-  /**
-   * 专属词条（只有这一招能出）。色条上加前缀点出来——
-   * 专属是这一招的招牌强化，玩家得知道「这张牌换个技能就再也见不到了」。
-   */
   exclusive?: boolean;
+}
+
+export interface LootSummary {
+  gold: number;
+  soul: number;
 }
 
 export interface LootOverlayOpts {
   screenW: number;
   screenH: number;
   cards: LootCard[];
-  onPick: (index: number) => void;
+  summary?: LootSummary;
+  onConfirm: (index: number) => void;
   onSkip: () => void;
+  onNeedPick?: () => void;
+}
+
+export interface DefeatOverlayOpts {
+  screenW: number;
+  screenH: number;
+  subtitle: string;
+  primaryLabel: string;
+  onPrimary: () => void;
+  secondaryLabel?: string;
+  onSecondary?: () => void;
 }
 
 /** 稀有度 → 卡框色。史诗要一眼比另外两档扎眼，否则三选一没有轻重 */
@@ -100,57 +113,11 @@ const RARITY_LABEL: Record<SkillModRarity, string> = {
   epic: '史诗',
 };
 
-/** 半透明遮罩：既压暗战场，又吃掉穿透到下层棋盘的点击 */
-function createScrim(w: number, h: number): PIXI.Graphics {
-  const g = new PIXI.Graphics();
-  g.beginFill(0x000000, 0.72);
-  g.drawRect(0, 0, w, h);
-  g.endFill();
-  g.eventMode = 'static';
-  g.hitArea = new PIXI.Rectangle(0, 0, w, h);
-  return g;
-}
-
-/**
- * 金色横幅贴图 + 代码画的标题字。
- *
- * 字不烧进贴图：一是文案要跟着「胜利 / 副本通关 / 失败」变，二是烧进去的字形
- * 和界面其余部分用的游戏字体对不上，凑在一起会很明显。
- *
- * **不要**走 `createUiIcon`：那个函数按正方形定尺寸并把图居中，横幅这种扁图会被
- * 上下垫出空白。标题若按「容器高度 × 0.62」算，落点会跑到皇冠上；副标题按
- * `banner.height` 往下排，又会叠回黄色面板里——截图里「胜利」在上、关卡名和奖励格
- * 啃进横幅，就是这么来的。
- */
-function createTitleBanner(cx: number, y: number, text: string, width: number): PIXI.Container {
-  const wrap = new PIXI.Container();
-  let h = 60;
-  if (AssetManager.isBundleLoaded('ui')) {
-    const tex = AssetManager.texture('ui', 'banner_victory');
-    if (tex && tex !== PIXI.Texture.WHITE) {
-      const sp = new PIXI.Sprite(tex);
-      // 按宽度等比缩放，高度跟着走，不再塞进正方形
-      const s = width / tex.width;
-      sp.width = width;
-      sp.height = tex.height * s;
-      sp.x = cx - width / 2;
-      sp.y = y;
-      wrap.addChild(sp);
-      h = sp.height;
-    }
-  }
-  const tx = makeText(text, 'display', {
-    fill: 0xfff4d8,
-    fontSize: 30,
-    stroke: 0x7a4a10,
-    strokeThickness: 5,
-  });
-  tx.anchor.set(0.5);
-  tx.x = cx;
-  // 贴图上方是皇冠+月桂，标题落在中间那块黄色面板的视觉中心
-  tx.y = y + h * 0.58;
-  wrap.addChild(tx);
-  return wrap;
+export function resolveLootConfirm(
+  selected: number | null,
+): { ok: true; index: number } | { ok: false; reason: 'need-pick' } {
+  if (selected === null) return { ok: false, reason: 'need-pick' };
+  return { ok: true, index: selected };
 }
 
 /** 米白圆角面板 */
@@ -163,10 +130,25 @@ function panelBg(w: number, h: number, radius = 14): PIXI.Graphics {
   return g;
 }
 
+function placeBanner(
+  root: PIXI.Container,
+  cx: number,
+  y: number,
+  text: string,
+  width: number,
+): { banner: PIXI.Container; height: number } {
+  const banner = createTitleBanner(text, width);
+  const height = banner.height;
+  banner.pivot.x = width / 2;
+  banner.x = cx;
+  root.addChild(banner);
+  dropBanner(banner, y);
+  confettiBurst(root, cx, y + 20, 26);
+  return { banner, height };
+}
+
 /**
- * 物品详情弹窗。参考的是成熟商业游戏的做法：奖励格本身只放图标和数量，
- * 说明藏在点击之后。结算屏要在两秒内让人看清「拿到了什么」，
- * 把每件东西的用途、来源都平铺出来反而谁也读不完。
+ * 物品详情弹窗。奖励格本身只放图标和数量，说明藏在点击之后。
  */
 function createItemDetail(
   screenW: number,
@@ -175,8 +157,7 @@ function createItemDetail(
   onClose: () => void,
 ): PIXI.Container {
   const layer = new PIXI.Container();
-  const scrim = createScrim(screenW, screenH);
-  scrim.alpha = 0.7;
+  const scrim = createScrim(screenW, screenH, 0.7);
   scrim.on('pointertap', onClose);
   layer.addChild(scrim);
 
@@ -201,7 +182,6 @@ function createItemDetail(
   card.y = y;
   card.addChild(panelBg(w, h));
 
-  // 顶部色条：品质色在这里出现一次，玩家就知道这一格属于哪一类资源
   const header = new PIXI.Graphics();
   header.beginFill(entry.tint, 0.95);
   header.drawRoundedRect(0, 0, w, headerH, 14);
@@ -282,34 +262,55 @@ function createItemDetail(
   return layer;
 }
 
-/** 结算第一屏：横幅 + 已到手的奖励格 + 确定 */
+function makeSummaryChip(iconKey: string, label: string, tint: number): PIXI.Container {
+  const c = new PIXI.Container();
+  const icon = createUiIcon(iconKey, 18);
+  const tx = makeText(label, 'uiStrong', { fill: tint, fontSize: 13 });
+  const pad = 8;
+  const iconW = icon ? 20 : 0;
+  const w = pad * 2 + iconW + tx.width;
+  const h = 26;
+  const bg = new PIXI.Graphics();
+  bg.beginFill(0x000000, 0.38);
+  bg.drawRoundedRect(0, 0, w, h, 13);
+  bg.endFill();
+  c.addChild(bg);
+  if (icon) {
+    icon.x = pad;
+    icon.y = (h - 18) / 2;
+    c.addChild(icon);
+  }
+  tx.x = pad + iconW;
+  tx.y = (h - tx.height) / 2;
+  c.addChild(tx);
+  return c;
+}
+
+/** 结算奖励屏：横幅落下 + 奖励格弹出 + 确定 */
 export function createRewardOverlay(opts: RewardOverlayOpts): PIXI.Container {
   const { screenW: W, screenH: H } = opts;
   const root = new PIXI.Container();
-  root.addChild(createScrim(W, H));
+  root.addChild(fadeScrim(W, H));
 
   const cx = W / 2;
   const bannerW = Math.min(300, W - 40);
   const bannerY = Math.max(40, H * 0.12);
-  const banner = createTitleBanner(cx, bannerY, opts.title, bannerW);
-  root.addChild(banner);
+  const { height: bannerH } = placeBanner(root, cx, bannerY, opts.title, bannerW);
 
-  // 关卡名在横幅下方，不再挤进黄色面板——那块位置留给「胜利」
   const sub = makeText(opts.subtitle, 'body', { fill: 0xe8e8d8 });
   sub.anchor.set(0.5, 0);
   sub.x = cx;
-  sub.y = bannerY + banner.height + 10;
+  sub.y = bannerY + Math.max(bannerH, 60) + 10;
   root.addChild(sub);
 
-  // 奖励格排成一行，和图标同宽同高。做成网格而不是逐行文字，是为了让「这一场
-  // 拿到 N 样东西」在一瞥之间就成立——数格子比读三行字快。
-  // 数量为 0 的不画：+0 看起来像漏发，而「这次没拿到」本来就不该占一格。
   const entries = opts.entries.filter((e) => e.amount > 0);
   const cellSize = 62;
   const gap = 10;
   const n = entries.length;
   const gridW = n * cellSize + Math.max(0, n - 1) * gap;
   const gridY = sub.y + 22;
+  const cells: PIXI.Container[] = [];
+  let soulFrom: { x: number; y: number } | null = null;
 
   let detail: PIXI.Container | null = null;
   const closeDetail = (): void => {
@@ -326,8 +327,10 @@ export function createRewardOverlay(opts: RewardOverlayOpts): PIXI.Container {
 
   entries.forEach((e, i) => {
     const cell = new PIXI.Container();
-    cell.x = cx - gridW / 2 + i * (cellSize + gap);
-    cell.y = gridY;
+    const x = cx - gridW / 2 + i * (cellSize + gap);
+    cell.x = x + cellSize / 2;
+    cell.y = gridY + cellSize / 2;
+    cell.pivot.set(cellSize / 2, cellSize / 2);
 
     const bg = new PIXI.Graphics();
     bg.lineStyle(2.5, C.ink, 1);
@@ -356,7 +359,12 @@ export function createRewardOverlay(opts: RewardOverlayOpts): PIXI.Container {
     cell.hitArea = new PIXI.Rectangle(0, 0, cellSize, cellSize);
     cell.on('pointertap', () => openDetail(e));
     root.addChild(cell);
+    cells.push(cell);
+    if (e.iconKey === 'icon_soul') {
+      soulFrom = { x: cell.x, y: cell.y };
+    }
   });
+  staggerPop(cells, 80);
 
   let btnY = gridY;
   if (n > 0) {
@@ -369,7 +377,14 @@ export function createRewardOverlay(opts: RewardOverlayOpts): PIXI.Container {
   }
 
   const btnW = Math.min(220, W - 80);
-  const btn = makeButton(opts.confirmLabel, opts.onConfirm, {
+  const btn = makeButton(opts.confirmLabel, () => {
+    const go = (): void => opts.onConfirm();
+    if (soulFrom) {
+      void flyTokenTo(root, 'icon_soul', soulFrom, { x: 28, y: 28 }).then(go);
+      return;
+    }
+    go();
+  }, {
     variant: 'primary', width: btnW, height: 48, fontSize: 17, radius: 14,
   });
   btn.x = cx - btnW / 2;
@@ -411,7 +426,6 @@ function buildLootCard(card: LootCard, cardW: number, cardH: number): PIXI.Conta
 
   let y = 22;
 
-  // 头像带在卡顶：三张卡并排时，玩家第一眼扫的是这一行，靠它分辨「这次轮到谁」
   if (card.portrait) {
     const bandH = 44;
     const band = new PIXI.Graphics();
@@ -434,7 +448,6 @@ function buildLootCard(card: LootCard, cardW: number, cardH: number): PIXI.Conta
   cc.addChild(whoTx);
   y += whoTx.height + 7;
 
-  // 技能大图标坐在圆底上：卡面是米白的，图标直接贴会显得漂着
   const discR = 27;
   const discCy = y + discR;
   const disc = new PIXI.Graphics();
@@ -460,13 +473,9 @@ function buildLootCard(card: LootCard, cardW: number, cardH: number): PIXI.Conta
   cc.addChild(skillTx);
   y += skillTx.height + 3;
 
-  // 词条名 + 类型小标签并排居中。标签是"这属于哪一类强化"的速记，
-  // 不承担辨识主责，所以只有 16px，摆在名字左边而不是单独占一行。
   const modTx = makeText(card.modName, 'uiStrong', {
     fill: accent, fontSize: 13,
   });
-  // 卡宽是屏宽三等分，「势不可挡」这种四字词条加上标签就顶到边框了。
-  // 挤不下时丢掉标签而不是缩字号：标签只是类型速记，名字才是玩家要读的。
   const tagFits = modTx.width + 16 + 3 <= cardW - 10;
   const tag = card.modIconKey && tagFits ? createUiIcon(card.modIconKey, 16) : null;
   const rowW = modTx.width + (tag ? 16 + 3 : 0);
@@ -482,62 +491,222 @@ function buildLootCard(card: LootCard, cardW: number, cardH: number): PIXI.Conta
   cc.addChild(modTx);
   y += modTx.height + 4;
 
-  const descTx = makeText(card.desc, 'body', {
-    fill: 0x5a6a3a, fontSize: 11,
-    wordWrap: true, wordWrapWidth: cardW - 14, align: 'center', lineHeight: 15,
+  // 中文无空格：必须 breakWords，否则整句当一个词撑破卡宽。
+  // 居中锚点 + wordWrap 在 Pixi 里会把本地原点算偏，改左对齐再在卡内居中。
+  const descPad = 8;
+  const wrapW = Math.max(40, cardW - descPad * 2);
+  const maxDescH = Math.max(20, cardH - y - descPad);
+  const descStyle = (fontSize: number, lineHeight: number) => ({
+    fill: 0x5a6a3a,
+    fontSize,
+    wordWrap: true,
+    wordWrapWidth: wrapW,
+    breakWords: true,
+    align: 'center' as const,
+    lineHeight,
   });
-  descTx.anchor.set(0.5, 0);
-  descTx.x = cardW / 2;
+  let descTx = makeText(card.desc, 'body', descStyle(11, 15));
+  if (descTx.height > maxDescH) {
+    descTx.destroy();
+    descTx = makeText(card.desc, 'body', descStyle(9, 12));
+  }
+  descTx.x = descPad + Math.max(0, (wrapW - descTx.width) / 2);
   descTx.y = y;
   cc.addChild(descTx);
+
+  const clip = new PIXI.Graphics();
+  clip.beginFill(0xffffff);
+  clip.drawRoundedRect(0, 0, cardW, cardH, 12);
+  clip.endFill();
+  clip.renderable = false;
+  cc.addChild(clip);
+  cc.mask = clip;
 
   return cc;
 }
 
-/** 结算第二屏：三张纹章卡竖着并排，点哪张选哪张 */
+function setConfirmLook(btn: PIXI.Container, ready: boolean): void {
+  btn.alpha = ready ? 1 : 0.45;
+}
+
+/** 中途胜利 + 三选一：横幅、入账条、点选高亮、确认才提交 */
 export function createLootOverlay(opts: LootOverlayOpts): PIXI.Container {
   const { screenW: W, screenH: H } = opts;
   const root = new PIXI.Container();
-  root.addChild(createScrim(W, H));
+  root.addChild(fadeScrim(W, H));
 
   const cx = W / 2;
-  const title = makeText('请 选 择 纹 章', 'title', {
-    fill: C.primary, fontSize: 19,
+  const bannerW = Math.min(280, W - 48);
+  const bannerY = Math.max(18, H * 0.05);
+  const { height: bannerH } = placeBanner(root, cx, bannerY, '胜  利', bannerW);
+
+  const summaryBits: PIXI.Container[] = [];
+  const s = opts.summary;
+  if (s && (s.gold > 0 || s.soul > 0)) {
+    if (s.gold > 0) summaryBits.push(makeSummaryChip('icon_gold', `+${s.gold} 金币`, C.gold));
+    if (s.soul > 0) summaryBits.push(makeSummaryChip('icon_soul', `+${s.soul} 魂晶`, C.soulText));
+  }
+  const summaryY = bannerY + Math.max(bannerH, 56) + 4;
+  if (summaryBits.length > 0) {
+    const gap = 10;
+    const total = summaryBits.reduce((w, c) => w + c.width, 0) + gap * (summaryBits.length - 1);
+    let x = cx - total / 2;
+    for (const chip of summaryBits) {
+      chip.x = x;
+      chip.y = summaryY;
+      root.addChild(chip);
+      x += chip.width + gap;
+    }
+    staggerPop(summaryBits, 50);
+  }
+
+  const pickHint = makeText('请 选 择 纹 章', 'title', {
+    fill: C.primary, fontSize: 16,
     stroke: 0x2a2010, strokeThickness: 4,
   });
-  title.anchor.set(0.5, 0);
-  title.x = cx;
-  title.y = Math.max(52, H * 0.14);
-  root.addChild(title);
+  pickHint.anchor.set(0.5, 0);
+  pickHint.x = cx;
+  pickHint.y = summaryY + (summaryBits.length > 0 ? 32 : 8);
 
+  const SELECT_SCALE = 1.08;
   const n = Math.max(1, opts.cards.length);
   const gap = 8;
-  const cardW = Math.min(116, (W - 28 - (n - 1) * gap) / n);
-  const cardH = 258;
+  const cardW = Math.min(110, (W - 28 - (n - 1) * gap) / n);
+  const cardH = Math.min(248, Math.max(210, H * 0.38));
   const totalW = n * cardW + (n - 1) * gap;
-  const top = title.y + 34;
+  // 选中 1.08、入场过冲 1.12 都从中心放大；再给 glow 外扩留空，避免盖住标题。
+  const scaleHeadroom = Math.ceil(cardH * 0.06) + 10;
+  const top = pickHint.y + pickHint.height + scaleHeadroom;
+
+  let selected: number | null = null;
+  const wraps: PIXI.Container[] = [];
+  const glows: ReturnType<typeof attachGlowRing>[] = [];
+  let confirmBtn: PIXI.Container | null = null;
+  const cardLayer = new PIXI.Container();
+  root.addChild(cardLayer);
+
+  const applySelect = (index: number): void => {
+    selected = index;
+    wraps.forEach((w, i) => {
+      const on = i === index;
+      w.scale.set(on ? SELECT_SCALE : 1);
+      glows[i]?.setActive(on);
+      if (on) cardLayer.addChild(w);
+    });
+    if (confirmBtn) setConfirmLook(confirmBtn, true);
+  };
 
   opts.cards.forEach((card, i) => {
-    const cc = new PIXI.Container();
-    cc.x = cx - totalW / 2 + i * (cardW + gap);
-    cc.y = top;
-    cc.addChild(buildLootCard(card, cardW, cardH));
-    cc.eventMode = 'static';
-    cc.cursor = 'pointer';
-    cc.hitArea = new PIXI.Rectangle(0, 0, cardW, cardH);
-    cc.on('pointertap', () => opts.onPick(i));
-    root.addChild(cc);
+    const wrap = new PIXI.Container();
+    wrap.x = cx - totalW / 2 + i * (cardW + gap) + cardW / 2;
+    wrap.y = top + cardH / 2;
+    wrap.pivot.set(cardW / 2, cardH / 2);
+    wrap.addChild(buildLootCard(card, cardW, cardH));
+    wrap.eventMode = 'static';
+    wrap.cursor = 'pointer';
+    wrap.hitArea = new PIXI.Rectangle(0, 0, cardW, cardH);
+    wrap.on('pointertap', () => applySelect(i));
+    cardLayer.addChild(wrap);
+    wraps.push(wrap);
+    glows.push(attachGlowRing(wrap, cardW, cardH));
   });
+  staggerPop(wraps, 80);
+  // 标题始终画在卡层之上，选中放大也不会盖住「请选择纹章」。
+  root.addChild(pickHint);
+
+  const btnW = Math.min(220, W - 80);
+  const confirm = makeButton('确认选择', () => {
+    const resolved = resolveLootConfirm(selected);
+    if (!resolved.ok) {
+      opts.onNeedPick?.();
+      return;
+    }
+    const soulChip = summaryBits.find((_, i) => (s?.soul ?? 0) > 0 && (s?.gold ?? 0) > 0 ? i === 1 : (s?.soul ?? 0) > 0);
+    const from = soulChip
+      ? { x: soulChip.x + soulChip.width / 2, y: soulChip.y + 13 }
+      : null;
+    const go = (): void => opts.onConfirm(resolved.index);
+    if (from && (s?.soul ?? 0) > 0) {
+      void flyTokenTo(root, 'icon_soul', from, { x: 28, y: 28 }).then(go);
+      return;
+    }
+    go();
+  }, {
+    variant: 'primary', width: btnW, height: 44, fontSize: 16, radius: 14,
+  });
+  confirm.x = cx - btnW / 2;
+  confirm.y = top + cardH + scaleHeadroom + 8;
+  confirmBtn = confirm;
+  setConfirmLook(confirm, false);
+  root.addChild(confirm);
 
   const skipW = Math.min(200, W - 100);
-  // 不能用 ghost：那一档是给米白面板调的（近透明底 + 深色字），压在这里的
-  // 深色遮罩上字直接读不出来。见风格圣经 §6 对 ghost 适用范围的限定。
   const skip = makeButton('都不要，继续前进', opts.onSkip, {
-    variant: 'secondary', width: skipW, height: 36, fontSize: 13,
+    variant: 'secondary', width: skipW, height: 34, fontSize: 13,
   });
   skip.x = cx - skipW / 2;
-  skip.y = top + cardH + 30;
+  skip.y = confirm.y + 52;
   root.addChild(skip);
+
+  return root;
+}
+
+/** 战败：盖在棋盘上，不换页。失败不撒彩纸。 */
+export function createDefeatOverlay(opts: DefeatOverlayOpts): PIXI.Container {
+  const { screenW: W, screenH: H } = opts;
+  const root = new PIXI.Container();
+  root.addChild(fadeScrim(W, H));
+
+  const cx = W / 2;
+  const bannerW = Math.min(280, W - 48);
+  const bannerH = 56;
+  const bannerY = Math.max(48, H * 0.16);
+  const bar = new PIXI.Container();
+  const g = new PIXI.Graphics();
+  g.beginFill(0x8a3a3a, 0.94);
+  g.lineStyle(3, C.ink, 1);
+  g.drawRoundedRect(0, 0, bannerW, bannerH, 12);
+  g.endFill();
+  bar.addChild(g);
+  const title = makeText('失  败', 'display', { fill: 0xffffff, fontSize: 28 });
+  title.anchor.set(0.5);
+  title.x = bannerW / 2;
+  title.y = bannerH / 2;
+  bar.addChild(title);
+  bar.pivot.x = bannerW / 2;
+  bar.x = cx;
+  root.addChild(bar);
+  dropBanner(bar, bannerY);
+
+  const cardW = Math.min(320, W - 40);
+  const card = new PIXI.Container();
+  card.addChild(panelBg(cardW, 64, 12));
+  const sub = makeText(opts.subtitle, 'ui', { fill: C.text });
+  sub.x = 16;
+  sub.y = 22;
+  card.addChild(sub);
+  card.pivot.x = cardW / 2;
+  card.x = cx;
+  card.y = bannerY + bannerH + 28;
+  root.addChild(card);
+  staggerPop([card], 40);
+
+  const btnW = cardW;
+  const primary = makeButton(opts.primaryLabel, opts.onPrimary, {
+    variant: 'primary', width: btnW, height: 46, fontSize: 16, radius: 12,
+  });
+  primary.x = cx - btnW / 2;
+  primary.y = card.y + 64 + 18;
+  root.addChild(primary);
+
+  if (opts.secondaryLabel && opts.onSecondary) {
+    const secondary = makeButton(opts.secondaryLabel, opts.onSecondary, {
+      variant: 'secondary', width: btnW, height: 40, fontSize: 14, radius: 12,
+    });
+    secondary.x = cx - btnW / 2;
+    secondary.y = primary.y + 56;
+    root.addChild(secondary);
+  }
 
   return root;
 }

@@ -421,6 +421,7 @@ function resolveHit(
     guardNote: guardNote(effectiveUnitDef(tgt, defs)) ?? undefined,
     modNote,
     poisoned: specAppliesPoison(spec) || undefined,
+    frostbitten: specAppliesFrost(spec) || undefined,
   };
 }
 
@@ -432,6 +433,11 @@ function resolveHit(
  */
 export function specAppliesPoison(spec: SkillSpec): boolean {
   return spec.onCastFoeEffects?.some((e) => e.kind === 'poison' && e.theme !== 'frost') ?? false;
+}
+
+/** 霜噬：挂冻伤，回放叠竖向霜晶，不叠紫雾。 */
+export function specAppliesFrost(spec: SkillSpec): boolean {
+  return spec.onCastFoeEffects?.some((e) => e.kind === 'poison' && e.theme === 'frost') ?? false;
 }
 
 /**
