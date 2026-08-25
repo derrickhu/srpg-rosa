@@ -53,6 +53,7 @@ import { ENDLESS_MAX_WAVES, isEndlessDungeon } from '@/data/endlessCatalog';
 import { createNodeStrip } from '@/view/NodeStrip';
 import { AssetManager } from '@/core/AssetManager';
 import { makeButton } from '@/ui/Button';
+import { AudioManager, muteButtonLabel } from '@/core/AudioManager';
 import { attachPress } from '@/ui/press';
 import { attachGlowRing } from '@/view/fx/celebration';
 import { unitHeadLocalY } from '@/view/AnimatedUnit';
@@ -369,7 +370,12 @@ export function createDeployView(
   const settingsOverlay = new PIXI.Container();
   settingsOverlay.visible = false;
   function toggleSettingsPanel(): void {
-    settingsOverlay.visible = !settingsOverlay.visible;
+    const next = !settingsOverlay.visible;
+    settingsOverlay.visible = next;
+    if (next) {
+      AudioManager.playSfx('ui_open');
+      buildSettingsPanel();
+    }
   }
   function buildSettingsPanel(): void {
     settingsOverlay.removeChildren();
@@ -385,7 +391,7 @@ export function createDeployView(
     settingsOverlay.addChild(dim);
 
     const panelW = Math.min(280, sw - 40);
-    const panelH = 220;
+    const panelH = 272;
     const panelX = Math.floor((sw - panelW) / 2);
     const panelY = Math.floor((sh - panelH) / 2) - 30;
 
@@ -433,6 +439,15 @@ export function createDeployView(
     btnHome.x = 16;
     btnHome.y = by;
     panel.addChild(btnHome);
+    by += 52;
+
+    const btnMute = makeButton(muteButtonLabel(), () => {
+      AudioManager.toggleMute();
+      buildSettingsPanel();
+    }, { variant: 'secondary', width: btnW, height: 42, fontSize: 15 });
+    btnMute.x = 16;
+    btnMute.y = by;
+    panel.addChild(btnMute);
 
     settingsOverlay.addChild(panel);
   }
@@ -604,6 +619,7 @@ export function createDeployView(
       return;
     }
     if (selectedRosterId && placeCharacter(state, selectedRosterId, pos)) {
+      AudioManager.playSfx('sfx_deploy');
       redrawGrid();
       redrawHand();
       return;

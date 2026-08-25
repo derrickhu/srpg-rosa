@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import { AudioManager } from '@/core/AudioManager';
 import { makeText } from '@/theme/typography';
 import { C, shade } from '@/view/mvpTheme';
 import { fadeScrim } from '@/view/fx/celebration';
@@ -96,6 +97,7 @@ function makeCloseButton(size: number, onTap: () => void): PIXI.Container {
 export function createModal(opts: ModalOptions): ModalHandle {
   const root = new PIXI.Container();
   root.eventMode = 'static';
+  AudioManager.playSfx('ui_open');
 
   const dim = fadeScrim(opts.screenWidth, opts.screenHeight, opts.dimAlpha ?? 0.55);
   root.addChild(dim);

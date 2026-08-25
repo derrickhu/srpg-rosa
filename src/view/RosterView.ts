@@ -36,6 +36,7 @@ import { createModal, type ModalHandle } from '@/ui/Modal';
 import { attachPress } from '@/ui/press';
 import { createScrollList } from '@/ui/ScrollList';
 import { showToast } from '@/ui/Toast';
+import { AudioManager } from '@/core/AudioManager';
 import { flashPop, staggerPop } from '@/view/fx/celebration';
 
 export interface RosterCallbacks {
@@ -542,10 +543,12 @@ export function createRosterView(
           md.setTitle(`${m.name}  Lv.${m.level}`);
           refillDetail(m);
           flashPop(md.body, md.bodySize.width, 48);
+          AudioManager.playSfx('sfx_levelup');
         } else {
           showToast(md.root, `魂晶不足（还差 ${cost - state.meta.metaCurrency}）`, {
             screenWidth: W,
             color: C.soulText,
+            deny: true,
           });
         }
       },

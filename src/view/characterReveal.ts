@@ -8,6 +8,7 @@ import { makeText } from '@/theme/typography';
 import { C, PROFESSION_ACCENT } from '@/view/mvpTheme';
 import { createBackground, createUnitToken } from '@/view/renderHelpers';
 import { fadeScrim, staggerPop } from '@/view/fx/celebration';
+import { AudioManager } from '@/core/AudioManager';
 
 export interface CharacterRevealOpts {
   screenW: number;
@@ -46,6 +47,7 @@ export function createCharacterRevealOverlay(opts: CharacterRevealOpts): PIXI.Co
   const role = def ? describeSkillRole(def.skillRoute) : '';
 
   const root = new PIXI.Container();
+  AudioManager.playSfx('sfx_reveal');
   root.addChild(createBackground(W, H, 'reveal_hall'));
   // 必须挡住下层招募按钮；alpha 压低，让厅堂自己说话
   root.addChild(fadeScrim(W, H, 0.28));

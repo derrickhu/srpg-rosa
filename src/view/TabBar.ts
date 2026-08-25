@@ -4,6 +4,7 @@ import { getSafeAreaInsets } from '@/core/safeArea';
 import { C, shade } from '@/view/mvpTheme';
 import { createUiIcon } from '@/view/renderHelpers';
 import { attachPress } from '@/ui/press';
+import { AudioManager } from '@/core/AudioManager';
 
 /**
  * 底部常驻导航 Tab。
@@ -105,7 +106,10 @@ export function createTabBar(
     c.hitArea = new PIXI.Rectangle(0, -10, slotW, H + 10);
     if (!isActive) {
       attachPress(c);
-      c.on('pointertap', () => onSelect(t.id));
+      c.on('pointertap', () => {
+        AudioManager.playSfx('ui_tab');
+        onSelect(t.id);
+      });
     }
     root.addChild(c);
   });

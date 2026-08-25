@@ -28,6 +28,8 @@ import { createNodeStrip } from '@/view/NodeStrip';
 import { isDisplayLive } from '@/view/pixiLive';
 import { attachPress } from '@/ui/press';
 import { makeButton } from '@/ui/Button';
+import { showToast } from '@/ui/Toast';
+import { AudioManager } from '@/core/AudioManager';
 import { staggerPop } from '@/view/fx/celebration';
 
 export interface AdventureCallbacks {
@@ -255,7 +257,16 @@ export function createAdventureView(
       if (d.unlock.kind === 'meta') {
         const cost = d.unlock.cost;
         const ub = makeButton(`解锁（魂晶 ${cost}）`, () => {
-          if (unlockDungeonWithMeta(state, d.id)) cb.onChanged();
+          if (unlockDungeonWithMeta(state, d.id)) {
+            AudioManager.playSfx('sfx_unlock');
+            cb.onChanged();
+          } else {
+            showToast(root, `魂晶不足（还差 ${cost - state.meta.metaCurrency}）`, {
+              screenWidth: W,
+              color: C.soulText,
+              deny: true,
+            });
+          }
         }, { variant: 'primary', width: 160, height: 38, fontSize: 13, radius: 10 });
         ub.x = W / 2 - 80;
         ub.y = cardY + cardH * 0.7;

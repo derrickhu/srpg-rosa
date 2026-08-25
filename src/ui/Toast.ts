@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import { AudioManager } from '@/core/AudioManager';
 import { makeText } from '@/theme/typography';
 import { getSafeAreaInsets } from '@/core/safeArea';
 import { isDisplayLive, safeDestroy } from '@/view/pixiLive';
@@ -13,6 +14,8 @@ export interface ToastOptions {
   y?: number;
   /** 有宽度时水平居中，避开「裸字贴左上」在草地上糊掉 */
   screenWidth?: number;
+  /** 金币/魂晶不足一类：顺带播拒绝音 */
+  deny?: boolean;
 }
 
 export function showToast(
@@ -20,6 +23,7 @@ export function showToast(
   msg: string,
   opts?: ToastOptions,
 ): void {
+  if (opts?.deny) AudioManager.playSfx('ui_deny');
   const wrap = new PIXI.Container();
   const fontSize = opts?.fontSize ?? 14;
   const maxW = Math.max(160, (opts?.screenWidth ?? 300) - 48);

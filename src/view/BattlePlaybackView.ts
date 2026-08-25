@@ -52,6 +52,8 @@ import {
   runGoldYBelow,
 } from '@/view/renderHelpers';
 import { makeButton } from '@/ui/Button';
+import { AudioManager, muteButtonLabel } from '@/core/AudioManager';
+import { sfxForAttack, sfxForAttackHit, sfxForSkillCast, sfxForSkillHit } from '@/data/audioCatalog';
 import { AssetManager } from '@/core/AssetManager';
 import {
   createAnimatedUnit,
@@ -500,6 +502,7 @@ export function createBattlePlaybackView(
 
   function flyCoinsToHud(fromX: number, fromY: number, amount: number): void {
     if (amount <= 0 || skipping) return;
+    AudioManager.playSfx('sfx_coin');
     const n = Math.min(4, Math.max(1, amount));
     addDisplayGold(amount);
     const dest = goldHudCenter();
@@ -681,9 +684,16 @@ export function createBattlePlaybackView(
   // --- 设置面板 ---
   const settingsOverlay = new PIXI.Container();
   settingsOverlay.visible = false;
-  settingsBtn.on('pointertap', () => { settingsOverlay.visible = !settingsOverlay.visible; });
-
-  {
+  function toggleBattleSettings(): void {
+    const next = !settingsOverlay.visible;
+    settingsOverlay.visible = next;
+    if (next) {
+      AudioManager.playSfx('ui_open');
+      buildBattleSettings();
+    }
+  }
+  function buildBattleSettings(): void {
+    settingsOverlay.removeChildren();
     const dim = new PIXI.Graphics();
     dim.beginFill(0x000000, 0.5);
     dim.drawRect(0, 0, sw, sh);
@@ -694,7 +704,7 @@ export function createBattlePlaybackView(
 
     const panelW = Math.min(280, sw - 40);
     const allowDeploy = gameState.allowReturnDeploy !== false;
-    const panelH = allowDeploy ? 220 : 168;
+    const panelH = allowDeploy ? 272 : 220;
     const panelX = Math.floor((sw - panelW) / 2);
     const panelY = Math.floor((sh - panelH) / 2) - 30;
     const panel = new PIXI.Container();
@@ -729,10 +739,18 @@ export function createBattlePlaybackView(
 
     const btnHome = makeButton('返回大厅', () => { settingsOverlay.visible = false; callbacks.onHome(); },
       { variant: 'ghost', width: btnW, height: 42, fontSize: 15 });
-    btnHome.x = 16; btnHome.y = by; panel.addChild(btnHome);
+    btnHome.x = 16; btnHome.y = by; panel.addChild(btnHome); by += 52;
+
+    const btnMute = makeButton(muteButtonLabel(), () => {
+      AudioManager.toggleMute();
+      buildBattleSettings();
+    }, { variant: 'secondary', width: btnW, height: 42, fontSize: 15 });
+    btnMute.x = 16; btnMute.y = by; panel.addChild(btnMute);
 
     settingsOverlay.addChild(panel);
   }
+  settingsBtn.on('pointertap', () => toggleBattleSettings());
+  buildBattleSettings();
 
   // --- 棋盘 ---
   /**
@@ -1154,6 +1172,8 @@ export function createBattlePlaybackView(
     opts: {
       onPass?: { at: { x: number; y: number }; run: () => void }[];
       onTargets?: { at: { x: number; y: number }; run: () => void }[];
+      /** 蓄力结束后、挥击/弹道/爆炸出手时。技能音效和出手动作挂这里，避免比画面早一截。 */
+      onRelease?: () => void;
     } = {},
   ): Promise<void> {
     if (skipping) return;
@@ -1172,6 +1192,8 @@ export function createBattlePlaybackView(
       );
       if (root.destroyed || skipping) return;
     }
+
+    opts.onRelease?.();
 
     if (recipe.cast) playFlash(recipe.cast, from, to);
     else if (recipe.castBurst) playCastBurst(fxLayer, from, recipe.castBurst, cell);
@@ -1613,9 +1635,11 @@ export function createBattlePlaybackView(
         case 'wait':
           // 必须播事件：待机拾取写在 commandWait 的返回值里，丢掉的话
           // 引擎已经把地上的药收走了，画面和背包却都不会变。
+          AudioManager.playSfx('sfx_wait');
           await playEvents(sim.commandWait(uid).events);
           break;
         case 'undo':
+          AudioManager.playSfx('sfx_undo');
           await playEvents(sim.commandUndoMove(uid).events);
           phase = 'act';
           aimSlot = null;
@@ -1708,6 +1732,7 @@ export function createBattlePlaybackView(
   function renderPotionEvents(evs: BattleEvent[]): void {
     for (const ev of evs) {
       if (ev.type === 'potion') {
+        AudioManager.playSfx('sfx_potion');
         floatUtility(sw / 2, originY + 30, `使用 ${ev.name}`);
       } else if (ev.type === 'heal') {
         const tok = tokens.get(ev.target);
@@ -1745,6 +1770,7 @@ export function createBattlePlaybackView(
         break;
       }
       case 'moveStep': {
+        AudioManager.playSfx('sfx_step');
         const tok = tokens.get(ev.uid);
         if (tok) {
           const dx = ev.to.x - ev.from.x;
@@ -1802,12 +1828,15 @@ export function createBattlePlaybackView(
         const cy = caster?.y ?? 120;
         const casterPos = posByUid.get(ev.uid);
         const firstTargetPos = ev.hits.length > 0 ? posByUid.get(ev.hits[0]!.target) : undefined;
-        if (casterPos && firstTargetPos) {
-          animByUid.get(ev.uid)?.playAttack(
-            firstTargetPos.x - casterPos.x,
-            firstTargetPos.y - casterPos.y,
-          );
-        }
+        const releaseCast = (): void => {
+          if (casterPos && firstTargetPos) {
+            animByUid.get(ev.uid)?.playAttack(
+              firstTargetPos.x - casterPos.x,
+              firstTargetPos.y - casterPos.y,
+            );
+          }
+          AudioManager.playSfx(sfxForSkillCast(ev.skillId, ev.vfxId));
+        };
         showSkillLabel(cx, cy - Math.max(42, cell * 0.6), ev.skillName);
         floatAtkTerrain(cx, cy - Math.max(22, cell * 0.32), ev.atkTerrainNote);
 
@@ -1834,6 +1863,10 @@ export function createBattlePlaybackView(
           if (tt) {
             // 纯 buff/debuff（damage:0）不飘「0」、不抖——那是号角/缠足一类，不是失手
             if (h.damage > 0) {
+              // 弹道落地才响；近战出手音已经在 release 对上了挥击/爆炸
+              if (recipe?.travel) {
+                AudioManager.playSfx(sfxForSkillHit(ev.skillId, ev.vfxId));
+              }
               applyHitFeel(h.target, { x: cx, y: cy });
               floatDamage(tt.x, tt.y, h.damage);
               floatTerrainNote(tt.x, tt.y, h.defTerrainNote, h.guardNote);
@@ -1869,7 +1902,10 @@ export function createBattlePlaybackView(
               run: () => applyHitFx(h),
             };
           });
-          await playRecipe(recipe, { x: cx, y: cy }, targets[0]?.at, { onTargets: targets });
+          await playRecipe(recipe, { x: cx, y: cy }, targets[0]?.at, {
+            onTargets: targets,
+            onRelease: releaseCast,
+          });
           flushRemainingHits();
           await awaitEase(dur(180), () => {});
         } else if (recipe?.travel) {
@@ -1882,6 +1918,7 @@ export function createBattlePlaybackView(
               ? cellCenter(originX, originY, cell, firstTargetPos)
               : { x: cx + cell * 3, y: cy };
           await playRecipe(recipe, { x: cx, y: cy }, endAt, {
+            onRelease: releaseCast,
             onPass: orderedHits.map((h) => {
               const tok = tokens.get(h.target);
               return {
@@ -1901,6 +1938,7 @@ export function createBattlePlaybackView(
             recipe,
             { x: cx, y: cy },
             groundAt ?? (aimTok ? { x: aimTok.x, y: aimTok.y } : undefined),
+            { onRelease: releaseCast },
           );
           await awaitEase(dur(HIT_STOP_MS), () => {});
           // AoE 逐个中招，而不是同一帧四个人一起闪白。
@@ -1916,6 +1954,7 @@ export function createBattlePlaybackView(
           await awaitEase(dur(320), () => {});
         } else {
           // 没登记专属特效的技能仍走 displayKind 的静态贴图
+          releaseCast();
           const firstHitToken = ev.hits.length > 0 ? tokens.get(ev.hits[0]!.target) : undefined;
           const fxKey = skillFxKey(ev.kind);
           const at = firstHitToken ?? { x: cx, y: cy };
@@ -1939,13 +1978,18 @@ export function createBattlePlaybackView(
           // 普攻按兵种原型取配方：近战只有命中闪光，弓手是飞箭 → 命中。
           // 有飞行段时 await 抵达再飘伤害，否则读成「敌人自己爆了」
           const kind = defIdByUid.get(ev.attacker);
+          const atkRecipe = attackRecipeFor(kind ?? 'sword', animSetByUid.get(ev.attacker));
+          AudioManager.playSfx(sfxForAttack(kind));
           // 冲锋光环挂在出手端，和飞/砍并行，不挡伤害时机
           if (ev.charged) void playRecipe(CHARGE_VFX, { x: a.x, y: a.y }, undefined);
           await playRecipe(
-            attackRecipeFor(kind ?? 'sword', animSetByUid.get(ev.attacker)),
+            atkRecipe,
             { x: a.x, y: a.y },
             { x: t.x, y: t.y },
           );
+          if (atkRecipe.travel) {
+            AudioManager.playSfx(sfxForAttackHit(kind));
+          }
           applyHitFeel(ev.target, { x: a.x, y: a.y });
           await awaitEase(dur(HIT_STOP_MS), () => {});
           floatDamage(t.x, t.y, ev.damage);
@@ -1960,6 +2004,7 @@ export function createBattlePlaybackView(
         break;
       }
       case 'heal': {
+        AudioManager.playSfx('sfx_heal');
         const tok = tokens.get(ev.target);
         if (tok) {
           floatHeal(tok.x, tok.y, ev.amount);
@@ -1974,10 +2019,12 @@ export function createBattlePlaybackView(
         break;
       }
       case 'potion': {
+        AudioManager.playSfx('sfx_potion');
         floatUtility(sw / 2, originY + 30, `使用 ${ev.name}`);
         break;
       }
       case 'death': {
+        AudioManager.playSfx('sfx_death');
         const tok = tokens.get(ev.uid);
         if (tok) {
           if (enemyUids.has(ev.uid)) {
@@ -2029,6 +2076,8 @@ export function createBattlePlaybackView(
         const at = cellCenter(originX, originY, cell, { x: ev.x, y: ev.y });
         // 烧起来要出声。玩家点了一发带火的技能，如果棋盘只是悄悄换了个颜色，
         // 他不会把「掩体消失」和自己那一下联系起来。
+        if (ev.reason === 'ignite') AudioManager.playSfx('sfx_ignite');
+        else if (ev.reason === 'gate') AudioManager.playSfx('sfx_gate');
         floatUtility(
           at.x,
           at.y - cell * 0.35,

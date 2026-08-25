@@ -1,0 +1,305 @@
+{
+  "defaults": {
+    "bitrate": "96k",
+    "prompt_influence": 0.4
+  },
+  "sfx": [
+    {
+      "name": "ui_click",
+      "text": "short crisp plastic tick, glassy UI button tap, sharp attack in first 20ms, dry, no reverb, no wooden thud, no music, no voice, no background noise",
+      "duration": 0.18,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/ui_click.mp3",
+      "notes": "所有 makeButton 成功点击"
+    },
+    {
+      "name": "ui_deny",
+      "text": "short muted plastic tick then a dull descending glass clack, UI error deny, dry, no reverb, no wooden thud, no music, no voice",
+      "duration": 0.22,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/ui_deny.mp3",
+      "notes": "禁用点击、金币/魂晶不足"
+    },
+    {
+      "name": "ui_open",
+      "text": "short airy whoosh into a bright plastic-glass tick, UI panel opening, dry, quick decay, no reverb, no music, no voice",
+      "duration": 0.28,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/ui_open.mp3",
+      "notes": "Modal / 详情打开"
+    },
+    {
+      "name": "ui_tab",
+      "text": "short lower-pitched plastic tick, UI tab switch, slightly heavier than a click, dry, no reverb, no wooden thud, no music, no voice",
+      "duration": 0.2,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/ui_tab.mp3",
+      "notes": "底栏切 Tab"
+    },
+    {
+      "name": "sfx_soul_spend",
+      "text": "amethyst crystal shard set into a gold inlay, two descending glass notes then a tiny harp pluck, warm cream hall, 0.5 seconds, no brass coin, no plastic tick, no choir, no voice",
+      "duration": 0.5,
+      "prompt_influence": 0.55,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_soul_spend.mp3",
+      "notes": "招募花魂晶"
+    },
+    {
+      "name": "sfx_unlock",
+      "text": "parchment map unfurling, rising three-note harp, one glass chime on the last note, chapter seal opening, short room, 0.7 seconds, no coin, no choir, no voice",
+      "duration": 0.7,
+      "prompt_influence": 0.55,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_unlock.mp3",
+      "notes": "魂晶解锁章节"
+    },
+    {
+      "name": "sfx_soul_gain",
+      "text": "two rising glass-crystal notes, amethyst shard catching light, tiny harp sparkle, warm hall, 0.5 seconds, no brass coin, no plastic tick, no voice",
+      "duration": 0.5,
+      "prompt_influence": 0.55,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_soul_gain.mp3",
+      "notes": "结算魂晶入账"
+    },
+    {
+      "name": "sfx_reveal",
+      "text": "gold ribbon snap, rising harp glissando, lute chord, warm wooden flute holds one note, glass chime on the last beat, character stepping onto a gold dais in a cream hall, 1.6 seconds, short hall, no choir, no brass, no voice",
+      "duration": 1.6,
+      "prompt_influence": 0.55,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_reveal.mp3",
+      "notes": "角色亮相厅弹出"
+    },
+    {
+      "name": "sfx_levelup",
+      "text": "four rising harp notes then a warm wooden flute lift, gold sparkle shimmer, 0.8 seconds, short room, no choir, no brass fanfare, no voice",
+      "duration": 0.8,
+      "prompt_influence": 0.55,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_levelup.mp3",
+      "notes": "升级成功 flashPop"
+    },
+    {
+      "name": "sfx_coin",
+      "text": "short bright metallic coin ding, small brass token, sharp attack, dry, no glass bell, no music, no voice",
+      "duration": 0.25,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_coin.mp3",
+      "notes": "击杀金币飞 HUD"
+    },
+    {
+      "name": "sfx_buy",
+      "text": "two brass coins drop on a wooden market counter, small leather pouch jingle, one cheerful lute pluck, supply tent, dry, 0.45 seconds, no glass soul chime, no plastic tick, no voice",
+      "duration": 0.45,
+      "prompt_influence": 0.55,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_buy.mp3",
+      "notes": "补给点买成"
+    },
+    {
+      "name": "sfx_deploy",
+      "text": "short soft cloth thump plus a tiny metal pin click, chess piece placed on board, dry, no wooden thud, no music, no voice",
+      "duration": 0.22,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_deploy.mp3",
+      "notes": "布阵落子"
+    },
+    {
+      "name": "sfx_sweep",
+      "text": "short paper rustle then a crisp plastic confirm tick, sweep confirm, dry, no music, no voice",
+      "duration": 0.3,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_sweep.mp3",
+      "notes": "扫荡确认"
+    },
+    {
+      "name": "sfx_step",
+      "text": "very short soft boot step on dry grass, single footfall, tiny cloth rustle, dry, no armor rattle, no music, no voice",
+      "duration": 0.15,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_step.mp3",
+      "notes": "moveStep，AudioManager 80ms 节流"
+    },
+    {
+      "name": "sfx_undo",
+      "text": "short reverse plastic tick, UI undo, slightly falling, dry, no reverb, no music, no voice",
+      "duration": 0.18,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_undo.mp3",
+      "notes": "撤销移动"
+    },
+    {
+      "name": "sfx_wait",
+      "text": "short soft cloth settle, wait/skip turn, tiny muted tick, dry, no music, no voice",
+      "duration": 0.18,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_wait.mp3",
+      "notes": "待机"
+    },
+    {
+      "name": "sfx_hit_melee",
+      "text": "short cloth impact plus metallic blade tap, melee hit, sharp attack, quick decay, dry, same envelope as other combat hits, no long tail, no scream, no music",
+      "duration": 0.35,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_hit_melee.mp3",
+      "notes": "近战普攻"
+    },
+    {
+      "name": "sfx_hit_arrow",
+      "text": "short airy whoosh then wooden shaft tap on cloth, arrow hit, sharp attack, quick decay, dry, no long tail, no music, no voice",
+      "duration": 0.35,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_hit_arrow.mp3",
+      "notes": "远程普攻出手"
+    },
+    {
+      "name": "sfx_hit_physical",
+      "text": "short physical impact, wooden bolt or steel tip punch into cloth and light mail, tight body thump, sharp attack, quick decay, dry, 0.35 seconds, no whoosh, no scream, no music, no voice",
+      "duration": 0.35,
+      "prompt_influence": 0.5,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_hit_physical.mp3",
+      "notes": "物理伤害落地（穿透箭、弓普攻）"
+    },
+    {
+      "name": "sfx_hit_magic",
+      "text": "loud compact magical explosion on impact, deep arcane thump then a bright crackle burst, punchy bass body, glassy shards, thick and aggressive, full 0.45 second, dry, no choir, no long whoosh, no music, no voice, no scream",
+      "duration": 0.45,
+      "prompt_influence": 0.5,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_hit_magic.mp3",
+      "notes": "魔法伤害落地（炎弹、霜、圣击）"
+    },
+    {
+      "name": "sfx_death",
+      "text": "short dull body fall, cloth and light armor settle, dry, no long tail, no scream, no music, no voice",
+      "duration": 0.4,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_death.mp3",
+      "notes": "死亡，短无长尾"
+    },
+    {
+      "name": "sfx_heal",
+      "text": "short soft rising glass shimmer, heal sparkle, warm and thin, dry, no choir, no music, no voice",
+      "duration": 0.4,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_heal.mp3",
+      "notes": "治疗事件"
+    },
+    {
+      "name": "sfx_potion",
+      "text": "short glass vial clink plus liquid gulp, potion used, dry, no music, no voice",
+      "duration": 0.35,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_potion.mp3",
+      "notes": "用药"
+    },
+    {
+      "name": "sfx_gate",
+      "text": "short heavy wood-and-iron gate unlatch then a brief rumble, mechanism opening, dry to short room, no long tail, no music, no voice",
+      "duration": 0.55,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_gate.mp3",
+      "notes": "开闸"
+    },
+    {
+      "name": "sfx_ignite",
+      "text": "short fire crackle whoosh, dry brush igniting, sharp attack, quick decay, dry, no explosion boom, no music, no voice",
+      "duration": 0.45,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_ignite.mp3",
+      "notes": "点燃森林"
+    },
+    {
+      "name": "sfx_victory",
+      "text": "cartoon fantasy victory sting, bright lute flourish of four rising notes, wooden flute answers the last two, harp sparkle, glass chime cadence, 2.0 seconds, short hall, no vocals, no choir, no brass orchestra, no long tail",
+      "duration": 2.0,
+      "prompt_influence": 0.55,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_victory.mp3",
+      "notes": "胜利横幅"
+    },
+    {
+      "name": "sfx_defeat",
+      "text": "cartoon fantasy defeat sting, descending lute in falling thirds, muted wooden flute sigh, one low zither note, 1.8 seconds, dry to short room, no drone, no vocals, no choir, not scary, no long tail",
+      "duration": 1.8,
+      "prompt_influence": 0.55,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_defeat.mp3",
+      "notes": "失败横幅"
+    },
+    {
+      "name": "sfx_skill_physical",
+      "text": "short cloth whoosh then metallic blade clash, physical skill swing, sharp attack, quick decay, dry, same envelope as other skill families, no long tail, no music, no voice",
+      "duration": 0.7,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_skill_physical.mp3",
+      "notes": "挥砍/突进/盾击/冲锋"
+    },
+    {
+      "name": "sfx_skill_fire",
+      "text": "short fire crackle whoosh, flame burst, sharp attack, quick decay, dry, same envelope as other skill families, no huge explosion, no music, no voice",
+      "duration": 0.7,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_skill_fire.mp3",
+      "notes": "余烬、火环、火把"
+    },
+    {
+      "name": "sfx_skill_frost",
+      "text": "short glass shatter plus icy bell chime, frost burst, sharp attack, quick decay, dry, same envelope as other skill families, no long wind, no music, no voice",
+      "duration": 0.7,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_skill_frost.mp3",
+      "notes": "霜环及冰主题"
+    },
+    {
+      "name": "sfx_skill_poison",
+      "text": "short wet bubble pop plus a thin hiss, poison burst, sharp attack, quick decay, dry, same envelope as other skill families, no music, no voice",
+      "duration": 0.7,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_skill_poison.mp3",
+      "notes": "毒沼、毒镖、孢子"
+    },
+    {
+      "name": "sfx_skill_holy",
+      "text": "short soft rising bell shimmer, holy bless, warm glass chime, sharp attack, quick decay, dry, same envelope as other skill families, no choir, no music, no voice",
+      "duration": 0.7,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_skill_holy.mp3",
+      "notes": "祝福、祈祷、圣疗"
+    },
+    {
+      "name": "sfx_skill_boss",
+      "text": "short heavy roar-whoosh plus low impact, boss skill, thicker than player skills but still dry and short, 1.2 seconds, no long tail, no vocals, no music",
+      "duration": 1.2,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_skill_boss.mp3",
+      "notes": "血牙吼 / 沼后瘴气 / 龙灾 共用"
+    },
+    {
+      "name": "sfx_skill_whirl",
+      "text": "spinning steel longsword whoosh circling once, three overlapping metallic blade slashes, cloth snap then a short steel ring tail, full 0.85 second cartoon combat swing, dry room, no voice, no music, no explosion, no choir",
+      "duration": 0.85,
+      "prompt_influence": 0.55,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_skill_whirl.mp3",
+      "notes": "雷恩 旋风斩"
+    },
+    {
+      "name": "sfx_skill_pierce",
+      "text": "wooden arrow flies past with a long airy whoosh, then a thin steel tip punch through cloth, bowstring snap only at the start, the whoosh is the main body lasting half a second, short airy tail, 0.75 seconds total, dry, no voice, no music, no explosion",
+      "duration": 0.75,
+      "prompt_influence": 0.45,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_skill_pierce.mp3",
+      "notes": "希尔 穿透箭"
+    },
+    {
+      "name": "sfx_skill_bash",
+      "text": "heavy oak-and-iron kite shield slams into plate armor, stone floor crack rumble, knockback thud, thick body then a short bass tail, full 0.8 second impact, dry, no voice, no music, no explosion boom, no choir",
+      "duration": 0.8,
+      "prompt_influence": 0.55,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_skill_bash.mp3",
+      "notes": "格隆 震击"
+    },
+    {
+      "name": "sfx_skill_lance_thrust",
+      "text": "cloth charge whoosh then steel lance punch through mail, metal ring after impact, short dash body with a ringing tail, full 0.85 second, dry, no horse neigh, no voice, no music, no explosion",
+      "duration": 0.85,
+      "prompt_influence": 0.55,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_skill_lance_thrust.mp3",
+      "notes": "岚骑 长驱突刺"
+    },
+    {
+      "name": "sfx_skill_ember",
+      "text": "compact fireball whoosh then a tight fire crackle burst on impact, orange ember pop and a short heat tail, full 0.75 second, dry, no huge explosion, no voice, no music",
+      "duration": 0.75,
+      "prompt_influence": 0.55,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_skill_ember.mp3",
+      "notes": "奥莉 炎弹"
+    },
+    {
+      "name": "sfx_skill_heal_touch",
+      "text": "warm hands press, rising three-note glass chime plus a soft harp pluck, cream light bloom with a short shimmer tail, full 0.7 second, short room, no choir, no voice, no music, not a UI tick, no plastic click",
+      "duration": 0.7,
+      "prompt_influence": 0.55,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_skill_heal_touch.mp3",
+      "notes": "弥尔 圣疗"
+    },
+    {
+      "name": "sfx_skill_frost_ring",
+      "text": "ice ring expanding outward, crystal shards burst, glassy shatter plus cold air whoosh, sharp attack, dry, 0.85 seconds, no wind storm, no voice, no music, no choir",
+      "duration": 0.85,
+      "prompt_influence": 0.55,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_skill_frost_ring.mp3",
+      "notes": "芙洛 霜环"
+    }
+  ]
+}

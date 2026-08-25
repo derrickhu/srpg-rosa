@@ -2,6 +2,7 @@ import * as PIXI from 'pixi.js';
 import { makeText } from '@/theme/typography';
 import { C } from '@/view/mvpTheme';
 import { makeButton } from '@/ui/Button';
+import { AudioManager } from '@/core/AudioManager';
 import { createUiIcon } from '@/view/renderHelpers';
 import type { SkillModRarity } from '@/data/skillModCatalog';
 import {
@@ -290,6 +291,10 @@ function makeSummaryChip(iconKey: string, label: string, tint: number): PIXI.Con
 export function createRewardOverlay(opts: RewardOverlayOpts): PIXI.Container {
   const { screenW: W, screenH: H } = opts;
   const root = new PIXI.Container();
+  AudioManager.playSfx('sfx_victory');
+  if (opts.entries.some((e) => e.iconKey === 'icon_soul' && e.amount > 0)) {
+    AudioManager.playSfx('sfx_soul_gain');
+  }
   root.addChild(fadeScrim(W, H));
 
   const cx = W / 2;
@@ -533,6 +538,8 @@ function setConfirmLook(btn: PIXI.Container, ready: boolean): void {
 export function createLootOverlay(opts: LootOverlayOpts): PIXI.Container {
   const { screenW: W, screenH: H } = opts;
   const root = new PIXI.Container();
+  AudioManager.playSfx('sfx_victory');
+  if ((opts.summary?.soul ?? 0) > 0) AudioManager.playSfx('sfx_soul_gain');
   root.addChild(fadeScrim(W, H));
 
   const cx = W / 2;
@@ -655,6 +662,7 @@ export function createLootOverlay(opts: LootOverlayOpts): PIXI.Container {
 export function createDefeatOverlay(opts: DefeatOverlayOpts): PIXI.Container {
   const { screenW: W, screenH: H } = opts;
   const root = new PIXI.Container();
+  AudioManager.playSfx('sfx_defeat');
   root.addChild(fadeScrim(W, H));
 
   const cx = W / 2;

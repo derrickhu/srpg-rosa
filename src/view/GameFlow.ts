@@ -78,6 +78,7 @@ import { createBackground, createUnitToken } from '@/view/renderHelpers';
 import { createCharacterRevealOverlay } from '@/view/characterReveal';
 import { createInitialState, getCharacter } from '@/game/state/GameState';
 import { getSkillSpec } from '@/data/skillCatalog';
+import { AudioManager } from '@/core/AudioManager';
 import { Platform } from '@/platform/wxPlatform';
 
 function containerScene(container: PIXI.Container): Scene {
@@ -241,6 +242,7 @@ export class GameFlow {
       createTabBar(this.currentTab, (t) => this.renderShell(t), this.screen),
     );
     this.scenes.replaceAll(containerScene(root));
+    AudioManager.playBgm('hub');
   }
 
   private buildTabContent(tab: TabId): PIXI.Container {
@@ -396,6 +398,7 @@ export class GameFlow {
     // 免得进战瞬间图集还没就位、回退成静态贴图
     void ensureAnimSets(animSetsForUnits(buildBattleUnits(this.state)));
     this.scenes.replaceAll(containerScene(container));
+    AudioManager.playBgm('deploy');
   }
 
   /**
@@ -411,10 +414,11 @@ export class GameFlow {
    */
   private sweepNode(): void {
     if (!canSweep(this.state)) {
-      this.showToast('这一关还不能扫荡');
+      this.showToast('这一关还不能扫荡', { deny: true });
       return;
     }
     consumeSweep(this.state);
+    AudioManager.playSfx('sfx_sweep');
     const run = this.state.run!;
     run.lastReportWinner = 'player';
     applyVictory(this.state);
@@ -426,7 +430,7 @@ export class GameFlow {
   private async resolveBattle(mode: BattleMode = 'manual'): Promise<void> {
     const units = buildBattleUnits(this.state);
     if (units.filter((u) => u.faction === 'player').length === 0) {
-      this.showToast('请至少部署 1 个单位');
+      this.showToast('请至少部署 1 个单位', { deny: true });
       return;
     }
     // 图集走 CDN，布阵期间的预取通常已经拉完；没拉完就在这儿等，
@@ -499,6 +503,7 @@ export class GameFlow {
       },
     );
     this.scenes.replaceAll(containerScene(container));
+    AudioManager.playBgm('battle');
   }
 
   private finishBattleAfterPlayback(winner: Faction): void {
@@ -727,7 +732,7 @@ export class GameFlow {
           close();
           this.advanceAfterVictory();
         },
-        onNeedPick: () => this.showToast('先选一张纹章'),
+        onNeedPick: () => this.showToast('先选一张纹章', { deny: true }),
       }),
     );
   }
@@ -797,9 +802,10 @@ export class GameFlow {
       {
         onBuy: (offer: ShopOffer, ctx?: BuyShopContext) => {
           if (!buyShopOffer(this.state, offer, ctx)) {
-            this.showToast('金币不足或商品无效');
+            this.showToast('金币不足或商品无效', { deny: true });
             return;
           }
+          AudioManager.playSfx('sfx_buy');
           // 购买成功：移除该 offer，留在商店可继续买
           this.shopOffers = (this.shopOffers ?? []).filter((o) => o !== offer);
           SaveManager.save(this.state);
@@ -815,11 +821,15 @@ export class GameFlow {
       this.screen,
     );
     this.scenes.replaceAll(containerScene(container));
+    AudioManager.playBgm('shop');
   }
 
-  private showToast(msg: string): void {
+  private showToast(msg: string, extra?: { deny?: boolean }): void {
     const current = this.scenes.current;
     if (!current) return;
-    showSceneToast(current.root, msg, { screenWidth: this.app.screen.width });
+    showSceneToast(current.root, msg, {
+      screenWidth: this.app.screen.width,
+      deny: extra?.deny,
+    });
   }
 }

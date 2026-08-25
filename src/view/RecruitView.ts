@@ -14,6 +14,7 @@ import { makeCard } from '@/ui/Card';
 import { makeSection } from '@/ui/Section';
 import { createScrollList } from '@/ui/ScrollList';
 import { showToast } from '@/ui/Toast';
+import { AudioManager } from '@/core/AudioManager';
 import { createCharacterRevealOverlay } from '@/view/characterReveal';
 import { staggerPop } from '@/view/fx/celebration';
 
@@ -147,6 +148,7 @@ export function createRecruitView(
           // 不拦的话滚一次页面就会买掉一个角色
           if (scroll.wasDragging()) return;
           if (unlockCharacterWithMeta(state, def.id)) {
+            AudioManager.playSfx('sfx_soul_spend');
             const reveal = createCharacterRevealOverlay({
               screenW: W,
               screenH: H,
@@ -164,6 +166,7 @@ export function createRecruitView(
             showToast(root, `魂晶不足（还差 ${cost - state.meta.metaCurrency}）`, {
               screenWidth: W,
               color: C.soulText,
+              deny: true,
             });
           }
         },

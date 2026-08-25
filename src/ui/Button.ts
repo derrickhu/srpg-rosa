@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import { AudioManager } from '@/core/AudioManager';
 import { textStyle } from '@/theme/typography';
 import { C, shade } from '@/view/mvpTheme';
 import { makeButtonSkin } from './chrome';
@@ -175,6 +176,7 @@ export function makeButton(
   c.on('pointerupoutside', () => press(false));
   c.on('pointertap', () => {
     if (!shouldFireButtonPress(disabled)) return;
+    AudioManager.playSfx('ui_click');
     onPress();
   });
 
