@@ -1,5 +1,82 @@
 import * as PIXI from 'pixi.js';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+declare const wx: any;
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+type NativeTouchApi = {
+  onTouchStart?: (cb: (ev: unknown) => void) => void;
+  offTouchStart?: (cb: (ev: unknown) => void) => void;
+  onTouchMove?: (cb: (ev: unknown) => void) => void;
+  offTouchMove?: (cb: (ev: unknown) => void) => void;
+  onTouchEnd?: (cb: (ev: unknown) => void) => void;
+  offTouchEnd?: (cb: (ev: unknown) => void) => void;
+  onTouchCancel?: (cb: (ev: unknown) => void) => void;
+  offTouchCancel?: (cb: (ev: unknown) => void) => void;
+};
+
+/**
+ * 真机 `wx` 是注入全局，不一定在 `globalThis.wx` 上。
+ * 和 AssetManager / platformBridge 同一套取法，漏了 onTouchMove 根本绑不上。
+ */
+export function nativeTouchApi(): NativeTouchApi | null {
+  const candidates: unknown[] = [];
+  try {
+    if (typeof wx !== 'undefined') candidates.push(wx);
+  } catch {
+    /* 非微信编译环境 */
+  }
+  const g = globalThis as { wx?: unknown; GameGlobal?: { wx?: unknown } };
+  if (g.wx) candidates.push(g.wx);
+  if (g.GameGlobal?.wx) candidates.push(g.GameGlobal.wx);
+  for (const c of candidates) {
+    const api = c as NativeTouchApi;
+    if (api && typeof api.onTouchMove === 'function') return api;
+  }
+  return null;
+}
+
+export interface NativeTouchFrame {
+  windowHeight: number;
+  pixelRatio: number;
+}
+
+/**
+ * 把微信 touch 收成和 Pixi stage 同一套逻辑像素。
+ *
+ * 偶发机型 `clientY` 是物理像素（比窗口高一截），按 dpr 折回来；
+ * 起手和移动必须用同一套数，不能 Pixi globalY 起手、wx clientY 跟手。
+ */
+export function readNativeTouchPoint(
+  ev: unknown,
+  frame?: NativeTouchFrame,
+): { x: number; y: number } | null {
+  const e = ev as {
+    touches?: Array<{ clientX?: number; clientY?: number; x?: number; y?: number }>;
+    changedTouches?: Array<{ clientX?: number; clientY?: number; x?: number; y?: number }>;
+  };
+  const t = e.touches?.[0] ?? e.changedTouches?.[0];
+  if (!t) return null;
+  let x = t.clientX ?? t.x;
+  let y = t.clientY ?? t.y;
+  if (typeof x !== 'number' || typeof y !== 'number') return null;
+  const wh = frame?.windowHeight ?? 0;
+  const dpr = frame?.pixelRatio ?? 1;
+  if (wh > 0 && dpr > 1 && y > wh * 1.35) {
+    x /= dpr;
+    y /= dpr;
+  }
+  return { x, y };
+}
+
+export function rectContains(
+  r: { x: number; y: number; width: number; height: number },
+  x: number,
+  y: number,
+): boolean {
+  return x >= r.x && x <= r.x + r.width && y >= r.y && y <= r.y + r.height;
+}
+
 /** 超过这个位移（逻辑像素）才算拖动，之内视为点击 */
 const DRAG_THRESHOLD = 6;
 
@@ -124,33 +201,90 @@ export function createScrollList(opts: {
   root.eventMode = 'static';
   root.hitArea = new PIXI.Rectangle(0, 0, opts.width, opts.height);
 
-  root.on('pointerdown', (e: PIXI.FederatedPointerEvent) => {
-    dragging = true;
-    moved = false;
-    startY = e.globalY;
-    contentStartY = content.y;
-  });
-
-  // 用 globalpointermove 而不是 pointermove：后者只在指针**还压在列表上**时派发，
-  // 手指一滑出边界（弹窗里的列表离面板边缘只有十几像素）滚动就会卡住不动，
-  // 手感读起来像掉帧。全局事件配合 dragging 标志才跟得住整段手势。
-  root.on('globalpointermove', (e: PIXI.FederatedPointerEvent) => {
+  const applyDragY = (globalY: number): void => {
     if (!dragging) return;
-    const dy = e.globalY - startY;
+    const dy = globalY - startY;
     if (!moved && Math.abs(dy) < DRAG_THRESHOLD) return;
     moved = true;
     content.y = Math.max(maxScroll(), Math.min(0, contentStartY + dy));
     drawBar();
-  });
+  };
 
-  // pointerup 只在指针**还在容器内**时触发，滑出去松手要靠 upoutside，否则 dragging
-  // 会一直挂着：下次手指落下时 startY 还是上一次的，列表会瞬间跳一大段。
+  function beginDrag(globalY: number): void {
+    dragging = true;
+    moved = false;
+    startY = globalY;
+    contentStartY = content.y;
+  }
+
   function endDrag(): void {
     dragging = false;
   }
-  root.on('pointerup', endDrag);
-  root.on('pointerupoutside', endDrag);
-  root.on('pointercancel', endDrag);
+
+  function listRect(): { x: number; y: number; width: number; height: number } {
+    const p = root.getGlobalPosition();
+    return { x: p.x, y: p.y, width: opts.width, height: opts.height };
+  }
+
+  root.on('wheel', (e: PIXI.FederatedWheelEvent) => {
+    if (maxScroll() === 0) return;
+    content.y = Math.max(maxScroll(), Math.min(0, content.y - e.deltaY));
+    drawBar();
+  });
+
+  // 真机 EventSystem 经常不派发 pointermove / globalpointermove，按钮点得动、列表拖不动。
+  // 有微信触摸 API 就只走这一路：起手和移动同一套坐标，不和 Pixi globalY 混用。
+  const api = nativeTouchApi();
+  const useNative = !!(api?.onTouchStart && api?.onTouchMove);
+  if (useNative && api) {
+    let frame: NativeTouchFrame | undefined;
+    try {
+      const si = typeof wx !== 'undefined' ? wx.getSystemInfoSync?.() : null;
+      if (si) {
+        frame = {
+          windowHeight: si.windowHeight || si.screenHeight || 0,
+          pixelRatio: si.pixelRatio || 1,
+        };
+      }
+    } catch {
+      frame = undefined;
+    }
+    const onNativeStart = (ev: unknown): void => {
+      const pt = readNativeTouchPoint(ev, frame);
+      if (!pt || !rectContains(listRect(), pt.x, pt.y)) return;
+      beginDrag(pt.y);
+    };
+    const onNativeMove = (ev: unknown): void => {
+      const pt = readNativeTouchPoint(ev, frame);
+      if (!pt) return;
+      applyDragY(pt.y);
+    };
+    api.onTouchStart(onNativeStart);
+    api.onTouchMove(onNativeMove);
+    api.onTouchEnd?.(endDrag);
+    api.onTouchCancel?.(endDrag);
+    const prevDestroy = root.destroy.bind(root);
+    root.destroy = (options?: PIXI.IDestroyOptions | boolean) => {
+      api.offTouchStart?.(onNativeStart);
+      api.offTouchMove?.(onNativeMove);
+      api.offTouchEnd?.(endDrag);
+      api.offTouchCancel?.(endDrag);
+      prevDestroy(options);
+    };
+  } else {
+    // 浏览器调试：Pixi 指针事件够用。用 globalpointermove 防止滑出边界就丢手势。
+    root.on('pointerdown', (e: PIXI.FederatedPointerEvent) => {
+      beginDrag(e.globalY);
+    });
+    const onDragMove = (e: PIXI.FederatedPointerEvent): void => {
+      applyDragY(e.globalY);
+    };
+    root.on('pointermove', onDragMove);
+    root.on('globalpointermove', onDragMove);
+    root.on('pointerup', endDrag);
+    root.on('pointerupoutside', endDrag);
+    root.on('pointercancel', endDrag);
+  }
 
   return {
     root,

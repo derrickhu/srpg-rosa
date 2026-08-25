@@ -55,7 +55,24 @@ export interface RosterCallbacks {
 
 const PAD = 12;
 const GRID_GAP = 8;
-const FOOTER_H = 28;
+/** 和 `makeRosterCardFace` 的圆角一致，底栏才能贴齐卡底 */
+export const ROSTER_CARD_RADIUS = 16;
+export const ROSTER_FOOTER_H = 40;
+
+/** 名字 + 等级在底栏里垂直居中，上下留同样的气口 */
+export function rosterCardFooterLayout(opts: {
+  cardH: number;
+  nameH: number;
+  subH: number;
+}): { barTop: number; nameY: number; subY: number } {
+  const gap = 2;
+  const pad = 4;
+  const barTop = opts.cardH - ROSTER_FOOTER_H;
+  const block = opts.nameH + gap + opts.subH;
+  const inner = ROSTER_FOOTER_H - pad * 2;
+  const y0 = barTop + pad + Math.max(0, (inner - block) / 2);
+  return { barTop, nameY: y0, subY: y0 + opts.nameH + gap };
+}
 
 /** 属性行的展示名，顺序即显示顺序 */
 const STAT_ROWS: { key: 'maxHp' | 'atk' | 'spd' | 'move'; label: string }[] = [
@@ -95,7 +112,7 @@ export function createRosterView(
   const W = screen.screenWidth;
   const H = screen.screenHeight;
   const root = new PIXI.Container();
-  root.addChild(createBackground(W, H, 'hub_bg'));
+  root.addChild(createBackground(W, H, 'roster_bg'));
 
   const header = createHubHeader({
     screenWidth: W,
@@ -185,23 +202,30 @@ export function createRosterView(
   }
 
   function paintFooter(card: PIXI.Container, w: number, h: number, name: string, sub: string): void {
+    const nameTx = makeText(name, 'uiStrong', { fill: 0xfff8e8, fontSize: 14 });
+    const subTx = makeText(sub, 'caption', { fill: 0xf3ddb0, fontSize: 13 });
+    const box = rosterCardFooterLayout({
+      cardH: h,
+      nameH: nameTx.height,
+      subH: subTx.height,
+    });
+
     const bar = new PIXI.Graphics();
-    bar.beginFill(0x1a1410, 0.82);
-    bar.drawRoundedRect(3, h - FOOTER_H, w - 6, FOOTER_H - 3, 10);
-    bar.drawRect(3, h - FOOTER_H, w - 6, 12);
+    bar.beginFill(0x1a1410, 0.88);
+    bar.drawRoundedRect(0, box.barTop, w, ROSTER_FOOTER_H, ROSTER_CARD_RADIUS);
+    // 上沿抹平，只留卡底那两个圆角，避免内缩条和卡面错位
+    bar.drawRect(0, box.barTop, w, ROSTER_CARD_RADIUS);
     bar.endFill();
     card.addChild(bar);
 
-    const nameTx = makeText(name, 'uiStrong', { fill: 0xfff8e8, fontSize: 12 });
     nameTx.anchor.set(0.5, 0);
     nameTx.x = w / 2;
-    nameTx.y = h - FOOTER_H + 2;
+    nameTx.y = box.nameY;
     card.addChild(nameTx);
 
-    const subTx = makeText(sub, 'caption', { fill: 0xe8d0a0, fontSize: 10 });
     subTx.anchor.set(0.5, 0);
     subTx.x = w / 2;
-    subTx.y = h - 13;
+    subTx.y = box.subY;
     card.addChild(subTx);
   }
 
@@ -225,9 +249,9 @@ export function createRosterView(
    */
   function buildOwnedCard(m: Character, w: number, h: number): PIXI.Container {
     const card = paintCardShell(w, h, false);
-    const token = createUnitToken(characterArtKey(m), 'player', Math.min(w - 6, h - FOOTER_H + 8));
+    const token = createUnitToken(characterArtKey(m), 'player', Math.min(w - 6, h - ROSTER_FOOTER_H + 8));
     token.x = w / 2;
-    token.y = (h - FOOTER_H) * 0.56;
+    token.y = (h - ROSTER_FOOTER_H) * 0.56;
     card.addChild(token);
 
     paintSkillBadge(card, resolveBattleSkillIdForCharacter(state, m), PROFESSION_ACCENT[m.profession]);
@@ -249,10 +273,10 @@ export function createRosterView(
     const token = createUnitToken(
       characterArtKey({ rosterId: def.id, profession: def.profession }),
       'player',
-      Math.min(w - 6, h - FOOTER_H + 8),
+      Math.min(w - 6, h - ROSTER_FOOTER_H + 8),
     );
     token.x = w / 2;
-    token.y = (h - FOOTER_H) * 0.56;
+    token.y = (h - ROSTER_FOOTER_H) * 0.56;
     token.alpha = 0.4;
     card.addChild(token);
 
@@ -269,7 +293,7 @@ export function createRosterView(
     });
     hint.anchor.set(0.5, 0.5);
     hint.x = w / 2;
-    hint.y = (h - FOOTER_H) * 0.72;
+    hint.y = (h - ROSTER_FOOTER_H) * 0.72;
     card.addChild(hint);
 
     paintFooter(card, w, h, def.name, '未加入');

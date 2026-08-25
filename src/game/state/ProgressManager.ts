@@ -107,7 +107,7 @@ function isNodeFirstClear(meta: MetaState, dungeonId: string, nodeIndex: number)
   return nodeIndex >= (meta.clearedNodesByDungeonId[dungeonId] ?? 0);
 }
 
-/** 记下「这个副本至少打通到第几个节点」，写进 meta 供扫荡解锁判定 */
+/** 记下「这个副本至少打通到第几个节点」，用来判节点首通魂晶 */
 function markNodeCleared(meta: MetaState, dungeonId: string, nodeIndex: number): void {
   const prev = meta.clearedNodesByDungeonId[dungeonId] ?? 0;
   meta.clearedNodesByDungeonId[dungeonId] = Math.max(prev, nodeIndex + 1);
@@ -116,25 +116,16 @@ function markNodeCleared(meta: MetaState, dungeonId: string, nodeIndex: number):
 // ---------------- 扫荡：打赢过的关直接拿结果 ----------------
 
 /**
- * 每天每个副本能扫荡几**轮**（一轮 = 该副本的全部战斗节点）。
+ * 每天每个副本能扫荡几**整章**。
  *
- * 配额按轮而不是按固定次数给，是因为副本长度不一样（草原 7 场，之后每章 5 场）。
- * 定一个固定数字必然在某一章不够用，而不够用的表现特别难受：扫到第 5 关时次数耗尽，
- * 玩家被迫手动打完剩下两关——他刚才选扫荡就是因为不想打，这时候等于被半路扣下。
- * 按轮给保证了「要么完整扫一遍，要么完整打一遍」，不会卡在中间。
+ * 扫荡入口在冒险页，点一次就是整章结算，不再按节点点。按「轮」给配额，
+ * 是因为玩家要的是「今天把这章刷完」，不是「今天扫 7 个节点」。
  */
 export const SWEEP_ROUNDS_PER_DAY = 1;
 
-/** 一个副本里的战斗节点数（商店不算，它不消耗扫荡次数） */
-function battleNodeCount(dungeonId: string): number {
-  const d = DUNGEON_DEFS.find((x) => x.id === dungeonId);
-  if (!d) return 0;
-  return d.nodes.filter((n) => n.kind !== 'shop').length;
-}
-
-/** 这个副本每天的扫荡次数上限 */
-export function sweepQuota(dungeonId: string): number {
-  return battleNodeCount(dungeonId) * SWEEP_ROUNDS_PER_DAY;
+/** 这个副本每天的扫荡次数上限（整章一次算 1 次） */
+export function sweepQuota(_dungeonId: string): number {
+  return SWEEP_ROUNDS_PER_DAY;
 }
 
 /**
@@ -167,25 +158,25 @@ export function sweepLeftToday(meta: MetaState, dungeonId: string): number {
 }
 
 /**
- * 当前节点能不能扫荡：**以前通过过** + 今天还有配额。
+ * 这一章能不能扫荡：整章通关过 + 今天还有配额 + 当前没有进行中的冒险。
  *
- * 「打赢过才能扫荡」是硬条件，因为扫荡直接判胜、不做模拟。没打过就能扫等于白送通关。
- * 而配额是给刷取设的天花板：扫荡发的是全额奖励（含整章重复通关的魂晶），
- * 不限次的话最优策略就变成一直点扫荡，那关卡本身就没人玩了。
+ * 没通关不能扫，否则等于白送通关。进行中的 run 先结束——扫荡不再进副本，
+ * 和「继续冒险」抢入口会让玩家搞不清自己还在哪一节。
  */
-export function canSweep(state: MvpGameState): boolean {
-  const run = state.run;
-  if (!run) return false;
-  // 无尽每波敌人落点都是现抽的，不存在「这关我赢过了」可以兑现
-  if (isEndlessDungeon(run.dungeonId) || isSandboxDungeon(run.dungeonId)) return false;
-  return nodeClearedBefore(state) && sweepLeftToday(state.meta, run.dungeonId) > 0;
+export function canSweepChapter(state: MvpGameState, dungeonId: string): boolean {
+  if (isEndlessDungeon(dungeonId) || isSandboxDungeon(dungeonId)) return false;
+  if (state.run) return false;
+  if (!state.meta.clearedDungeonIds.includes(dungeonId)) return false;
+  return sweepLeftToday(state.meta, dungeonId) > 0;
+}
+
+/** 这一章是否已经整章通关（扫荡按钮出现的条件，不看今日配额） */
+export function chapterClearedForSweep(meta: { clearedDungeonIds: string[] }, dungeonId: string): boolean {
+  return meta.clearedDungeonIds.includes(dungeonId);
 }
 
 /**
- * 当前节点以前通过过没有——即「够不够格扫荡」，不看今天还剩几次。
- *
- * 和 `canSweep` 分开导出是给界面用的：次数用完时按钮仍要画出来并说明原因，
- * 直接藏掉的话玩家会以为扫荡是随机出现的。
+ * 当前节点以前通过过没有。节点首通魂晶还用这个口径；扫荡已经改成整章入口。
  */
 export function nodeClearedBefore(state: MvpGameState): boolean {
   const run = state.run;
@@ -195,13 +186,25 @@ export function nodeClearedBefore(state: MvpGameState): boolean {
   return run.nodeIndex < (state.meta.clearedNodesByDungeonId[run.dungeonId] ?? 0);
 }
 
-/** 扣一次当前副本的扫荡配额。调用方须先过 `canSweep` */
-export function consumeSweep(state: MvpGameState): void {
-  const run = requireRun(state);
+/** 扣一次该副本的整章扫荡配额。调用方须先过 `canSweepChapter` */
+export function consumeSweep(state: MvpGameState, dungeonId: string): void {
   const today = todayKey();
-  const rec = state.meta.sweepUsageByDungeonId[run.dungeonId];
+  const rec = state.meta.sweepUsageByDungeonId[dungeonId];
   const used = rec && rec.date === today ? rec.used : 0;
-  state.meta.sweepUsageByDungeonId[run.dungeonId] = { date: today, used: used + 1 };
+  state.meta.sweepUsageByDungeonId[dungeonId] = { date: today, used: used + 1 };
+}
+
+/**
+ * 冒险页整章扫荡：不建 run、不进战斗，直接发重复通关魂晶。
+ *
+ * 金币和三选一只在局内有意义；大厅扫荡要的是「今天把这章刷完」，
+ * 奖励口径和手打重复通关同一笔 `DUNGEON_REPEAT_SOUL`。
+ */
+export function applyChapterSweep(state: MvpGameState, dungeonId: string): { soul: number } {
+  if (!canSweepChapter(state, dungeonId)) return { soul: 0 };
+  consumeSweep(state, dungeonId);
+  state.meta.metaCurrency += DUNGEON_REPEAT_SOUL;
+  return { soul: DUNGEON_REPEAT_SOUL };
 }
 
 /**

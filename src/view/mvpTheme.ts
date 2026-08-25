@@ -81,3 +81,18 @@ export function shade(color: number, k: number): number {
   const b = Math.round((color & 0xff) * k);
   return (r << 16) | (g << 8) | b;
 }
+
+/** 两色按 t 插值。浅底分区用 paper 混一点 panel / soul，避免 View 里手写 hex */
+export function mix(a: number, b: number, t: number): number {
+  const k = Math.max(0, Math.min(1, t));
+  const ar = (a >> 16) & 0xff;
+  const ag = (a >> 8) & 0xff;
+  const ab = a & 0xff;
+  const br = (b >> 16) & 0xff;
+  const bg = (b >> 8) & 0xff;
+  const bb = b & 0xff;
+  const r = Math.round(ar + (br - ar) * k);
+  const g = Math.round(ag + (bg - ag) * k);
+  const bl = Math.round(ab + (bb - ab) * k);
+  return (r << 16) | (g << 8) | bl;
+}

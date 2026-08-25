@@ -56,7 +56,9 @@ export function isCdnPath(path: string): boolean {
 }
 
 export function getCdnUrl(logicalPath: string): string {
-  return `${CDN_PUBLIC_BASE_URL}/${CDN_FILE_PREFIX}/${logicalPath}`;
+  const base = `${CDN_PUBLIC_BASE_URL}/${CDN_FILE_PREFIX}/${logicalPath}`;
+  const hash = manifest?.files?.[logicalPath]?.hash;
+  return hash ? `${base}?h=${hash}` : base;
 }
 
 function getCachePath(logicalPath: string): string {

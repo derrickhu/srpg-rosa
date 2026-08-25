@@ -74,11 +74,9 @@ export interface MetaState {
   unlockedDungeonIds: string[];
   clearedDungeonIds: string[];
   /**
-   * 各副本**已打通过的战斗节点数**，用来判定某个节点能不能扫荡（见 `canSweep`）。
+   * 各副本**已打通过的节点数**，用来判节点首通魂晶。
    *
-   * 按节点记而不是按副本记：扫荡的用途是「把已经会打的关快速过掉」，
-   * 而玩家通常是卡在某一关反复重来的。要求整章通关才给扫荡，等于在他最需要少受折磨的
-   * 那段路上一直不给——而通关之后他也不太会再回来刷了。
+   * 扫荡改成整章入口之后，这个字段不再决定能不能扫——整章通关看 `clearedDungeonIds`。
    */
   clearedNodesByDungeonId: Record<string, number>;
   /**

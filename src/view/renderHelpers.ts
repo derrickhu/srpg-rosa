@@ -326,14 +326,22 @@ export function createUnitToken(
 
 const BG_FALLBACK: Record<string, number> = {
   battle_bg: C.bg,
+  battle_bg_forest: 0xfbcc4c,
+  battle_bg_fortress: 0xfdbb6a,
+  battle_bg_swamp: 0xfcce21,
+  battle_bg_dragon: 0xfdd8aa,
   shop_bg: C.bg,
   hub_bg: 0x6a5a8c,
+  recruit_bg: 0x5eb4e8,
+  roster_bg: 0xfcac95,
+  adventure_bg: 0x5ec4d4,
+  challenge_bg: 0xe3b5c0,
   reveal_hall: 0xf0e4c4,
 };
 
 /**
- * 全屏背景。默认 `battle_bg`（俯视空草地）；大厅四页传 `hub_bg`；
- * 角色亮相传 `reveal_hall`；补给点传 `shop_bg`。
+ * 全屏背景。默认 `battle_bg`（第一章俯视草地）；战斗按章节换 `battle_bg_*`；
+ * 大厅四页各传自己的底；角色亮相传 `reveal_hall`；补给点传 `shop_bg`。
  * 资源未加载时回退该场景的主色，避免大厅先闪一帧草地。
  */
 export function createBackground(

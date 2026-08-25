@@ -5,7 +5,7 @@ import { gridSize } from '@/battle/grid';
 import type { TerrainId } from '@/battle/types';
 import { UNIT_DEFS } from '@/data/unitDefs';
 import { skillDefForId } from '@/data/skillCatalog';
-import { PLACEABLE_TERRAIN_IDS, terrainTicketName } from '@/data/dungeonCatalog';
+import { dungeonBattleBgKey, PLACEABLE_TERRAIN_IDS, terrainTicketName } from '@/data/dungeonCatalog';
 import { isSandboxDungeon } from '@/data/sandboxLab';
 import { characterArtKey } from '@/data/characterCatalog';
 import type { Character } from '@/game/characterTypes';
@@ -15,9 +15,6 @@ import { enemySpawnToUnitState } from '@/game/state/DeployManager';
 import {
   activeSkillIdForRun,
   benchCharacters,
-  canSweep,
-  nodeClearedBefore,
-  sweepLeftToday,
   currentDungeon,
   currentNode,
   currentEnemyScale,
@@ -170,13 +167,6 @@ function computeDeployLayout(screen: DeployLayoutScreen, gridW: number, gridH: n
 
 export interface DeployCallbacks {
   onStartBattle: (mode: BattleMode) => void;
-  /**
-   * 扫荡：直接拿这一关的结果，不进战斗页。
-   *
-   * 和 `onStartBattle('auto')` 是两件事，不能合并：自动战斗要跑完整模拟、要回放、
-   * 有输的可能；扫荡是「这关我赢过了」的兑现，判胜不模拟。
-   */
-  onSweep: () => void;
   onReset: () => void;
   onHome: () => void;
   /** 刷新部署界面（不重置状态） */
@@ -211,7 +201,11 @@ export function createDeployView(
 
   const root = new PIXI.Container();
 
-  const bgLayer = createBackground(screen.screenWidth, screen.screenHeight);
+  const bgLayer = createBackground(
+    screen.screenWidth,
+    screen.screenHeight,
+    dungeonBattleBgKey(currentDungeon(state)),
+  );
   root.addChild(bgLayer);
 
   // --- 设置按钮（左上角齿轮） ---
@@ -922,20 +916,9 @@ export function createDeployView(
   redrawHand();
 
   // ---- 开打按钮 ----
-  //
-  // 这一关**打赢过**的时候，扫荡是主按钮、开打是次按钮：玩家会回到一个已经通关的
-  // 节点，绝大多数时候就是想快点过去。把「再打一遍」摆在主位等于让他每次都要
-  // 先绕过一个自己不想点的按钮。没打过的关只有开打，扫荡连位置都不占——
-  // 摆一个点不动的按钮比没有更糟，玩家会一直找解锁条件在哪。
-  const cleared = nodeClearedBefore(state);
-  const sweepLeft = sweepLeftToday(state.meta, run.dungeonId);
-  const canSweepNow = canSweep(state);
+  // 扫荡改到冒险页整章入口，布阵页只负责开打。
   const fh = 46;
-  const gapBtn = 8;
-  // 通关过的关两个按钮**等宽同位**，主次只用颜色表达。让主按钮更宽会使「开始战斗」
-  // 在通关前后落在屏幕不同位置上，而这两个按钮的后果完全不同（一个花三分钟，
-  // 一个花一次每日配额），位移带来的误触代价太高。
-  const btnW = cleared ? Math.floor((fightW - gapBtn) / 2) : fightW;
+  const btnW = fightW;
 
   /**
    * Boss 空手上阵要二次确认。
@@ -958,9 +941,7 @@ export function createDeployView(
     }
     callbacks.onStartBattle('manual');
   }, {
-    // 有扫荡可用时开打让位给它，但仍是一个正常按钮：想重打的人（练手、试新词条、
-    // 想省下配额）不该被降级成一个看起来点不动的灰块。
-    variant: canSweepNow ? 'secondary' : 'primary',
+    variant: 'primary',
     width: btnW,
     height: fh,
     fontSize: needsPotionWarning ? 13 : 15,
@@ -969,22 +950,6 @@ export function createDeployView(
   fightC.x = fightX;
   fightC.y = fightY;
   root.addChild(fightC);
-
-  if (cleared && !endless) {
-    const sweepBtn = makeButton(canSweepNow ? `扫荡 (${sweepLeft})` : '扫荡 (0)', () => {
-      callbacks.onSweep();
-    }, {
-      variant: canSweepNow ? 'primary' : 'secondary',
-      disabled: !canSweepNow,
-      width: btnW,
-      height: fh,
-      fontSize: 15,
-      radius: 10,
-    });
-    sweepBtn.x = fightX + btnW + gapBtn;
-    sweepBtn.y = fightY;
-    root.addChild(sweepBtn);
-  }
 
   root.addChild(settingsOverlay);
   root.addChild(detailOverlay);

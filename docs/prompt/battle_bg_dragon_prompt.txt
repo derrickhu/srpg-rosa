@@ -1,0 +1,42 @@
+第 5 章「龙岭绝巅」战斗底图（俯视棋盘舞台）
+产出 → images/bg/battle_bg_dragon.png（832×1248，2:3）
+参考：images/bg/battle_bg.png —— 抄明度 / 饱和 / 阳光感，只换色相和镶边
+
+v1 翻车：炭灰地面 #4F453C L27 + 近黑岩石镶边 + 粗黑描边。整张像洞穴，不是同一款游戏。
+重出：中央浅暖石 / 蜜桃灰岩 L60–75，镶边是蓬松的中明度圆岩石，带奶油高光。禁止岩浆河、黑洞、粗黑线。
+
+叠层避让：
+- 深渊贴纸：近黑洞 —— 中央禁止窟窿裂谷
+- 高地：浅黄沙台 —— 地面偏蜜桃灰，不要同色黄沙
+- 燃烧/焦土：橙火与炭堆 —— 中央禁止熔岩裂纹
+- 禁止紫岩浆
+
+---
+
+Use the visible grassland battle background as the STYLE and BRIGHTNESS reference. Match its sunny high-key cartoon lighting, high saturation, soft puffy shapes, and clean empty centre. Do NOT copy the lime-green colour. Do NOT make a darker, ashen, or cave-like scene.
+
+A hand-drawn cartoon TOP-DOWN battlefield background. Cheerful candy-colored mobile game art, same brightness as a sunny spring meadow — a sun-baked rock shelf, never a dark volcano pit.
+
+CAMERA: strictly TOP-DOWN. NO sky, NO horizon, NO volcano cone, NO dragon. The entire image is ground.
+
+LAYOUT — same as the reference:
+- Top fifth: puffy rounded cartoon boulders from above
+- Bottom fifth: same
+- Narrow rock strips on left and right
+- Centre ~65%: OPEN, CLEAN, UNCLUTTERED bright warm stone
+
+THE GROUND must be as bright as the reference grass:
+- Pale warm peach-stone / sun-baked tuff. Anchor colours: #F0D4C0, #E8C8B0, #F6E0D0. About H22 L78. Light, warm, luminous. Think sunlit rock candy, NOT ash, NOT lava, NOT charcoal.
+- High-key. Do NOT use grey ash, black basalt, chocolate, dusk, or any colour darker than warm sand.
+- NO holes, NO pits, NO canyon cracks, NO lava rivers, NO glowing orange veins in the centre, NO purple.
+- No dark blotches, no heavy shadows, no vignette.
+- Tiny sparse decoration: two cream pebbles, one faint pale crack much lighter than a fissure.
+
+THE FRAME:
+- Puffy rounded cartoon boulders in the SAME blob language as the reference bushes — medium warm tan #D4B080 with cream sunlit tops. Soft and toy-like.
+- NOT jagged black rocks, NOT obsidian, NOT thick black outlines.
+- Soft outlines in a slightly deeper tan. Optional: at most two tiny bright orange specks tucked in the FRAME only, never in the centre, never a lava flow.
+
+ART STYLE: hand-drawn cartoon, flat saturated fills, simple cel shading, clean and cheerful. Low frequency.
+
+NO text, NO grid, NO UI, NO watermark, NO characters, NO dragons, NO buildings, NO skulls.

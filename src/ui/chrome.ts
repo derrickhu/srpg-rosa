@@ -16,7 +16,14 @@ export const HUB_BG_KEY = 'hub_bg';
 export const REVEAL_HALL_KEY = 'reveal_hall';
 
 export const FRAME_INSETS = { left: 48, top: 48, right: 48, bottom: 48 };
-export const BUTTON_INSETS = { left: 48, top: 28, right: 48, bottom: 28 };
+/**
+ * 只给 `fitNineSliceInsets` 单测用。金按钮皮不再走九宫格——
+ * 胶囊一被上下一起拉，圆头弧线就会进拉伸带，两边拉出尖翅。
+ */
+export const BUTTON_INSETS = { left: 80, top: 28, right: 80, bottom: 28 };
+
+/** 贴图像素：切过整颗半圆（半高约 61）再留一点平直金带，避免弧还在拉伸区 */
+const BUTTON_CAP_TEX = 70;
 
 export interface NineSliceInsets {
   left: number;
@@ -53,9 +60,9 @@ export function shouldUseChromeFrame(_width: number, _height: number): boolean {
   return false;
 }
 
-/** 金皮只给够宽的主 CTA。小「挑战」钮九宫格会把两头拉成把手 */
+/** 金皮只给够宽的主 CTA。左右各要留出整颗圆头，窄了就会拉出尖翅 */
 export function canUseButtonSkin(width: number, height: number): boolean {
-  return width >= 200 && height >= 44;
+  return width >= 220 && height >= 44;
 }
 
 export function uiTexture(key: string): PIXI.Texture | null {
@@ -92,12 +99,63 @@ export function makeChromePanel(width: number, height: number): PIXI.Container |
   return makeNineSlice(tex, width, height, FRAME_INSETS);
 }
 
-/** 主 CTA 金按钮皮。高度随按钮走，两头圆角由贴图自己保 */
-export function makeButtonSkin(width: number, height: number): PIXI.NineSlicePlane | null {
+/**
+ * 金皮只横向三段拉：左右整颗圆头按高度等比缩放，中间平直金带拉宽。
+ * 不用 NineSlicePlane——它会把 122px 高的胶囊压成 48px 时切碎圆头。
+ */
+export function buttonSkinLayout(
+  srcW: number,
+  srcH: number,
+  width: number,
+  height: number,
+): { cap: number; capW: number } | null {
+  if (srcW < 8 || srcH < 8 || width < 8 || height < 8) return null;
+  const cap = Math.min(Math.floor(srcW / 3), Math.max(Math.ceil(srcH / 2) + 8, BUTTON_CAP_TEX));
+  const capW = Math.max(1, Math.ceil(cap * (height / srcH)));
+  if (capW * 2 + 8 >= width) return null;
+  return { cap, capW };
+}
+
+/** 主 CTA 金按钮皮。高度等比，两头圆角不进拉伸带 */
+export function makeButtonSkin(width: number, height: number): PIXI.Container | null {
   if (!canUseButtonSkin(width, height)) return null;
   const tex = uiTexture('btn_primary_skin');
   if (!tex) return null;
-  return makeNineSlice(tex, width, height, BUTTON_INSETS);
+  const layout = buttonSkinLayout(tex.width, tex.height, width, height);
+  if (!layout) return null;
+
+  const { cap, capW } = layout;
+  const srcW = tex.width;
+  const srcH = tex.height;
+  const base = tex.baseTexture;
+  const slice = (x: number, w: number): PIXI.Sprite => {
+    const sp = new PIXI.Sprite(new PIXI.Texture(base, new PIXI.Rectangle(x, 0, w, srcH)));
+    sp.height = height;
+    return sp;
+  };
+
+  const wrap = new PIXI.Container();
+  const left = slice(0, cap);
+  left.width = capW;
+
+  const mid = slice(cap, srcW - cap * 2);
+  mid.x = capW;
+  mid.width = width - capW * 2;
+
+  const right = slice(srcW - cap, cap);
+  right.x = width - capW;
+  right.width = capW;
+
+  wrap.addChild(left, mid, right);
+
+  // 再套一层胶囊遮罩：描边若还冒尖，会被圆头裁掉
+  const mask = new PIXI.Graphics();
+  mask.beginFill(0xffffff);
+  mask.drawRoundedRect(0, 0, width, height, height / 2);
+  mask.endFill();
+  wrap.addChild(mask);
+  wrap.mask = mask;
+  return wrap;
 }
 
 /**
@@ -158,7 +216,30 @@ export function makeArtPlate(opts: {
 }
 
 /**
- * 金绶带 + 代码叠字。字不烧进贴图，大厅标题和亮相名牌才能换文案。
+ * 大厅页名：米白字 + 墨描边，底下一条短墨线。
+ *
+ * 不是绶带，也不是又一根圆角横条——那两种全站复用一次就腻。
+ * 金绶带只留给获得亮相（`makeRibbonTitle`）。
+ */
+export function makeInkTitle(text: string, opts?: { fontSize?: number }): PIXI.Container {
+  const wrap = new PIXI.Container();
+  const tx = makeText(text, 'display', {
+    fill: C.paper,
+    fontSize: opts?.fontSize ?? 24,
+    stroke: C.ink,
+    strokeThickness: 5,
+  });
+  wrap.addChild(tx);
+  const rule = new PIXI.Graphics();
+  rule.beginFill(C.ink, 1);
+  rule.drawRoundedRect(0, tx.height + 1, Math.min(32, Math.ceil(tx.width * 0.45)), 3, 1.5);
+  rule.endFill();
+  wrap.addChild(rule);
+  return wrap;
+}
+
+/**
+ * 金绶带 + 代码叠字。只给获得亮相这种「宣布一件事」的场合。
  * 没贴图时退回金色圆角条，占位尺寸接近绶带比例，调用方不用改排版。
  */
 export function makeRibbonTitle(

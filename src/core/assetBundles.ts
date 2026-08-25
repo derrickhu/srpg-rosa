@@ -254,8 +254,16 @@ export const BG_BUNDLE: AssetBundleDef = {
   name: 'bg',
   assets: {
     battle_bg: 'images/bg/battle_bg.png',
-    // 大厅四页专属底。不能复用 battle_bg：草地是战场，大厅叠在上面会永远像半成品
+    battle_bg_forest: 'images/bg/battle_bg_forest.png',
+    battle_bg_fortress: 'images/bg/battle_bg_fortress.png',
+    battle_bg_swamp: 'images/bg/battle_bg_swamp.png',
+    battle_bg_dragon: 'images/bg/battle_bg_dragon.png',
+    // 旧四页共用底，留给未改到的入口兜底
     hub_bg: 'images/bg/hub_bg.png',
+    recruit_bg: 'images/bg/recruit_bg.png',
+    roster_bg: 'images/bg/roster_bg.png',
+    adventure_bg: 'images/bg/adventure_bg.png',
+    challenge_bg: 'images/bg/challenge_bg.png',
     // 角色获得亮相厅
     reveal_hall: 'images/bg/reveal_hall.png',
     // 补给点场景底：平视草地空地（商人正视，不能用俯视 battle_bg）

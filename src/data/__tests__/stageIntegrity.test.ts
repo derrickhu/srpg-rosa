@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { CHAPTER_STAGE_INDICES, STAGES_MVP } from '@/data/stagesMvp';
-import { DUNGEON_DEFS } from '@/data/dungeonCatalog';
+import { DUNGEON_DEFS, dungeonBattleBgKey } from '@/data/dungeonCatalog';
+import { BG_BUNDLE } from '@/core/assetBundles';
 import { isKnownTerrainId, isPassable } from '@/data/terrainSpec';
 import { getSkillSpec } from '@/data/skillCatalog';
 import { getEnemySkillSkin } from '@/data/enemySkillCatalog';
@@ -288,6 +289,14 @@ describe('副本节点与关卡的对应关系', () => {
 
     for (const d of DUNGEON_DEFS) {
       expect(reachable.has(d.id), `${d.id}（${d.name}）解锁链断开，玩家永远进不去`).toBe(true);
+    }
+  });
+
+  it('每章战斗底图都登记在 bg bundle 里', () => {
+    for (const d of DUNGEON_DEFS) {
+      const key = dungeonBattleBgKey(d);
+      expect(d.battleBg, `${d.id} 没写 battleBg，进战斗会一直铺第一章草地`).toBeDefined();
+      expect(BG_BUNDLE.assets[key], `${d.id} 的底图 ${key} 不在 BG_BUNDLE`).toBeDefined();
     }
   });
 

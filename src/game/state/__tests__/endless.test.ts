@@ -9,7 +9,7 @@ import type { UnitState } from '@/battle/types';
 import { UNIT_DEFS } from '@/data/unitDefs';
 import {
   applyEndlessWaveVictory,
-  canSweep,
+  canSweepChapter,
   continueEndlessWave,
   endlessWavesCleared,
   finishEndlessRun,
@@ -44,7 +44,7 @@ describe('无尽试炼结算', () => {
     const s = newEndless();
     expect(isEndlessRun(s)).toBe(true);
     expect(s.run?.endless).toEqual({ wave: 1, clearedCurrent: false, carry: null });
-    expect(canSweep(s)).toBe(false);
+    expect(canSweepChapter(s, ENDLESS_DUNGEON_ID)).toBe(false);
     expect(isRunComplete(s)).toBe(false);
     expect(endlessWavesCleared(s)).toBe(0);
   });

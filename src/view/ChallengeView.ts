@@ -28,6 +28,30 @@ export interface ChallengeCallbacks {
 const PAD = 12;
 const CARD_H = 132;
 const ACTION_W = 88;
+const HEAD_H = 34;
+const CARD_STEP = CARD_H + 10;
+const HEAD_STEP = HEAD_H + 8;
+/** 列表最底下多留一截，最后一张卡不要贴着底栏 */
+const LIST_TAIL = 120;
+
+/**
+ * 副本页内容堆叠高度（不含顶栏）。
+ *
+ * 抽出来给单测：典型手机视口必须溢出，否则玩家会看见底下被裁掉、却拖不动。
+ */
+export function challengeStackHeight(opts: {
+  repeats: number;
+  tipH: number;
+  events: number;
+  endless: number;
+}): number {
+  let y = 6;
+  if (opts.repeats > 0) y += HEAD_STEP + opts.repeats * CARD_STEP;
+  else y += HEAD_STEP + opts.tipH + 14;
+  y += HEAD_STEP + opts.events * CARD_STEP;
+  y += HEAD_STEP + opts.endless * CARD_STEP;
+  return y + LIST_TAIL;
+}
 
 /**
  * 副本页：可重复刷的内容。
@@ -43,45 +67,60 @@ export function createChallengeView(
   const W = screen.screenWidth;
   const H = screen.screenHeight;
   const root = new PIXI.Container();
-  root.addChild(createBackground(W, H, 'hub_bg'));
+  root.addChild(createBackground(W, H, 'challenge_bg'));
 
   const header = createHubHeader({
     screenWidth: W,
     title: '副本',
     soul: state.meta.metaCurrency,
   });
-  root.addChild(header.root);
 
+  // 顶栏也进滚动：视口按整页算，底下被裁的卡一定带得动。
   const scroll = createScrollList({
-    y: header.height,
+    y: 0,
     width: W,
-    height: Math.max(80, H - header.height),
+    height: Math.max(80, H),
     showBar: true,
   });
   root.addChild(scroll.root);
+  scroll.content.addChild(header.root);
 
   const cardW = W - PAD * 2;
   const artW = Math.round(cardW * 0.42);
-  let y = 6;
+  let y = header.height + 6;
   const pops: PIXI.Container[] = [];
 
   function addHeading(title: string, note?: string): void {
+    const band = new PIXI.Graphics();
+    band.beginFill(C.panel, 0.88);
+    band.lineStyle(1, C.ink, 0.35, 0);
+    band.drawRoundedRect(0, 0, cardW, HEAD_H, 10);
+    band.endFill();
+    band.x = PAD;
+    band.y = y;
+    scroll.content.addChild(band);
+
     const t = makeText(title, 'title', {
-      fill: 0xfff8e8,
-      fontSize: 17,
-      stroke: 0x2a2010,
-      strokeThickness: 4,
+      fill: C.paper,
+      fontSize: 16,
+      stroke: C.ink,
+      strokeThickness: 3,
     });
-    t.x = PAD;
-    t.y = y;
+    t.x = PAD + 12;
+    t.y = y + Math.round((HEAD_H - t.height) / 2);
     scroll.content.addChild(t);
     if (note) {
-      const n = makeText(note, 'caption', { fill: 0xf0e0c8 });
-      n.x = PAD + t.width + 10;
-      n.y = y + 4;
+      const n = makeText(note, 'caption', {
+        fill: C.paper,
+        stroke: C.ink,
+        strokeThickness: 3,
+      });
+      n.anchor.set(1, 0.5);
+      n.x = PAD + cardW - 12;
+      n.y = y + HEAD_H / 2;
       scroll.content.addChild(n);
     }
-    y += t.height + 8;
+    y += HEAD_H + 8;
   }
 
   function entryCard(entry: ChallengeEntry): PIXI.Container {
@@ -165,7 +204,7 @@ export function createChallengeView(
     card.addChild(desc);
 
     const reward = makeText(entry.reward, 'caption', {
-      fill: open ? 0x8a4ec8 : C.soulText,
+      fill: open ? C.soul : C.soulText,
       fontSize: 11,
     });
     reward.x = infoX;
@@ -231,12 +270,22 @@ export function createChallengeView(
   function tipRow(msg: string): PIXI.Container {
     const c = new PIXI.Container();
     const t = makeText(msg, 'caption', {
-      fill: 0xf0e0c8,
+      fill: C.text,
       lineHeight: 17,
       wordWrap: true,
-      wordWrapWidth: cardW,
+      wordWrapWidth: cardW - 20,
     });
+    const h = Math.max(36, t.height + 16);
+    const bg = new PIXI.Graphics();
+    bg.beginFill(C.paper, 0.94);
+    bg.lineStyle(1, C.ink, 0.28, 0);
+    bg.drawRoundedRect(0, 0, cardW, h, 10);
+    bg.endFill();
+    c.addChild(bg);
+    t.x = 10;
+    t.y = 8;
     c.addChild(t);
+    c.hitArea = new PIXI.Rectangle(0, 0, cardW, h);
     return c;
   }
 
@@ -245,11 +294,11 @@ export function createChallengeView(
     addBlock('章节重挑战', `${repeats.length} 章可刷`, repeats.map(entryCard));
   } else {
     addHeading('章节重挑战');
-    const tip = tipRow('通关任意章节后，可以在这里重复挑战它，或者在布阵页直接扫荡。');
+    const tip = tipRow('通关任意章节后，可以在这里重复挑战，或者回冒险页整章扫荡。');
     tip.x = PAD;
     tip.y = y;
     scroll.content.addChild(tip);
-    y += tip.height + 14;
+    y += (tip.hitArea as PIXI.Rectangle).height + 14;
   }
 
   const events = CHALLENGE_ENTRIES.filter((e) => e.kind === 'event');
@@ -263,7 +312,7 @@ export function createChallengeView(
     endless.map(entryCard),
   );
 
-  scroll.refresh(y + 16);
+  scroll.refresh(y + LIST_TAIL);
   staggerPop(pops.slice(0, 6), 45);
   return root;
 }

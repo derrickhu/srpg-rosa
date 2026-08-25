@@ -2,7 +2,8 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { CHARACTER_DEFS } from '@/data/characterCatalog';
 import { lockedCharacterDefs } from '@/game/characterFactory';
-import { createInitialMeta } from '@/game/state/GameState';
+import { createInitialMeta, createInitialState } from '@/game/state/GameState';
+import { acquireHint } from '@/view/RecruitView';
 
 /**
  * 大厅四页的职责边界。
@@ -32,6 +33,14 @@ describe('大厅 tab 职责', () => {
     // 玩家不知道打那个副本能换来一个人，也就没有理由去打
     expect(shown.some((d) => d.unlock.kind === 'clearDungeon')).toBe(true);
     expect(shown.some((d) => d.unlock.kind === 'meta')).toBe(true);
+  });
+
+  it('通关解锁写章节名，不写长段来源说明', () => {
+    const state = createInitialState();
+    const clear = CHARACTER_DEFS.find((d) => d.unlock.kind === 'clearDungeon');
+    expect(clear).toBeDefined();
+    expect(acquireHint(state, clear!)).toMatch(/^通关「/);
+    expect(acquireHint(state, clear!)).not.toMatch(/自动加入/);
   });
 });
 

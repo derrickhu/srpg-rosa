@@ -117,6 +117,8 @@ export interface PlaybackState {
   allowReturnDeploy?: boolean;
   /** 特效试炼：连放 + GM 清冷却 */
   sandbox?: boolean;
+  /** 本章俯视底图；缺省第一章草地 */
+  battleBg?: string;
 }
 
 export interface PlaybackCallbacks {
@@ -257,7 +259,7 @@ export function createBattlePlaybackView(
     });
   }
 
-  const bgLayer = createBackground(sw, sh);
+  const bgLayer = createBackground(sw, sh, gameState.battleBg ?? 'battle_bg');
   const gridLayer = new PIXI.Container();
   const dropLayer = new PIXI.Container();
   const rangeLayer = new PIXI.Container();

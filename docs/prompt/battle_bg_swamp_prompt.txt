@@ -1,0 +1,41 @@
+第 4 章「毒沼泥潭」战斗底图（俯视棋盘舞台）
+产出 → images/bg/battle_bg_swamp.png（832×1248，2:3）
+参考：images/bg/battle_bg.png —— 抄明度 / 饱和 / 阳光感，只换色相和镶边
+
+v1 翻车：褐黄泥 #8F6E35 L38 + 暗橄榄镶边。脏、暗，像写实泥潭。
+重出：中央亮芥末金 L55–65，卡通毒沼，不是阴沟。禁止紫。
+
+叠层避让：
+- 沼泽贴纸：暗橄榄浊水 L21 + 睡莲 —— 地面必须是亮的、干的、不透明的土，禁止睡莲/气泡/水面
+- 河流贴纸：亮蓝 —— 中央禁止蓝水
+- 第一章草地：暖黄绿 H69 —— 本章走芥末金 H50，更黄更金，不要春天草绿
+
+---
+
+Use the visible grassland battle background as the STYLE and BRIGHTNESS reference. Match its sunny high-key cartoon lighting, high saturation, soft puffy shapes, and clean empty centre. Do NOT copy the lime-green colour. Do NOT make a darker or muddier scene.
+
+A hand-drawn cartoon TOP-DOWN battlefield background. Cheerful candy-colored mobile game art, same brightness as a sunny spring meadow — a playful poison-mire, never a gloomy bog.
+
+CAMERA: strictly TOP-DOWN. NO sky, NO horizon, NO waterline. The entire image is ground.
+
+LAYOUT — same as the reference:
+- Top fifth: puffy olive-lime mangrove / cattail clumps from above
+- Bottom fifth: same
+- Narrow strips on left and right
+- Centre ~65%: OPEN, CLEAN, UNCLUTTERED bright firm mustard earth — opaque dirt, NOT a pond
+
+THE GROUND must be as bright as the reference grass:
+- Bright sunny mustard-gold packed earth. Anchor colours: #E8D24A, #F0DC62, #DCC83C. About H50 L62. Sickly-sweet cartoon mire, still fully lit.
+- High saturation. Do NOT use chocolate mud, dark olive water, khaki-brown, teal pools, or anything darker than the reference grass.
+- NO blue water, NO lily pads, NO bubbles, NO purple, NO violet, NO magenta.
+- No dark blotches, no heavy shadows, no vignette.
+- Tiny sparse decoration: two cream pebbles only.
+
+THE FRAME:
+- Puffy round clumps like the reference bushes, in bright olive-lime and yellow-green, with sunlit yellow-green tops. Cheerful, not dark mangrove.
+- Soft outlines in a slightly deeper olive. No thick black outlines.
+- Frame may be a bit richer green than the mustard centre. The OPEN CENTRE stays dry opaque earth.
+
+ART STYLE: hand-drawn cartoon, flat saturated fills, simple cel shading, clean and cheerful. Low frequency.
+
+NO text, NO grid, NO UI, NO watermark, NO characters, NO buildings, NO boardwalks, NO mushrooms.

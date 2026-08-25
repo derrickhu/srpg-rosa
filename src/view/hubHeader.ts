@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js';
 import { getSafeAreaInsets } from '@/core/safeArea';
-import { makeRibbonTitle } from '@/ui/chrome';
+import { makeInkTitle } from '@/ui/chrome';
 import { createCurrencyPill } from '@/view/renderHelpers';
 
 export interface HubHeaderOptions {
@@ -44,13 +44,11 @@ export function createHubHeader(opts: HubHeaderOptions): HubHeaderHandle {
   }
 
   if (opts.title) {
-    // 金绶带压在大厅厅堂底上，贴左躲开微信胶囊。字叠在带子上，不烧进贴图。
-    const ribbonW = Math.min(200, Math.max(140, opts.screenWidth - 96));
-    const ribbon = makeRibbonTitle(opts.title, ribbonW, { fontSize: 22 });
-    ribbon.x = PAD;
-    ribbon.y = y;
-    root.addChild(ribbon);
-    y += ribbon.height + 4;
+    const title = makeInkTitle(opts.title, { fontSize: 22 });
+    title.x = PAD;
+    title.y = y;
+    root.addChild(title);
+    y += title.height + 4;
   }
 
   return { root, height: y };

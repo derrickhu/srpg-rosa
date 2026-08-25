@@ -3,7 +3,7 @@ import type { PixiHost } from '@/boot/createPixiApp';
 import type { Faction, UnitState } from '@/battle/types';
 import { createBattleSim, type BattleMode } from '@/battle/engine';
 import { UNIT_DEFS } from '@/data/unitDefs';
-import { DUNGEON_DEFS } from '@/data/dungeonCatalog';
+import { DUNGEON_DEFS, dungeonBattleBgKey } from '@/data/dungeonCatalog';
 import { isSandboxDungeon } from '@/data/sandboxLab';
 import { gmPrepareSandboxRoster } from '@/game/state/gmCheats';
 import {
@@ -30,9 +30,9 @@ import {
   battleTerrain,
   buildBattleUnits,
   buyShopOffer,
-  canSweep,
+  applyChapterSweep,
+  canSweepChapter,
   claimLoot,
-  consumeSweep,
   continueEndlessWave,
   currentDungeon,
   currentNode,
@@ -262,6 +262,7 @@ export class GameFlow {
           {
             onStartRun: (dungeonId, party) => this.startRunAndEnter(dungeonId, party),
             onContinueRun: () => this.renderNode(),
+            onSweepChapter: (dungeonId) => this.sweepChapter(dungeonId),
             onChanged: persistAndRedraw,
             onChapterChange: (i) => { this.adventureChapter = i; },
           },
@@ -378,7 +379,6 @@ export class GameFlow {
       this.state,
       {
         onStartBattle: (mode) => void this.resolveBattle(mode),
-        onSweep: () => this.sweepNode(),
         onWarn: (msg) => this.showToast(msg),
         onReset: () => {
           const endless = isEndlessRun(this.state);
@@ -402,29 +402,22 @@ export class GameFlow {
   }
 
   /**
-   * 扫荡：**直接判胜**，不建模拟器、不进战斗页、不等图集。
-   *
-   * 前提是这一关以前赢过（`canSweep`），所以再模拟一遍没有信息价值——而且模拟会有
-   * 输的可能：同一支队伍同一关，玩家上次赢了、这次自动代打输了，对他来说就是
-   * 「点了扫荡结果倒扣一次配额还没奖励」，无从解释。扫荡是兑现已有结果，不是重打。
-   *
-   * 奖励走和手打完全一样的 `applyVictory`：金币、三选一、通关魂晶一分不少。
-   * 刷取的天花板由每日配额来定（见 `SWEEP_ROUNDS_PER_DAY`），不靠削奖励来防——
-   * 削奖励只会让扫荡变成一个没人用的按钮。
+   * 整章扫荡：不建 run、不进战斗。已通关章节在冒险页点一次，拿重复通关魂晶。
    */
-  private sweepNode(): void {
-    if (!canSweep(this.state)) {
-      this.showToast('这一关还不能扫荡', { deny: true });
+  private sweepChapter(dungeonId: string): void {
+    if (this.state.run) {
+      this.showToast('先结束当前的冒险', { deny: true });
       return;
     }
-    consumeSweep(this.state);
+    if (!canSweepChapter(this.state, dungeonId)) {
+      this.showToast('这一章还不能扫荡', { deny: true });
+      return;
+    }
+    const { soul } = applyChapterSweep(this.state, dungeonId);
     AudioManager.playSfx('sfx_sweep');
-    const run = this.state.run!;
-    run.lastReportWinner = 'player';
-    applyVictory(this.state);
-    const last = isRunComplete(this.state);
     SaveManager.save(this.state);
-    this.presentBattleWin(last);
+    this.showToast(`扫荡完成，魂晶 +${soul}`);
+    this.renderShell('adventure');
   }
 
   private async resolveBattle(mode: BattleMode = 'manual'): Promise<void> {
@@ -487,6 +480,7 @@ export class GameFlow {
           : endless
             ? `${dungeon.name} ${run.endless?.wave ?? 1}/${ENDLESS_MAX_WAVES}`
             : `${dungeon.name} ${run.nodeIndex + 1}/${dungeon.nodes.length}`,
+        battleBg: dungeonBattleBgKey(dungeon),
         sandbox,
         gold: run.gold,
         goldReward: endless ? 0 : currentStage(this.state).goldReward,

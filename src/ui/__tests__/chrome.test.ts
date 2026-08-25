@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   BUTTON_INSETS,
   FRAME_INSETS,
+  buttonSkinLayout,
   canUseButtonSkin,
   fitNineSliceInsets,
   shouldUseChromeFrame,
@@ -16,7 +17,7 @@ describe('大厅壳', () => {
   it('金皮只给够宽的主 CTA，小挑战钮不用', () => {
     expect(canUseButtonSkin(240, 48)).toBe(true);
     expect(canUseButtonSkin(74, 36)).toBe(false);
-    expect(canUseButtonSkin(180, 48)).toBe(false);
+    expect(canUseButtonSkin(200, 48)).toBe(false);
   });
 
   it('目标比 inset 矮时把四边收到 1/3，而不是硬拉', () => {
@@ -28,5 +29,12 @@ describe('大厅壳', () => {
 
   it('目标只剩贴图缝时放弃，避免 NineSlice 除零', () => {
     expect(fitNineSliceInsets(64, 64, 2, 2, FRAME_INSETS)).toBeNull();
+  });
+
+  it('金皮圆头按半高切开，不会把弧留在拉伸带', () => {
+    const layout = buttonSkinLayout(400, 122, 294, 48);
+    expect(layout).not.toBeNull();
+    expect(layout!.cap).toBeGreaterThanOrEqual(61);
+    expect(layout!.capW * 2).toBeLessThan(294);
   });
 });

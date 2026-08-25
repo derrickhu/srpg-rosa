@@ -74,6 +74,12 @@ export interface DungeonDef {
    * 没有插图的章节退回 `themeColor` 平涂，不影响布局。
    */
   art?: string;
+  /**
+   * 布阵 / 战斗的俯视底图，`images/bg` 下的 key。
+   * 平原格不画贴图、直接透出这张底，所以每章换一张才能读出「换场景了」。
+   * 缺省走 `battle_bg`（第一章草地）；无尽 / 试炼不写，沿用草地。
+   */
+  battleBg?: string;
 }
 
 const r = (rows: ShopPoolRow[]): ShopPoolRow[] => rows;
@@ -262,6 +268,7 @@ export const DUNGEON_DEFS: DungeonDef[] = [
     unlock: { kind: 'default' },
     themeColor: 0x5a9e3a,
     art: 'chapter_grassland',
+    battleBg: 'battle_bg',
   },
   {
     id: 'dungeon_forest',
@@ -275,6 +282,7 @@ export const DUNGEON_DEFS: DungeonDef[] = [
     unlock: { kind: 'clearDungeon', dungeonId: 'dungeon_grassland' },
     themeColor: 0x2d7a4d,
     art: 'chapter_forest',
+    battleBg: 'battle_bg_forest',
   },
   {
     id: 'dungeon_fortress',
@@ -288,6 +296,7 @@ export const DUNGEON_DEFS: DungeonDef[] = [
     unlock: { kind: 'clearDungeon', dungeonId: 'dungeon_forest' },
     themeColor: 0x8a7a5a,
     art: 'chapter_fortress',
+    battleBg: 'battle_bg_fortress',
   },
   {
     id: 'dungeon_swamp',
@@ -301,6 +310,7 @@ export const DUNGEON_DEFS: DungeonDef[] = [
     unlock: { kind: 'clearDungeon', dungeonId: 'dungeon_fortress' },
     themeColor: 0x5a7a3a,
     art: 'chapter_swamp',
+    battleBg: 'battle_bg_swamp',
   },
   {
     id: 'dungeon_dragon',
@@ -314,6 +324,7 @@ export const DUNGEON_DEFS: DungeonDef[] = [
     unlock: { kind: 'clearDungeon', dungeonId: 'dungeon_swamp' },
     themeColor: 0x8a3a3a,
     art: 'chapter_dragon',
+    battleBg: 'battle_bg_dragon',
   },
 ];
 
@@ -326,6 +337,11 @@ export function getDungeonDef(id: string): DungeonDef | undefined {
   if (id === ENDLESS_DUNGEON_ID) return ENDLESS_DUNGEON;
   if (id === SANDBOX_DUNGEON_ID) return SANDBOX_DUNGEON;
   return DUNGEON_BY_ID[id];
+}
+
+/** 布阵 / 战斗底图。没写的副本（无尽、试炼）回落到第一章草地。 */
+export function dungeonBattleBgKey(dungeon: Pick<DungeonDef, 'battleBg'> | undefined): string {
+  return dungeon?.battleBg ?? 'battle_bg';
 }
 
 /** 默认即解锁的副本 id */

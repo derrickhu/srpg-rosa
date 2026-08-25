@@ -1,5 +1,6 @@
 import { DUNGEON_DEFS, getDungeonDef } from '@/data/dungeonCatalog';
 import { ENDLESS_DUNGEON_ID } from '@/data/endlessCatalog';
+import { DUNGEON_REPEAT_SOUL } from '@/game/state/ProgressManager';
 import type { MetaState } from '@/game/state/GameState';
 
 /**
@@ -100,7 +101,7 @@ export function chapterRepeatEntries(meta: MetaState): ChallengeEntry[] {
     desc: d.desc,
     icon: 'tab_adventure',
     // 和扫荡口径对齐：重复通关整章照样给魂晶，每日次数才是天花板（见 `sweepQuota`）
-    reward: `通关魂晶 ×${d.metaReward} · 可扫荡`,
+    reward: `重复通关魂晶 ×${DUNGEON_REPEAT_SOUL} · 每日可扫荡`,
     window: '常驻',
     dungeonId: d.id,
   }));

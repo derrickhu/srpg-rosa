@@ -135,8 +135,8 @@ function normalizeRun(run: RunState): RunState {
  * 同上，meta 侧的新增字段补默认值。
  *
  * `clearedNodesByDungeonId` 缺失时补空对象而不是「按 clearedDungeonIds 推算」：
- * 老档里没有逐节点记录，猜出来的值可能给出玩家其实没打过的关的扫荡权限。
- * 补空的代价只是老玩家要再打一次才拿到扫荡，而猜错的代价是他能跳过没学会的内容。
+ * 老档里没有逐节点记录，猜出来的值可能把没打过的节点算成已首通。
+ * 补空的代价只是老玩家少拿几次节点首通魂晶，猜错则会多发。
  *
  * `sweepUsageByDungeonId` 补空则是白送老玩家今天的配额——反正它每天都要归零，
  * 没有值得防的东西。
