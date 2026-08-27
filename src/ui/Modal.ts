@@ -152,7 +152,11 @@ export function createModal(opts: ModalOptions): ModalHandle {
     drawTopRounded(bar, pw, TITLE_H, radius, C.primary);
     panel.addChild(bar);
 
-    const t = makeText(opts.title, 'title', { fill: shade(C.primary, 0.3) });
+    const t = makeText(opts.title, 'heading', {
+      fill: shade(C.primary, 0.28),
+      fontSize: 18,
+      letterSpacing: 0.6,
+    });
     t.anchor.set(0, 0.5);
     t.x = PAD + 2;
     t.y = TITLE_H / 2;

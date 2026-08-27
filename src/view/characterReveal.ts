@@ -87,7 +87,7 @@ export function createCharacterRevealOverlay(opts: CharacterRevealOpts): PIXI.Co
   root.addChild(stage);
 
   const nameW = Math.min(260, W - 40);
-  const nameplate = makeRibbonTitle(name, nameW, { fontSize: 22 });
+  const nameplate = makeRibbonTitle(name, nameW, { fontSize: 22, role: 'heading' });
   nameplate.x = cx - nameW / 2;
   nameplate.y = stageY + tokenSize * 0.62 + 8;
   root.addChild(nameplate);

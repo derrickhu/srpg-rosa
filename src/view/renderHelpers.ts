@@ -326,10 +326,10 @@ export function createUnitToken(
 
 const BG_FALLBACK: Record<string, number> = {
   battle_bg: C.bg,
-  battle_bg_forest: 0xfbcc4c,
-  battle_bg_fortress: 0xfdbb6a,
-  battle_bg_swamp: 0xfcce21,
-  battle_bg_dragon: 0xfdd8aa,
+  battle_bg_forest: C.bg,
+  battle_bg_fortress: 0xf0b478,
+  battle_bg_swamp: C.bg,
+  battle_bg_dragon: 0xe8c8b0,
   shop_bg: C.bg,
   hub_bg: 0x6a5a8c,
   recruit_bg: 0x5eb4e8,

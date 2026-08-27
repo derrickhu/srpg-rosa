@@ -5,7 +5,6 @@ import {
   challengeArt,
   challengeDungeon,
   challengeStatus,
-  chapterRepeatEntries,
   endlessBestFloor,
   type ChallengeEntry,
 } from '@/data/challengeCatalog';
@@ -40,24 +39,19 @@ const LIST_TAIL = 120;
  * 抽出来给单测：典型手机视口必须溢出，否则玩家会看见底下被裁掉、却拖不动。
  */
 export function challengeStackHeight(opts: {
-  repeats: number;
-  tipH: number;
   events: number;
   endless: number;
 }): number {
   let y = 6;
-  if (opts.repeats > 0) y += HEAD_STEP + opts.repeats * CARD_STEP;
-  else y += HEAD_STEP + opts.tipH + 14;
   y += HEAD_STEP + opts.events * CARD_STEP;
   y += HEAD_STEP + opts.endless * CARD_STEP;
   return y + LIST_TAIL;
 }
 
 /**
- * 副本页：可重复刷的内容。
+ * 副本页：活动和无尽。章节重打只在冒险页（扫荡 / 再开一局），这里不再列一份。
  *
  * 对齐参考「历练大厅」：卡直接压在厅堂上，左侧铺满插图，右侧说明 + 挑战。
- * 不再套描金角花框——那张方图一拉，饰角会变成四角贴纸。
  */
 export function createChallengeView(
   state: MvpGameState,
@@ -72,22 +66,23 @@ export function createChallengeView(
   const header = createHubHeader({
     screenWidth: W,
     title: '副本',
+    page: 'challenge',
     soul: state.meta.metaCurrency,
   });
+  root.addChild(header.root);
 
-  // 顶栏也进滚动：视口按整页算，底下被裁的卡一定带得动。
+  // 魂晶和页名钉在顶上，只滚标题下面的活动 / 无尽。
   const scroll = createScrollList({
-    y: 0,
+    y: header.height,
     width: W,
-    height: Math.max(80, H),
+    height: Math.max(80, H - header.height),
     showBar: true,
   });
   root.addChild(scroll.root);
-  scroll.content.addChild(header.root);
 
   const cardW = W - PAD * 2;
   const artW = Math.round(cardW * 0.42);
-  let y = header.height + 6;
+  let y = 6;
   const pops: PIXI.Container[] = [];
 
   function addHeading(title: string, note?: string): void {
@@ -265,40 +260,6 @@ export function createChallengeView(
       scroll.content.addChild(r);
       y += CARD_H + 10;
     }
-  }
-
-  function tipRow(msg: string): PIXI.Container {
-    const c = new PIXI.Container();
-    const t = makeText(msg, 'caption', {
-      fill: C.text,
-      lineHeight: 17,
-      wordWrap: true,
-      wordWrapWidth: cardW - 20,
-    });
-    const h = Math.max(36, t.height + 16);
-    const bg = new PIXI.Graphics();
-    bg.beginFill(C.paper, 0.94);
-    bg.lineStyle(1, C.ink, 0.28, 0);
-    bg.drawRoundedRect(0, 0, cardW, h, 10);
-    bg.endFill();
-    c.addChild(bg);
-    t.x = 10;
-    t.y = 8;
-    c.addChild(t);
-    c.hitArea = new PIXI.Rectangle(0, 0, cardW, h);
-    return c;
-  }
-
-  const repeats = chapterRepeatEntries(state.meta);
-  if (repeats.length > 0) {
-    addBlock('章节重挑战', `${repeats.length} 章可刷`, repeats.map(entryCard));
-  } else {
-    addHeading('章节重挑战');
-    const tip = tipRow('通关任意章节后，可以在这里重复挑战，或者回冒险页整章扫荡。');
-    tip.x = PAD;
-    tip.y = y;
-    scroll.content.addChild(tip);
-    y += (tip.hitArea as PIXI.Rectangle).height + 14;
   }
 
   const events = CHALLENGE_ENTRIES.filter((e) => e.kind === 'event');

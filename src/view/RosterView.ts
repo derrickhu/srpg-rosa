@@ -55,9 +55,24 @@ export interface RosterCallbacks {
 
 const PAD = 12;
 const GRID_GAP = 8;
+/**
+ * 一行四个。
+ *
+ * 静态棋子是 `anim2token` 烤的 128px 高，三列卡在 3 倍屏上会把图拉到两百多物理像素，
+ * 线性放大发糊。真要锐，得另出大立绘或提高 token 分辨率；在那之前先把显示尺码压回去。
+ */
+export const ROSTER_GRID_COLS = 4;
 /** 和 `makeRosterCardFace` 的圆角一致，底栏才能贴齐卡底 */
 export const ROSTER_CARD_RADIUS = 16;
 export const ROSTER_FOOTER_H = 40;
+
+export function rosterGridMetrics(screenW: number): { cols: number; cardW: number; cardH: number } {
+  const gridW = screenW - PAD * 2;
+  const cols = ROSTER_GRID_COLS;
+  const cardW = Math.floor((gridW - GRID_GAP * (cols - 1)) / cols);
+  const cardH = Math.round(cardW * 1.34);
+  return { cols, cardW, cardH };
+}
 
 /** 名字 + 等级在底栏里垂直居中，上下留同样的气口 */
 export function rosterCardFooterLayout(opts: {
@@ -117,6 +132,7 @@ export function createRosterView(
   const header = createHubHeader({
     screenWidth: W,
     title: '角色',
+    page: 'roster',
     soul: state.meta.metaCurrency,
   });
   root.addChild(header.root);
@@ -130,9 +146,7 @@ export function createRosterView(
   root.addChild(scroll.root);
 
   const gridW = W - PAD * 2;
-  const cols = 3;
-  const cardW = Math.floor((gridW - GRID_GAP * (cols - 1)) / cols);
-  const cardH = Math.round(cardW * 1.34);
+  const { cols, cardW, cardH } = rosterGridMetrics(W);
 
   const owned = state.meta.roster;
   const ownedIds = new Set(owned.map((m) => m.rosterId));

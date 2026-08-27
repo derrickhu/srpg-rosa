@@ -92,6 +92,11 @@ export const UI_BUNDLE: AssetBundleDef = {
     // 大厅壳。键名对齐 chrome.ts
     frame_panel: 'images/ui/frame_panel.png',
     ribbon_title: 'images/ui/ribbon_title.png',
+    // 大厅四页标题底。图里留空，页名用系统字叠上去，四张外形和主色都不同。
+    title_recruit: 'images/ui/title_recruit.png',
+    title_roster: 'images/ui/title_roster.png',
+    title_adventure: 'images/ui/title_adventure.png',
+    title_challenge: 'images/ui/title_challenge.png',
     btn_primary_skin: 'images/ui/btn_primary_skin.png',
     platform_gold: 'images/ui/platform_gold.png',
     illust_endless: 'images/ui/illust_endless.png',

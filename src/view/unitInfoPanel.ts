@@ -482,7 +482,7 @@ export function createUnitInfoPanel(
     portrait.y = cy + 24;
     panel.addChild(portrait);
 
-    const nameTx = makeText(model.name, 'title', { fill: 0x3a3a2a, fontSize: 16 });
+    const nameTx = makeText(model.name, 'heading', { fill: 0x3a3a2a, fontSize: 16 });
     nameTx.x = 62;
     nameTx.y = cy + 6;
     panel.addChild(nameTx);

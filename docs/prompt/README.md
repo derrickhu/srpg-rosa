@@ -3,7 +3,7 @@
 ## 写新 prompt
 
 1. 先读 [美术风格圣经](../美术风格圣经.md)，尤其 §2.1 配色编码、§4.1 怎么避免"普通"、
-   §4.3 已知色彩冲突。
+   §4.3 已知色彩冲突。**新战斗地图先读 §5.1**，不要从章节卡另起画风。
 2. 风格段落**原样粘贴** [`_style_block.txt`](./_style_block.txt)，不要自己重写措辞。
    风格描述只有一处会变，就是那个文件。
 2.5. 行走 sheet 的迈腿段落**原样粘贴** [`_walk_motion_block.txt`](./_walk_motion_block.txt)。
@@ -21,6 +21,16 @@
   （anchor / mode / cells）和**生图实测偏差**，下一个人抄的时候才知道哪些地方模型会不听话。
   规则与五步管线见《[特效圣经](../特效圣经.md)》。
 - UI / 场景：`<用途>_prompt.txt`
+
+## 战斗底图（§5.1）
+
+新章节 / 无尽 / 试炼 / 活动图的棋盘底，一律是「第一章 `battle_bg.png` 换边角道具」：
+
+1. **唯一画法参考**是 `images/bg/battle_bg.png`。章节卡只写进题材清单，不要当 style reference。
+2. 正俯视、三层平涂圆冠。中央可走地要干净、够亮、和单位对比够；色相按章来，不必锁 `#CCE43C`。
+3. 章的身份放边角道具 + 一块干净的章色地板。禁止换透视、禁止厚涂脏色。
+4. prompt 照抄 [`battle_bg_forest_prompt.txt`](./battle_bg_forest_prompt.txt) 的结构，换道具和地板色相。
+5. 产出 832×1248，`pngquant` 后进 `images/bg/`，兜底色跟该章中央实测走，改完跑 `npm run upload:cdn`。
 
 ## 场景、地形、UI 的额外约定
 
@@ -47,7 +57,8 @@
 |---|---|---|
 | `shop_scene` | 补给点白卡片列表 | 神秘商人 + 木摊场景图（`shop_merchant` / `shop_stall`），货与价签运行时叠 |
 | `shop_bg` | 补给点复用俯视 `battle_bg` | 平视草地空地 832×1248，允许地平线/天空，给正视商人搭机位 |
-| `battle_bg_v9` | `battle_bg_v5` / `v6` | 彻底去掉天空，草地转暖黄绿以避开弓手色相 |
+| `battle_bg_v9` | `battle_bg_v5` / `v6` | 第一章母版：正俯视、去掉天空、草地转暖黄绿避开弓手 |
+| `battle_bg_forest` / `_swamp` | 斜俯视土黄路 / 脏橄榄泥 | 按圣经 §5.1：同一套平涂，边角换道具，地板可换干净章色 |
 | `terrain_v4_3x2` | `terrain_v3_3x2`（已删） | 去掉黑描边，键色改品红，明度序写进 prompt |
 | `ui_icons_v2` | `toolbar_icons_2x2` | 九个图标一次出齐，三种药剂共用瓶型 |
 | `ui_icons_v3_nav` | 底栏与节点条的 emoji | 五个 tab + 魂晶 + 锁 + 补给 + BOSS，要求同时压得住深底与金底 |

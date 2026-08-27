@@ -8,7 +8,7 @@ import {
 } from '@/theme/typography';
 
 const ALL: TextRole[] = [
-  'display', 'title', 'ui', 'uiStrong', 'body', 'caption',
+  'display', 'title', 'heading', 'ui', 'uiStrong', 'body', 'caption',
   'combatFloat', 'combatLabel', 'micro',
 ];
 
@@ -23,6 +23,13 @@ describe('typography', () => {
         expect(fam, role).toBe('sans-serif');
       }
     }
+    setShowcaseFontFamily('SmileySans');
+  });
+
+  it('人名 heading 走系统字，不进得意黑', () => {
+    setShowcaseFontFamily('SmileySansTest');
+    expect(textStyle('heading').fontFamily).toBe('sans-serif');
+    expect(textStyle('heading').fontWeight).toBe('bold');
     setShowcaseFontFamily('SmileySans');
   });
 

@@ -215,10 +215,87 @@ export function makeArtPlate(opts: {
   return c;
 }
 
+export type HubPageId = 'recruit' | 'roster' | 'adventure' | 'challenge';
+
+export const PAGE_TITLE_KEYS: Record<HubPageId, string> = {
+  recruit: 'title_recruit',
+  roster: 'title_roster',
+  adventure: 'title_adventure',
+  challenge: 'title_challenge',
+};
+
+const PAGE_TITLE_FALLBACK: Record<HubPageId, number> = {
+  recruit: 0x5eb4e8,
+  roster: 0xfcac95,
+  adventure: 0x5ec4d4,
+  challenge: 0xc4a0d8,
+};
+
+/**
+ * 米白井中心（相对整张底图）。顶饰高低不一，不能按整张图居中。
+ * 数值从 `images/ui/title_*.png` 的高亮低饱和色带量出来。
+ */
+export const PAGE_TITLE_WELL: Record<HubPageId, { x: number; y: number }> = {
+  recruit: { x: 0.49, y: 0.63 },
+  roster: { x: 0.51, y: 0.65 },
+  adventure: { x: 0.49, y: 0.56 },
+  challenge: { x: 0.50, y: 0.69 },
+};
+
+export function hubTitleWidth(screenW: number): number {
+  return Math.min(248, Math.max(180, screenW - 48));
+}
+
+export function hubTitleX(screenW: number, titleW: number): number {
+  return Math.round((screenW - titleW) / 2);
+}
+
+/**
+ * 大厅页名：四页各一张空心底，系统黑体叠在米白井上。
+ * 金绶带只留给获得亮相（`makeRibbonTitle`）。
+ */
+export function makePageTitle(text: string, page: HubPageId, width: number): PIXI.Container {
+  const wrap = new PIXI.Container();
+  const tex = uiTexture(PAGE_TITLE_KEYS[page]);
+  let h: number;
+  if (tex) {
+    const sp = new PIXI.Sprite(tex);
+    const s = width / tex.width;
+    sp.width = width;
+    sp.height = tex.height * s;
+    wrap.addChild(sp);
+    h = sp.height;
+  } else {
+    h = Math.round(width * 0.34);
+    const g = new PIXI.Graphics();
+    g.lineStyle(3, C.ink, 1, 0);
+    g.beginFill(PAGE_TITLE_FALLBACK[page], 1);
+    g.drawRoundedRect(0, 0, width, h, 14);
+    g.endFill();
+    g.lineStyle(2, C.ink, 1, 0);
+    g.beginFill(C.paper, 1);
+    g.drawRoundedRect(width * 0.16, h * 0.28, width * 0.68, h * 0.44, 8);
+    g.endFill();
+    wrap.addChild(g);
+  }
+
+  const tx = makeText(text, 'heading', {
+    fill: C.ink,
+    fontSize: 24,
+    letterSpacing: 2,
+  });
+  const well = PAGE_TITLE_WELL[page];
+  tx.anchor.set(0.5);
+  tx.x = width * well.x;
+  tx.y = h * well.y;
+  wrap.addChild(tx);
+  return wrap;
+}
+
 /**
  * 大厅页名：米白字 + 墨描边，底下一条短墨线。
  *
- * 不是绶带，也不是又一根圆角横条——那两种全站复用一次就腻。
+ * 大厅四页已改走 `makePageTitle`。留下给没有页底图的场合。
  * 金绶带只留给获得亮相（`makeRibbonTitle`）。
  */
 export function makeInkTitle(text: string, opts?: { fontSize?: number }): PIXI.Container {
@@ -245,7 +322,7 @@ export function makeInkTitle(text: string, opts?: { fontSize?: number }): PIXI.C
 export function makeRibbonTitle(
   text: string,
   width: number,
-  opts?: { fontSize?: number },
+  opts?: { fontSize?: number; role?: 'display' | 'heading' },
 ): PIXI.Container {
   const wrap = new PIXI.Container();
   const tex = uiTexture('ribbon_title');
@@ -267,7 +344,7 @@ export function makeRibbonTitle(
     wrap.addChild(g);
   }
 
-  const tx = makeText(text, 'display', {
+  const tx = makeText(text, opts?.role ?? 'display', {
     fill: 0xfff8e8,
     fontSize: opts?.fontSize ?? 22,
     stroke: 0x6a3a08,

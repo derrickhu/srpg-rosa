@@ -1,40 +1,21 @@
-第 3 章「要塞攻防」战斗底图（俯视棋盘舞台）
-产出 → images/bg/battle_bg_fortress.png（832×1248，2:3）
-参考：images/bg/battle_bg.png —— 抄明度 / 饱和 / 阳光感，只换色相和镶边
-
-v1 翻车：赭石土 #A3602C L41 + 深巧克力土堆。太脏太暗。
-重出：中央 L55–65，杏桃 / 暖沙，阳光庭院，不是土壕。
-
-叠层避让：
-- 高地：浅黄沙台 #E4B46C —— 地面偏杏桃粉橙，不要同色浅沙砖
-- 城墙：冷灰垛口 —— 中央和镶边都禁止灰砖垛口、城门
-- 第一章草地：不要绿
+第 3 章「要塞攻防」战斗底图（832×1248 / 2:3）
+生成器：Cursor 内置 GenerateImage，aspect_ratio 3:4
+唯一画法参考：images/bg/battle_bg.png（第一章草原）
+规范：美术风格圣经 §5.1。这是同一张画换道具，不是新风格。
 
 ---
 
-Use the visible grassland battle background as the STYLE and BRIGHTNESS reference. Match its sunny high-key cartoon lighting, high saturation, soft puffy shapes, and clean empty centre. Do NOT copy the lime-green colour. Do NOT make a darker or muddier scene.
+The visible grassland battle background is the SAME painting. Redress it. Do not invent a new style.
 
-A hand-drawn cartoon TOP-DOWN battlefield background. Cheerful candy-colored mobile game art, same brightness as a sunny spring meadow.
+KEEP EXACTLY:
+- Strict top-down camera. No 3/4 courtyard, no vanishing point, no sky, no horizon.
+- The SAME painting language: flat cartoon, 2–3 clean colors per object, soft edges, no thick black outlines, no painterly stone grain.
+- Walkable center is CLEAN and bright (mid-high value), not mottled mud.
 
-CAMERA: strictly TOP-DOWN. NO sky, NO horizon, NO castle against a sky. The entire image is ground.
+CHANGE floor hue + edge props:
+- CENTER ~50% is a clean flat apricot-sand courtyard #F0B478 / #F6C490. One or two big shapes only, no ruts, no dirt noise.
+- An L-shaped low stone wall along the TOP and RIGHT edges only: simple square blocks, warm grey-tan #C8B49A, two-tone, toy-like. BOTTOM and LEFT stay more open.
+- One small stacked crate in the TOP-RIGHT inner corner only. Flat wood #C4A06A, no grain.
+- Do not wrap bushes around all four sides.
 
-LAYOUT — same as the reference:
-- Top fifth: puffy rounded packed-sand / earth mounds from above
-- Bottom fifth: same
-- Narrow strips on left and right
-- Centre ~65%: OPEN, CLEAN, UNCLUTTERED bright courtyard earth
-
-THE GROUND must be as bright as the reference grass:
-- Bright sun-washed apricot / peachy packed earth. Anchor colours: #F2B078, #F6C090, #E8A068. About H22 L64. A sunny clay courtyard, toy-like, NOT a trench.
-- High saturation, full sunlight. Do NOT use chocolate, terracotta-dark, rust, grey flagstone, brick, or cobble.
-- No wheel ruts, no wagon tracks, no heavy shadows, no vignette.
-- Tiny sparse decoration: a few cream pebbles only.
-
-THE FRAME:
-- Soft puffy mounds like the reference bushes, but made of light warm sand and pale tan, with cream sunlit tops. Small light-grey pebbles may sit on the mounds.
-- NOT dark chocolate clods, NOT grey crenellated walls, NOT gates, NOT towers.
-- Soft outlines in a slightly deeper peach-tan. No thick black outlines.
-
-ART STYLE: hand-drawn cartoon, flat saturated fills, simple cel shading, clean and cheerful. Low frequency.
-
-NO text, NO grid, NO UI, NO watermark, NO characters, NO buildings, NO banners.
+NO text, NO grid, NO UI, NO characters, NO banners with writing, NO towers against sky.

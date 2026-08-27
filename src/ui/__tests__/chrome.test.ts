@@ -2,9 +2,13 @@ import { describe, expect, it } from 'vitest';
 import {
   BUTTON_INSETS,
   FRAME_INSETS,
+  PAGE_TITLE_KEYS,
+  PAGE_TITLE_WELL,
   buttonSkinLayout,
   canUseButtonSkin,
   fitNineSliceInsets,
+  hubTitleWidth,
+  hubTitleX,
   shouldUseChromeFrame,
 } from '@/ui/chrome';
 
@@ -29,6 +33,18 @@ describe('大厅壳', () => {
 
   it('目标只剩贴图缝时放弃，避免 NineSlice 除零', () => {
     expect(fitNineSliceInsets(64, 64, 2, 2, FRAME_INSETS)).toBeNull();
+  });
+
+  it('页名居中，四页各有一张标题底', () => {
+    expect(hubTitleX(375, 248)).toBe(64);
+    expect(hubTitleWidth(375)).toBe(248);
+    expect(Object.keys(PAGE_TITLE_KEYS)).toEqual(['recruit', 'roster', 'adventure', 'challenge']);
+  });
+
+  it('副本底拱门占上沿，字落在偏下的米白井', () => {
+    expect(PAGE_TITLE_WELL.challenge.y).toBeGreaterThan(PAGE_TITLE_WELL.adventure.y);
+    expect(PAGE_TITLE_WELL.challenge.y).toBeGreaterThan(0.64);
+    expect(PAGE_TITLE_WELL.challenge.x).toBeCloseTo(0.5, 1);
   });
 
   it('金皮圆头按半高切开，不会把弧留在拉伸带', () => {

@@ -96,6 +96,7 @@ export function createRecruitView(
   const header = createHubHeader({
     screenWidth: W,
     title: '招募',
+    page: 'recruit',
     soul: state.meta.metaCurrency,
   });
   root.addChild(header.root);
@@ -174,11 +175,12 @@ export function createRecruitView(
     stage.addChild(tokenWrap);
     attachIdleBob(token, 3);
 
-    const nameTx = makeText(def.name, 'display', {
+    const nameTx = makeText(def.name, 'heading', {
       fill: C.paper,
       fontSize: 26,
       stroke: C.ink,
       strokeThickness: 5,
+      letterSpacing: 1,
     });
     nameTx.anchor.set(0.5, 0);
     nameTx.x = cx;

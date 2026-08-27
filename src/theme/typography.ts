@@ -9,6 +9,7 @@ import * as PIXI from 'pixi.js';
 export type TextRole =
   | 'display'
   | 'title'
+  | 'heading'
   | 'ui'
   | 'uiStrong'
   | 'body'
@@ -43,6 +44,11 @@ const ROLE_DEFAULTS: Record<
 > = {
   display: { showcase: true, fontSize: 26, fontWeight: 'bold' },
   title: { showcase: true, fontSize: 18, fontWeight: 'bold' },
+  /**
+   * 人名、面板顶栏。走系统黑体，不用得意黑——子集一缺字就会
+   * 同一个名字里一半斜体一半苹方，看起来像两种字型拼出来的。
+   */
+  heading: { showcase: false, fontSize: 18, fontWeight: 'bold' },
   ui: { showcase: false, fontSize: 14, fontWeight: 'normal' },
   uiStrong: { showcase: false, fontSize: 14, fontWeight: 'bold' },
   body: { showcase: false, fontSize: 12, fontWeight: 'normal' },

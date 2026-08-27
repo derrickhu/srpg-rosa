@@ -342,11 +342,14 @@ export function createAdventureView(
   let chapter = Math.max(0, Math.min(chapterIndex, chapters.length - 1));
 
   // 顶栏走四页共用的那一份，胶囊避让在它内部处理。
-  // 这一页不出「冒险」标题：章节名就在卡片上沿，再写一行只是把卡片往下挤。
-  const header = createHubHeader({ screenWidth: W, soul: state.meta.metaCurrency });
+  const header = createHubHeader({
+    screenWidth: W,
+    title: '冒险',
+    page: 'adventure',
+    soul: state.meta.metaCurrency,
+  });
   root.addChild(header.root);
-  /** 标题条跨在卡片上沿，要比顶栏再让出它的一半高度 */
-  const cardY = Math.max(66, header.height + 26);
+  const cardY = Math.max(66, header.height + 10);
 
   // 章节内容层（切章节时整体滑动）
   const chapterLayer = new PIXI.Container();

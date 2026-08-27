@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { CHARACTER_DEFS } from '@/data/characterCatalog';
 import {
   ROSTER_FOOTER_H,
+  ROSTER_GRID_COLS,
   rosterCardFooterLayout,
+  rosterGridMetrics,
   rosterUnlockHint,
 } from '@/view/RosterView';
 
@@ -14,6 +16,14 @@ describe('角色网格灰卡文案', () => {
     expect(clear).toBeDefined();
     expect(rosterUnlockHint(buy!)).toMatch(/^魂晶 \d+$/);
     expect(rosterUnlockHint(clear!)).toMatch(/^通关/);
+  });
+
+  it('一行四个，卡宽比三列矮一截，少把 128px 棋子放大', () => {
+    expect(ROSTER_GRID_COLS).toBe(4);
+    const four = rosterGridMetrics(375);
+    expect(four.cols).toBe(4);
+    expect(four.cardW).toBeLessThan(90);
+    expect(four.cardH).toBeGreaterThan(four.cardW);
   });
 
   it('底栏里名字在上、等级在下，整块垂直居中', () => {

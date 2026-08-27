@@ -1,41 +1,21 @@
-第 2 章「密林深处」战斗底图（俯视棋盘舞台）
-产出 → images/bg/battle_bg_forest.png（832×1248，2:3）
+第 2 章「密林深处」战斗底图（832×1248 / 2:3）
 生成器：Cursor 内置 GenerateImage，aspect_ratio 3:4
-参考：images/bg/battle_bg.png —— **抄它的明度、饱和、阳光感**，只换地面色相和镶边材质
-
-v1 翻车：地面做成可可棕 #583A22 L24，镶边深绿。游戏是糖果卡通，第一章草地 L56。
-重出硬规矩：中央地面明度必须落在 L55–65，饱和要高，阳光充足。禁止巧克力、炭灰、黄昏、低饱和泥地。
-
-叠层避让（色相分开，不要靠压暗）：
-- 第一章草地：暖黄绿 H69 L56 —— 本章走蜜糖金 / 焦糖橙，不要绿
-- 高地贴纸：浅沙岩台 #E4B46C H36 L66 —— 地面更橙、更饱和，台子靠「鼓起来的边」认，不靠变黑
-- 森林贴纸：三团深绿树冠 —— 中央禁止树丛；镶边可以是亮绿圆冠
+唯一画法参考：images/bg/battle_bg.png（第一章草原）
+这是同一张画换道具，不是新风格。
 
 ---
 
-Use the visible grassland battle background as the STYLE and BRIGHTNESS reference. Match its sunny high-key cartoon lighting, high saturation, soft puffy shapes, and clean empty centre. Do NOT copy the lime-green ground colour. Do NOT make a darker or muddier scene.
+The visible grassland battle background is the SAME painting. Redress it. Do not invent a new style.
 
-A hand-drawn cartoon TOP-DOWN battlefield background for a portrait phone tactics game. Cheerful candy-colored mobile game art, same brightness as a sunny spring meadow.
+KEEP EXACTLY:
+- The same strict top-down camera. No 3/4, no receding path, no vanishing point.
+- The SAME puffy scalloped bushes: three-tone stack (dark green underside, mid green, small yellow-green highlight), soft edges, no thick black outlines, no bark, no painterly leaves.
+- Walkable center is a CLEAN flat field (1–2 colors, mid-high value). Current chapter uses lime-yellow #CCE43C; a clean mid-green sibling is OK. No olive-brown mud, no dirty shadows, no dirt noise.
 
-CAMERA: strictly TOP-DOWN. NO sky, NO horizon, NO clouds. The entire image is ground. Frame plants are round canopies from above.
+CHANGE composition + optional clean floor tint (not a sandwich recolor, not a new paint style):
+- Denser grove: large puffy canopies push in from TOP-LEFT and BOTTOM-RIGHT, overlapping, some sit 20–25% into the field. BOTTOM and LEFT stay more open.
+- A few thick simple vine loops (flat green ribbons) on the RIGHT edge only.
+- One simple two-tone fallen log on the LEFT edge only.
+- CENTER ~50% is a clean flat walkable field. NO tan winding road, NO painterly dirt.
 
-LAYOUT — same as the reference:
-- Top fifth: dense round puffy tree canopies
-- Bottom fifth: same
-- Narrow canopy strips on left and right
-- Centre ~65% height: OPEN, CLEAN, UNCLUTTERED bright forest-clearing earth
-
-THE GROUND must be as bright as the reference grass:
-- Bright sunlit honey-gold / caramel packed earth. Anchor colours: #F0C46A, #E8B45A, #F6D278. About H40 L62. Think a sunny autumn clearing, NOT dark soil.
-- High saturation, full sunlight. Same luminous cheerful key as lime grass, just gold instead of green.
-- Do NOT use chocolate brown, cocoa, umber, charcoal, olive mud, or any colour darker than a manila envelope.
-- No dark blotches, no heavy shadows, no vignette. Vary with gentle warm gold / pale gold shifts only.
-- Tiny sparse decoration only: two pale gold leaf specks, two tiny cream pebbles.
-
-THE FRAME:
-- Big puffy round canopies from above, BRIGHT leaf-green with yellow-green sunlit tops — same cheerful lighting as the reference bushes, maybe one step richer. NOT dark pine, NOT night forest.
-- Soft rounded outlines in a slightly deeper green. No thick black outlines.
-
-ART STYLE: hand-drawn cartoon, flat saturated fills, simple cel shading, clean and cheerful. Low frequency, big soft shapes.
-
-NO text, NO grid, NO UI, NO watermark, NO characters, NO buildings, NO tree clusters in the centre.
+NO sky, NO horizon, NO trunks as side-view trees, NO fire, NO text, NO grid, NO UI, NO characters.
