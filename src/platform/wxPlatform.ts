@@ -112,6 +112,10 @@ class PlatformClass {
     return hasWx();
   }
 
+  get isDevtools(): boolean {
+    return isWxDevtools();
+  }
+
   get canUseBackend(): boolean {
     if (hasWx() && typeof wx.request === 'function') return true;
     return typeof fetch === 'function';
@@ -254,6 +258,18 @@ class PlatformClass {
     if (typeof document !== 'undefined') {
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'hidden') handler();
+      });
+    }
+  }
+
+  onShow(handler: () => void): void {
+    if (hasWx() && typeof wx.onShow === 'function') {
+      wx.onShow(handler);
+      return;
+    }
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') handler();
       });
     }
   }

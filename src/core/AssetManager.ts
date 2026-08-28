@@ -30,8 +30,29 @@ function bundleKey(bundle: string, name: string): string {
   return `${bundle}::${name}`;
 }
 
+/**
+ * 单张图的解码上限。
+ *
+ * 微信的 `createImage()` 在个别路径下（缓存文件、瘦包后缺失的包内路径）**既不回 onload
+ * 也不回 onerror**，Promise 就永远挂着：整个 `Promise.all` 卡死，控制台一条错都没有。
+ * 所以这里必须自己兜一个超时，超了就退白图，让 Loading 能往下走。
+ */
+const IMAGE_DECODE_TIMEOUT_MS = 8000;
+
 function loadImageAsTexture(src: string): Promise<PIXI.Texture> {
   return new Promise((resolve) => {
+    let settled = false;
+    const finish = (tex: PIXI.Texture): void => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve(tex);
+    };
+    const timer = setTimeout(() => {
+      console.warn(`[AssetManager] image decode timeout ${IMAGE_DECODE_TIMEOUT_MS}ms: ${src}`);
+      finish(PIXI.Texture.WHITE);
+    }, IMAGE_DECODE_TIMEOUT_MS);
+
     try {
       /* eslint-disable @typescript-eslint/no-explicit-any */
       const g = typeof GameGlobal !== 'undefined' ? (GameGlobal as any) : undefined;
@@ -43,28 +64,28 @@ function loadImageAsTexture(src: string): Promise<PIXI.Texture> {
         img.onload = () => {
           try {
             const base = PIXI.BaseTexture.from(img);
-            resolve(new PIXI.Texture(base));
+            finish(new PIXI.Texture(base));
           } catch {
             console.warn(`[AssetManager] BaseTexture.from failed for ${src}`);
-            resolve(PIXI.Texture.WHITE);
+            finish(PIXI.Texture.WHITE);
           }
         };
         img.onerror = (err: unknown) => {
           console.warn(`[AssetManager] wx image load failed: ${src}`, err);
-          resolve(PIXI.Texture.WHITE);
+          finish(PIXI.Texture.WHITE);
         };
         img.src = src;
       } else {
         PIXI.Assets.load<PIXI.Texture>(src)
-          .then((tex) => resolve(tex))
+          .then((tex) => finish(tex))
           .catch(() => {
             console.warn(`[AssetManager] PIXI.Assets fallback failed: ${src}`);
-            resolve(PIXI.Texture.WHITE);
+            finish(PIXI.Texture.WHITE);
           });
       }
     } catch {
       console.warn(`[AssetManager] Unexpected error loading ${src}`);
-      resolve(PIXI.Texture.WHITE);
+      finish(PIXI.Texture.WHITE);
     }
   });
 }
@@ -88,8 +109,9 @@ export const AssetManager = {
     def: AssetBundleDef,
     onProgress?: (loaded: number, total: number) => void,
   ): Promise<void> {
-    const total = Object.keys(def.assets).length;
-    const entries = Object.entries(def.assets).filter(
+    const assets = def?.assets || {};
+    const total = Object.keys(assets).length;
+    const entries = Object.entries(assets).filter(
       ([key]) => !textureCache.has(bundleKey(def.name, key)),
     );
     if (entries.length === 0) {

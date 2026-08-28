@@ -79,7 +79,11 @@ import { createCharacterRevealOverlay } from '@/view/characterReveal';
 import { createInitialState, getCharacter } from '@/game/state/GameState';
 import { getSkillSpec } from '@/data/skillCatalog';
 import { AudioManager } from '@/core/AudioManager';
+import { analytics, EVENT_NAMES, initAnalytics, setAnalyticsUserId } from '@/analytics/gpAnalytics';
 import { Platform } from '@/platform/wxPlatform';
+
+/** 地形/单位/特效/背景四个 bundle 的总预算，超了先进大厅，剩下的后台补 */
+const REST_BUNDLE_BUDGET_MS = 25000;
 
 function containerScene(container: PIXI.Container): Scene {
   return { root: container, enter() {}, exit() {} };
@@ -141,13 +145,20 @@ export class GameFlow {
   private loading: LoadingView | null = null;
   /** 启动云同步完成、大厅已可渲染后才接受下行覆盖 */
   private started = false;
+  /** 本局开战时刻，给 level_clear / level_fail 算 duration_ms */
+  private runStartedAt = 0;
+  private runEndTracked = false;
+  private lastHideAt = 0;
 
   constructor(private readonly app: PixiHost) {
     this.scenes = new SceneManager(app.stage);
     this.state = createInitialState();
     this.bindCloudLifecycle();
     this.showLoading();
-    void this.loadAssetsAndStart();
+    void this.loadAssetsAndStart().catch((e) => {
+      console.error('[GameFlow] 启动加载失败，仍进入大厅:', e);
+      this.finishLoadingIntoHub();
+    });
   }
 
   private bindCloudLifecycle(): void {
@@ -161,6 +172,13 @@ export class GameFlow {
     });
     Platform.onHide(() => {
       void CloudSyncManager.flushNow('app-hide');
+      analytics.trackSessionEnd('app-hide');
+      this.lastHideAt = Date.now();
+    });
+    Platform.onShow(() => {
+      if (this.lastHideAt > 0) {
+        analytics.trackAppShow({ background_ms: Date.now() - this.lastHideAt });
+      }
     });
   }
 
@@ -195,27 +213,53 @@ export class GameFlow {
     setP(0.42);
 
     const rest = ALL_BUNDLES.filter((b) => b.name !== 'ui');
-    const restTotal = rest.reduce((sum, b) => sum + Object.keys(b.assets).length, 0);
+    const restTotal = rest.reduce((sum, b) => sum + Object.keys(b?.assets || {}).length, 0);
     let restDone = 0;
-    await Promise.all(
+    const restLoaded = Promise.all(
       rest.map((b) => {
         let last = 0;
         return AssetManager.loadBundle(b, (n) => {
           restDone += n - last;
           last = n;
           if (restTotal > 0) setP(0.42 + (restDone / restTotal) * 0.53);
+        }).then(() => {
+          console.log(`[GameFlow] bundle '${b.name}' 就绪 (${restDone}/${restTotal})`);
         });
       }),
     );
+    // 单张图已各自超时兜底，这里再兜整段：任何一环卡住也必须让玩家进大厅，
+    // 缺的图后续按需重取，绝不允许把人留在 Loading。
+    await Promise.race([
+      restLoaded,
+      new Promise<void>((resolve) => setTimeout(resolve, REST_BUNDLE_BUDGET_MS)),
+    ]);
+    if (restDone < restTotal) {
+      console.warn(`[GameFlow] 资源未全部就绪就进大厅 (${restDone}/${restTotal})，缺图按需重取`);
+    }
 
     // 动画图集走 CDN、约 2MB，不能挡主页。resolveBattle 进战前会等本场要用的那几个。
     loadAnimSets();
     setP(0.96);
+    // 等 CDN 首批发完再 init：经分 wx.request 和 downloadFile 抢同一条并发配额，会把 Loading 卡在 42%。
+    initAnalytics();
     const sync = await CloudSyncManager.awaitStartupSync();
     console.log(`[GameFlow] 云同步启动: ${sync.status} (${sync.reason})`);
+    const userId = CloudSyncManager.userId;
+    if (userId) setAnalyticsUserId(userId);
+    else console.warn('[GameFlow] 未拿到登录 userId，经分仅以 anonymous_id 上报');
+    analytics.trackSessionStart({
+      entry: 'main_boot',
+      with_user_id: !!userId,
+      cloud_sync_ready: CloudSyncManager.ready,
+    });
+    this.finishLoadingIntoHub();
+  }
+
+  private finishLoadingIntoHub(): void {
+    if (this.started) return;
     this.state = SaveManager.loadOrCreate();
     this.started = true;
-    setP(1);
+    this.loading?.setProgress(1);
     this.loading = null;
     this.renderShell();
   }
@@ -315,6 +359,7 @@ export class GameFlow {
     }
     startRun(this.state, dungeonId, party);
     this.shopOffers = null;
+    this.trackRunStart(dungeonId);
     SaveManager.save(this.state);
     this.renderNode();
   }
@@ -351,6 +396,7 @@ export class GameFlow {
         return;
       }
       if (e?.clearedCurrent && e.wave >= ENDLESS_MAX_WAVES) {
+        this.trackRunEnd('clear');
         const bonus = finishEndlessRun(this.state);
         SaveManager.saveRun(null);
         SaveManager.save(this.state);
@@ -382,6 +428,7 @@ export class GameFlow {
         onWarn: (msg) => this.showToast(msg),
         onReset: () => {
           const endless = isEndlessRun(this.state);
+          this.trackRunEnd('abandon');
           if (endless) finishEndlessRun(this.state);
           else abandonRun(this.state);
           SaveManager.saveRun(null);
@@ -653,12 +700,14 @@ export class GameFlow {
             this.showLootOverlay();
           } else if (isRunFinal) {
             if (endless) {
+              this.trackRunEnd('clear');
               const bonus = finishEndlessRun(this.state);
               SaveManager.saveRun(null);
               SaveManager.save(this.state);
               this.showToast(bonus > 0 ? `试炼完成，额外魂晶 +${bonus}` : '试炼结束');
               this.renderShell('challenge');
             } else {
+              this.trackRunEnd('clear');
               const result = finishRunVictory(this.state);
               SaveManager.save(this.state);
               this.showToast(`通关「${dungeon.name}」，魂晶 +${result.soul}`);
@@ -748,6 +797,7 @@ export class GameFlow {
         onPrimary: () => {
           close();
           if (endless) {
+            this.trackRunEnd('fail');
             finishEndlessRun(this.state);
             SaveManager.saveRun(null);
             SaveManager.save(this.state);
@@ -763,6 +813,7 @@ export class GameFlow {
           ? undefined
           : () => {
               close();
+              this.trackRunEnd('abandon');
               abandonRun(this.state);
               SaveManager.saveRun(null);
               SaveManager.save(this.state);
@@ -816,6 +867,32 @@ export class GameFlow {
     );
     this.scenes.replaceAll(containerScene(container));
     AudioManager.playBgm('shop');
+  }
+
+  private trackRunStart(dungeonId: string): void {
+    if (isSandboxDungeon(dungeonId)) return;
+    this.runStartedAt = Date.now();
+    this.runEndTracked = false;
+    analytics.track(EVENT_NAMES.LEVEL_START, {
+      level_id: this.dungeonChapterIndex(dungeonId) + 1,
+      level_name: dungeonId,
+      endless: isEndlessDungeon(dungeonId),
+    });
+  }
+
+  private trackRunEnd(result: 'clear' | 'fail' | 'abandon'): void {
+    const dungeonId = this.state.run?.dungeonId ?? '';
+    if (this.runEndTracked || !dungeonId || isSandboxDungeon(dungeonId)) return;
+    this.runEndTracked = true;
+    const params = {
+      level_id: this.dungeonChapterIndex(dungeonId) + 1,
+      level_name: dungeonId,
+      duration_ms: Math.max(0, Date.now() - this.runStartedAt),
+      reached_wave: this.state.run?.endless?.wave ?? (this.state.run ? this.state.run.nodeIndex + 1 : 0),
+      reason: result,
+      endless: isEndlessDungeon(dungeonId),
+    };
+    analytics.track(result === 'clear' ? EVENT_NAMES.LEVEL_CLEAR : EVENT_NAMES.LEVEL_FAIL, params);
   }
 
   private showToast(msg: string, extra?: { deny?: boolean }): void {

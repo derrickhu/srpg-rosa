@@ -21,6 +21,7 @@
     "font:subset": "python3 scripts/subset-pixi-fonts.py"
   },
   "dependencies": {
+    "@gp/analytics-sdk": "file:../game-analysis/packages/analytics-sdk",
     "@pixi/core": "7.3.2",
     "@pixi/settings": "7.3.2",
     "@pixi/unsafe-eval": "7.3.2",

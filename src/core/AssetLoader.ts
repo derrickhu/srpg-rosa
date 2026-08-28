@@ -24,6 +24,56 @@ const fs = getFileSystemManager();
 const userDataPath = getUserDataPath();
 const CACHE_ROOT = userDataPath ? `${userDataPath}/cdn_cache` : '';
 
+/** 真机 wx.downloadFile / request 合计大约 10 路；一次打满会超时且不回调，Loading 就停在 42%。 */
+const DOWNLOAD_CONCURRENCY = 4;
+const DOWNLOAD_TIMEOUT_MS = 12000;
+
+let downloadActive = 0;
+const downloadWaiters: Array<() => void> = [];
+
+function acquireDownloadSlot(): Promise<void> {
+  return new Promise((resolve) => {
+    const grant = (): void => {
+      downloadActive += 1;
+      resolve();
+    };
+    if (downloadActive < DOWNLOAD_CONCURRENCY) grant();
+    else downloadWaiters.push(grant);
+  });
+}
+
+function releaseDownloadSlot(): void {
+  downloadActive = Math.max(0, downloadActive - 1);
+  const next = downloadWaiters.shift();
+  if (next) next();
+}
+
+function downloadFileOnce(url: string): Promise<{ tempFilePath?: string }> {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      reject(new Error(`download timeout after ${DOWNLOAD_TIMEOUT_MS}ms: ${url}`));
+    }, DOWNLOAD_TIMEOUT_MS);
+    downloadFile({
+      url,
+      success: (res) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolve(res);
+      },
+      fail: (err) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        reject(err);
+      },
+    });
+  });
+}
+
 interface ManifestFileEntry {
   hash?: string;
   size?: number;
@@ -83,7 +133,20 @@ function localFileExists(path: string): boolean {
 }
 
 function cacheFileExists(logicalPath: string): boolean {
+  if (!fs || !CACHE_ROOT) return false;
   return localFileExists(getCachePath(logicalPath));
+}
+
+/**
+ * 包内是否还留着这张图。
+ *
+ * `packOptions.ignore` 只在**上传/预览打包**时剔除 CDN 目录，开发者工具跑本地项目、
+ * 以及尚未瘦包的构建里这些文件都在。此时直接用包内路径，别再走 downloadFile ——
+ * 一次要拉近百张，真机并发一满就卡在 Loading 不动。
+ */
+function packageFileExists(logicalPath: string): boolean {
+  if (!fs) return false;
+  return localFileExists(logicalPath);
 }
 
 function getCachedHash(logicalPath: string): string | null {
@@ -143,6 +206,10 @@ export function resolveAsset(path: string): string | null {
     debugOnce(`hit:${path}`, 'cache hit', path);
     return getCachePath(path);
   }
+  if (packageFileExists(path)) {
+    debugOnce(`pkg:${path}`, 'package hit', path);
+    return path;
+  }
   return null;
 }
 
@@ -157,28 +224,14 @@ export function downloadAndNotify(logicalPath: string, onComplete?: (ok: boolean
   const cachePath = getCachePath(logicalPath);
   ensureCacheDir(cachePath);
 
-  let retries = 0;
-  const maxRetries = 2;
-
-  const retryOrFail = (err: unknown) => {
-    retries += 1;
-    if (retries <= maxRetries) {
-      setTimeout(doDownload, 500 * retries);
-      return;
-    }
-    console.warn('[AssetLoader] download failed', logicalPath, err);
-    finishDownload(logicalPath, false);
-  };
-
-  const doDownload = () => {
-    downloadFile({
-      url,
-      success: (res) => {
+  void (async () => {
+    const maxRetries = 2;
+    for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
+      await acquireDownloadSlot();
+      try {
+        const res = await downloadFileOnce(url);
         const temp = res?.tempFilePath ?? '';
-        if (!temp) {
-          retryOrFail({ errMsg: 'missing tempFilePath' });
-          return;
-        }
+        if (!temp) throw new Error('missing tempFilePath');
         if (/^https?:\/\//.test(temp)) {
           runtimeTempUrlCache.set(logicalPath, temp);
           finishDownload(logicalPath, true);
@@ -188,27 +241,31 @@ export function downloadAndNotify(logicalPath: string, onComplete?: (ok: boolean
           finishDownload(logicalPath, false);
           return;
         }
-        try {
-          fs.copyFileSync(temp, cachePath);
-          localExistsCache.set(cachePath, true);
-          const hash = manifest?.files?.[logicalPath]?.hash ?? '';
-          if (hash) {
-            try {
-              fs.writeFileSync(`${cachePath}.meta`, hash, 'utf-8');
-            } catch {
-              /* ignore */
-            }
+        fs.copyFileSync(temp, cachePath);
+        localExistsCache.set(cachePath, true);
+        const hash = manifest?.files?.[logicalPath]?.hash ?? '';
+        if (hash) {
+          try {
+            fs.writeFileSync(`${cachePath}.meta`, hash, 'utf-8');
+          } catch {
+            /* ignore */
           }
-          finishDownload(logicalPath, true);
-        } catch (e) {
-          retryOrFail(e);
         }
-      },
-      fail: retryOrFail,
-    });
-  };
-
-  doDownload();
+        finishDownload(logicalPath, true);
+        return;
+      } catch (err) {
+        if (attempt < maxRetries) {
+          await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+          continue;
+        }
+        console.warn('[AssetLoader] download failed', logicalPath, err);
+        finishDownload(logicalPath, false);
+        return;
+      } finally {
+        releaseDownloadSlot();
+      }
+    }
+  })();
 }
 
 export async function resolveOrDownload(logicalPath: string): Promise<string> {

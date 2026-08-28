@@ -4,6 +4,7 @@
 import '@/core/pixiUnsafeEvalPatch';
 import { createPixiHost } from '@/boot/createPixiApp';
 import { AssetLoader } from '@/core/AssetLoader';
+import { analytics } from '@/analytics/gpAnalytics';
 import { GAME_KEY, GAME_TITLE } from '@/config/gameKey';
 import { GameFlow } from '@/view/GameFlow';
 import '@/platform/wxPlatform';
@@ -31,9 +32,11 @@ function formatBootErr(e: unknown): string {
 if (typeof GameGlobal !== 'undefined') {
   GameGlobal.onError = (msg: unknown) => {
     console.error('[GlobalError]', formatBootErr(msg));
+    analytics.trackAppError(msg, { source: 'GameGlobal.onError' });
   };
   GameGlobal.onUnhandledRejection = (ev: unknown) => {
     console.error('[UnhandledRejection]', formatBootErr(ev));
+    analytics.trackAppError(ev, { source: 'unhandledRejection' });
   };
 }
 

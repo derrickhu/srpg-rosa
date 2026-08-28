@@ -65,7 +65,13 @@ if (_api) {
         gpu: null,
       }),
       getBaseUrl: (): string => '',
-      getFontFaceSet: (): any => null,
+      getFontFaceSet: (): any => ({
+        add() { /* mini game 无 FontFaceSet */ },
+        delete() { return false; },
+        check() { return false; },
+        forEach() { /* empty */ },
+        ready: Promise.resolve(),
+      }),
       fetch: ((_url: any, _opts?: any): any => {
         return Promise.reject(new Error('fetch not available in mini game'));
       }) as any,
@@ -117,9 +123,13 @@ const GLSL_TO_ARRAY_SETTERS: Record<string, (gl: any, loc: any, cv: any, v: any)
 };
 
 function patchedSyncUniforms(group: any, uniformData: any, ud: any, uv: any, renderer: any): void {
+  // WeChat 真机首帧 Text/Graphics 时 uniforms 可能还是 null，`for...in null` 会抛
+  // TypeError: Cannot convert undefined or null to object，Loading 直接白屏。
+  const uniforms = group?.uniforms;
+  if (!uniforms || !uniformData || !ud || !uv || !renderer?.gl) return;
   let textureCount = 0, v: any = null, cv: any = null;
   const gl = renderer.gl;
-  for (const i in group.uniforms) {
+  for (const i in uniforms) {
     const data = uniformData[i], uvi = uv[i], udi = ud[i], gu = group.uniforms[i];
     if (!data) { if (gu.group === true) renderer.shader.syncUniformGroup(uvi); continue; }
     if (data.type==='float'&&data.size===1&&!data.isArray) { if(uvi!==udi.value){udi.value=uvi;gl.uniform1f(udi.location,uvi);} }

@@ -1,3 +1,4 @@
+import { analytics } from '@/analytics/gpAnalytics';
 import { hasWx, AdConfigKeys } from './wxPlatform';
 
 declare const wx: any;
@@ -46,10 +47,13 @@ export const AdManager = {
       return Promise.resolve(false);
     }
 
+    analytics.trackAdShow(scenario, { ad_unit_id: adUnitId });
     return new Promise<boolean>((resolve) => {
       const onClose = (res: { isEnded?: boolean }) => {
         ad.offClose(onClose);
-        resolve(res?.isEnded !== false);
+        const completed = res?.isEnded !== false;
+        analytics.trackAdClose(scenario, completed, { ad_unit_id: adUnitId });
+        resolve(completed);
       };
       ad.onClose(onClose);
 
@@ -59,6 +63,7 @@ export const AdManager = {
           .catch((err: any) => {
             console.warn('[AdManager] rewarded load+show failed:', err);
             ad.offClose(onClose);
+            analytics.trackAdClose(scenario, false, { ad_unit_id: adUnitId, fail: true });
             resolve(false);
           });
       });
@@ -77,6 +82,7 @@ export const AdManager = {
           adUnitId: 'WX_INTERSTITIAL_ADUNIT',
         });
       }
+      analytics.trackAdShow('interstitial', { ad_type: 'interstitial' });
       interstitialInstance.show().catch(() => {
         interstitialInstance.load()
           .then(() => interstitialInstance.show())
