@@ -1,6 +1,10 @@
-冒险章节卡壳 —— 冷蓝灰外壳 + 浅色奖励井
+冒险章节卡壳 —— 冷蓝灰外壳 + 画出来的奖励零件
 
-圣经 §6：外壳 `C.panel`，留白大约占 38%，金色只给主 CTA，面板不做立体。
-整张卡铺米白会在海天底上像贴纸，已改回面板色。
+圣经 §6：外壳 `C.panel`，金色只给主 CTA。整张卡和奖励区都不要再铺米白井。
 
-浅底只留给：标题名牌、奖励井、选中的难度。奖励仍是魂晶方砖（xN）。
+奖励区零件（洋红抠图，见 `chapter_reward_chrome_prompt.txt`）：
+
+- `chapter_repeat_title` / `chapter_repeat_frame`：本关奖励居中一套（标题牌压在框上，同宽）
+- `chapter_plaque`：通关三列的旧纸牌
+- `chapter_ribbon`：通关奖励分区绶带（不是金绶带）
+- `chapter_star_on` / `chapter_star_off`：叠在每列牌顶，和条件一一对应

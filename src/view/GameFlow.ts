@@ -42,6 +42,9 @@ import {
   finishRunVictory,
   isEndlessRun,
   isRunComplete,
+  previewChapterClear,
+  recordRunBattleStats,
+  recordRunPotionUse,
   snapshotEndlessCarry,
   rollShop,
   skipLoot,
@@ -52,7 +55,6 @@ import {
   type MvpGameState,
   type ShopOffer,
 } from '@/game/MvpState';
-import { dungeonClearSoul } from '@/game/MvpState';
 import { animSetsForUnits, createBattlePlaybackView } from '@/view/BattlePlaybackView';
 import { createDeployView } from '@/view/DeployView';
 import { createShopView } from '@/view/ShopView';
@@ -513,6 +515,12 @@ export class GameFlow {
             timedBattleEffects: u.timedBattleEffects?.map((e) => ({ ...e })),
           }));
           run.lastReportWinner = winner;
+          if (winner === 'player' && !sandbox && !endless) {
+            recordRunBattleStats(run, {
+              rounds: sim.getRound(),
+              allyDeaths: sim.getUnits().filter((u) => u.faction === 'player' && u.hp <= 0).length,
+            });
+          }
           this.finishBattleAfterPlayback(winner);
         },
         onHome: () => this.renderShell(),
@@ -535,6 +543,7 @@ export class GameFlow {
         allowReturnDeploy: !endless || (run.endless?.wave ?? 1) === 1,
         onConsumePotion: (potionId: string) => {
           run.potions[potionId] = Math.max(0, (run.potions[potionId] ?? 0) - 1);
+          if (!sandbox) recordRunPotionUse(run);
         },
         onPickupPotion: endless
           ? (potionId: string) => {
@@ -619,6 +628,9 @@ export class GameFlow {
     const entries: RewardEntry[] = [];
     const endless = isEndlessRun(this.state);
     const wave = run.endless?.wave ?? 1;
+    const chapterPreview = !endless && isRunFinal
+      ? previewChapterClear(this.state, dungeon.id)
+      : null;
 
     if (endless) {
       entries.push({
@@ -641,18 +653,21 @@ export class GameFlow {
           tint: C.soul,
         });
       }
-    } else if (isRunFinal) {
-      const soul = dungeonClearSoul(this.state, dungeon.id);
-      const first = !this.state.meta.clearedDungeonIds.includes(dungeon.id);
+    } else if (chapterPreview) {
+      const starNote = chapterPreview.labels.length > 0
+        ? `新点亮：${chapterPreview.labels.join('、')}。`
+        : chapterPreview.firstClear
+          ? '本趟没有点亮新的星。'
+          : '本关奖励每次通关都能领。';
       entries.push({
         iconKey: 'icon_soul',
         name: '魂晶',
-        amount: soul,
+        amount: chapterPreview.soul,
         quality: '永久',
-        desc: first
-          ? `首次通关「${dungeon.name}」的一次性大奖。魂晶带得出副本，用来升级角色、学技能、招募同伴和解锁新章节。`
-          : `重复通关「${dungeon.name}」的固定收益。首通大奖只发一次，想要更多就往更深的章节推。`,
-        sources: ['章节通关', '战斗节点首通'],
+        desc: chapterPreview.firstClear
+          ? `通关「${dungeon.name}」。${starNote}每颗星的魂晶只领一次。`
+          : `再通「${dungeon.name}」。${starNote}`,
+        sources: ['章节星级', '本关奖励'],
         tint: C.soul,
       });
     } else {
@@ -684,7 +699,11 @@ export class GameFlow {
     const hasLoot = !isRunFinal && (run.pendingLoot?.length ?? 0) > 0;
     const subtitle = endless
       ? `${dungeon.name} 第 ${wave}/${ENDLESS_MAX_WAVES} 波`
-      : `${dungeon.name} ${run.nodeIndex + 1}/${dungeon.nodes.length}`;
+      : chapterPreview
+        ? (chapterPreview.labels.length > 0
+          ? `${dungeon.name} · 新点亮 ${chapterPreview.labels.join('、')}`
+          : `${dungeon.name} · 魂晶 +${chapterPreview.soul}`)
+        : `${dungeon.name} ${run.nodeIndex + 1}/${dungeon.nodes.length}`;
     let close = (): void => undefined;
     close = this.pushOverlay(
       createRewardOverlay({

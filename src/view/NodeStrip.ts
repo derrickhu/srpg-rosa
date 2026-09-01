@@ -21,10 +21,10 @@ const CURRENT_COLOR = 0x7ee24a;
 const FUTURE_COLOR = 0x6a5f80;
 const LINE_COLOR = 0x8a7fa0;
 
-function nodeIcon(kind: string): string | null {
+function nodeIcon(kind: string): string {
   if (kind === 'shop') return 'node_supply';
   if (kind === 'boss') return 'node_boss';
-  return null;
+  return 'node_battle';
 }
 
 /**
@@ -46,8 +46,7 @@ function drawHereMarker(): PIXI.Graphics {
 }
 
 /**
- * 横向节点进度条：已过/当前/未来节点，商店与 Boss 图标。
- * 冒险页章节卡与 Run 内布阵页共用。
+ * 横向节点进度条：已过/当前/未来节点。战斗 / 补给 / Boss 各有图标。
  */
 export function createNodeStrip(dungeon: DungeonDef, opts: NodeStripOptions): PIXI.Container {
   const root = new PIXI.Container();
@@ -72,9 +71,7 @@ export function createNodeStrip(dungeon: DungeonDef, opts: NodeStripOptions): PI
     root.addChild(doneLine);
   }
 
-  let battleNo = 0;
   nodes.forEach((node, i) => {
-    if (node.kind !== 'shop') battleNo += 1;
     const isCurrent = i === opts.currentIndex;
     const isDone = i < opts.currentIndex;
     const r = isCurrent ? rBase + 4 : rBase;
@@ -101,31 +98,19 @@ export function createNodeStrip(dungeon: DungeonDef, opts: NodeStripOptions): PI
     c.addChild(g);
 
     const iconKey = nodeIcon(node.kind);
-    if (iconKey) {
-      // 只占直径的 3/4：图标自带粗描边，铺满会把圆环整个盖掉，
-      // 而圆环的颜色正是「已过 / 当前 / 未到」的唯一区分，比图标本身更要紧。
-      const size = r * 1.5;
-      const it = createUiIcon(iconKey, size);
-      if (it) {
-        it.x = -size / 2;
-        it.y = -size / 2;
-        c.addChild(it);
-      }
+    // 只占直径的 3/4：图标自带粗描边，铺满会把圆环整个盖掉，
+    // 而圆环的颜色正是「已过 / 当前 / 未到」的唯一区分，比图标本身更要紧。
+    const size = r * 1.5;
+    const it = createUiIcon(iconKey, size);
+    if (it) {
+      it.x = -size / 2;
+      it.y = -size / 2;
+      c.addChild(it);
     } else if (isDone) {
       c.addChild(drawCheck(r));
-    } else {
-      // 序号画在圈里而不是圈下：战斗点没有图标，圈里空着会显得这一格是坏的，
-      // 而序号飘在圈外又和补给/BOSS 的文字标签挤成一行分不清谁是谁。
-      const num = makeText(`${battleNo}`, 'uiStrong', {
-        fill: isCurrent ? C.ink : 0xffffff,
-        fontSize: Math.round(r * 1.15),
-      });
-      num.anchor.set(0.5);
-      c.addChild(num);
     }
 
-    // 只有带图标的节点还需要文字标签；战斗点的序号已经在圈里了
-    if (iconKey) {
+    if (node.kind === 'shop' || node.kind === 'boss') {
       const label = makeText(node.kind === 'shop' ? '补给' : 'BOSS', isCurrent ? 'uiStrong' : 'caption', {
         fill: isCurrent ? 0xffffff : 0xd8d0e8,
         fontSize: 10,

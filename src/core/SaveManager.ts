@@ -2,7 +2,9 @@ import { SAVE_META_KEY, SAVE_RUN_KEY } from '@/config/CloudConfig';
 import { PersistService } from '@/core/PersistService';
 import { safeStorageGet, safeStorageSet } from '@/platform/wxPlatform';
 import type { MetaState, MvpGameState, RunState } from '@/game/state/GameState';
+import { emptyRunStarStats } from '@/data/chapterStars';
 import { createInitialMeta, createInitialState, META_VERSION } from '@/game/state/GameState';
+import { hydrateChapterStars } from '@/game/state/ProgressManager';
 import { getDungeonDef } from '@/data/dungeonCatalog';
 import { isEndlessDungeon } from '@/data/endlessCatalog';
 import { LEGACY_CHARACTER_IDS, remapLegacyCharacterId } from '@/data/characterCatalog';
@@ -128,6 +130,7 @@ function normalizeRun(run: RunState): RunState {
       )
         ? null
         : rest.pendingLoot ?? null,
+    starStats: rest.starStats ?? emptyRunStarStats(),
   };
 }
 
@@ -142,12 +145,15 @@ function normalizeRun(run: RunState): RunState {
  * 没有值得防的东西。
  */
 function normalizeMeta(meta: MetaState): MetaState {
-  return {
+  const next: MetaState = {
     ...meta,
     roster: remapLegacyRoster(meta.roster),
     clearedNodesByDungeonId: meta.clearedNodesByDungeonId ?? {},
     sweepUsageByDungeonId: meta.sweepUsageByDungeonId ?? {},
+    chapterStarsByDungeonId: meta.chapterStarsByDungeonId ?? {},
   };
+  hydrateChapterStars(next);
+  return next;
 }
 
 /** 进入副本后断点续局时，从节点类型推断稳妥的恢复阶段（不恢复战斗中/结算中） */

@@ -1,0 +1,11 @@
+Chapter node icon: BATTLE (ordinary fight, not shop, not boss)
+产出 → images/ui/node_battle.png
+Displayed at ~16–20px on a colored circle, next to node_supply (crate) and node_boss (skull).
+
+ONE GAME UI ICON. Background 100% solid flat MAGENTA #FF00FF.
+Thick near-black #1A1410 outline, chunky cartoon, flat fills, one cel shade.
+NO TEXT, no numbers, no letters, no watermark, no circular frame.
+
+CONTENT: two short crossed steel swords (X), cream-steel blades, dark brown grips.
+Must read at nail size as "a fight". Not a skull, not a crate, not a single slash trail.
+Icon fills ~70% of the square. Magenta margin on all sides.

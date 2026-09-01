@@ -8,23 +8,37 @@ import { chapterRewardModel } from '@/view/AdventureView';
 const DUNGEON = DUNGEON_DEFS[0]!;
 
 describe('章节卡奖励分行', () => {
-  it('未通关时首通未领、重复通关先标出来', () => {
+  it('未通关时三星未领、本关奖励先标出来', () => {
     const meta = createInitialMeta();
     const m = chapterRewardModel(DUNGEON, meta);
-    expect(m.firstSoul).toBe(DUNGEON.metaReward);
+    expect(m.stars).toHaveLength(3);
+    expect(m.stars[0]!.label).toBe('成功通关');
+    expect(m.stars.every((s) => !s.claimed && !s.achieved)).toBe(true);
+    expect(m.starFilled).toBe(0);
     expect(m.firstClaimed).toBe(false);
     expect(m.repeatSoul).toBe(DUNGEON_REPEAT_SOUL);
     expect(m.pendingNodeFirstClears).toBeGreaterThan(0);
   });
 
-  it('整章通关后首通已领取，只剩重复通关可扫荡', () => {
+  it('整章通关且星已领完：本关可扫荡，通关奖励全已领取', () => {
     const meta = createInitialMeta();
     meta.clearedDungeonIds.push(DUNGEON.id);
     meta.clearedNodesByDungeonId[DUNGEON.id] = DUNGEON.nodes.length;
+    meta.chapterStarsByDungeonId = { [DUNGEON.id]: 0b111 };
     const m = chapterRewardModel(DUNGEON, meta);
     expect(m.firstClaimed).toBe(true);
+    expect(m.starFilled).toBe(3);
+    expect(m.stars.every((s) => s.claimed && s.achieved)).toBe(true);
     expect(m.pendingNodeFirstClears).toBe(0);
     expect(m.repeatSoul).toBe(DUNGEON_REPEAT_SOUL);
+  });
+
+  it('老档已通关但没有星字段：卡上看成三星已领', () => {
+    const meta = createInitialMeta();
+    meta.clearedDungeonIds.push(DUNGEON.id);
+    const m = chapterRewardModel(DUNGEON, meta);
+    expect(m.starFilled).toBe(3);
+    expect(m.stars.every((s) => s.claimed)).toBe(true);
   });
 });
 

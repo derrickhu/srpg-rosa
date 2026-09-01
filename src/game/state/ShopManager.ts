@@ -1,3 +1,4 @@
+import { emptyRunStarStats } from '@/data/chapterStars';
 import { POTION_DEFS } from '@/data/potionCatalog';
 import { terrainTicketName, type ShopPoolRow } from '@/data/dungeonCatalog';
 import { getSkillSpec } from '@/data/skillCatalog';
@@ -124,5 +125,7 @@ export function buyShopOffer(
       return false;
   }
   run.gold -= offer.price;
+  run.starStats = run.starStats ?? emptyRunStarStats();
+  run.starStats.shopBuys += 1;
   return true;
 }

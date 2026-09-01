@@ -1,0 +1,10 @@
+A single mobile-game UI TITLE PLATE, one object only, perfectly left-right symmetric, centered.
+
+Shape: compact horizontal wooden/teal nameplate, slightly arched top, rounded ends — NOT a long swallowtail ribbon, NOT a wide banner. About as wide as a short sign that can hold four chunky Chinese characters later.
+
+Color: slate-teal #4A7A8C frame, inner empty cream well #D8C8A4 for later text. Thick near-black #1A1410 outline. One cel shade only.
+
+NO gold, no filigree, no compass, no jewels, no icons.
+NO TEXT, no letters, no numbers, no watermark.
+Background 100% solid flat MAGENTA #FF00FF.
+Chunky cartoon, same family as the game's adventure title plates.

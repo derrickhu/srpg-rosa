@@ -92,6 +92,13 @@ export const UI_BUNDLE: AssetBundleDef = {
     // 大厅壳。键名对齐 chrome.ts
     frame_panel: 'images/ui/frame_panel.png',
     ribbon_title: 'images/ui/ribbon_title.png',
+    chapter_plaque: 'images/ui/chapter_plaque.png',
+    chapter_strip: 'images/ui/chapter_strip.png',
+    chapter_repeat_title: 'images/ui/chapter_repeat_title.png',
+    chapter_repeat_frame: 'images/ui/chapter_repeat_frame.png',
+    chapter_ribbon: 'images/ui/chapter_ribbon.png',
+    chapter_star_on: 'images/ui/chapter_star_on.png',
+    chapter_star_off: 'images/ui/chapter_star_off.png',
     // 大厅四页标题底。图里留空，页名用系统字叠上去，四张外形和主色都不同。
     title_recruit: 'images/ui/title_recruit.png',
     title_roster: 'images/ui/title_roster.png',
@@ -120,6 +127,7 @@ export const UI_BUNDLE: AssetBundleDef = {
     icon_lock: 'images/ui/icon_lock.png',
     // 节点进度条上的补给点与 Boss 点，直径只有 20px
     node_supply: 'images/ui/node_supply.png',
+    node_battle: 'images/ui/node_battle.png',
     node_boss: 'images/ui/node_boss.png',
     // 底部导航。背包 tab 已删，tab_inventory 随之下架
     tab_shop: 'images/ui/tab_shop.png',

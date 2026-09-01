@@ -8,6 +8,7 @@ import {
   type DungeonDef,
   type NodeDef,
 } from '@/data/dungeonCatalog';
+import { emptyRunStarStats, type RunStarStats } from '@/data/chapterStars';
 import { ENDLESS_DUNGEON_ID } from '@/data/endlessCatalog';
 import { mergeTerrainOverlay, type TerrainGrid } from '@/battle/grid';
 import { createStarterRoster } from '@/game/characterFactory';
@@ -93,6 +94,11 @@ export interface MetaState {
    * （`endlessBestFloor()`）。同版本内加一个数，不升档。
    */
   endlessBestFloor?: number;
+  /**
+   * 各章已领奖的星（3bit）。可选：老档没有，读档时按 `clearedDungeonIds` 补满，
+   * 避免把已经拿过的整笔 metaReward 再发一遍。
+   */
+  chapterStarsByDungeonId?: Record<string, number>;
 }
 
 /** 单副本一局的临时状态（roguelike 构筑都在这里，结束即弃） */
@@ -136,7 +142,7 @@ export interface RunState {
   runTempSkill: Record<string, string>;
   /** 局内主技能装配覆盖（rosterId → skillId），不写回 meta */
   runEquip: Record<string, string>;
-  /** 本节点看广告额外解锁的上阵位数（每节点重置） */
+  /** 本节点广告额外上阵位。入口先关掉，字段还留着以免旧档对不上 */
   adExtraSlot: number;
   /** 战斗胜利后待选的三选一战利品（选完 / 跳过后清空） */
   pendingLoot: LootOption[] | null;
@@ -150,6 +156,8 @@ export interface RunState {
    * 用节点推进会清掉部署、把玩家踢回布阵页，和「清完一波原地刷下一波」对着干。
    */
   endless?: EndlessRunState;
+  /** 本局评星累计。出副本即弃 */
+  starStats: RunStarStats;
 }
 
 /** 无尽试炼里一名我方单位跨波带过去的状态 */
@@ -211,6 +219,7 @@ export function createInitialMeta(): MetaState {
     clearedDungeonIds: [],
     clearedNodesByDungeonId: {},
     sweepUsageByDungeonId: {},
+    chapterStarsByDungeonId: {},
   };
 }
 
@@ -242,6 +251,7 @@ export function createRunState(dungeonId: string, partyRosterIds: string[]): Run
     pendingLoot: null,
     lastReportWinner: null,
     lastVictory: null,
+    starStats: emptyRunStarStats(),
     endless: dungeonId === ENDLESS_DUNGEON_ID
       ? { wave: 1, clearedCurrent: false, carry: null }
       : undefined,

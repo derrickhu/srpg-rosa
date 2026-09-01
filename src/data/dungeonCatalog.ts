@@ -3,6 +3,7 @@ import { CHAPTER_STAGE_INDICES, STAGES_MVP, type StageDefMvp } from '@/data/stag
 import { ENDLESS_DUNGEON, ENDLESS_DUNGEON_ID } from '@/data/endlessCatalog';
 import { SANDBOX_DUNGEON, SANDBOX_DUNGEON_ID } from '@/data/sandboxLab';
 import { getTerrainSpec } from '@/data/terrainSpec';
+import type { ChapterStars } from '@/data/chapterStars';
 
 /**
  * 副本（roguelike 局）数据。一个副本 = 一串有序节点（战斗/Boss/商店），
@@ -59,8 +60,13 @@ export interface DungeonDef {
   nodes: NodeDef[];
   /** 局内商店（节点）可出现的 roguelike 池 */
   roguelikePool: ShopPoolRow[];
-  /** 通关返回大厅的 meta 货币奖励 */
+  /** 通关返回大厅的 meta 货币奖励（三星魂晶之和；无尽 / 试炼为 0） */
   metaReward: number;
+  /**
+   * 整章三星。正式章节必填；无尽 / 试炼不评星。
+   * 第 1 条必须是 `clear`，三星魂晶之和必须等于 `metaReward`。
+   */
+  stars?: ChapterStars;
   /** 全副本敌人基础缩放 */
   enemyScaleBase: number;
   /** 可带入本副本的最大角色数 */
@@ -255,14 +261,34 @@ function buildNodes(stageIndices: number[]): NodeDef[] {
   return nodes;
 }
 
+function battleCount(nodes: NodeDef[]): number {
+  return nodes.filter((n) => n.kind === 'battle' || n.kind === 'boss').length;
+}
+
+/** 回合上限初值：场数 × 12，偏松，避免第 2 星永远拿不到 */
+function roundCap(nodes: NodeDef[]): number {
+  return battleCount(nodes) * 12;
+}
+
+const NODES_GRASSLAND = buildNodes(chapterStages(1));
+const NODES_FOREST = buildNodes(chapterStages(2));
+const NODES_FORTRESS = buildNodes(chapterStages(3));
+const NODES_SWAMP = buildNodes(chapterStages(4));
+const NODES_DRAGON = buildNodes(chapterStages(5));
+
 export const DUNGEON_DEFS: DungeonDef[] = [
   {
     id: 'dungeon_grassland',
     name: '草原战线',
     desc: '血牙部族踏进草原。四场遭遇战，先学会抢那两块缓丘。',
-    nodes: buildNodes(chapterStages(1)),
+    nodes: NODES_GRASSLAND,
     roguelikePool: POOL_GRASSLAND,
     metaReward: 10,
+    stars: [
+      { cond: { kind: 'clear' }, soul: 3 },
+      { cond: { kind: 'maxRounds', max: roundCap(NODES_GRASSLAND) }, soul: 3 },
+      { cond: { kind: 'maxDeaths', max: 0 }, soul: 4 },
+    ],
     enemyScaleBase: 1.0,
     maxParty: 4,
     unlock: { kind: 'default' },
@@ -274,9 +300,14 @@ export const DUNGEON_DEFS: DungeonDef[] = [
     id: 'dungeon_forest',
     name: '密林深处',
     desc: '林子替谁挡伤，谁就占便宜——而它烧得起来。',
-    nodes: buildNodes(chapterStages(2)),
+    nodes: NODES_FOREST,
     roguelikePool: POOL_FOREST,
     metaReward: 12,
+    stars: [
+      { cond: { kind: 'clear' }, soul: 4 },
+      { cond: { kind: 'maxDeaths', max: 2 }, soul: 4 },
+      { cond: { kind: 'noPotion' }, soul: 4 },
+    ],
     enemyScaleBase: 1.05,
     maxParty: 4,
     unlock: { kind: 'clearDungeon', dungeonId: 'dungeon_grassland' },
@@ -288,9 +319,14 @@ export const DUNGEON_DEFS: DungeonDef[] = [
     id: 'dungeon_fortress',
     name: '要塞攻防',
     desc: '墙挡路，也挡箭。闸门是唯一能被你亲手操作的地形。',
-    nodes: buildNodes(chapterStages(3)),
+    nodes: NODES_FORTRESS,
     roguelikePool: POOL_FORTRESS,
     metaReward: 14,
+    stars: [
+      { cond: { kind: 'clear' }, soul: 5 },
+      { cond: { kind: 'noShop' }, soul: 4 },
+      { cond: { kind: 'maxRounds', max: roundCap(NODES_FORTRESS) }, soul: 5 },
+    ],
     enemyScaleBase: 1.12,
     maxParty: 5,
     unlock: { kind: 'clearDungeon', dungeonId: 'dungeon_forest' },
@@ -302,9 +338,14 @@ export const DUNGEON_DEFS: DungeonDef[] = [
     id: 'dungeon_swamp',
     name: '毒沼泥潭',
     desc: '河水拖慢脚步，泥潭每回合抽血。这里的地形一直在扣你的账。',
-    nodes: buildNodes(chapterStages(4)),
+    nodes: NODES_SWAMP,
     roguelikePool: POOL_SWAMP,
     metaReward: 16,
+    stars: [
+      { cond: { kind: 'clear' }, soul: 5 },
+      { cond: { kind: 'maxDeaths', max: 1 }, soul: 5 },
+      { cond: { kind: 'noPotion' }, soul: 6 },
+    ],
     enemyScaleBase: 1.2,
     maxParty: 5,
     unlock: { kind: 'clearDungeon', dungeonId: 'dungeon_fortress' },
@@ -316,9 +357,14 @@ export const DUNGEON_DEFS: DungeonDef[] = [
     id: 'dungeon_dragon',
     name: '龙岭绝巅',
     desc: '绝壁能切断退路，却挡不住一支箭。龙王在最高处。',
-    nodes: buildNodes(chapterStages(5)),
+    nodes: NODES_DRAGON,
     roguelikePool: POOL_DRAGON,
     metaReward: 20,
+    stars: [
+      { cond: { kind: 'clear' }, soul: 6 },
+      { cond: { kind: 'maxDeaths', max: 0 }, soul: 7 },
+      { cond: { kind: 'noShop' }, soul: 7 },
+    ],
     enemyScaleBase: 1.3,
     maxParty: 5,
     unlock: { kind: 'clearDungeon', dungeonId: 'dungeon_swamp' },

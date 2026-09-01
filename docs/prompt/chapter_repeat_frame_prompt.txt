@@ -1,0 +1,10 @@
+A single mobile-game UI REWARD FRAME, one object only, perfectly left-right symmetric, centered.
+
+Shape: compact rounded rectangle / ticket, wider than tall but NOT a full-width bar. Same visual family as a short sign, sized to hold one crystal icon plus a count.
+
+Fill: aged parchment #D8C8A4 (NOT white). Thick near-black #1A1410 outline, thin inner ink line, four simple ink corner ticks. Completely empty center.
+
+NO gold, no filigree, no icons, no stars, no ribbon attached to the side.
+NO TEXT, no letters, no numbers, no watermark.
+Background 100% solid flat MAGENTA #FF00FF.
+Chunky cartoon, flat fill, one cel shade on the rim only.

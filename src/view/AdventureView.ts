@@ -1,6 +1,7 @@
 import * as PIXI from 'pixi.js';
 import { makeText } from '@/theme/typography';
 import { DUNGEON_DEFS, getDungeonDef, type DungeonDef } from '@/data/dungeonCatalog';
+import { isStarBit, starCondLabel, LEGACY_CLEARED_STAR_MASK } from '@/data/chapterStars';
 import {
   adventureChapterList,
   isSandboxDungeon,
@@ -13,7 +14,6 @@ import {
   gmUnlockAllCharacters,
   isDungeonUnlocked,
   sweepLeftToday,
-  sweepQuota,
   unlockDungeonWithMeta,
   type MetaState,
   type MvpGameState,
@@ -33,6 +33,7 @@ import { makeButton } from '@/ui/Button';
 import { showToast } from '@/ui/Toast';
 import { AudioManager } from '@/core/AudioManager';
 import { staggerPop } from '@/view/fx/celebration';
+import { uiTexture } from '@/ui/chrome';
 
 export interface AdventureCallbacks {
   onStartRun: (dungeonId: string, party: string[]) => void;
@@ -46,40 +47,64 @@ export interface AdventureCallbacks {
   onChapterChange: (index: number) => void;
 }
 
+export interface ChapterStarRewardView {
+  label: string;
+  soul: number;
+  achieved: boolean;
+  claimed: boolean;
+}
+
 export interface ChapterRewardModel {
-  firstSoul: number;
-  firstClaimed: boolean;
+  stars: ChapterStarRewardView[];
+  starFilled: number;
   repeatSoul: number;
+  firstClaimed: boolean;
   pendingNodeFirstClears: number;
 }
 
-/** 章节卡上的两行奖励：首通一次，重复通关可扫荡 */
+function displayStarMask(
+  d: DungeonDef,
+  meta: Pick<MetaState, 'clearedDungeonIds' | 'chapterStarsByDungeonId'>,
+): number {
+  const stored = meta.chapterStarsByDungeonId?.[d.id];
+  if (stored !== undefined) return stored;
+  return chapterClearedForSweep(meta, d.id) ? LEGACY_CLEARED_STAR_MASK : 0;
+}
+
+/** 章节卡奖励：本关可扫荡 + 三星各领一次 */
 export function chapterRewardModel(
   d: DungeonDef,
-  meta: Pick<MetaState, 'clearedDungeonIds' | 'clearedNodesByDungeonId'>,
+  meta: Pick<MetaState, 'clearedDungeonIds' | 'clearedNodesByDungeonId' | 'chapterStarsByDungeonId'>,
 ): ChapterRewardModel {
   const doneNodes = meta.clearedNodesByDungeonId[d.id] ?? 0;
+  const mask = displayStarMask(d, meta);
+  const stars = (d.stars ?? []).map((s, i) => {
+    const claimed = isStarBit(mask, i);
+    return { label: starCondLabel(s.cond), soul: s.soul, achieved: claimed, claimed };
+  });
   return {
-    firstSoul: d.metaReward,
-    firstClaimed: chapterClearedForSweep(meta, d.id),
+    stars,
+    starFilled: stars.filter((s) => s.claimed).length,
     repeatSoul: DUNGEON_REPEAT_SOUL,
+    firstClaimed: chapterClearedForSweep(meta, d.id),
     pendingNodeFirstClears: d.nodes.filter((n, i) => n.kind !== 'shop' && i >= doneNodes).length,
   };
 }
 
 const RADIUS = 20;
-/** 插图占卡片高度的比例，同时也是 DungeonDef.art 出图时的取景依据 */
-const ART_RATIO = 0.38;
-/** 星级占位、难度切换条的高度，后面真做评价/精英时不用再挤卡片 */
-const STAR_ROW_H = 22;
-const DIFF_ROW_H = 32;
-const TILE = 40;
-const SECTION_H = 18;
-const REWARD_H = 86;
-/** 分区条 / 奖励井：paper 混 secondary，比纯米白沉一档，仍是浅底 */
-const WASH = mix(C.paper, C.secondary, 0.28);
-const WELL = mix(C.paper, C.secondary, 0.16);
-const SOUL_TILE = mix(C.paper, C.soul, 0.18);
+/** 插图占卡片高度的比例；星星改画在通关三列上，插图可以略抬回来 */
+const ART_RATIO = 0.34;
+const SOUL_ICON = 28;
+const RIBBON_H = 24;
+const REPEAT_TITLE_H = 44;
+const REPEAT_FRAME_H = 50;
+const REPEAT_OVERLAP = 12;
+const REPEAT_TITLE_WELL_Y = 0.54;
+const STAR_SZ = 24;
+const COND_H = 24;
+const STAR_COL_H = 10 + STAR_SZ + 6 + COND_H + 6 + SOUL_ICON + 6 + 14 + 8;
+/** 羊皮纸降级色：旧纸，不要再铺一块刺眼米白 */
+const PARCHMENT = mix(C.paper, C.panel, 0.38);
 
 /** 浅底色块。内部分区默认不描边；要线也只走 1px 发丝，避免套框发沉 */
 function flatFill(
@@ -97,7 +122,55 @@ function flatFill(
   return g;
 }
 
-function drawFlatStar(size: number, filled: boolean): PIXI.Graphics {
+function stretchUi(key: string, w: number, h: number): PIXI.Sprite | null {
+  const tex = uiTexture(key);
+  if (!tex) return null;
+  const sp = new PIXI.Sprite(tex);
+  sp.width = w;
+  sp.height = h;
+  return sp;
+}
+
+function fitUi(key: string, w: number, h: number): PIXI.Sprite | null {
+  const tex = uiTexture(key);
+  if (!tex) return null;
+  const sp = new PIXI.Sprite(tex);
+  const s = Math.min(w / tex.width, h / tex.height);
+  sp.width = tex.width * s;
+  sp.height = tex.height * s;
+  return sp;
+}
+
+function fitUiHeight(key: string, h: number): PIXI.Sprite | null {
+  const tex = uiTexture(key);
+  if (!tex) return null;
+  const sp = new PIXI.Sprite(tex);
+  const s = h / tex.height;
+  sp.width = tex.width * s;
+  sp.height = h;
+  return sp;
+}
+
+function repeatBlockH(): number {
+  return REPEAT_TITLE_H + REPEAT_FRAME_H - REPEAT_OVERLAP;
+}
+
+function rewardBlockH(): number {
+  return repeatBlockH() + 8 + RIBBON_H + 2 + STAR_COL_H;
+}
+
+function parchmentFill(w: number, h: number, radius: number): PIXI.Graphics {
+  const g = new PIXI.Graphics();
+  g.lineStyle(2, C.ink, 0.9, 0);
+  g.beginFill(PARCHMENT, 1);
+  g.drawRoundedRect(0, 0, w, h, radius);
+  g.endFill();
+  return g;
+}
+
+function makeStarIcon(filled: boolean, size: number): PIXI.Container {
+  const icon = createUiIcon(filled ? 'chapter_star_on' : 'chapter_star_off', size);
+  if (icon) return icon;
   const g = new PIXI.Graphics();
   const r = size / 2;
   const inner = r * 0.4;
@@ -107,51 +180,57 @@ function drawFlatStar(size: number, filled: boolean): PIXI.Graphics {
     const rad = i % 2 === 0 ? r : inner;
     pts.push({ x: Math.cos(a) * rad, y: Math.sin(a) * rad });
   }
-  g.lineStyle(1.5, C.paper, 0.75, 0);
-  g.beginFill(filled ? C.paper : mix(C.panel, C.paper, 0.22), 1);
+  g.lineStyle(1.6, C.ink, 1, 0);
+  g.beginFill(filled ? C.paper : mix(C.panel, C.ink, 0.18), 1);
   g.moveTo(pts[0]!.x, pts[0]!.y);
   for (const p of pts.slice(1)) g.lineTo(p.x, p.y);
   g.closePath();
   g.endFill();
-  return g;
-}
-
-/** 星级占位：现在全空，后面接入评价时把 `filled` 改成实际星数 */
-function buildStarRow(cx: number, y: number, filled: number): PIXI.Container {
-  const row = new PIXI.Container();
-  const n = 3;
-  const gap = 22;
-  for (let i = 0; i < n; i++) {
-    const star = drawFlatStar(16, i < filled);
-    star.x = cx + (i - (n - 1) / 2) * gap;
-    star.y = y;
-    row.addChild(star);
-  }
-  return row;
-}
-
-function makeSoulTile(amount: number, muted: boolean): PIXI.Container {
+  g.x = size / 2;
+  g.y = size / 2;
   const c = new PIXI.Container();
-  c.addChild(flatFill(
-    TILE,
-    TILE,
-    10,
-    muted ? mix(C.paper, C.panel, 0.12) : SOUL_TILE,
-    muted ? 0.18 : 0.28,
-  ));
-  const icon = createUiIcon('icon_soul', 22);
+  c.addChild(g);
+  return c;
+}
+
+/** 魂晶在左、数量在右，避免字压在图标尖上 */
+function makeSoulMark(amount: number, muted: boolean): PIXI.Container {
+  const c = new PIXI.Container();
+  const icon = createUiIcon('icon_soul', SOUL_ICON);
+  const qty = makeText(`×${amount}`, 'ui', {
+    fill: muted ? C.muted : C.ink,
+    fontSize: 15,
+  });
+  qty.anchor.set(0, 0.5);
+  let x = 0;
   if (icon) {
-    icon.x = (TILE - 22) / 2;
-    icon.y = 3;
-    icon.alpha = muted ? 0.45 : 1;
+    icon.alpha = muted ? 0.5 : 1;
     c.addChild(icon);
+    x = SOUL_ICON + 4;
   }
-  const qty = makeText(`x${amount}`, 'micro', { fill: muted ? C.muted : C.ink });
-  qty.anchor.set(1, 1);
-  qty.x = TILE - 4;
-  qty.y = TILE - 3;
+  qty.x = x;
+  qty.y = SOUL_ICON / 2;
   c.addChild(qty);
   return c;
+}
+
+function addRibbonTitle(parent: PIXI.Container, label: string, x: number, y: number, w: number): void {
+  const skin = fitUi('chapter_ribbon', w, RIBBON_H + 8);
+  if (skin) {
+    skin.x = x + (w - skin.width) / 2;
+    skin.y = y + (RIBBON_H - skin.height) / 2;
+    parent.addChild(skin);
+  } else {
+    const bar = parchmentFill(Math.min(w, 168), RIBBON_H, 8);
+    bar.x = x + (w - bar.width) / 2;
+    bar.y = y;
+    parent.addChild(bar);
+  }
+  const title = makeText(label, 'caption', { fill: C.paper, fontSize: 11 });
+  title.anchor.set(0.5);
+  title.x = x + w / 2;
+  title.y = y + RIBBON_H / 2;
+  parent.addChild(title);
 }
 
 function buildRewardBlock(
@@ -163,111 +242,98 @@ function buildRewardBlock(
   const box = new PIXI.Container();
   box.x = x;
   box.y = y;
-  box.addChild(flatFill(w, REWARD_H, 12, WELL, 0.18));
 
-  const gap = 10;
-  const colW = Math.floor((w - gap) / 2);
-  const cols: Array<{ label: string; soul: number; muted: boolean; tag?: string }> = [
-    {
-      label: '首通奖励',
-      soul: rewards.firstSoul,
-      muted: rewards.firstClaimed,
-      tag: rewards.firstClaimed ? '已领取' : undefined,
-    },
-    {
-      label: '重复通关',
-      soul: rewards.repeatSoul,
-      muted: !rewards.firstClaimed,
-      tag: rewards.firstClaimed ? '可扫荡' : undefined,
-    },
-  ];
+  let y0 = 0;
+  const frameY = y0 + REPEAT_TITLE_H - REPEAT_OVERLAP;
+  const frame = fitUiHeight('chapter_repeat_frame', REPEAT_FRAME_H);
+  if (frame) {
+    frame.x = (w - frame.width) / 2;
+    frame.y = frameY;
+    box.addChild(frame);
+  } else {
+    const bar = parchmentFill(88, REPEAT_FRAME_H, 10);
+    bar.x = (w - bar.width) / 2;
+    bar.y = frameY;
+    box.addChild(bar);
+  }
+  const title = fitUiHeight('chapter_repeat_title', REPEAT_TITLE_H);
+  if (title) {
+    title.x = (w - title.width) / 2;
+    title.y = y0;
+    box.addChild(title);
+  } else {
+    const bar = parchmentFill(88, REPEAT_TITLE_H, 8);
+    bar.x = (w - bar.width) / 2;
+    bar.y = y0;
+    box.addChild(bar);
+  }
+  const caption = makeText('本关奖励', 'caption', { fill: C.ink, fontSize: 13 });
+  caption.anchor.set(0.5);
+  caption.x = w / 2;
+  caption.y = y0 + REPEAT_TITLE_H * REPEAT_TITLE_WELL_Y;
+  box.addChild(caption);
+  const repeatTile = makeSoulMark(rewards.repeatSoul, false);
+  const frameW = frame?.width ?? 88;
+  const frameX = (w - frameW) / 2;
+  repeatTile.x = frameX + (frameW - repeatTile.width) / 2;
+  repeatTile.y = frameY + (REPEAT_FRAME_H - SOUL_ICON) / 2;
+  box.addChild(repeatTile);
+
+  y0 += repeatBlockH() + 8;
+  addRibbonTitle(box, '通关奖励', 0, y0, w);
+  y0 += RIBBON_H + 2;
+
+  const cols = rewards.stars;
+  const gap = 8;
+  const colW = cols.length > 0 ? Math.floor((w - gap * (cols.length - 1)) / cols.length) : w;
   cols.forEach((col, i) => {
     const cx = i * (colW + gap);
-    const bar = flatFill(colW, SECTION_H, 8, WASH);
-    bar.x = cx;
-    box.addChild(bar);
+    const plaque = stretchUi('chapter_plaque', colW, STAR_COL_H);
+    if (plaque) {
+      plaque.x = cx;
+      plaque.y = y0;
+      plaque.alpha = col.claimed ? 0.78 : 1;
+      box.addChild(plaque);
+    } else {
+      const well = parchmentFill(colW, STAR_COL_H, 12);
+      well.x = cx;
+      well.y = y0;
+      well.alpha = col.claimed ? 0.78 : 1;
+      box.addChild(well);
+    }
 
-    const label = makeText(col.label, 'caption', { fill: C.text, fontSize: 11 });
-    label.anchor.set(0.5, 0.5);
-    label.x = cx + colW / 2;
-    label.y = SECTION_H / 2;
-    box.addChild(label);
+    const star = makeStarIcon(col.achieved, STAR_SZ);
+    star.x = cx + (colW - STAR_SZ) / 2;
+    star.y = y0 + 8;
+    box.addChild(star);
 
-    const tile = makeSoulTile(col.soul, col.muted);
-    tile.x = cx + (colW - TILE) / 2;
-    tile.y = SECTION_H + 6;
+    const cond = makeText(col.label, 'micro', {
+      fill: C.ink,
+      fontSize: 10,
+      wordWrap: true,
+      wordWrapWidth: colW - 10,
+      align: 'center',
+    });
+    cond.anchor.set(0.5, 0);
+    cond.x = cx + colW / 2;
+    cond.y = y0 + 8 + STAR_SZ + 4;
+    box.addChild(cond);
+
+    const tile = makeSoulMark(col.soul, col.claimed);
+    tile.x = cx + (colW - tile.width) / 2;
+    tile.y = y0 + 8 + STAR_SZ + 4 + COND_H + 4;
     box.addChild(tile);
 
-    if (col.tag) {
-      const tag = makeText(col.tag, 'micro', { fill: col.muted ? C.muted : C.text });
-      tag.anchor.set(0.5, 0);
-      tag.x = cx + colW / 2;
-      tag.y = SECTION_H + 6 + TILE + 2;
-      box.addChild(tag);
-    }
+    const mark = makeText(col.claimed ? '已领取' : '未达成', 'micro', {
+      fill: col.claimed ? C.ink : C.muted,
+      fontSize: 9,
+    });
+    mark.anchor.set(0.5, 0);
+    mark.x = cx + colW / 2;
+    mark.y = y0 + STAR_COL_H - 16;
+    box.addChild(mark);
   });
   return box;
-}
-
-function buildDifficultyRow(
-  x: number,
-  y: number,
-  w: number,
-  toastRoot: PIXI.Container,
-  screenW: number,
-): PIXI.Container {
-  const row = new PIXI.Container();
-  row.x = x;
-  row.y = y;
-  const gap = 8;
-  const tabW = Math.floor((w - gap) / 2);
-  const tabH = DIFF_ROW_H;
-
-  const mkTab = (label: string, active: boolean, locked: boolean, onTap?: () => void): PIXI.Container => {
-    const t = new PIXI.Container();
-    t.addChild(flatFill(
-      tabW,
-      tabH,
-      10,
-      active ? C.paper : mix(C.panel, C.paper, 0.22),
-      active ? 0.45 : 0.25,
-    ));
-    const tx = makeText(label, 'uiStrong', {
-      fill: locked ? mix(C.paper, C.panel, 0.45) : active ? C.ink : C.paper,
-      fontSize: 13,
-    });
-    tx.anchor.set(0.5);
-    const lock = locked ? createUiIcon('icon_lock', 12) : null;
-    if (lock) {
-      const pair = 12 + 4 + tx.width;
-      lock.x = (tabW - pair) / 2;
-      lock.y = (tabH - 12) / 2;
-      tx.x = lock.x + 16 + tx.width / 2;
-      tx.y = tabH / 2;
-      t.addChild(lock);
-    } else {
-      tx.x = tabW / 2;
-      tx.y = tabH / 2;
-    }
-    t.addChild(tx);
-    if (onTap) {
-      t.eventMode = 'static';
-      t.cursor = 'pointer';
-      t.hitArea = new PIXI.Rectangle(0, 0, tabW, tabH);
-      attachPress(t);
-      t.on('pointertap', onTap);
-    }
-    return t;
-  };
-
-  const normal = mkTab('普通', true, false);
-  const elite = mkTab('精英', false, true, () => {
-    showToast(toastRoot, '精英难度即将开放，敌方数值会更高', { screenWidth: screenW });
-  });
-  elite.x = tabW + gap;
-  row.addChild(normal);
-  row.addChild(elite);
-  return row;
 }
 
 /**
@@ -371,7 +437,7 @@ export function createAdventureView(
     const cardW = W - 48;
     const cardX = 24;
     // 下方只留开打/扫荡，卡片可以吃掉原来节点条的高度
-    const cardH = Math.min(H * 0.5, 400, H - cardY - 118);
+    const cardH = Math.min(H * 0.62, 480, H - cardY - 108);
 
     // 外壳走面板色，留白只给奖励井——整张米白会在海天底上像贴了一张纸。
     const card = new PIXI.Graphics();
@@ -420,36 +486,18 @@ export function createAdventureView(
     const innerL = cardX + 16;
     const innerW = cardW - 32;
 
-    if (!isSandboxDungeon(d.id)) {
-      c.addChild(buildStarRow(W / 2, bodyTop + 12, 0));
-    }
+    const rewards = isSandboxDungeon(d.id) ? null : chapterRewardModel(d, state.meta);
 
     if (unlocked) {
-      const descPad = 24;
-      const descWrap = cardW - descPad * 2;
-      const desc = makeText(d.desc, 'body', {
-        fill: C.paper, fontSize: 13,
-        wordWrap: true, wordWrapWidth: descWrap, breakWords: true, align: 'center',
-      });
-      desc.x = cardX + descPad + Math.max(0, (descWrap - desc.width) / 2);
-      desc.y = bodyTop + (isSandboxDungeon(d.id) ? 12 : STAR_ROW_H + 8);
-      c.addChild(desc);
-
-      if (!isSandboxDungeon(d.id)) {
-        const rewards = chapterRewardModel(d, state.meta);
-        const rewardY = Math.min(
-          desc.y + desc.height + 10,
-          cardY + cardH - DIFF_ROW_H - REWARD_H - 8,
-        );
-        c.addChild(buildRewardBlock(innerL, rewardY, innerW, rewards));
-        c.addChild(buildDifficultyRow(innerL, cardY + cardH - DIFF_ROW_H - 10, innerW, root, W));
+      if (rewards) {
+        c.addChild(buildRewardBlock(innerL, bodyTop + 10, innerW, rewards));
       }
     } else {
       const LOCK = 40;
       const lock = createUiIcon('icon_lock', LOCK);
       if (lock) {
         lock.x = W / 2 - LOCK / 2;
-        lock.y = bodyTop + STAR_ROW_H + 6;
+        lock.y = bodyTop + 10;
         c.addChild(lock);
       }
       let condStr = '';
@@ -462,7 +510,7 @@ export function createAdventureView(
       const cond = makeText(condStr, 'ui', { fill: C.paper });
       cond.anchor.set(0.5);
       cond.x = W / 2;
-      cond.y = bodyTop + STAR_ROW_H + (lock ? LOCK + 14 : 20);
+      cond.y = bodyTop + 10 + (lock ? LOCK + 14 : 20);
       c.addChild(cond);
       if (d.unlock.kind === 'meta') {
         const cost = d.unlock.cost;
@@ -482,9 +530,9 @@ export function createAdventureView(
         ub.y = cond.y + 18;
         c.addChild(ub);
       }
-      const rewards = chapterRewardModel(d, state.meta);
-      c.addChild(buildRewardBlock(innerL, cardY + cardH - DIFF_ROW_H - REWARD_H - 8, innerW, rewards));
-      c.addChild(buildDifficultyRow(innerL, cardY + cardH - DIFF_ROW_H - 10, innerW, root, W));
+      if (rewards) {
+        c.addChild(buildRewardBlock(innerL, cardY + cardH - rewardBlockH() - 10, innerW, rewards));
+      }
     }
 
     const mkArrow = (dir: -1 | 1): void => {
@@ -559,14 +607,11 @@ export function createAdventureView(
       return;
     }
 
-    const rewards = chapterRewardModel(d, state.meta);
     const cleared = chapterClearedForSweep(state.meta, d.id);
     const left = sweepLeftToday(state.meta, d.id);
-    const note = !cleared && rewards.pendingNodeFirstClears > 0
-      ? `沿途战斗另有 ${rewards.pendingNodeFirstClears} 处节点首通魂晶`
-      : cleared
-        ? (left > 0 ? `今日可扫荡 ${left}/${sweepQuota(d.id)} 次` : '今日扫荡次数已用完')
-        : '';
+    const note = cleared
+      ? (left > 0 ? `今日还可扫荡 ${left} 次` : '今日扫荡已用完')
+      : '';
     if (note) {
       const noteTx = makeText(note, 'caption', {
         fill: C.paper,

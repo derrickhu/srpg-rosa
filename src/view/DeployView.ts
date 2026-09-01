@@ -281,65 +281,6 @@ export function createDeployView(
   stageTx.y = stageBg.y + stageLabelH / 2;
   root.addChild(stageTx);
 
-  // --- 上阵人数提示（关卡名称下方，居中） ---
-  const maxDeployCount = getMaxDeploy(state);
-  const baseMaxDeploy = currentStage(state).maxDeploy ?? 3;
-  const deployedCount = run.placements.length;
-  const deployInfoTx = makeText(`${deployedCount}/${maxDeployCount}`, 'uiStrong', { fill: 0xffffff, fontSize: 12 });
-  const deployInfoPadX = 8;
-  const deployInfoPadY = 4;
-
-  const adBtnW = 20;
-  const adBtnGap = 6;
-  const hasAdSlot = run.adExtraSlot === 0;
-  const deployInfoContentW = 14 + deployInfoTx.width + (hasAdSlot ? adBtnGap + adBtnW : 0);
-  const deployInfoW = deployInfoContentW + deployInfoPadX * 2;
-  const deployInfoH = deployInfoTx.height + deployInfoPadY * 2;
-  const deployInfoContainer = new PIXI.Container();
-  deployInfoContainer.x = Math.floor((screen.screenWidth - deployInfoW) / 2);
-  deployInfoContainer.y = stageBg.y + stageLabelH + 4;
-
-  const deployInfoBg = new PIXI.Graphics();
-  deployInfoBg.beginFill(0x000000, 0.4);
-  deployInfoBg.drawRoundedRect(0, 0, deployInfoW, deployInfoH, 8);
-  deployInfoBg.endFill();
-  deployInfoContainer.addChild(deployInfoBg);
-
-  const personIcon = makeText('⚔', 'ui', { fill: 0xffdd88, fontSize: 12 });
-  personIcon.x = deployInfoPadX;
-  personIcon.y = (deployInfoH - personIcon.height) / 2;
-  deployInfoContainer.addChild(personIcon);
-
-  deployInfoTx.x = deployInfoPadX + 14;
-  deployInfoTx.y = (deployInfoH - deployInfoTx.height) / 2;
-  deployInfoContainer.addChild(deployInfoTx);
-
-  if (hasAdSlot) {
-    const adBtn = new PIXI.Container();
-    const adBtnBg = new PIXI.Graphics();
-    adBtnBg.beginFill(0x44aa44, 0.9);
-    adBtnBg.drawRoundedRect(0, 0, adBtnW, deployInfoH - deployInfoPadY, 4);
-    adBtnBg.endFill();
-    adBtn.addChild(adBtnBg);
-    const adTx = makeText('+1', 'caption', { fill: 0xffffff, fontSize: 10, fontWeight: 'bold' });
-    adTx.anchor.set(0.5);
-    adTx.x = adBtnW / 2;
-    adTx.y = (deployInfoH - deployInfoPadY) / 2;
-    adBtn.addChild(adTx);
-    adBtn.x = deployInfoPadX + 14 + deployInfoTx.width + adBtnGap;
-    adBtn.y = deployInfoPadY / 2;
-    adBtn.eventMode = 'static';
-    adBtn.cursor = 'pointer';
-    adBtn.on('pointertap', (e: PIXI.FederatedPointerEvent) => {
-      e.stopPropagation();
-      run.adExtraSlot = 1;
-      callbacks.onRefresh?.();
-    });
-    deployInfoContainer.addChild(adBtn);
-  }
-
-  root.addChild(deployInfoContainer);
-
   // --- 节点进度链（代替「2/9」数字） ---
   // 无尽没有章节节点，只显示当前波次
   if (endless) {
@@ -347,14 +288,14 @@ export function createDeployView(
     const waveTx = makeText(`第 ${wave} / ${ENDLESS_MAX_WAVES} 波`, 'uiStrong', { fill: 0xffffff, fontSize: 13 });
     waveTx.anchor.set(0.5, 0);
     waveTx.x = Math.floor(screen.screenWidth / 2);
-    waveTx.y = deployInfoContainer.y + deployInfoH + 10;
+    waveTx.y = stageBg.y + stageLabelH + 10;
     root.addChild(waveTx);
   } else {
     const stripW = Math.min(screen.screenWidth - 32, 360);
     const strip = createNodeStrip(dungeon0, { currentIndex: run.nodeIndex, width: stripW });
     strip.x = Math.floor((screen.screenWidth - stripW) / 2);
-    // 30 而不是 18：当前节点上方要留出「你在这」标记的高度，否则它会压到上面的信息条
-    strip.y = deployInfoContainer.y + deployInfoH + 30;
+    // 当前节点上方要留出「你在这」标记的高度，否则它会压到关卡名
+    strip.y = stageBg.y + stageLabelH + 28;
     root.addChild(strip);
   }
 
@@ -465,10 +406,6 @@ export function createDeployView(
   function isDeployRow(y: number): boolean {
     return deployRowSet.has(y);
   }
-
-  let _deployCountUpdater: (() => void) | null = () => {
-    deployInfoTx.text = `${run.placements.length}/${maxDeployCount}`;
-  };
 
   function redrawGrid(): void {
     gridLayer.removeChildren();
@@ -585,7 +522,6 @@ export function createDeployView(
       line.lineTo(ORIGIN_X + x * CELL, ORIGIN_Y + GH * CELL);
     }
     gridLayer.addChild(line);
-    _deployCountUpdater?.();
   }
 
   function onCellTap(x: number, y: number): void {
@@ -612,6 +548,7 @@ export function createDeployView(
       AudioManager.playSfx('sfx_deploy');
       redrawGrid();
       redrawHand();
+      redrawToolbar();
       return;
     }
     // 走到这里说明这一格没有可做的操作（非部署行、或还没选人）。
@@ -621,8 +558,14 @@ export function createDeployView(
     if (ter) showTerrainInfo(ter);
   }
 
-  function makeToolChip(label: string, active: boolean, onPress: () => void, enabled = true, iconKey?: string): PIXI.Container {
-    const chipW = 76;
+  function makeToolChip(
+    label: string,
+    active: boolean,
+    onPress: () => void,
+    enabled = true,
+    iconKey?: string,
+    chipW = 76,
+  ): PIXI.Container {
     const chipH = 28;
     const c = new PIXI.Container();
     const g = new PIXI.Graphics();
@@ -666,7 +609,7 @@ export function createDeployView(
     let tx = 0;
     const row = new PIXI.Container();
     const tUnit = makeToolChip(
-      '部署',
+      `部署 ${run.placements.length}/${getMaxDeploy(state)}`,
       deployTool === 'unit',
       () => {
         deployTool = 'unit';
@@ -676,9 +619,10 @@ export function createDeployView(
       },
       true,
       'icon_deploy',
+      108,
     );
     tUnit.x = tx;
-    tx += 82;
+    tx += 114;
     const terTotal = terrainChargesTotal(run);
     const tTer = makeToolChip(
       `地形×${terTotal}`,

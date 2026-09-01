@@ -1,0 +1,6 @@
+Chapter reward UI chrome for a cartoon fantasy mobile SRPG.
+Style: chunky hand-drawn cartoon, thick near-black #1A1410 outlines, flat saturated fills, one cel-shade only.
+NO TEXT, no letters, no numbers, no watermark.
+Background is 100% solid flat MAGENTA #FF00FF.
+NO gold, no filigree, no sparkles.
+Parchment color is aged paper #D8C8A4, never bright white.

@@ -39,14 +39,12 @@ function overlayAt(run: RunState, pos: Vec2): boolean {
 
 const DEFAULT_MAX_DEPLOY = 3;
 
-/** 当前节点的有效最大上阵人数（含广告额外位） */
+/** 当前节点的有效最大上阵人数 */
 export function getMaxDeploy(state: MvpGameState): number {
   const run = requireRun(state);
   // 第一章第一关 maxDeploy=2，无尽复用那张地形但不能沿用 2 人上限
-  const base = isEndlessDungeon(run.dungeonId)
-    ? ENDLESS_DUNGEON.maxParty
-    : (currentStage(state).maxDeploy ?? DEFAULT_MAX_DEPLOY);
-  return base + (run.adExtraSlot ?? 0);
+  if (isEndlessDungeon(run.dungeonId)) return ENDLESS_DUNGEON.maxParty;
+  return currentStage(state).maxDeploy ?? DEFAULT_MAX_DEPLOY;
 }
 
 export function canPlaceAt(state: MvpGameState, pos: Vec2): boolean {

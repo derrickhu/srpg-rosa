@@ -2,7 +2,17 @@ import {
   CHARACTER_DEFS,
   getCharacterDef,
 } from '@/data/characterCatalog';
-import { DUNGEON_DEFS } from '@/data/dungeonCatalog';
+import { DUNGEON_DEFS, getDungeonDef } from '@/data/dungeonCatalog';
+import {
+  LEGACY_CLEARED_STAR_MASK,
+  emptyRunStarStats,
+  evaluateChapterStars,
+  isStarBit,
+  starBitMask,
+  starCondLabel,
+  type ChapterStarDef,
+  type RunStarStats,
+} from '@/data/chapterStars';
 import { POTION_DEFS } from '@/data/potionCatalog';
 import { getSkillSpec } from '@/data/skillCatalog';
 import { allSkillMods, modRollWeight, modStacks } from '@/data/skillModCatalog';
@@ -22,6 +32,7 @@ import {
   type LootOption,
   type MetaState,
   type MvpGameState,
+  type RunState,
 } from './GameState';
 import {
   ENDLESS_CLEAR_BONUS,
@@ -49,12 +60,104 @@ export const NODE_FIRST_CLEAR_SOUL = 2;
 export const BOSS_FIRST_CLEAR_SOUL = 5;
 
 /**
- * 重复通关整章的魂晶。首通拿的是 `dungeon.metaReward`（大额，一次性）。
+ * 重复通关整章的魂晶（本关奖励）。通关奖励改成按星第一次点亮发，
+ * 三星之和仍是 `dungeon.metaReward`。
  *
  * 保留一个可重复的量，是因为玩家总要有个地方刷；把它挂在**整章通关**上，
  * 刷的成本就是完整打一遍，而不是进副本赢两场就跑。
  */
 export const DUNGEON_REPEAT_SOUL = 3;
+
+export function recordRunBattleStats(
+  run: RunState,
+  input: { rounds: number; allyDeaths: number },
+): void {
+  const stats = run.starStats ?? emptyRunStarStats();
+  stats.battleRounds += Math.max(0, Math.floor(input.rounds));
+  stats.allyDeaths += Math.max(0, Math.floor(input.allyDeaths));
+  run.starStats = stats;
+}
+
+export function recordRunPotionUse(run: RunState): void {
+  const stats = run.starStats ?? emptyRunStarStats();
+  stats.potionsUsed += 1;
+  run.starStats = stats;
+}
+
+export function recordRunShopBuy(run: RunState): void {
+  const stats = run.starStats ?? emptyRunStarStats();
+  stats.shopBuys += 1;
+  run.starStats = stats;
+}
+
+export function chapterStarMask(meta: MetaState, dungeonId: string): number {
+  const stored = meta.chapterStarsByDungeonId?.[dungeonId];
+  if (stored !== undefined) return stored;
+  return meta.clearedDungeonIds.includes(dungeonId) ? LEGACY_CLEARED_STAR_MASK : 0;
+}
+
+/**
+ * 老档已通关、还没有星字段：三星都算领过。已经写过的章不覆盖。
+ */
+export function hydrateChapterStars(meta: MetaState): Record<string, number> {
+  const stars = { ...(meta.chapterStarsByDungeonId ?? {}) };
+  for (const id of meta.clearedDungeonIds) {
+    if (stars[id] === undefined) stars[id] = LEGACY_CLEARED_STAR_MASK;
+  }
+  meta.chapterStarsByDungeonId = stars;
+  return stars;
+}
+
+export interface ChapterClearPreview {
+  soul: number;
+  firstClear: boolean;
+  newStars: number[];
+  labels: string[];
+  starMask: number;
+}
+
+function previewFrom(
+  stars: readonly ChapterStarDef[] | undefined,
+  stats: RunStarStats,
+  claimedMask: number,
+  firstClear: boolean,
+): ChapterClearPreview {
+  if (!stars || stars.length === 0) {
+    return {
+      soul: firstClear ? 0 : DUNGEON_REPEAT_SOUL,
+      firstClear,
+      newStars: [],
+      labels: [],
+      starMask: claimedMask,
+    };
+  }
+  const achieved = evaluateChapterStars(stars, stats);
+  const fresh = starBitMask(achieved);
+  const next = claimedMask | fresh;
+  const newStars: number[] = [];
+  const labels: string[] = [];
+  let soul = 0;
+  stars.forEach((s, i) => {
+    if (isStarBit(fresh, i) && !isStarBit(claimedMask, i)) {
+      soul += s.soul;
+      newStars.push(i + 1);
+      labels.push(starCondLabel(s.cond));
+    }
+  });
+  if (!firstClear) soul += DUNGEON_REPEAT_SOUL;
+  return { soul, firstClear, newStars, labels, starMask: next };
+}
+
+export function previewChapterClear(state: MvpGameState, dungeonId: string): ChapterClearPreview {
+  const d = getDungeonDef(dungeonId);
+  const firstClear = !state.meta.clearedDungeonIds.includes(dungeonId);
+  const claimed = chapterStarMask(state.meta, dungeonId);
+  const stats = state.run?.starStats ?? emptyRunStarStats();
+  if (!d?.stars) {
+    return previewFrom(undefined, stats, claimed, firstClear);
+  }
+  return previewFrom(d.stars, stats, claimed, firstClear);
+}
 
 /** 进入副本：建立 run，定位首节点 */
 export function startRun(state: MvpGameState, dungeonId: string, partyRosterIds: string[]): void {
@@ -464,34 +567,40 @@ export function advanceNode(state: MvpGameState): void {
 export interface FinishRunResult {
   soul: number;
   unlockedRosterIds: string[];
+  newStars: number[];
+  starMask: number;
 }
 
 /**
- * 整章通关：首通给 `metaReward`（大额，一次性），之后每次重复通关给 `DUNGEON_REPEAT_SOUL`。
- * 返回本次入账的魂晶和刚入队的角色，供结算界面展示。
+ * 整章通关：新点亮的星发魂晶；已经通关过再打，另加本关重复奖。
  */
 export function finishRunVictory(state: MvpGameState): FinishRunResult {
   if (state.run && isSandboxDungeon(state.run.dungeonId)) {
     state.run = null;
     state.phase = 'hub';
-    return { soul: 0, unlockedRosterIds: [] };
+    return { soul: 0, unlockedRosterIds: [], newStars: [], starMask: 0 };
   }
   const d = currentDungeon(state);
-  // 判首通要在 `applyDungeonClearUnlocks` 之前——它会把 id 写进 clearedDungeonIds
-  const firstClear = !state.meta.clearedDungeonIds.includes(d.id);
+  hydrateChapterStars(state.meta);
+  const preview = previewChapterClear(state, d.id);
   const unlockedRosterIds = applyDungeonClearUnlocks(state.meta, d.id);
-  const soul = firstClear ? d.metaReward : DUNGEON_REPEAT_SOUL;
-  state.meta.metaCurrency += soul;
+  const map = state.meta.chapterStarsByDungeonId ?? {};
+  map[d.id] = preview.starMask;
+  state.meta.chapterStarsByDungeonId = map;
+  state.meta.metaCurrency += preview.soul;
   state.run = null;
   state.phase = 'hub';
-  return { soul, unlockedRosterIds };
+  return {
+    soul: preview.soul,
+    unlockedRosterIds,
+    newStars: preview.newStars,
+    starMask: preview.starMask,
+  };
 }
 
-/** 本局通关能拿多少魂晶（供结算/大厅提前告知，不产生副作用） */
+/** 本局通关能拿多少魂晶（供结算弹层提前告知，不产生副作用） */
 export function dungeonClearSoul(state: MvpGameState, dungeonId: string): number {
-  const d = DUNGEON_DEFS.find((x) => x.id === dungeonId);
-  if (!d) return 0;
-  return state.meta.clearedDungeonIds.includes(d.id) ? DUNGEON_REPEAT_SOUL : d.metaReward;
+  return previewChapterClear(state, dungeonId).soul;
 }
 
 /**
