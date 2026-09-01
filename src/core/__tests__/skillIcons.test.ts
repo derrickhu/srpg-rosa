@@ -87,6 +87,11 @@ describe('图标资源完整性', () => {
     }
   });
 
+  it('托管 / 接手徽钮成对登记', () => {
+    expect(UI_BUNDLE.assets.icon_pilot_auto).toBe('images/ui/icon_pilot_auto.png');
+    expect(UI_BUNDLE.assets.icon_pilot_take).toBe('images/ui/icon_pilot_take.png');
+  });
+
   /**
    * 登记了 key **不等于**图真的在。
    *

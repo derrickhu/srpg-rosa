@@ -108,6 +108,9 @@ export const UI_BUNDLE: AssetBundleDef = {
     icon_deploy: 'images/ui/icon_deploy.png',
     icon_terrain: 'images/ui/icon_terrain.png',
     icon_gear: 'images/ui/icon_gear.png',
+    // 战斗底部托管开关。只出剪影，圆钮壳和「托管 / 接手」字在回放层画。
+    icon_pilot_auto: 'images/ui/icon_pilot_auto.png',
+    icon_pilot_take: 'images/ui/icon_pilot_take.png',
     // 三种药剂共用同一个瓶型，只有液体颜色不同，键名对齐 POTION_DEFS 的 id
     icon_potion_heal: 'images/ui/icon_potion_heal.png',
     icon_potion_draught: 'images/ui/icon_potion_draught.png',

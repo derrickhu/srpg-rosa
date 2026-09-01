@@ -40,7 +40,7 @@ import {
   spawnSkillNameTag,
   type CombatFloatHost,
 } from '@/view/battle/combatFloatText';
-import { C } from '@/view/mvpTheme';
+import { C, mix, shade } from '@/view/mvpTheme';
 import { createUnitOverhead, type UnitOverheadHandle } from '@/view/unitOverhead';
 import {
   createTerrainBadge,
@@ -52,6 +52,7 @@ import {
   runGoldYBelow,
 } from '@/view/renderHelpers';
 import { makeButton } from '@/ui/Button';
+import { attachPress } from '@/ui/press';
 import { AudioManager, muteButtonLabel } from '@/core/AudioManager';
 import { sfxForAttack, sfxForAttackHit, sfxForSkillCast, sfxForSkillHit } from '@/data/audioCatalog';
 import { AssetManager } from '@/core/AssetManager';
@@ -547,35 +548,82 @@ export function createBattlePlaybackView(
    * 不在开局二选一，是因为这两种玩法解决的是**同一局里不同段落**的问题：
    * 前半场清杂兵让 AI 走，Boss 残局收回来自己打。
    *
-   * 按钮放药剂右边：右上角已经让给胶囊和跳过，托管是战斗中途会反复点的，
-   * 跟补给放在同一条操作带上，拇指不用离开底部。
-   * 标签写点下去会发生什么（托管 / 接手），状态由配色表达。
+   * 按钮钉在右下角，单独一颗，不和药剂挤同一个底框。
+   * 右上角已经让给胶囊和跳过；托管是战斗中途会反复点的，拇指自然落在右下。
+   * 壳和技能圆钮同一套：深色圆盘 + 色环 + 下沿。图只出剪影，字用代码画。
    */
-  const pilotBtnW = 72;
-  const pilotH = 40;
+  const PILOT_D = 52;
+  const PILOT_ICON = 30;
+  const PILOT_LIP = 3;
+  const PILOT_CHIP_H = 16;
+  const pilotH = PILOT_D + PILOT_LIP + 8;
   const pilotBtn = new PIXI.Container();
-  const pilotBg = new PIXI.Graphics();
-  const pilotLbl = makeText('托管', 'ui', { fill: 0xffffff, fontSize: 14 });
+  const pilotFace = new PIXI.Container();
+  const pilotPlate = new PIXI.Graphics();
+  const pilotAuto = createUiIcon('icon_pilot_auto', PILOT_ICON);
+  const pilotTake = createUiIcon('icon_pilot_take', PILOT_ICON);
+  const pilotLbl = makeText('托管', 'heading', { fill: C.paper, fontSize: 11 });
+  const r = PILOT_D / 2;
+  pilotFace.addChild(pilotPlate);
+  if (pilotAuto) {
+    pilotAuto.x = r - PILOT_ICON / 2;
+    pilotAuto.y = r - PILOT_ICON / 2 - 6;
+    pilotFace.addChild(pilotAuto);
+  }
+  if (pilotTake) {
+    pilotTake.x = r - PILOT_ICON / 2;
+    pilotTake.y = r - PILOT_ICON / 2 - 6;
+    pilotFace.addChild(pilotTake);
+  }
   pilotLbl.anchor.set(0.5);
-  pilotLbl.x = pilotBtnW / 2;
-  pilotLbl.y = pilotH / 2;
+  pilotLbl.x = r;
+  pilotLbl.y = PILOT_D - 9;
+  pilotFace.addChild(pilotLbl);
+  pilotBtn.addChild(pilotFace);
+
   function drawPilotBtn(): void {
     const auto = sim.isAuto();
-    pilotBg.clear();
-    pilotBg.lineStyle(1.5, auto ? 0x52c4dc : 0x888888, 1);
-    pilotBg.beginFill(auto ? 0x2a7a8c : 0x000000, auto ? 0.85 : 0.4);
-    pilotBg.drawRoundedRect(0, 0, pilotBtnW, pilotH, 12);
-    pilotBg.endFill();
+    // 托管：冷青环，和技能条动作钮一类。接手：金环，表示「把控制拿回来」。
+    const tone = auto ? C.primary : 0x5ec4d4;
+    const face = auto ? mix(C.panel, C.primary, 0.22) : C.panel;
+    pilotPlate.clear();
+    // 米白外晕：单独落在草地上，没有这圈会陷进草里
+    pilotPlate.beginFill(C.paper, 0.92);
+    pilotPlate.drawCircle(r + 0.5, r + 1.5, r + 2);
+    pilotPlate.endFill();
+    // 下沿：和大厅按钮同一套「能按」的语言
+    pilotPlate.beginFill(shade(face, 0.48), 1);
+    pilotPlate.drawCircle(r + 1, r + PILOT_LIP, r);
+    pilotPlate.endFill();
+    pilotPlate.lineStyle(2, C.ink, 1, 0);
+    pilotPlate.beginFill(face, 1);
+    pilotPlate.drawCircle(r, r, r);
+    pilotPlate.endFill();
+    pilotPlate.lineStyle(2.5, tone, 1);
+    pilotPlate.drawCircle(r, r, r - 2.5);
+    // 底部名牌：字不烧进图里，两态共用一块壳
+    pilotPlate.lineStyle(1.5, C.ink, 1, 0);
+    pilotPlate.beginFill(auto ? mix(C.primary, C.paper, 0.28) : mix(C.ink, C.panel, 0.35), 0.96);
+    pilotPlate.drawRoundedRect(r - 22, PILOT_D - 16, 44, PILOT_CHIP_H, 8);
+    pilotPlate.endFill();
+    if (pilotAuto) pilotAuto.visible = !auto;
+    if (pilotTake) pilotTake.visible = auto;
     pilotLbl.text = auto ? '接手' : '托管';
+    pilotLbl.style.fill = auto ? 0x2a2010 : C.paper;
   }
   drawPilotBtn();
-  pilotBtn.addChild(pilotBg);
-  pilotBtn.addChild(pilotLbl);
   // 位置在底部药剂栏排完之后再钉，见下方 HUD
   pilotBtn.eventMode = 'static';
   pilotBtn.cursor = 'pointer';
   // 底部比按钮大一圈，避免点到边上看起来没反应
-  pilotBtn.hitArea = new PIXI.Rectangle(-8, -8, pilotBtnW + 16, pilotH + 16);
+  pilotBtn.hitArea = new PIXI.Rectangle(-8, -8, PILOT_D + 16, pilotH + 8);
+  attachPress(pilotBtn, { scale: 0.96 });
+  const sinkPilot = (down: boolean): void => {
+    pilotFace.y = down ? PILOT_LIP : 0;
+  };
+  pilotBtn.on('pointerup', () => sinkPilot(false));
+  pilotBtn.on('pointerupoutside', () => sinkPilot(false));
+  pilotBtn.on('pointercancel', () => sinkPilot(false));
   // 用 pointerdown：微信上 window.pointerup 经常丢，pointertap 就不会响。
   // 防抖避免 down+tap 各切一次又切回去。
   let lastPilotAt = 0;
@@ -595,7 +643,10 @@ export function createBattlePlaybackView(
       manualUi?.abortWait();
     }
   };
-  pilotBtn.on('pointerdown', onPilotPress);
+  pilotBtn.on('pointerdown', () => {
+    sinkPilot(true);
+    onPilotPress();
+  });
 
   // --- 单位信息面板 ---
   //
@@ -911,7 +962,6 @@ export function createBattlePlaybackView(
     const oh = createUnitOverhead({
       maxHp: ed.maxHp,
       currentHp: u.hp,
-      professionName: u.faction === 'enemy' ? (u.displayName ?? UNIT_DEFS[u.defId].name) : UNIT_DEFS[u.defId].name,
       faction: u.faction,
       cell,
     });
@@ -1331,95 +1381,121 @@ export function createBattlePlaybackView(
   hudLayer.zIndex = 20;
   root.addChild(hudLayer);
 
-  const potionBtns = new Map<string, { count: number; countLbl: PIXI.Text; container: PIXI.Container }>();
-  /** 药剂栏顶边，人工操作条排在它上面 */
+  const potionBtns = new Map<string, {
+    count: number;
+    countLbl: PIXI.Text;
+    chip: PIXI.Container;
+    icon: PIXI.Container | null;
+    well: PIXI.Graphics;
+    container: PIXI.Container;
+  }>();
+  /** 药剂槽顶边；顺序条贴在它上面，技能条再贴顺序条 */
   let potionTopY = sh - 16;
 
+  const POTION_SLOT = 52;
+  const POTION_SLOT_GAP = 8;
+  const HUD_PAD = 10;
+
+  function drawPotionWell(g: PIXI.Graphics, filled: boolean): void {
+    const r = POTION_SLOT / 2;
+    g.clear();
+    // 米白外晕：槽要压在草地上，只有墨线会陷进去
+    g.beginFill(C.paper, 0.9);
+    g.drawCircle(0.5, 1.5, r + 1.5);
+    g.endFill();
+    g.beginFill(shade(C.panel, 0.42), 1);
+    g.drawCircle(1, 2.5, r);
+    g.endFill();
+    g.lineStyle(2, C.ink, 1, 0);
+    g.beginFill(mix(C.panel, C.paper, filled ? 0.16 : 0.05), 1);
+    g.drawCircle(0, 0, r);
+    g.endFill();
+    g.lineStyle(0);
+    g.beginFill(0x12141c, filled ? 0.32 : 0.55);
+    g.drawCircle(0, 1, r - 6);
+    g.endFill();
+    g.lineStyle(1.2, C.paper, filled ? 0.22 : 0.1);
+    g.drawCircle(0, 0, r - 7);
+  }
+
+  function paintPotionSlot(pid: string, count: number): void {
+    const h = potionBtns.get(pid);
+    if (!h) return;
+    h.count = count;
+    const filled = count > 0;
+    drawPotionWell(h.well, filled);
+    if (h.icon) h.icon.alpha = filled ? 1 : 0.28;
+    h.countLbl.text = `×${count}`;
+    h.chip.visible = filled;
+    h.container.eventMode = filled ? 'static' : 'none';
+    h.container.cursor = filled ? 'pointer' : 'default';
+  }
+
   {
-    const btnR = 26;
-    const gapX = 12;
-    const hudH = btnR * 2 + 26;
-    const hudY = sh - hudH - Math.max(8, inset.bottom + 8);
-    const potionIds = Object.keys(POTION_DEFS).filter((id) =>
-      (gameState.potions[id] ?? 0) > 0 || !!gameState.onPickupPotion,
-    );
+    const slotTop = sh - Math.max(10, inset.bottom + 6) - POTION_SLOT;
+    potionTopY = slotTop;
 
-    const potionW = potionIds.length > 0
-      ? potionIds.length * (btnR * 2 + gapX) - gapX
-      : 0;
-    const clusterGap = potionW > 0 ? gapX : 0;
-    const clusterW = potionW + clusterGap + pilotBtnW;
-    let bx = Math.max(8, Math.floor((sw - clusterW) / 2));
-    potionTopY = hudY - 6;
+    // 三种药剂永远占左下三个槽，空的也画井——有药才冒出来会让底栏每局换形。
+    const potionIds = Object.keys(POTION_DEFS);
+    potionIds.forEach((pid, i) => {
+      const c = new PIXI.Container();
+      c.x = HUD_PAD + POTION_SLOT / 2 + i * (POTION_SLOT + POTION_SLOT_GAP);
+      c.y = slotTop + POTION_SLOT / 2;
 
-    const hudBg = new PIXI.Graphics();
-    hudBg.beginFill(0x000000, 0.4);
-    hudBg.drawRoundedRect(bx - 10, hudY - 6, clusterW + 20, hudH + 8, 14);
-    hudBg.endFill();
-    hudLayer.addChild(hudBg);
+      const well = new PIXI.Graphics();
+      c.addChild(well);
 
-    for (const pid of potionIds) {
-        const def = POTION_DEFS[pid]!;
-        const c = new PIXI.Container();
-        c.x = bx + btnR;
-        c.y = hudY + btnR;
+      const iconSize = 34;
+      const icon = createUiIcon(`icon_potion_${pid}`, iconSize);
+      if (icon) {
+        icon.x = -iconSize / 2;
+        icon.y = -iconSize / 2 - 3;
+        c.addChild(icon);
+      }
 
-        const base = new PIXI.Graphics();
-        base.lineStyle(2, C.ink, 1, 0);
-        base.beginFill(C.panel, 0.94);
-        base.drawRoundedRect(-btnR, -btnR, btnR * 2, btnR * 2, 10);
-        base.endFill();
-        c.addChild(base);
+      const chip = new PIXI.Container();
+      chip.x = 14;
+      chip.y = -20;
+      const chipBg = new PIXI.Graphics();
+      chipBg.beginFill(C.ink, 0.82);
+      chipBg.drawRoundedRect(-11, -8, 22, 15, 7);
+      chipBg.endFill();
+      chip.addChild(chipBg);
+      const countLbl = makeText('×0', 'uiStrong', {
+        fill: C.paper,
+        fontSize: 10,
+      });
+      countLbl.anchor.set(0.5);
+      countLbl.y = -0.5;
+      chip.addChild(countLbl);
+      c.addChild(chip);
 
-        // 三种药剂共用同一个瓶型、只有液体颜色不同，键名直接由 id 拼出来。
-        // 之前这里是 emoji，不同机型画出来的瓶子形状不一，玩家没法把它和商店里的药剂对上号。
-        const iconSize = btnR * 1.5;
-        const icon = createUiIcon(`icon_potion_${pid}`, iconSize);
-        if (icon) {
-          icon.x = -iconSize / 2;
-          icon.y = -iconSize / 2 - 4;
-          c.addChild(icon);
-        }
+      c.hitArea = new PIXI.Circle(0, 0, POTION_SLOT / 2 + 2);
+      c.on('pointertap', () => {
+        const h = potionBtns.get(pid);
+        if (!h || h.count <= 0 || completed || sim.isDone()) return;
+        paintPotionSlot(pid, h.count - 1);
+        gameState.onConsumePotion(pid);
+        const evs = sim.usePotion(pid);
+        renderPotionEvents(evs);
+        updateOrderStrip(sim.pending()?.uid ?? null);
+      });
 
-        const nameLbl = makeText(def.name, 'micro', { fill: 0xffffff });
-        nameLbl.anchor.set(0.5, 0);
-        nameLbl.y = btnR + 2;
-        c.addChild(nameLbl);
+      hudLayer.addChild(c);
+      potionBtns.set(pid, {
+        count: 0,
+        countLbl,
+        chip,
+        icon,
+        well,
+        container: c,
+      });
+      paintPotionSlot(pid, gameState.potions[pid] ?? 0);
+    });
 
-        const countLbl = makeText(`×${gameState.potions[pid] ?? 0}`, 'caption', {
-          fill: 0xffe08a, fontWeight: 'bold',
-        });
-        countLbl.anchor.set(0.5, 1);
-        countLbl.y = btnR - 2;
-        countLbl.x = btnR - 10;
-        c.addChild(countLbl);
-
-        c.eventMode = 'static';
-        c.cursor = 'pointer';
-        c.hitArea = new PIXI.Rectangle(-btnR, -btnR, btnR * 2, btnR * 2);
-        c.on('pointertap', () => {
-          const h = potionBtns.get(pid);
-          if (!h || h.count <= 0 || completed || sim.isDone()) return;
-          h.count -= 1;
-          h.countLbl.text = `×${h.count}`;
-          if (h.count <= 0) h.container.alpha = 0.45;
-          gameState.onConsumePotion(pid);
-          const evs = sim.usePotion(pid);
-          renderPotionEvents(evs);
-          updateOrderStrip(sim.pending()?.uid ?? null);
-        });
-
-        const startCount = gameState.potions[pid] ?? 0;
-        if (startCount <= 0) c.alpha = 0.45;
-        hudLayer.addChild(c);
-        potionBtns.set(pid, { count: startCount, countLbl, container: c });
-        bx += btnR * 2 + gapX;
-    }
-
-    // 循环末尾已经多加了一段 gapX，bx 正好是下一个槽的左缘；没有药剂时 bx 就是簇的起点
-    pilotBtn.x = bx;
-    // 再抬一点，躲开微信底栏手势区；点下去才吃得到
-    pilotBtn.y = hudY + btnR - pilotH / 2 - 10;
+    // 圆盘和药井同一条中线；底下名牌探进安全区，不把整行顶高
+    pilotBtn.x = sw - HUD_PAD - PILOT_D;
+    pilotBtn.y = slotTop;
     hudLayer.addChild(pilotBtn);
   }
 
@@ -1433,13 +1509,14 @@ export function createBattlePlaybackView(
   const orderStrip = new PIXI.Container();
   hudLayer.addChild(orderStrip);
 
-  const ORDER_CARD_W = 40;
-  const ORDER_CARD_H = 50;
-  /** 顺序条整体高度，供人工操作条让位 */
+  const ORDER_CARD_W = 36;
+  const ORDER_CARD_H = 52;
+  /** 顺序条整体高度，供人工操作条让位；多留一点给当前卡上浮 */
   const ORDER_STRIP_H = ORDER_CARD_H + 8;
   /** 一屏最多几格；含跨回合预估 */
   const ORDER_SHOW = 8;
-  orderStrip.y = potionTopY - ORDER_STRIP_H;
+  // 贴着药剂槽顶边，技能条跟着一起下来，不要悬在战场中腰
+  orderStrip.y = potionTopY - ORDER_STRIP_H - 2;
 
   function updateOrderStrip(currentUid: string | null): void {
     orderStrip.removeChildren().forEach((c) => c.destroy({ children: true }));
@@ -1450,7 +1527,7 @@ export function createBattlePlaybackView(
     // 本回合还剩几格（含当前）：之后的是下一回合预估
     const thisRoundCount = (currentUid ? 1 : 0) + sim.roundOrder().filter((id) => id !== currentUid).length;
 
-    const gap = 4;
+    const gap = 5;
     const cards: PIXI.Container[] = [];
     queue.forEach((uid, idx) => {
       const u = sim.getUnit(uid);
@@ -1458,53 +1535,74 @@ export function createBattlePlaybackView(
       const isNow = uid === currentUid && idx === 0;
       const nextRound = idx >= thisRoundCount;
       const card = new PIXI.Container();
+      const W = ORDER_CARD_W;
+      const H = ORDER_CARD_H;
+      const R = 5;
 
-      // 当前行动者金底，其余按阵营深蓝 / 深红——要能一眼数出「接下来轮到几个敌人」
-      const fill = isNow ? 0xffdd44 : (u.faction === 'player' ? 0x1e4c6e : 0x6e2420);
+      // 纸牌：米白卡面 + 细墨线。不要按钮下沿、深色凹槽、嵌进去的名牌——那些是厚砖。
+      const face = isNow
+        ? mix(C.paper, C.primary, 0.22)
+        : u.faction === 'player'
+          ? mix(C.paper, C.panel, 0.1)
+          : mix(C.paper, 0xb05048, 0.12);
+      const accent = u.faction === 'player' ? C.panel : 0xa85850;
       const bg = new PIXI.Graphics();
-      bg.lineStyle(isNow ? 2 : 1, isNow ? 0xfff4c0 : 0x000000, isNow ? 1 : 0.5);
-      bg.beginFill(fill, isNow ? 1 : 0.85);
-      bg.drawRoundedRect(0, 0, ORDER_CARD_W, ORDER_CARD_H, 7);
+      bg.beginFill(0x1a1410, 0.14);
+      bg.drawRoundedRect(1, 2, W, H, R);
+      bg.endFill();
+      bg.lineStyle(isNow ? 1.5 : 1.15, isNow ? C.primary : C.ink, 1, 0);
+      bg.beginFill(face, 1);
+      bg.drawRoundedRect(0, 0, W, H, R);
+      bg.endFill();
+      bg.lineStyle(1, C.paper, 0.55);
+      bg.drawRoundedRect(2, 2, W - 4, H - 4, R - 2);
+      bg.lineStyle(0);
+      bg.beginFill(isNow ? C.primary : accent, 0.9);
+      bg.drawRoundedRect(7, 3, W - 14, 2, 1);
       bg.endFill();
       card.addChild(bg);
 
       // 头像用棋盘同一套 token，玩家不用在两种画法之间做二次对应
-      const portrait = createUnitToken(u.animSet ?? u.defId, u.faction, ORDER_CARD_W - 4);
-      portrait.x = ORDER_CARD_W / 2;
-      portrait.y = ORDER_CARD_H / 2 - 6;
+      const artH = H - 16;
+      const portrait = createUnitToken(u.animSet ?? u.defId, u.faction, artH + 4);
+      portrait.x = W / 2;
+      portrait.y = 5 + artH / 2;
       card.addChild(portrait);
 
       // 名字优先用角色名（`displayName`），职业名只是兜底。
       // 一队里两个剑士时，「剑士 / 剑士」根本指不出是谁该动。
+      // 印在卡面上，系统黑体，不要再套一块底板。
       const label = u.displayName ?? UNIT_DEFS[u.defId].name;
-      const tx = makeText(label.slice(0, 4), 'combatLabel', {
-        fill: isNow ? 0x2a2010 : 0xffffff,
-        fontSize: 9,
+      const tx = makeText(label.slice(0, 4), 'heading', {
+        fill: C.ink,
+        fontSize: 8,
       });
       tx.anchor.set(0.5, 1);
-      tx.x = ORDER_CARD_W / 2;
-      tx.y = ORDER_CARD_H - 2;
+      tx.x = W / 2;
+      tx.y = H - 4;
       card.addChild(tx);
 
       // 正在看的这个人：再描一圈金边，和棋盘上的检视圈对得上
       if (uid === inspectUid) {
         const ring = new PIXI.Graphics();
-        ring.lineStyle(2, 0xfff4c0, 1);
-        ring.drawRoundedRect(1, 1, ORDER_CARD_W - 2, ORDER_CARD_H - 2, 7);
+        ring.lineStyle(1.5, C.primary, 1);
+        ring.drawRoundedRect(-2, -2, W + 4, H + 4, R + 1);
         card.addChild(ring);
       }
 
+      if (isNow) card.y = -3;
+
       card.eventMode = 'static';
       card.cursor = 'pointer';
-      card.hitArea = new PIXI.Rectangle(0, 0, ORDER_CARD_W, ORDER_CARD_H);
+      card.hitArea = new PIXI.Rectangle(0, 0, W, H);
       card.on('pointertap', () => showUnitInfo(uid));
 
       // 跨回合预估略淡，并在回合分界加一条细缝
       if (nextRound) card.alpha = 0.62;
       if (nextRound && idx === thisRoundCount && cards.length > 0) {
         const sep = new PIXI.Graphics();
-        sep.beginFill(0xfff4c0, 0.55);
-        sep.drawRoundedRect(-3, 6, 2, ORDER_CARD_H - 12, 1);
+        sep.beginFill(C.ink, 0.28);
+        sep.drawRoundedRect(-3, 10, 1.5, H - 20, 1);
         sep.endFill();
         card.addChild(sep);
       }
@@ -2058,12 +2156,7 @@ export function createBattlePlaybackView(
         hideDropMarker(ev.pos);
         gameState.potions[ev.potionId] = (gameState.potions[ev.potionId] ?? 0) + 1;
         gameState.onPickupPotion?.(ev.potionId);
-        const h = potionBtns.get(ev.potionId);
-        if (h) {
-          h.count += 1;
-          h.countLbl.text = `×${h.count}`;
-          h.container.alpha = 1;
-        }
+        paintPotionSlot(ev.potionId, gameState.potions[ev.potionId] ?? 0);
         const at = cellCenter(originX, originY, cell, ev.pos);
         const name = POTION_DEFS[ev.potionId]?.name ?? '药剂';
         floatUtility(at.x, at.y - cell * 0.35, `拾取 ${name}`);
@@ -2161,7 +2254,7 @@ export function createBattlePlaybackView(
     app,
     geo: { cell, originX, originY, gridW: GW, gridH: GH },
     screenW: sw,
-    barBottomY: orderStrip.y - 10,
+    barBottomY: orderStrip.y - 6,
     highlightLayer: rangeLayer,
     threatLayer: fxLayer,
     inputLayer,

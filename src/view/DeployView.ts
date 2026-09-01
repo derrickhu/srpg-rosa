@@ -32,7 +32,7 @@ import {
   type MvpGameState,
 } from '@/game/MvpState';
 import { C } from '@/view/mvpTheme';
-import { createUnitOverhead } from '@/view/unitOverhead';
+import { createUnitOverhead, tokenOverheadLocalY } from '@/view/unitOverhead';
 import { battleUnitInfoModel, characterInfoModel } from '@/view/unitInfoModel';
 import { createUnitInfoOverlay, type UnitInfoModel } from '@/view/unitInfoPanel';
 import { createTerrainInfoOverlay } from '@/view/terrainInfoPanel';
@@ -53,8 +53,6 @@ import { makeButton } from '@/ui/Button';
 import { AudioManager, muteButtonLabel } from '@/core/AudioManager';
 import { attachPress } from '@/ui/press';
 import { attachGlowRing } from '@/view/fx/celebration';
-import { unitHeadLocalY } from '@/view/AnimatedUnit';
-
 export interface DeployLayoutScreen {
   screenWidth: number;
   screenHeight: number;
@@ -532,11 +530,10 @@ export function createDeployView(
           const oh = createUnitOverhead({
             maxHp: showHp,
             currentHp: showHp,
-            professionName: enemy.name ?? d.name,
             faction: 'enemy',
             cell: CELL,
           });
-          oh.root.y = unitHeadLocalY(artKey, CELL) * bossScale - 4;
+          oh.root.y = tokenOverheadLocalY(CELL, bossScale);
           wrap.addChild(oh.root);
           // 敌人格没有别的操作，整格都可以点开信息（我方格的点击已经被「取消部署」占了，
           // 那边只能挂一个小「i」角标）。开打前能读到敌人的攻/移/技能，
@@ -560,11 +557,10 @@ export function createDeployView(
             const oh = createUnitOverhead({
               maxHp: effHp,
               currentHp: effHp,
-              professionName: UNIT_DEFS[m.profession].name,
               faction: 'player',
               cell: CELL,
             });
-            oh.root.y = unitHeadLocalY(m.profession, CELL) - 4;
+            oh.root.y = tokenOverheadLocalY(CELL);
             wrap.addChild(oh.root);
             // 上了场的人会从替补席消失，替补席那个「i」也就跟着没了。
             // 不补一个入口的话，恰恰是**已经决定要带上场**的角色反而查不了词条。
