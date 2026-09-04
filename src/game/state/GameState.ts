@@ -9,7 +9,7 @@ import {
   type NodeDef,
 } from '@/data/dungeonCatalog';
 import { emptyRunStarStats, type RunStarStats } from '@/data/chapterStars';
-import { ENDLESS_DUNGEON_ID } from '@/data/endlessCatalog';
+import { ENDLESS_DUNGEON_ID, isEndlessDungeon } from '@/data/endlessCatalog';
 import { mergeTerrainOverlay, type TerrainGrid } from '@/battle/grid';
 import { createStarterRoster } from '@/game/characterFactory';
 import type { Character } from '@/game/characterTypes';
@@ -18,7 +18,8 @@ import type { Character } from '@/game/characterTypes';
  * 两层状态：
  * - MetaState（持久）：名册 + 等级/技能、meta 货币、副本解锁。
  * - RunState（单副本一局，临时）：节点进度、局内金币、局内 roguelike 构筑。
- * MvpGameState 为运行时聚合：`meta` 常驻，`run` 仅在副本中存在。
+ * MvpGameState 为运行时聚合：`meta` 常驻，`run` 是当前在打的那一局，
+ * `parkedRun` 停着另一条线（冒险 ↔ 无尽）的进度。
  */
 
 export type GamePhase = 'hub' | 'deploy' | 'battle' | 'result' | 'shop' | 'run_done';
@@ -99,6 +100,11 @@ export interface MetaState {
    * 避免把已经拿过的整笔 metaReward 再发一遍。
    */
   chapterStarsByDungeonId?: Record<string, number>;
+  /**
+   * 新手引导步骤。可选：老档没有，读档时按通关/名册补成已完成。
+   * 不升 META_VERSION。
+   */
+  tutorialStep?: number;
 }
 
 /** 单副本一局的临时状态（roguelike 构筑都在这里，结束即弃） */
@@ -191,9 +197,59 @@ export interface VictoryReward {
 
 export interface MvpGameState {
   meta: MetaState;
+  /** 当前正在打的那一局（布阵 / 战斗 / 商店） */
   run: RunState | null;
+  /**
+   * 另一条线的挂起进度。冒险和无尽各占一条线，互不覆盖：
+   * 进无尽时把冒险停在这里，打完无尽还能接着推章节。
+   */
+  parkedRun: RunState | null;
   phase: GamePhase;
   lastEventsLen: number;
+}
+
+/** 副本页那条线（无尽 / 日后的活动）；其余都算冒险 */
+export function isChallengeLaneRun(run: RunState | null | undefined): boolean {
+  return !!run && isEndlessDungeon(run.dungeonId);
+}
+
+export function adventureRunOf(state: MvpGameState): RunState | null {
+  if (state.run && !isChallengeLaneRun(state.run)) return state.run;
+  if (state.parkedRun && !isChallengeLaneRun(state.parkedRun)) return state.parkedRun;
+  return null;
+}
+
+export function challengeRunOf(state: MvpGameState): RunState | null {
+  if (isChallengeLaneRun(state.run)) return state.run;
+  if (isChallengeLaneRun(state.parkedRun)) return state.parkedRun;
+  return null;
+}
+
+/**
+ * 把指定线切到前台。另一条线有进度就停到 `parkedRun`。
+ * 返回 false 表示这条线没有可恢复的局。
+ */
+export function activateRunLane(state: MvpGameState, lane: 'adventure' | 'challenge'): boolean {
+  const match = (run: RunState | null): boolean =>
+    !!run && (lane === 'challenge') === isChallengeLaneRun(run);
+  if (match(state.run)) return true;
+  if (!match(state.parkedRun)) return false;
+  const swap = state.run;
+  state.run = state.parkedRun;
+  state.parkedRun = swap;
+  return true;
+}
+
+/** 开新局前：把另一条线的进度停住，同线旧局直接丢掉 */
+export function prepareLaneForStart(state: MvpGameState, next: RunState): void {
+  const nextIsChallenge = isChallengeLaneRun(next);
+  if (state.run && isChallengeLaneRun(state.run) !== nextIsChallenge) {
+    state.parkedRun = state.run;
+    return;
+  }
+  if (!state.run && state.parkedRun && isChallengeLaneRun(state.parkedRun) === nextIsChallenge) {
+    state.parkedRun = null;
+  }
 }
 
 export type BuyShopContext = {
@@ -220,6 +276,7 @@ export function createInitialMeta(): MetaState {
     clearedNodesByDungeonId: {},
     sweepUsageByDungeonId: {},
     chapterStarsByDungeonId: {},
+    tutorialStep: 0,
   };
 }
 
@@ -228,6 +285,7 @@ export function createInitialState(): MvpGameState {
   return {
     meta: createInitialMeta(),
     run: null,
+    parkedRun: null,
     phase: 'hub',
     lastEventsLen: 0,
   };

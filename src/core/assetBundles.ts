@@ -99,6 +99,8 @@ export const UI_BUNDLE: AssetBundleDef = {
     chapter_ribbon: 'images/ui/chapter_ribbon.png',
     chapter_star_on: 'images/ui/chapter_star_on.png',
     chapter_star_off: 'images/ui/chapter_star_off.png',
+    tutorial_guide: 'images/ui/tutorial_guide.png',
+    tutorial_hand: 'images/ui/tutorial_hand.png',
     // 大厅四页标题底。图里留空，页名用系统字叠上去，四张外形和主色都不同。
     title_recruit: 'images/ui/title_recruit.png',
     title_roster: 'images/ui/title_roster.png',
@@ -139,6 +141,8 @@ export const UI_BUNDLE: AssetBundleDef = {
     // 战斗胜利弹窗的标题横幅。图里刻意留空——「胜利」两个字用游戏字体在代码里画，
     // 烧进贴图的话既换不了文案，字形也和界面其余部分对不上。
     banner_victory: 'images/ui/banner_victory.png',
+    // 暴击飘字左侧前缀。和会心词条图标 mod_crit 不是同一张：这张更小、有黄核红尖层次。
+    crit_burst: 'images/ui/crit_burst.png',
     // 技能词条图标，键名 = SkillModDef.icon（见 src/data/skillModCatalog.ts）。
     // **普通词条一条一张**；专属词条不各配图，十八条共用 mod_signature 徽记——
     // 卡面正中已经是那一招的技能大图了，理由见《美术风格圣经》§6.1。
@@ -151,6 +155,7 @@ export const UI_BUNDLE: AssetBundleDef = {
     mod_fury: 'images/ui/mod_fury.png',
     mod_wide: 'images/ui/mod_wide.png',
     mod_overwhelm: 'images/ui/mod_overwhelm.png',
+    mod_crit: 'images/ui/mod_crit.png',
     mod_guard: 'images/ui/mod_guard.png',
     mod_haste: 'images/ui/mod_haste.png',
     mod_splash: 'images/ui/mod_splash.png',

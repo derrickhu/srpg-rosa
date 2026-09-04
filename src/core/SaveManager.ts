@@ -5,6 +5,7 @@ import type { MetaState, MvpGameState, RunState } from '@/game/state/GameState';
 import { emptyRunStarStats } from '@/data/chapterStars';
 import { createInitialMeta, createInitialState, META_VERSION } from '@/game/state/GameState';
 import { hydrateChapterStars } from '@/game/state/ProgressManager';
+import { hydrateTutorial } from '@/game/tutorial/TutorialManager';
 import { getDungeonDef } from '@/data/dungeonCatalog';
 import { isEndlessDungeon } from '@/data/endlessCatalog';
 import { LEGACY_CHARACTER_IDS, remapLegacyCharacterId } from '@/data/characterCatalog';
@@ -39,7 +40,9 @@ interface MetaPayload {
 
 interface RunPayload {
   version: typeof META_VERSION;
-  run: RunState;
+  run: RunState | null;
+  /** 另一条线的挂起进度；老档没有这个字段 */
+  parkedRun?: RunState | null;
   savedAt: number;
 }
 
@@ -131,7 +134,15 @@ function normalizeRun(run: RunState): RunState {
         ? null
         : rest.pendingLoot ?? null,
     starStats: rest.starStats ?? emptyRunStarStats(),
+    nodeIndex: clampRunNodeIndex(rest),
   };
+}
+
+/** 章节砍关后，停在已删除节点上的旧局夹回最后一格，避免 currentNode 读到空。 */
+function clampRunNodeIndex(run: Pick<RunState, 'dungeonId' | 'nodeIndex'>): number {
+  const d = getDungeonDef(run.dungeonId);
+  if (!d || d.nodes.length === 0) return run.nodeIndex;
+  return Math.max(0, Math.min(run.nodeIndex, d.nodes.length - 1));
 }
 
 /**
@@ -151,8 +162,10 @@ function normalizeMeta(meta: MetaState): MetaState {
     clearedNodesByDungeonId: meta.clearedNodesByDungeonId ?? {},
     sweepUsageByDungeonId: meta.sweepUsageByDungeonId ?? {},
     chapterStarsByDungeonId: meta.chapterStarsByDungeonId ?? {},
+    tutorialStep: meta.tutorialStep,
   };
   hydrateChapterStars(next);
+  hydrateTutorial(next);
   return next;
 }
 
@@ -203,13 +216,18 @@ export const SaveManager = {
     }
   },
 
-  saveRun(run: RunState | null): boolean {
+  saveRun(run: RunState | null, parkedRun: RunState | null = null): boolean {
     try {
-      if (!run) {
+      if (!run && !parkedRun) {
         persistSet(RUN_KEY, '');
         return true;
       }
-      const payload: RunPayload = { version: META_VERSION, run, savedAt: Date.now() };
+      const payload: RunPayload = {
+        version: META_VERSION,
+        run,
+        parkedRun,
+        savedAt: Date.now(),
+      };
       persistSet(RUN_KEY, JSON.stringify(payload));
       return true;
     } catch (e) {
@@ -218,10 +236,10 @@ export const SaveManager = {
     }
   },
 
-  /** 同时持久化 meta 与 run（run 为空则清除续局档） */
+  /** 同时持久化 meta 与两条线的 run（都空则清除续局档） */
   save(state: MvpGameState): boolean {
     const a = SaveManager.saveMeta(state.meta);
-    const b = SaveManager.saveRun(state.run);
+    const b = SaveManager.saveRun(state.run, state.parkedRun);
     return a && b;
   },
 
@@ -240,16 +258,24 @@ export const SaveManager = {
   },
 
   loadRun(): RunState | null {
+    return SaveManager.loadRuns().run;
+  },
+
+  loadRuns(): { run: RunState | null; parkedRun: RunState | null } {
+    const empty = { run: null, parkedRun: null };
     try {
       const raw = persistGet(RUN_KEY);
-      if (!raw) return null;
+      if (!raw) return empty;
       const payload: RunPayload = JSON.parse(raw);
-      if (payload.version !== META_VERSION || !payload.run) return null;
-      if (!getDungeonDef(payload.run.dungeonId)) return null;
-      return normalizeRun(payload.run);
+      if (payload.version !== META_VERSION) return empty;
+      const take = (r: RunState | null | undefined): RunState | null => {
+        if (!r || !getDungeonDef(r.dungeonId)) return null;
+        return normalizeRun(r);
+      };
+      return { run: take(payload.run), parkedRun: take(payload.parkedRun) };
     } catch (e) {
       console.warn('[SaveManager] loadRun failed:', e);
-      return null;
+      return empty;
     }
   },
 
@@ -257,10 +283,11 @@ export const SaveManager = {
     migrateLegacyIfAny();
     const meta = SaveManager.loadMeta();
     if (!meta) return null;
-    const run = SaveManager.loadRun();
+    const { run, parkedRun } = SaveManager.loadRuns();
     return {
       meta,
       run,
+      parkedRun,
       phase: run ? resumePhase(run) : 'hub',
       lastEventsLen: 0,
     };

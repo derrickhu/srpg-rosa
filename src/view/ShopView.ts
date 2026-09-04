@@ -54,6 +54,28 @@ function makeTypeTag(type: ShopOffer['type']): PIXI.Container {
   return c;
 }
 
+/** 明底弹窗：消耗 + 金币图标 + 数字（不用金色字，米白底上读不清） */
+function makeGoldCostRow(price: number): PIXI.Container {
+  const row = new PIXI.Container();
+  const ICON = 18;
+  const prefix = makeText('消耗', 'body', { fill: C.text, fontSize: 13 });
+  const icon = createUiIcon('icon_gold', ICON);
+  const amount = makeText(`${price}`, 'uiStrong', { fill: C.ink, fontSize: 14 });
+  row.addChild(prefix);
+  let x = prefix.width + 8;
+  const lineH = Math.max(prefix.height, ICON, amount.height);
+  if (icon) {
+    icon.x = x;
+    icon.y = (lineH - ICON) / 2;
+    row.addChild(icon);
+    x += ICON + 6;
+  }
+  amount.x = x;
+  amount.y = (lineH - amount.height) / 2;
+  row.addChild(amount);
+  return row;
+}
+
 function merchantLine(state: MvpGameState): string {
   const untilBoss = nodesUntilBoss(state);
   const potionsOwned = Object.values(state.run!.potions).reduce((a, b) => a + b, 0);
@@ -105,12 +127,19 @@ function offerIconKey(o: ShopOffer): string {
  * 局内补给点：神秘商人 + 木摊摆货（参考杀戮尖塔的场景感，不是 App 列表）。
  * 数据仍是 `rollShop` 抽的最多 3 件；买完由 GameFlow 重绘。
  */
+export interface ShopViewHandle {
+  root: PIXI.Container;
+  potionRect(): { x: number; y: number; w: number; h: number } | null;
+  buyRect(): { x: number; y: number; w: number; h: number } | null;
+  leaveRect(): { x: number; y: number; w: number; h: number };
+}
+
 export function createShopView(
   state: MvpGameState,
   offers: ShopOffer[],
   callbacks: { onBuy: (offer: ShopOffer, ctx?: BuyShopContext) => void; onSkip: () => void },
   screen: { screenWidth: number; screenHeight: number },
-): PIXI.Container {
+): ShopViewHandle {
   const root = new PIXI.Container();
   const W = screen.screenWidth;
   const H = screen.screenHeight;
@@ -146,7 +175,7 @@ export function createShopView(
   /**
    * Boss 备药提醒。
    *
-   * 第一章 Boss 裸打胜率极低、带治疗药才过关——必须在**买得到药的时候**说清楚。
+   * 血牙酋长裸打胜率极低、带治疗药才过关——必须在**买得到药的时候**说清楚。
    */
   const untilBoss = nodesUntilBoss(state);
   const potionsOwned = Object.values(state.run!.potions).reduce((a, b) => a + b, 0);
@@ -251,12 +280,15 @@ export function createShopView(
 
   let selected = offers.length > 0 ? 0 : -1;
   const slotNodes: PIXI.Container[] = [];
+  const slotRects: { type: ShopOffer['type']; x: number; y: number; w: number; h: number }[] = [];
+  let lastBuyRect: { x: number; y: number; w: number; h: number } | null = null;
   const slotCount = offers.length;
   const slotPitch = stallW / Math.max(slotCount, 1);
 
   function rebuildSlots(): void {
     slotsLayer.removeChildren().forEach((c) => c.destroy({ children: true }));
     slotNodes.length = 0;
+    slotRects.length = 0;
     for (let i = 0; i < slotCount; i++) {
       const o = offers[i]!;
       const slot = new PIXI.Container();
@@ -334,6 +366,13 @@ export function createShopView(
 
       slotsLayer.addChild(slot);
       slotNodes.push(slot);
+      slotRects.push({
+        type: o.type,
+        x: cx - padSize / 2,
+        y: cy - padSize / 2 + (slotsLayer.parent?.y ?? 0) + (scene.y ?? 0),
+        w: padSize,
+        h: padSize + tagH + 8,
+      });
     }
   }
 
@@ -421,6 +460,7 @@ export function createShopView(
     buyBtn.x = panelW - 88 - 12;
     buyBtn.y = Math.max(12, (detailH - 36) / 2);
     detail.addChild(buyBtn);
+    lastBuyRect = { x: buyBtn.x, y: buyBtn.y, w: 88, h: 36 };
     layoutMainBlock();
   }
 
@@ -447,7 +487,7 @@ export function createShopView(
       scrollable: true,
       onClose: () => { picker = null; },
     });
-    const note = makeText(`消耗 ${offer.price} 金币`, 'body', { fill: C.gold });
+    const note = makeGoldCostRow(offer.price);
     picker.body.addChild(note);
     let py = note.height + 10;
     for (const m of mercs) {
@@ -490,5 +530,25 @@ export function createShopView(
   rebuildSlots();
   refreshDetail();
 
-  return root;
+  function localRect(node: PIXI.DisplayObject, w: number, h: number): { x: number; y: number; w: number; h: number } {
+    const g = node.toGlobal(new PIXI.Point(0, 0));
+    const p = root.toLocal(g);
+    return { x: p.x, y: p.y, w, h };
+  }
+
+  return {
+    root,
+    potionRect: () => {
+      const i = offers.findIndex((o) => o.type === 'potion');
+      const node = i >= 0 ? slotNodes[i] : null;
+      return node ? localRect(node, padSize + 8, padSize + 28) : null;
+    },
+    buyRect: () => {
+      if (!lastBuyRect) return null;
+      const g = detail.toGlobal(new PIXI.Point(lastBuyRect.x, lastBuyRect.y));
+      const p = root.toLocal(g);
+      return { x: p.x, y: p.y, w: lastBuyRect.w, h: lastBuyRect.h };
+    },
+    leaveRect: () => localRect(leaveBtn, W - PAD * 2, leaveH),
+  };
 }

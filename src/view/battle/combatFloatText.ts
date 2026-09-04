@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import { AssetManager } from '@/core/AssetManager';
 import { makeText, type TextRole } from '@/theme/typography';
 import { isDisplayLive, safeDestroy } from '@/view/pixiLive';
 
@@ -13,6 +14,7 @@ import { isDisplayLive, safeDestroy } from '@/view/pixiLive';
 
 export type CombatFloatKind =
   | 'damage'
+  | 'crit'
   | 'heal'
   | 'poison'
   | 'terrain'
@@ -23,7 +25,7 @@ export type CombatFloatKind =
 
 interface FloatStyle {
   role: TextRole;
-  fill: number;
+  fill: number | number[];
   fontSize: number;
   stroke: number;
   strokeThickness: number;
@@ -36,6 +38,13 @@ interface FloatStyle {
   /** 相对锚点的垂直偏移 */
   yOffset: number;
 }
+
+/**
+ * 暴击飘字：橙红竖向渐变 + 贴图炸裂标（crit_burst）。
+ * 不能走紫色——紫已经是减益 / 和毒雾一类，玩家会读成中毒。
+ */
+export const CRIT_FLOAT_FILL = [0xfff06a, 0xff3a14] as const;
+export const CRIT_FLOAT_STROKE = 0x5a1408;
 
 const FLOAT_STYLE: Record<CombatFloatKind, FloatStyle> = {
   // 伤害：大字得意黑；描边够清、阴影要轻——重黑影会糊成双层字
@@ -52,6 +61,21 @@ const FLOAT_STYLE: Record<CombatFloatKind, FloatStyle> = {
     risePx: 38,
     durationMs: 720,
     yOffset: -10,
+  },
+  // 暴击：比普攻更大、更烫，左边带贴图炸裂标。热色，绝不走紫。
+  crit: {
+    role: 'combatFloat',
+    fill: [...CRIT_FLOAT_FILL],
+    fontSize: 32,
+    stroke: CRIT_FLOAT_STROKE,
+    strokeThickness: 5,
+    dropShadow: true,
+    dropShadowDistance: 2,
+    dropShadowAlpha: 0.4,
+    startScale: 1.55,
+    risePx: 46,
+    durationMs: 820,
+    yOffset: -14,
   },
   heal: {
     role: 'combatFloat',
@@ -167,6 +191,23 @@ export interface CombatFloatHost {
   awaitEase: (ms: number, onUpdate: (k: number) => void) => Promise<void>;
 }
 
+/** 飘字前缀相对字号的高度。原先程序八角星用 0.72，尖刺一放就比数字还抢。 */
+export const CRIT_BURST_SIZE_RATIO = 0.55;
+
+function attachCritBurst(root: PIXI.Container, text: PIXI.Text, fontSize: number): void {
+  if (!AssetManager.isBundleLoaded('ui')) return;
+  const tex = AssetManager.texture('ui', 'crit_burst');
+  if (!tex || tex === PIXI.Texture.WHITE) return;
+  const spr = new PIXI.Sprite(tex);
+  spr.anchor.set(0.5);
+  const target = Math.max(14, Math.round(fontSize * CRIT_BURST_SIZE_RATIO));
+  const s = target / Math.max(tex.width, tex.height);
+  spr.scale.set(s);
+  spr.x = -text.width / 2 - spr.width * 0.52 - 1;
+  spr.y = 0;
+  root.addChild(spr);
+}
+
 /** 伤害 / 治疗 / 地形注记 / 用药提示 */
 export function spawnCombatFloat(
   host: CombatFloatHost,
@@ -178,8 +219,9 @@ export function spawnCombatFloat(
 ): void {
   if (host.skipping()) return;
   const st = FLOAT_STYLE[kind];
+  const fill = opts?.fill ?? st.fill;
   const t = makeText(msg, st.role, {
-    fill: opts?.fill ?? st.fill,
+    fill,
     fontSize: st.fontSize,
     stroke: st.stroke,
     strokeThickness: st.strokeThickness,
@@ -188,34 +230,44 @@ export function spawnCombatFloat(
     dropShadowDistance: st.dropShadowDistance,
     dropShadowBlur: 0,
     dropShadowAlpha: st.dropShadowAlpha,
+    ...(Array.isArray(fill)
+      ? { fillGradientType: PIXI.TEXT_GRADIENT.LINEAR_VERTICAL }
+      : {}),
   });
-  t.anchor.set(0.5);
-  t.x = x;
-  t.y = y + st.yOffset;
-  t.scale.set(st.startScale);
-  host.layer.addChild(t);
+  t.anchor.set(0.5, 0.5);
+
+  const root = new PIXI.Container();
+  if (kind === 'crit') attachCritBurst(root, t, st.fontSize);
+  t.x = 0;
+  t.y = 0;
+  root.addChild(t);
+  root.x = x;
+  root.y = y + st.yOffset;
+  root.scale.set(st.startScale);
+  host.layer.addChild(root);
 
   void (async () => {
-    const startY = t.y;
-    const startScale = t.scale.x;
+    const startY = root.y;
+    const startScale = root.scale.x;
+    const pop = kind === 'crit' ? 0.32 : 0.22;
     await host.awaitEase(host.dur(st.durationMs), (k) => {
-      if (!isDisplayLive(t)) return;
-      t.y = startY - st.risePx * k;
+      if (!isDisplayLive(root)) return;
+      root.y = startY - st.risePx * k;
       if (k < 0.12) {
-        t.alpha = 1;
-        t.scale.set(startScale * (1 + 0.22 * (k / 0.12)));
+        root.alpha = 1;
+        root.scale.set(startScale * (1 + pop * (k / 0.12)));
       } else if (k < 0.65) {
-        t.alpha = 1;
+        root.alpha = 1;
         const settle = (k - 0.12) / 0.53;
-        t.scale.set(startScale * (1.22 - 0.14 * settle));
+        root.scale.set(startScale * (1.22 - 0.14 * settle));
       } else {
-        t.alpha = 1 - (k - 0.65) / 0.35;
-        t.scale.set(startScale * 1.08);
+        root.alpha = 1 - (k - 0.65) / 0.35;
+        root.scale.set(startScale * 1.08);
       }
     });
-    if (isDisplayLive(t)) {
-      t.parent?.removeChild(t);
-      safeDestroy(t);
+    if (isDisplayLive(root)) {
+      root.parent?.removeChild(root);
+      safeDestroy(root, { children: true });
     }
   })();
 }

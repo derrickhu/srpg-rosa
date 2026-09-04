@@ -10,12 +10,14 @@ import type {
 import { effectiveUnitDef } from './effectiveUnit';
 import { canAttackFrom, chooseTurnAction, selectAttackTarget, type AiDifficulty } from './ai';
 import { computeDamage, guardNote, terrainAttackNote, terrainDefenseNote } from './damage';
+import { applyCritToDamage } from './crit';
 import { POTION_DEFS } from '@/data/potionCatalog';
 import { getTerrainAt, type TerrainGrid } from './grid';
 import { MAX_BATTLE_ROUNDS } from './constants';
 import { cellsFromDist, reachableCells, shortestPath4 } from './path';
 import {
   castSkillManual,
+  setHitRng,
   skillAiming,
   type SkillSlot,
   trySkillAfterMove,
@@ -130,12 +132,16 @@ export interface BattleSimOptions {
   enableDrops?: boolean;
   /** 掉落掷点，测试传入固定序列 */
   dropRng?: () => number;
+  /** 战斗内伤害掷点（暴击等），测试传入固定序列 */
+  battleRng?: () => number;
   dropChance?: number;
   /**
    * 特效试炼：技能冷却立刻清零，同一单位本回合可连放。
    * 只作用于玩家指令，AI 仍是每回合一发，避免木桩怪在自己回合里死循环。
    */
   sandboxFreeCast?: boolean;
+  /** 指定回合开始时插入的单位（新手援军） */
+  scriptedSpawns?: { round: number; unit: UnitState; auto?: boolean }[];
 }
 
 /**
@@ -152,7 +158,8 @@ export interface BattleSimOptions {
 interface MutablePending {
   uid: string;
   moved: boolean;
-  usedSkill: boolean;
+  /** 本回合已经放过技能的槽；主 / 临时各自独立计次 */
+  usedSkillSlots: Set<SkillSlot>;
   attacked: boolean;
   /**
    * 走完之后又放过技能或普攻。撤销只回滚移动，出手不回滚；
@@ -183,12 +190,7 @@ export interface PendingTurn {
   uid: string;
   /** 还能移动（每回合一次；与技能/普攻顺序不限，和 AI `actTurn` 一致） */
   canMove: boolean;
-  /**
-   * 还能放技能（任一槽）。
-   *
-   * 两个槽**共用**这一个额度：临时技能给的是「主技能在冷却时还有别的事可做」，
-   * 不是每回合多打一发。具体哪些槽此刻放得出来看 `castableSlots`。
-   */
+  /** 还能放技能（任一槽冷却好且本回合该槽还没放过） */
   canSkill: boolean;
   /** 此刻放得出来的槽（主 / 临时），按钮按它来生成 */
   castableSlots: SkillSlot[];
@@ -197,7 +199,10 @@ export interface PendingTurn {
   /** 已经移动过、且走完之后还没再出手，可以撤销回原位 */
   canUndoMove: boolean;
   didMove: boolean;
+  /** 本回合放过至少一个槽的技能 */
   didSkill: boolean;
+  /** 本回合已经放过技能的槽；UI 只对这些槽打勾 */
+  spentSkillSlots: SkillSlot[];
   didAttack: boolean;
 }
 
@@ -276,6 +281,8 @@ export interface BattleSim {
   upcomingOrder(limit: number, currentUid?: string | null): string[];
   getRound(): number;
   isDone(): boolean;
+  /** 中途加人；`auto` 时该玩家单位由 AI 走 */
+  spawnUnit(unit: UnitState, auto?: boolean): BattleEvent[];
   /** 试炼 GM：当场清掉所有单位的技能冷却 */
   clearSkillCds(): void;
 }
@@ -297,6 +304,8 @@ export function createBattleSim(
   const mode: BattleMode = opts.mode ?? 'auto';
   const enableDrops = opts.enableDrops ?? false;
   const dropRng = opts.dropRng ?? Math.random;
+  const battleRng = opts.battleRng ?? Math.random;
+  setHitRng(battleRng);
   const dropChance = opts.dropChance ?? 0.35;
   const pickups: { pos: Vec2; potionId: string }[] = [];
   const rolledDeaths = new Set<string>();
@@ -309,6 +318,7 @@ export function createBattleSim(
    * 合成一个变量的话「托管」就成了单向门——切过去之后没有东西记得原本该由谁操作。
    */
   let forceAuto = mode === 'auto';
+  const autoUids = new Set<string>();
   /** 人工模式下当前停下来等指令的单位 */
   let pendingTurn: MutablePending | null = null;
   let rounds = 0;
@@ -406,6 +416,32 @@ export function createBattleSim(
     return held ? terrainRt.openGates() : [];
   }
 
+  function spawnUnit(unit: UnitState, auto?: boolean): BattleEvent[] {
+    if (units.some((u) => u.uid === unit.uid)) return [];
+    const copy = cloneUnits([unit])[0]!;
+    units.push(copy);
+    if (auto) autoUids.add(copy.uid);
+    if (order.length > 0) {
+      const spd = effectiveUnitDef(copy, defs).spd;
+      let inserted = false;
+      const next: string[] = [];
+      for (const id of order) {
+        if (!inserted) {
+          const other = liveUnit(id);
+          const ospd = other ? effectiveUnitDef(other, defs).spd : 0;
+          if (spd > ospd || (spd === ospd && copy.uid.localeCompare(id) < 0)) {
+            next.push(copy.uid);
+            inserted = true;
+          }
+        }
+        next.push(id);
+      }
+      if (!inserted) next.push(copy.uid);
+      order = next;
+    }
+    return [{ type: 'spawn', unit: { ...copy, pos: { ...copy.pos } } }];
+  }
+
   function startRound(): BattleStep {
     rounds += 1;
     const events: BattleEvent[] = [{ type: 'round', round: rounds }];
@@ -447,6 +483,9 @@ export function createBattleSim(
     // 各烧一次人再熄。放前面的话最后一个轮首会先变成焦土，实际只烧到 1 回合。
     events.push(...terrainRt.tick());
     events.push(...checkLevers());
+    for (const s of opts.scriptedSpawns ?? []) {
+      if (s.round === rounds) events.push(...spawnUnit(s.unit, s.auto));
+    }
     order = bySpeedOrder(units, defs).map((u) => u.uid);
     const evs = attachDrops(events);
     const w = checkWinner(units);
@@ -477,17 +516,49 @@ export function createBattleSim(
    * 它剩下的动作。后者在按跳过的那一刻会白送一次攻击机会，而玩家通常正是因为
    * 局势已定才按跳过的，凭空掉一刀会让结果和他的判断不符。
    */
+  function skillSlotFromCast(
+    self: UnitState,
+    batch: readonly BattleEvent[],
+  ): SkillSlot | null {
+    const cast = batch.find(
+      (e): e is Extract<BattleEvent, { type: 'skillCast' }> =>
+        e.type === 'skillCast' && e.uid === self.uid,
+    );
+    if (!cast) return null;
+    const def = effectiveUnitDef(self, defs);
+    if (def.tempSkill?.id === cast.skillId) return 'temp';
+    if ((self.battleSkill ?? def.skill)?.id === cast.skillId) return 'main';
+    return null;
+  }
+
+  function drainTimingSkills(
+    self: UnitState,
+    timing: 'beforeMove' | 'afterMove',
+    spent: Set<SkillSlot>,
+  ): BattleEvent[] {
+    const events: BattleEvent[] = [];
+    for (;;) {
+      const batch = timing === 'beforeMove'
+        ? trySkillBeforeMove(self, defs, units, terrain, terrainRt, spent)
+        : trySkillAfterMove(self, defs, units, terrain, terrainRt, spent);
+      if (!batch.length) break;
+      events.push(...batch);
+      const slot = skillSlotFromCast(self, batch);
+      if (slot) spent.add(slot);
+      else break;
+    }
+    return events;
+  }
+
   function actTurn(self: UnitState, resume?: MutablePending): BattleStep {
     const events: BattleEvent[] = [];
-    const canSkill = !resume?.usedSkill;
+    const spent = resume ? new Set(resume.usedSkillSlots) : new Set<SkillSlot>();
     const canMove = !resume?.moved;
     const canAttack = !resume?.attacked;
     if (resume?.moved) self.movedInTurn = true;
 
-    if (canSkill) {
-      events.push(...trySkillBeforeMove(self, defs, units, terrain, terrainRt));
-      resyncRoundOrder();
-    }
+    events.push(...drainTimingSkills(self, 'beforeMove', spent));
+    resyncRoundOrder();
     let w = checkWinner(units);
     if (w) return finish(w, events);
 
@@ -511,10 +582,8 @@ export function createBattleSim(
       events.push(...moveAlong(self, choice.moveTo));
     }
 
-    if (canSkill) {
-      events.push(...trySkillAfterMove(self, defs, units, terrain, terrainRt));
-      resyncRoundOrder();
-    }
+    events.push(...drainTimingSkills(self, 'afterMove', spent));
+    resyncRoundOrder();
     w = checkWinner(units);
     if (w) return finish(w, events);
 
@@ -563,6 +632,8 @@ export function createBattleSim(
     if (chargeMul && charged) {
       dmg = Math.max(1, Math.floor(dmg * chargeMul));
     }
+    const critRoll = applyCritToDamage(dmg, undefined, battleRng);
+    dmg = critRoll.damage;
     target.hp -= dmg;
     const events: BattleEvent[] = [{
       type: 'attack',
@@ -570,6 +641,7 @@ export function createBattleSim(
       target: target.uid,
       damage: dmg,
       hpLeft: Math.max(0, target.hp),
+      crit: critRoll.crit || undefined,
       // 冲锋和地形一样，改了这一下的伤害就得说出来。骑兵的全部身份就是「先动再打更疼」，
       // 而在此之前它只体现为一个玩家无从比较的数字，等于这个被动不存在。
       attackLabel: charged ? '冲锋' : '普攻',
@@ -601,11 +673,11 @@ export function createBattleSim(
       const self = units.find((u) => u.uid === uid);
       if (!self || self.hp <= 0) continue;
       const turnStart: BattleEvent = { type: 'turnStart', uid: self.uid, faction: self.faction };
-      if (self.faction === 'player' && !forceAuto) {
+      if (self.faction === 'player' && !forceAuto && !autoUids.has(self.uid)) {
         pendingTurn = {
           uid: self.uid,
           moved: false,
-          usedSkill: false,
+          usedSkillSlots: new Set(),
           attacked: false,
           actedAfterMove: false,
           startPos: { ...self.pos },
@@ -647,13 +719,14 @@ export function createBattleSim(
       canAttack: !pendingTurn.attacked && attackTargetsFrom(u).length > 0,
       canUndoMove: pendingTurn.moved && !pendingTurn.actedAfterMove,
       didMove: pendingTurn.moved,
-      didSkill: pendingTurn.usedSkill,
+      didSkill: pendingTurn.usedSkillSlots.size > 0,
+      spentSkillSlots: [...pendingTurn.usedSkillSlots],
       didAttack: pendingTurn.attacked,
     };
   }
 
   function skillAimingFor(u: UnitState, slot: SkillSlot = 'main'): SkillAiming | null {
-    if (pendingTurn?.uid === u.uid && pendingTurn.usedSkill) return null;
+    if (pendingTurn?.uid === u.uid && pendingTurn.usedSkillSlots.has(slot)) return null;
     return skillAiming(u, defs, units, terrain, slot);
   }
 
@@ -759,13 +832,13 @@ export function createBattleSim(
       cur.u, defs, units, terrain, targetUid, slot, aimCell, terrainRt,
     );
     if (events.length === 0) return noop();
-    cur.p.usedSkill = true;
+    cur.p.usedSkillSlots.add(slot);
     rebaseStartPosAfterDisplace(cur.p, cur.u, events);
     if (cur.p.moved) cur.p.actedAfterMove = true;
     if (opts.sandboxFreeCast) {
       cur.u.skillCd = 0;
       cur.u.tempSkillCd = 0;
-      cur.p.usedSkill = false;
+      cur.p.usedSkillSlots.clear();
     }
     resyncRoundOrder();
     return settleAfterAction(events);
@@ -912,13 +985,14 @@ export function createBattleSim(
     },
     getRound: () => rounds,
     isDone: () => done,
+    spawnUnit,
     clearSkillCds: () => {
       for (const u of units) {
         if (u.hp <= 0) continue;
         u.skillCd = 0;
         u.tempSkillCd = 0;
       }
-      if (pendingTurn) pendingTurn.usedSkill = false;
+      if (pendingTurn) pendingTurn.usedSkillSlots.clear();
     },
   };
 }

@@ -9,7 +9,7 @@ import {
   type ChallengeEntry,
 } from '@/data/challengeCatalog';
 import type { DungeonDef } from '@/data/dungeonCatalog';
-import { sweepLeftToday, sweepQuota, type MvpGameState } from '@/game/MvpState';
+import { challengeRunOf, sweepLeftToday, sweepQuota, type MvpGameState } from '@/game/MvpState';
 import { createHubHeader } from '@/view/hubHeader';
 import { C } from '@/view/mvpTheme';
 import { bgTexture, makeArtPlate, uiTexture } from '@/ui/chrome';
@@ -208,8 +208,9 @@ export function createChallengeView(
 
     if (status.kind === 'open') {
       const d = challengeDungeon(entry);
+      const resume = !!(d && challengeRunOf(state)?.dungeonId === d.id);
       const btn = makeButton(
-        '挑战',
+        resume ? '继续' : '挑战',
         () => {
           if (scroll.wasDragging()) return;
           if (d) cb.onChallenge(d);

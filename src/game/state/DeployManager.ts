@@ -26,6 +26,11 @@ import {
   isEndlessDungeon,
 } from '@/data/endlessCatalog';
 import { battleTerrain } from './GameState';
+import {
+  isTutorialRun,
+  tutorialBattle1Enemies,
+  tutorialEnemyScaleMul,
+} from '@/game/tutorial/tutorialRules';
 
 function enemyAt(state: MvpGameState, pos: Vec2): boolean {
   // 无尽的敌人是开战时才抽落点的，布阵阶段棋盘上没有预设敌格
@@ -83,6 +88,27 @@ export function placeTerrainCell(state: MvpGameState, pos: Vec2, terrain: Terrai
   run.terrainCharges[terrain] = (run.terrainCharges[terrain] ?? 0) - 1;
   run.terrainOverlay.push({ x: pos.x, y: pos.y, terrain });
   return true;
+}
+
+/** 这一格是不是玩家用券放上去的（地图自带的高地 / 林子不算） */
+export function placedTerrainAt(state: MvpGameState, pos: Vec2): TerrainId | null {
+  const run = requireRun(state);
+  return run.terrainOverlay.find((o) => o.x === pos.x && o.y === pos.y)?.terrain ?? null;
+}
+
+/**
+ * 收回自己放的地形，券退回库存。
+ *
+ * 和撤人同一套手感：点一下拿下来。地图自带的格子没有 overlay，收不走。
+ */
+export function removeTerrainCell(state: MvpGameState, pos: Vec2): TerrainId | null {
+  const run = requireRun(state);
+  const i = run.terrainOverlay.findIndex((o) => o.x === pos.x && o.y === pos.y);
+  if (i < 0) return null;
+  const [cell] = run.terrainOverlay.splice(i, 1);
+  if (!cell) return null;
+  run.terrainCharges[cell.terrain] = (run.terrainCharges[cell.terrain] ?? 0) + 1;
+  return cell.terrain;
 }
 
 export function placeCharacter(state: MvpGameState, rosterId: string, pos: Vec2): boolean {
@@ -236,7 +262,9 @@ export function buildBattleUnits(state: MvpGameState): UnitState[] {
   const run = requireRun(state);
   const st = currentStage(state);
   const endless = isEndlessDungeon(run.dungeonId);
-  const scale = endless ? endlessWaveScale(run.endless?.wave ?? 1) : currentEnemyScale(state);
+  const scale = endless
+    ? endlessWaveScale(run.endless?.wave ?? 1)
+    : currentEnemyScale(state) * tutorialEnemyScaleMul(state);
   const units: UnitState[] = [];
 
   if (endless) {
@@ -249,7 +277,10 @@ export function buildBattleUnits(state: MvpGameState): UnitState[] {
     );
     for (const e of wave) units.push(enemySpawnToUnitState(e, scale));
   } else {
-    for (const e of st.enemies) units.push(enemySpawnToUnitState(e, scale));
+    const enemies = isTutorialRun(state) && run.nodeIndex === 0
+      ? tutorialBattle1Enemies()
+      : st.enemies;
+    for (const e of enemies) units.push(enemySpawnToUnitState(e, scale));
   }
 
   const carryByRoster = new Map((run.endless?.carry ?? []).map((c) => [c.rosterId, c]));

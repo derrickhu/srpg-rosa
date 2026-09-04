@@ -27,7 +27,7 @@ export interface EnemySkillSkin {
 }
 
 export const ENEMY_SKILL_SKINS: Record<string, EnemySkillSkin> = {
-  // 第一章 Boss · 血牙酋长。底层仍是 savage_roar（自身 AoE + 攻 buff），
+  // 第六章 Boss · 血牙酋长（原第一章末战）。底层仍是 savage_roar（自身 AoE + 攻 buff），
   // 但名字/图标跟玩家池彻底分开——玩家不可学，也不该看起来像「旋风斩换皮」。
   bloodfang_roar: {
     id: 'bloodfang_roar',

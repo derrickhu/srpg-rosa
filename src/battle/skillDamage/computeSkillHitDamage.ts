@@ -1,4 +1,5 @@
 import type { SkillDamageSpec, SkillSpec } from '@/data/skillCatalog';
+import { applyCritToDamage, type CritRollResult } from '../crit';
 import { computeDamage, counterMultiplier, terrainAttackMul, terrainDefenseMul } from '../damage';
 import type { UnitDef } from '../types';
 import type { SkillDamageContext } from './context';
@@ -107,11 +108,14 @@ export function isExecuting(spec: SkillSpec, targetHp: number, targetMaxHp: numb
  * 而漏掉的表现是「套了盾，敌人的某一招照样打满」，玩家只会认为盾是坏的。
  * `custom` 计算器同理：它应当返回**未计减伤**的伤害，由这里补上。
  */
-export function computeSkillHitDamage(ctx: SkillDamageContext): number {
+export function computeSkillHitDamage(ctx: SkillDamageContext): CritRollResult {
   const base = dispatchDamage(ctx.spec.damage, ctx);
-  if (base <= 0) return base;
-  const mul = executeMul(ctx) * ctx.targetDef.damageTakenMul;
-  return mul === 1 ? base : clampDamage(base * mul);
+  if (base <= 0) return { damage: base, crit: false };
+  let dmg = base;
+  const exMul = executeMul(ctx);
+  if (exMul !== 1) dmg = clampDamage(dmg * exMul);
+  if (ctx.targetDef.damageTakenMul !== 1) dmg = clampDamage(dmg * ctx.targetDef.damageTakenMul);
+  return applyCritToDamage(dmg, ctx.spec, ctx.rng ?? Math.random);
 }
 
 function dispatchDamage(d: SkillDamageSpec, ctx: SkillDamageContext): number {

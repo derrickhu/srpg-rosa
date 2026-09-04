@@ -66,6 +66,7 @@ export function acquireHint(state: MvpGameState, def: CharacterDef): string {
     const d = getDungeonDef(def.unlock.dungeonId);
     return `通关「${d?.name ?? '前置副本'}」`;
   }
+  if (def.unlock.kind === 'story') return '跟随冒险加入';
   return '开局即拥有';
 }
 

@@ -12,10 +12,11 @@ describe('敌方技能皮肤', () => {
   // 从章节表取下标，不硬写 0..6：关卡编号现在由 `CHAPTERS` 里的位置推出（见 stagesMvp），
   // 往前面章节插一关就会让硬写的范围悄悄滑到别的章去，而断言照样能过。
   const chapter1 = CHAPTER_STAGE_INDICES[0]!;
-  const ch1Boss = chapter1[chapter1.length - 1]!;
+  const ch6 = CHAPTER_STAGE_INDICES[5]!;
+  const ch6Boss = ch6[ch6.length - 1]!;
 
   it('第一章小怪不挂技能，只普攻', () => {
-    for (const i of chapter1.slice(0, -1)) {
+    for (const i of chapter1) {
       const stage = STAGES_MVP[i]!;
       for (const e of stage.enemies) {
         expect(e.skillSkin, `${stage.name} ${e.uid} 不应有 skillSkin`).toBeUndefined();
@@ -27,8 +28,8 @@ describe('敌方技能皮肤', () => {
     }
   });
 
-  it('第一章 Boss 挂血牙咆哮皮肤，结算仍走 savage_roar', () => {
-    const boss = STAGES_MVP[ch1Boss]!.enemies.find((e) => e.boss)!;
+  it('第六章 Boss 挂血牙咆哮皮肤，结算仍走 savage_roar', () => {
+    const boss = STAGES_MVP[ch6Boss]!.enemies.find((e) => e.boss)!;
     expect(boss.skillSkin).toBe('bloodfang_roar');
     const u = enemySpawnToUnitState(boss, 1.1);
     expect(u.battleSkill?.id).toBe('savage_roar');

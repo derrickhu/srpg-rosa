@@ -119,9 +119,7 @@ export interface UnitState {
   /** 本场覆盖兵种表上的主技能（布阵配置） */
   battleSkill?: SkillDef;
   /**
-   * 临时技能（第二槽，局内商店购买）。和主技能**共用**每回合一次的施放额度，
-   * 所以它加的是「多一个选项」而不是「多一次出手」——后者会直接改变行动经济，
-   * 整条难度曲线都要重调。
+   * 临时技能（第二槽，局内商店购买）。和主技能冷却各自独立，本回合也各自可施放一次。
    */
   tempSkill?: SkillDef;
   /** 临时技能剩余冷却；两槽冷却各自独立计时 */
@@ -198,6 +196,8 @@ export type SkillHit = {
    * 它每次都生效，飘一行「锋锐」只是噪音。
    */
   modNote?: string;
+  /** 这一击触发了暴击；回放走橙红炸裂标，不走紫色 */
+  crit?: true;
   /** 该目标身上限时减伤对这一下的影响，如「减伤 -25%」；逐目标记录，同 `defTerrainNote` */
   guardNote?: string;
   /**
@@ -292,6 +292,8 @@ export type BattleEvent =
        * 「这个盾值不值得占一次施放」。
        */
       guardNote?: string;
+      /** 普攻暴击；回放走橙红炸裂标 */
+      crit?: true;
     }
   | { type: 'death'; uid: string }
   /** 敌人倒下时掉在死亡格上的药剂（无尽试炼） */
@@ -329,7 +331,9 @@ export type BattleEvent =
       to: TerrainId;
       reason: TerrainChangeReason;
     }
-  | { type: 'end'; winner: Faction };
+  | { type: 'end'; winner: Faction }
+  /** 中途入场（新手援军）。回放层按这份快照建 token */
+  | { type: 'spawn'; unit: UnitState };
 
 export interface BattleReport {
   events: BattleEvent[];

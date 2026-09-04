@@ -17,6 +17,7 @@ import {
   unlockDungeonWithMeta,
   type MetaState,
   type MvpGameState,
+  adventureRunOf,
 } from '@/game/MvpState';
 import { AssetManager } from '@/core/AssetManager';
 import {
@@ -170,7 +171,11 @@ function parchmentFill(w: number, h: number, radius: number): PIXI.Graphics {
 
 function makeStarIcon(filled: boolean, size: number): PIXI.Container {
   const icon = createUiIcon(filled ? 'chapter_star_on' : 'chapter_star_off', size);
-  if (icon) return icon;
+  if (icon) {
+    const sprite = icon.getChildAt(0);
+    if (sprite instanceof PIXI.Sprite && filled) sprite.tint = C.primary;
+    return icon;
+  }
   const g = new PIXI.Graphics();
   const r = size / 2;
   const inner = r * 0.4;
@@ -181,7 +186,7 @@ function makeStarIcon(filled: boolean, size: number): PIXI.Container {
     pts.push({ x: Math.cos(a) * rad, y: Math.sin(a) * rad });
   }
   g.lineStyle(1.6, C.ink, 1, 0);
-  g.beginFill(filled ? C.paper : mix(C.panel, C.ink, 0.18), 1);
+  g.beginFill(filled ? C.primary : mix(C.panel, C.ink, 0.18), 1);
   g.moveTo(pts[0]!.x, pts[0]!.y);
   for (const p of pts.slice(1)) g.lineTo(p.x, p.y);
   g.closePath();
@@ -390,6 +395,81 @@ function buildCardArt(
   return c;
 }
 
+/** 未解锁章节的锁与条件文案叠在插图上，避免和下方通关奖励区抢位置。 */
+function buildLockedOverlay(
+  d: DungeonDef,
+  state: MvpGameState,
+  onChanged: () => void,
+  toastRoot: PIXI.Container,
+  screenW: number,
+  cardX: number,
+  cardY: number,
+  cardW: number,
+  artH: number,
+): PIXI.Container {
+  const box = new PIXI.Container();
+  const cx = cardX + cardW / 2;
+
+  const LOCK = 40;
+  const lock = createUiIcon('icon_lock', LOCK);
+
+  let condStr = '';
+  if (d.unlock.kind === 'clearDungeon') {
+    const need = getDungeonDef(d.unlock.dungeonId);
+    condStr = `通关「${need?.name ?? '前置章节'}」解锁`;
+  } else if (d.unlock.kind === 'meta') {
+    condStr = `魂晶 ${d.unlock.cost} 解锁`;
+  }
+  const cond = makeText(condStr, 'ui', {
+    fill: C.ink,
+    fontSize: 14,
+    wordWrap: true,
+    wordWrapWidth: cardW - 40,
+    align: 'center',
+  });
+  cond.anchor.set(0.5, 0);
+
+  let unlockBtn: PIXI.Container | null = null;
+  if (d.unlock.kind === 'meta') {
+    const cost = d.unlock.cost;
+    unlockBtn = makeButton(`解锁（魂晶 ${cost}）`, () => {
+      if (unlockDungeonWithMeta(state, d.id)) {
+        AudioManager.playSfx('sfx_unlock');
+        onChanged();
+      } else {
+        showToast(toastRoot, `魂晶不足（还差 ${cost - state.meta.metaCurrency}）`, {
+          screenWidth: screenW,
+          color: C.soulText,
+          deny: true,
+        });
+      }
+    }, { variant: 'primary', width: 160, height: 36, fontSize: 13, radius: 10 });
+  }
+
+  const gap = 10;
+  const btnGap = unlockBtn ? 12 : 0;
+  const btnH = unlockBtn ? 36 : 0;
+  const lockH = lock ? LOCK : 0;
+  const lockGap = lock ? gap : 0;
+  const totalH = lockH + lockGap + cond.height + btnGap + btnH;
+  const top = cardY + (artH - totalH) / 2;
+
+  if (lock) {
+    lock.x = cx - LOCK / 2;
+    lock.y = top;
+    box.addChild(lock);
+  }
+  cond.x = cx;
+  cond.y = top + lockH + lockGap;
+  box.addChild(cond);
+  if (unlockBtn) {
+    unlockBtn.x = cx - 80;
+    unlockBtn.y = cond.y + cond.height + btnGap;
+    box.addChild(unlockBtn);
+  }
+  return box;
+}
+
 /**
  * 冒险页 = 章节地图：大幅章节卡 + 底部开打/扫荡。节点条只在局内布阵页出现。
  */
@@ -493,43 +573,9 @@ export function createAdventureView(
         c.addChild(buildRewardBlock(innerL, bodyTop + 10, innerW, rewards));
       }
     } else {
-      const LOCK = 40;
-      const lock = createUiIcon('icon_lock', LOCK);
-      if (lock) {
-        lock.x = W / 2 - LOCK / 2;
-        lock.y = bodyTop + 10;
-        c.addChild(lock);
-      }
-      let condStr = '';
-      if (d.unlock.kind === 'clearDungeon') {
-        const need = getDungeonDef(d.unlock.dungeonId);
-        condStr = `通关「${need?.name ?? '前置章节'}」解锁`;
-      } else if (d.unlock.kind === 'meta') {
-        condStr = `魂晶 ${d.unlock.cost} 解锁`;
-      }
-      const cond = makeText(condStr, 'ui', { fill: C.paper });
-      cond.anchor.set(0.5);
-      cond.x = W / 2;
-      cond.y = bodyTop + 10 + (lock ? LOCK + 14 : 20);
-      c.addChild(cond);
-      if (d.unlock.kind === 'meta') {
-        const cost = d.unlock.cost;
-        const ub = makeButton(`解锁（魂晶 ${cost}）`, () => {
-          if (unlockDungeonWithMeta(state, d.id)) {
-            AudioManager.playSfx('sfx_unlock');
-            cb.onChanged();
-          } else {
-            showToast(root, `魂晶不足（还差 ${cost - state.meta.metaCurrency}）`, {
-              screenWidth: W,
-              color: C.soulText,
-              deny: true,
-            });
-          }
-        }, { variant: 'primary', width: 160, height: 36, fontSize: 13, radius: 10 });
-        ub.x = W / 2 - 80;
-        ub.y = cond.y + 18;
-        c.addChild(ub);
-      }
+      c.addChild(buildLockedOverlay(
+        d, state, cb.onChanged, root, W, cardX, cardY, cardW, artH,
+      ));
       if (rewards) {
         c.addChild(buildRewardBlock(innerL, cardY + cardH - rewardBlockH() - 10, innerW, rewards));
       }
@@ -567,9 +613,10 @@ export function createAdventureView(
     const unlocked = isDungeonUnlocked(state.meta, d.id);
     const btnY = H - 70;
 
-    if (state.run) {
-      const runD = getDungeonDef(state.run.dungeonId);
-      const label = state.run.dungeonId === d.id ? '继续冒险' : `继续冒险（${runD?.name ?? ''}）`;
+    const adventure = adventureRunOf(state);
+    if (adventure) {
+      const runD = getDungeonDef(adventure.dungeonId);
+      const label = adventure.dungeonId === d.id ? '继续冒险' : `继续冒险（${runD?.name ?? ''}）`;
       const btn = makeButton(label, () => cb.onContinueRun(), {
         variant: 'primary', width: W - 96, height: 48, fontSize: 17, radius: 14,
       });

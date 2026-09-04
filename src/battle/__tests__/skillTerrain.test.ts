@@ -43,6 +43,7 @@ function ctx(casterPos: Vec2, targetPos: Vec2, terrain: TerrainGrid): SkillDamag
     spec: getSkillSpec('bash')!,
     terrain,
     defs: {} as Record<UnitKind, UnitArchetypeDef>,
+    rng: () => 1,
   };
 }
 
@@ -65,30 +66,30 @@ describe('技能伤害与地形', () => {
 
   it('目标站森林时技能也要吃减伤', () => {
     const grid: TerrainGrid = [['plain', 'forest']];
-    const dmg = computeSkillHitDamage(ctx({ x: 0, y: 0 }, { x: 1, y: 0 }, grid));
+    const dmg = computeSkillHitDamage(ctx({ x: 0, y: 0 }, { x: 1, y: 0 }, grid)).damage;
     expect(dmg).toBe(Math.floor(base * 0.75));
   });
 
   it('施法者站高地时技能吃加成', () => {
     const grid: TerrainGrid = [['high', 'plain']];
-    const dmg = computeSkillHitDamage(ctx({ x: 0, y: 0 }, { x: 1, y: 0 }, grid));
+    const dmg = computeSkillHitDamage(ctx({ x: 0, y: 0 }, { x: 1, y: 0 }, grid)).damage;
     expect(dmg).toBe(Math.floor(base * 1.25));
   });
 
   it('两头地形叠乘', () => {
     const grid: TerrainGrid = [['high', 'forest']];
-    const dmg = computeSkillHitDamage(ctx({ x: 0, y: 0 }, { x: 1, y: 0 }, grid));
+    const dmg = computeSkillHitDamage(ctx({ x: 0, y: 0 }, { x: 1, y: 0 }, grid)).damage;
     expect(dmg).toBe(Math.floor(base * 1.25 * 0.75));
   });
 
   it('河流削弱施法者输出', () => {
     const grid: TerrainGrid = [['river', 'plain']];
-    const dmg = computeSkillHitDamage(ctx({ x: 0, y: 0 }, { x: 1, y: 0 }, grid));
+    const dmg = computeSkillHitDamage(ctx({ x: 0, y: 0 }, { x: 1, y: 0 }, grid)).damage;
     expect(dmg).toBe(Math.floor(base * 0.8));
   });
 
   it('平原不改变任何东西', () => {
     const grid: TerrainGrid = [['plain', 'plain']];
-    expect(computeSkillHitDamage(ctx({ x: 0, y: 0 }, { x: 1, y: 0 }, grid))).toBe(base);
+    expect(computeSkillHitDamage(ctx({ x: 0, y: 0 }, { x: 1, y: 0 }, grid)).damage).toBe(base);
   });
 });

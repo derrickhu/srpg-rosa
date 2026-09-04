@@ -6,6 +6,7 @@ import {
   effectiveSkillSpec,
   exclusiveChainForSkill,
   exclusiveModsForSkill,
+  formatModStars,
   getSkillMod,
   isExclusiveMod,
   modRollWeight,
@@ -403,6 +404,32 @@ describe('抽卡权重', () => {
 });
 
 describe('词条描述', () => {
+  it('可叠层词条必须声明 perLevel，描述和结算读同一份', () => {
+    for (const m of allSkillMods()) {
+      if (m.maxStacks <= 1) {
+        expect(m.perLevel, `「${m.name}」只能叠 1 层，不该再写每级加值`).toBeUndefined();
+        continue;
+      }
+      expect(m.perLevel, `「${m.name}」可叠却没写每级加值`).toBeGreaterThan(0);
+      const total = (m.perLevel ?? 0) * 2;
+      expect(
+        m.describe(2).includes(String(total)),
+        `「${m.name}」第 2 层描述里没有 ${total}（perLevel=${m.perLevel}）`,
+      ).toBe(true);
+    }
+    const sharpen = getSkillMod('sharpen')!;
+    const base = atkMul(whirl());
+    const two = effectiveSkillSpec(whirl(), ['sharpen', 'sharpen']);
+    expect(atkMul(two)).toBeCloseTo(base * (1 + (sharpen.perLevel! / 100) * 2), 6);
+  });
+
+  it('星级只给能叠的词条画，满级画满实心', () => {
+    expect(formatModStars(1, 1)).toBe('');
+    expect(formatModStars(1, 3)).toBe('★☆☆');
+    expect(formatModStars(3, 3)).toBe('★★★');
+    expect(formatModStars(9, 3)).toBe('★★★');
+  });
+
   it('每一层都说得出具体数值，且层数不同描述不同', () => {
     for (const m of allSkillMods()) {
       for (let n = 1; n <= m.maxStacks; n += 1) {

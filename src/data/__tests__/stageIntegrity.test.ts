@@ -300,12 +300,16 @@ describe('副本节点与关卡的对应关系', () => {
     }
   });
 
-  it('每章最后一个战斗节点是 Boss 节点', () => {
+  it('有 Boss 的章节最后一战必须是 Boss，教学章没有 Boss', () => {
     for (const d of DUNGEON_DEFS) {
       const battles = d.nodes.filter((n) => n.kind !== 'shop');
       expect(battles.length, `${d.id} 没有战斗节点`).toBeGreaterThan(0);
-      expect(battles[battles.length - 1]!.kind, `${d.id} 最后一战不是 boss`).toBe('boss');
       const bosses = battles.filter((n) => n.kind === 'boss');
+      if (d.id === 'dungeon_grassland') {
+        expect(bosses, `${d.id} 教学章不应再有 boss`).toHaveLength(0);
+        continue;
+      }
+      expect(battles[battles.length - 1]!.kind, `${d.id} 最后一战不是 boss`).toBe('boss');
       expect(bosses, `${d.id} 有多个 boss 节点`).toHaveLength(1);
     }
   });

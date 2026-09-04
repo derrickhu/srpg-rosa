@@ -11,6 +11,12 @@ import type {
 import { effectiveUnitDef } from './effectiveUnit';
 import { guardNote, terrainAttackNote, terrainDefenseNote } from './damage';
 import { computeSkillHitDamage, isExecuting } from './skillDamage';
+
+/** 战斗内伤害掷点（暴击等）。引擎开局注入，单局同时只跑一场战斗。 */
+let hitRng: () => number = Math.random;
+export function setHitRng(rng: () => number): void {
+  hitRng = rng;
+}
 import {
   applySkillCastAllyEffects,
   applySkillCastFoeEffects,
@@ -382,7 +388,7 @@ function skillHitDamage(
   tgt: UnitState,
   terrain: TerrainGrid,
   defs: Record<UnitKind, UnitArchetypeDef>,
-): number {
+): { damage: number; crit: boolean } {
   return computeSkillHitDamage({
     self,
     target: tgt,
@@ -391,6 +397,7 @@ function skillHitDamage(
     spec,
     terrain,
     defs,
+    rng: hitRng,
   });
 }
 
@@ -411,7 +418,7 @@ function resolveHit(
 ): SkillHit {
   // 处决要在扣血**之前**判：它读的是命中那一刻的血量
   const modNote = hitModNote(spec, tgt, defs);
-  const damage = skillHitDamage(self, def, spec, tgt, terrain, defs);
+  const { damage, crit } = skillHitDamage(self, def, spec, tgt, terrain, defs);
   tgt.hp -= damage;
   return {
     target: tgt.uid,
@@ -420,6 +427,7 @@ function resolveHit(
     defTerrainNote: terrainDefenseNote(terrain, tgt.pos) ?? undefined,
     guardNote: guardNote(effectiveUnitDef(tgt, defs)) ?? undefined,
     modNote,
+    crit: crit || undefined,
     poisoned: specAppliesPoison(spec) || undefined,
     frostbitten: specAppliesFrost(spec) || undefined,
   };
@@ -486,7 +494,7 @@ function resolveSplashHits(
       : manhattan(t.pos, main.pos) === 1;
     if (!inRing) continue;
     const modNote = hitModNote(spec, t, defs);
-    const full = skillHitDamage(self, def, spec, t, terrain, defs);
+    const { damage: full, crit } = skillHitDamage(self, def, spec, t, terrain, defs);
     const damage = Math.max(1, Math.floor(full * ratio));
     t.hp -= damage;
     out.push({
@@ -496,6 +504,7 @@ function resolveSplashHits(
       defTerrainNote: terrainDefenseNote(terrain, t.pos) ?? undefined,
       guardNote: guardNote(effectiveUnitDef(t, defs)) ?? undefined,
       modNote,
+      crit: crit || undefined,
       splash: true,
     });
   }
@@ -942,10 +951,8 @@ function castLineBestRay(
 /**
  * 技能槽。主槽来自布阵配置，临时槽来自局内商店。
  *
- * 两槽**冷却各自独立**，但共用每回合一次的施放额度（`PendingTurn.canSkill`）。
- * 让临时技能额外多一次出手会直接改变行动经济——每回合能打两发技能的队伍
- * 和现在这套敌人血量完全不是一个游戏，整条难度曲线都得重调。
- * 共用额度之后它加的是「主技能进冷却时你还有别的事可做」，这是选择，不是数值膨胀。
+ * 两槽**冷却各自独立**，本回合也**各自可施放一次**（`usedSkillSlots` 按槽记）。
+ * 主技能在冷却时，临时技能仍能出手；两槽都就绪时也能在同一回合各放一发。
  */
 export type SkillSlot = 'main' | 'temp';
 
@@ -1030,9 +1037,11 @@ export function trySkillBeforeMove(
   units: UnitState[],
   terrain: TerrainGrid,
   tr?: TerrainRuntime,
+  spentSlots?: ReadonlySet<SkillSlot>,
 ): BattleEvent[] {
   const def = effectiveUnitDef(self, defs);
   for (const slot of CAST_ORDER) {
+    if (spentSlots?.has(slot)) continue;
     const spec = readySlotSpec(self, def, slot);
     if (!spec || spec.timing !== 'beforeMove') continue;
     const events = commitCast(
@@ -1049,9 +1058,11 @@ export function trySkillAfterMove(
   units: UnitState[],
   terrain: TerrainGrid,
   tr?: TerrainRuntime,
+  spentSlots?: ReadonlySet<SkillSlot>,
 ): BattleEvent[] {
   const def = effectiveUnitDef(self, defs);
   for (const slot of CAST_ORDER) {
+    if (spentSlots?.has(slot)) continue;
     const spec = readySlotSpec(self, def, slot);
     if (!spec || spec.timing !== 'afterMove') continue;
     const events = commitCast(

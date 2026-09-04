@@ -7,7 +7,7 @@
     "minified": true,
     "newFeature": true,
     "uglifyFileName": false,
-    "uploadWithSourceMap": true,
+    "uploadWithSourceMap": false,
     "enhance": false,
     "packNpmManually": false,
     "packNpmRelationList": [],
@@ -205,6 +205,14 @@
       },
       {
         "value": "fonts/.charset.txt",
+        "type": "file"
+      },
+      {
+        "value": "fonts/OFL.txt",
+        "type": "file"
+      },
+      {
+        "value": ".gitignore",
         "type": "file"
       }
     ],

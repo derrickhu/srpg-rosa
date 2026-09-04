@@ -109,37 +109,42 @@ const r = (rows: ShopPoolRow[]): ShopPoolRow[] => rows;
  *    会有 14 招，而商店一次只 roll 3 件（还保底一件药剂）——想要的那招基本抽不到，
  *    「选一个流派」就退化成抽奖。滑动窗口让每章的池子由**本章的族**主导，
  *    上一章的留一轮作为过渡，玩家仍能把上一章顺手的招带过来。
+ *
+ * 4. **标价按「两场战斗的金币买不齐三件」定。** 补给点插在每两场之后，首店手上
+ *    就是刚打完的两笔 `goldReward`。三件最便宜的之和必须大于这笔钱，否则每次
+ *    都清空货架，商店没有选择。省下来的钱可以带到下一店——那是「现在买 / 留给后面」
+ *    的第二层选择。教程店单独标价，不受这条约束。
  */
 
 /** 各章**新增**的临时技能。总计 14 招，恰好是现有全部临时技能 */
 const TEMP_NEW_BY_CHAPTER: ShopPoolRow[][] = [
   // 章 1 草原：一招就够。控制类里最便宜、最好懂的那个
-  r([{ category: 'tempSkill', skillId: 'temp_gl_snare', price: 6 }]),
+  r([{ category: 'tempSkill', skillId: 'temp_gl_snare', price: 12 }]),
   // 章 2 密林：火把是这一章的关键一招（松脂林道那关就等着它）
   r([
-    { category: 'tempSkill', skillId: 'temp_fo_torch', price: 8 },
-    { category: 'tempSkill', skillId: 'temp_fo_thorn', price: 7 },
+    { category: 'tempSkill', skillId: 'temp_fo_torch', price: 18 },
+    { category: 'tempSkill', skillId: 'temp_fo_thorn', price: 16 },
   ]),
   // 章 3 要塞：撞城槌和 Boss 的破阵冲撞同形，钩索配墙与闸门
   r([
-    { category: 'tempSkill', skillId: 'temp_ft_ram', price: 9 },
-    { category: 'tempSkill', skillId: 'temp_ft_suppress', price: 7 },
-    { category: 'tempSkill', skillId: 'temp_ft_grapple', price: 7 },
+    { category: 'tempSkill', skillId: 'temp_ft_ram', price: 20 },
+    { category: 'tempSkill', skillId: 'temp_ft_suppress', price: 18 },
+    { category: 'tempSkill', skillId: 'temp_ft_grapple', price: 18 },
   ]),
   // 章 4 毒沼：四招全是续航/增益。这一章的地形每回合在扣血，
   // 商店该给的是「扛得住」而不是「打得快」
   r([
-    { category: 'tempSkill', skillId: 'temp_gl_salve', price: 7 },
-    { category: 'tempSkill', skillId: 'temp_fo_bark', price: 8 },
-    { category: 'tempSkill', skillId: 'temp_ft_banner', price: 8 },
-    { category: 'tempSkill', skillId: 'field_bless', price: 8 },
+    { category: 'tempSkill', skillId: 'temp_gl_salve', price: 20 },
+    { category: 'tempSkill', skillId: 'temp_fo_bark', price: 22 },
+    { category: 'tempSkill', skillId: 'temp_ft_banner', price: 22 },
+    { category: 'tempSkill', skillId: 'field_bless', price: 22 },
   ]),
   // 章 5 龙岭：剩下的四招一起开，终章不再留新东西
   r([
-    { category: 'tempSkill', skillId: 'temp_gl_horn', price: 7 },
-    { category: 'tempSkill', skillId: 'temp_gl_swarm', price: 8 },
-    { category: 'tempSkill', skillId: 'temp_fo_warden', price: 7 },
-    { category: 'tempSkill', skillId: 'war_shout', price: 8 },
+    { category: 'tempSkill', skillId: 'temp_gl_horn', price: 22 },
+    { category: 'tempSkill', skillId: 'temp_gl_swarm', price: 24 },
+    { category: 'tempSkill', skillId: 'temp_fo_warden', price: 22 },
+    { category: 'tempSkill', skillId: 'war_shout', price: 24 },
   ]),
 ];
 
@@ -155,9 +160,9 @@ function tempSkillPool(chapter: number): ShopPoolRow[] {
  * 这不是内容少，是**这一章要问的问题只有一个**：这个丘归谁。一张券配一个问题。
  */
 const POOL_GRASSLAND = r([
-  { category: 'terrain', terrainId: 'high', price: 4 },
-  { category: 'potion', potionId: 'heal', price: 5 },
-  { category: 'potion', potionId: 'draught', price: 5 },
+  { category: 'terrain', terrainId: 'high', price: 8 },
+  { category: 'potion', potionId: 'heal', price: 10 },
+  { category: 'potion', potionId: 'draught', price: 10 },
   ...tempSkillPool(1),
 ]);
 
@@ -169,11 +174,11 @@ const POOL_GRASSLAND = r([
  * 这正是想要的那种决定。
  */
 const POOL_FOREST = r([
-  { category: 'terrain', terrainId: 'high', price: 4 },
-  { category: 'terrain', terrainId: 'forest', price: 4 },
-  { category: 'potion', potionId: 'heal', price: 5 },
-  { category: 'potion', potionId: 'draught', price: 5 },
-  { category: 'potion', potionId: 'slow', price: 6 },
+  { category: 'terrain', terrainId: 'high', price: 12 },
+  { category: 'terrain', terrainId: 'forest', price: 12 },
+  { category: 'potion', potionId: 'heal', price: 14 },
+  { category: 'potion', potionId: 'draught', price: 14 },
+  { category: 'potion', potionId: 'slow', price: 16 },
   ...tempSkillPool(2),
 ]);
 
@@ -185,12 +190,12 @@ const POOL_FOREST = r([
  * 一堵墙就能把它切断。和机关的关系是互补的：机关开路，墙封路。
  */
 const POOL_FORTRESS = r([
-  { category: 'terrain', terrainId: 'high', price: 5 },
-  { category: 'terrain', terrainId: 'forest', price: 5 },
-  { category: 'terrain', terrainId: 'wall', price: 5 },
-  { category: 'potion', potionId: 'heal', price: 6 },
-  { category: 'potion', potionId: 'draught', price: 6 },
-  { category: 'potion', potionId: 'slow', price: 6 },
+  { category: 'terrain', terrainId: 'high', price: 14 },
+  { category: 'terrain', terrainId: 'forest', price: 14 },
+  { category: 'terrain', terrainId: 'wall', price: 14 },
+  { category: 'potion', potionId: 'heal', price: 16 },
+  { category: 'potion', potionId: 'draught', price: 16 },
+  { category: 'potion', potionId: 'slow', price: 16 },
   ...tempSkillPool(3),
 ]);
 
@@ -202,22 +207,30 @@ const POOL_FORTRESS = r([
  * 换个地形环境就换了用途——这是不加新机制就能加深度的地方。
  */
 const POOL_SWAMP = r([
-  { category: 'terrain', terrainId: 'high', price: 5 },
-  { category: 'terrain', terrainId: 'forest', price: 5 },
-  { category: 'terrain', terrainId: 'wall', price: 5 },
-  { category: 'potion', potionId: 'heal', price: 6 },
-  { category: 'potion', potionId: 'draught', price: 7 },
-  { category: 'potion', potionId: 'slow', price: 7 },
+  { category: 'terrain', terrainId: 'high', price: 16 },
+  { category: 'terrain', terrainId: 'forest', price: 16 },
+  { category: 'terrain', terrainId: 'wall', price: 16 },
+  { category: 'potion', potionId: 'heal', price: 18 },
+  { category: 'potion', potionId: 'draught', price: 20 },
+  { category: 'potion', potionId: 'slow', price: 20 },
   ...tempSkillPool(4),
 ]);
 
 const POOL_DRAGON = r([
-  { category: 'terrain', terrainId: 'high', price: 5 },
-  { category: 'terrain', terrainId: 'forest', price: 5 },
-  { category: 'terrain', terrainId: 'wall', price: 6 },
-  { category: 'potion', potionId: 'heal', price: 7 },
-  { category: 'potion', potionId: 'draught', price: 7 },
-  { category: 'potion', potionId: 'slow', price: 7 },
+  { category: 'terrain', terrainId: 'high', price: 20 },
+  { category: 'terrain', terrainId: 'forest', price: 20 },
+  { category: 'terrain', terrainId: 'wall', price: 22 },
+  { category: 'potion', potionId: 'heal', price: 22 },
+  { category: 'potion', potionId: 'draught', price: 22 },
+  { category: 'potion', potionId: 'slow', price: 22 },
+  ...tempSkillPool(5),
+]);
+
+/** 章 6 血牙祭坛：单关 Boss，没有补给点。池子仍留药，避免完整性测试把「能买到药」漏掉。 */
+const POOL_BLOODFANG = r([
+  { category: 'terrain', terrainId: 'high', price: 20 },
+  { category: 'potion', potionId: 'heal', price: 22 },
+  { category: 'potion', potionId: 'draught', price: 22 },
   ...tempSkillPool(5),
 ]);
 
@@ -225,10 +238,9 @@ const POOL_DRAGON = r([
  * 把一段连续战斗关卡按「打几场插一个商店、Boss 关收尾」编排为节点序列。
  *
  * Boss 由关卡自己的 `StageDefMvp.isBoss` 决定，不再按「数组最后一个」推。
- * 那个字段以前写了却没人读——5 章的 Boss 关都标着 `isBoss: true`，而节点类型
+ * 那个字段以前写了却没人读——有 Boss 的章节都标着 `isBoss: true`，而节点类型
  * 是从位置推出来的，两套说法并存且谁也不校验谁。改成读字段之后它成了唯一来源：
- * 新章漏标就会得到一章没有 Boss 节点，`stageIntegrity` 当场跑红，
- * 而不是等到玩到最后一关发现没有 Boss 的 1.1 倍缩放和奖励。
+ * 该有 Boss 的章漏标，`stageIntegrity` 当场跑红。教学章没有 Boss，打完精英即通关。
  */
 /**
  * 第 n 章（1 起）的关卡下标。章节增删关卡时这里自动跟上。
@@ -275,12 +287,13 @@ const NODES_FOREST = buildNodes(chapterStages(2));
 const NODES_FORTRESS = buildNodes(chapterStages(3));
 const NODES_SWAMP = buildNodes(chapterStages(4));
 const NODES_DRAGON = buildNodes(chapterStages(5));
+const NODES_BLOODFANG = buildNodes(chapterStages(6));
 
 export const DUNGEON_DEFS: DungeonDef[] = [
   {
     id: 'dungeon_grassland',
     name: '草原战线',
-    desc: '血牙部族踏进草原。四场遭遇战，先学会抢那两块缓丘。',
+    desc: '血牙部族踏进草原。三场遭遇战，先学会抢那两块缓丘。',
     nodes: NODES_GRASSLAND,
     roguelikePool: POOL_GRASSLAND,
     metaReward: 10,
@@ -371,6 +384,25 @@ export const DUNGEON_DEFS: DungeonDef[] = [
     themeColor: 0x8a3a3a,
     art: 'chapter_dragon',
     battleBg: 'battle_bg_dragon',
+  },
+  {
+    id: 'dungeon_bloodfang',
+    name: '血牙祭坛',
+    desc: '草原尽头的祭坛。血牙酋长还在等你。',
+    nodes: NODES_BLOODFANG,
+    roguelikePool: POOL_BLOODFANG,
+    metaReward: 12,
+    stars: [
+      { cond: { kind: 'clear' }, soul: 4 },
+      { cond: { kind: 'maxRounds', max: roundCap(NODES_BLOODFANG) }, soul: 4 },
+      { cond: { kind: 'maxDeaths', max: 0 }, soul: 4 },
+    ],
+    enemyScaleBase: 1.0,
+    maxParty: 4,
+    unlock: { kind: 'clearDungeon', dungeonId: 'dungeon_dragon' },
+    themeColor: 0x8a4a2a,
+    art: 'chapter_grassland',
+    battleBg: 'battle_bg',
   },
 ];
 

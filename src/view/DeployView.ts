@@ -5,7 +5,8 @@ import { gridSize } from '@/battle/grid';
 import type { TerrainId } from '@/battle/types';
 import { UNIT_DEFS } from '@/data/unitDefs';
 import { skillDefForId } from '@/data/skillCatalog';
-import { dungeonBattleBgKey, PLACEABLE_TERRAIN_IDS, terrainTicketName } from '@/data/dungeonCatalog';
+import { dungeonBattleBgKey, PLACEABLE_TERRAIN_IDS } from '@/data/dungeonCatalog';
+import { getTerrainSpec } from '@/data/terrainSpec';
 import { isSandboxDungeon } from '@/data/sandboxLab';
 import { characterArtKey } from '@/data/characterCatalog';
 import type { Character } from '@/game/characterTypes';
@@ -27,7 +28,9 @@ import {
   getCharacter,
   placeCharacter,
   placeTerrainCell,
+  placedTerrainAt,
   removePlacement,
+  removeTerrainCell,
   terrainChargesTotal,
   type MvpGameState,
 } from '@/game/MvpState';
@@ -50,7 +53,8 @@ import { ENDLESS_MAX_WAVES, isEndlessDungeon } from '@/data/endlessCatalog';
 import { createNodeStrip } from '@/view/NodeStrip';
 import { AssetManager } from '@/core/AssetManager';
 import { makeButton } from '@/ui/Button';
-import { AudioManager, muteButtonLabel } from '@/core/AudioManager';
+import { AudioManager } from '@/core/AudioManager';
+import { ABANDON_RUN_CONFIRM, attachAbandonConfirm } from '@/view/battle/resultOverlay';
 import { attachPress } from '@/ui/press';
 import { attachGlowRing } from '@/view/fx/celebration';
 export interface DeployLayoutScreen {
@@ -171,13 +175,24 @@ export interface DeployCallbacks {
   onRefresh?: () => void;
   /** 提示（走 GameFlow 的 toast，DeployView 不自己造弹窗） */
   onWarn?: (msg: string) => void;
+  onPlacementChange?: (rosterId: string) => void;
+  /** 替补席点选，教程用来把手指从人转到格子上 */
+  onSelectRoster?: (rosterId: string) => void;
+}
+
+export interface DeployViewHandle {
+  root: PIXI.Container;
+  cellRect(x: number, y: number): { x: number; y: number; w: number; h: number };
+  benchRect(rosterId: string): { x: number; y: number; w: number; h: number } | null;
+  fightRect(): { x: number; y: number; w: number; h: number };
+  selectedRosterId(): string | null;
 }
 
 export function createDeployView(
   state: MvpGameState,
   callbacks: DeployCallbacks,
   screen: DeployLayoutScreen,
-): PIXI.Container {
+): DeployViewHandle {
   const run = state.run!;
   const endless = isEndlessDungeon(run.dungeonId);
   const st0 = currentStage(state);
@@ -324,7 +339,7 @@ export function createDeployView(
     settingsOverlay.addChild(dim);
 
     const panelW = Math.min(280, sw - 40);
-    const panelH = 272;
+    const panelH = 212;
     const panelX = Math.floor((sw - panelW) / 2);
     const panelY = Math.floor((sh - panelH) / 2) - 30;
 
@@ -357,8 +372,10 @@ export function createDeployView(
     by += 52;
 
     const btnRestart = makeButton('放弃副本', () => {
-      settingsOverlay.visible = false;
-      callbacks.onReset();
+      attachAbandonConfirm(settingsOverlay, sw, sh, ABANDON_RUN_CONFIRM, () => {
+        settingsOverlay.visible = false;
+        callbacks.onReset();
+      });
     }, { variant: 'danger', width: btnW, height: 42, fontSize: 15 });
     btnRestart.x = 16;
     btnRestart.y = by;
@@ -372,15 +389,6 @@ export function createDeployView(
     btnHome.x = 16;
     btnHome.y = by;
     panel.addChild(btnHome);
-    by += 52;
-
-    const btnMute = makeButton(muteButtonLabel(), () => {
-      AudioManager.toggleMute();
-      buildSettingsPanel();
-    }, { variant: 'secondary', width: btnW, height: 42, fontSize: 15 });
-    btnMute.x = 16;
-    btnMute.y = by;
-    panel.addChild(btnMute);
 
     settingsOverlay.addChild(panel);
   }
@@ -402,6 +410,7 @@ export function createDeployView(
   const handLayer = new PIXI.Container();
   handLayer.y = handY;
   root.addChild(handLayer);
+  const benchRects = new Map<string, { x: number; y: number; w: number; h: number }>();
 
   function isDeployRow(y: number): boolean {
     return deployRowSet.has(y);
@@ -526,10 +535,25 @@ export function createDeployView(
 
   function onCellTap(x: number, y: number): void {
     const pos = { x, y };
+    const placedTer = placedTerrainAt(state, pos);
+    if (placedTer) {
+      removeTerrainCell(state, pos);
+      deployTool = 'terrain';
+      terrainPickId = placedTer;
+      selectedRosterId = null;
+      AudioManager.playSfx('sfx_undo');
+      redrawToolbar();
+      redrawGrid();
+      redrawHand();
+      return;
+    }
     if (deployTool === 'terrain' && terrainPickId) {
       if (placeTerrainCell(state, pos, terrainPickId)) {
-        deployTool = 'unit';
-        terrainPickId = null;
+        AudioManager.playSfx('sfx_deploy');
+        if ((run.terrainCharges[terrainPickId] ?? 0) <= 0) {
+          const left = PLACEABLE_TERRAIN_IDS.filter((id) => (run.terrainCharges[id] ?? 0) > 0);
+          terrainPickId = left[0] ?? null;
+        }
         redrawToolbar();
         redrawGrid();
         redrawHand();
@@ -546,9 +570,11 @@ export function createDeployView(
     }
     if (selectedRosterId && placeCharacter(state, selectedRosterId, pos)) {
       AudioManager.playSfx('sfx_deploy');
+      const placedId = selectedRosterId;
       redrawGrid();
       redrawHand();
       redrawToolbar();
+      callbacks.onPlacementChange?.(placedId);
       return;
     }
     // 走到这里说明这一格没有可做的操作（非部署行、或还没选人）。
@@ -624,19 +650,22 @@ export function createDeployView(
     tUnit.x = tx;
     tx += 114;
     const terTotal = terrainChargesTotal(run);
+    const canUseTerrain = terTotal > 0 || run.terrainOverlay.length > 0;
     const tTer = makeToolChip(
-      `地形×${terTotal}`,
+      terTotal > 0 ? `地形×${terTotal}` : '地形',
       deployTool === 'terrain',
       () => {
-        if (terTotal <= 0) return;
+        if (!canUseTerrain) return;
         deployTool = 'terrain';
         selectedRosterId = null;
         const inStock = PLACEABLE_TERRAIN_IDS.filter((id) => (run.terrainCharges[id] ?? 0) > 0);
-        terrainPickId = inStock.length === 1 ? inStock[0]! : null;
+        if (!terrainPickId || (run.terrainCharges[terrainPickId] ?? 0) <= 0) {
+          terrainPickId = inStock[0] ?? null;
+        }
         redrawToolbar();
         redrawHand();
       },
-      terTotal > 0,
+      canUseTerrain,
       'icon_terrain',
     );
     tTer.x = tx;
@@ -647,37 +676,20 @@ export function createDeployView(
     let sx = 0;
     const sy = 34;
     if (deployTool === 'terrain') {
-      for (const id of PLACEABLE_TERRAIN_IDS) {
-        const cnt = run.terrainCharges[id] ?? 0;
-        const chip = makeToolChip(
-          `${terrainTicketName(id).replace('券', '')}×${cnt}`,
-          terrainPickId === id,
-          () => {
-            if (cnt <= 0) return;
-            terrainPickId = id;
-            redrawToolbar();
-          },
-          cnt > 0,
-        );
-        chip.x = sx;
-        chip.y = sy;
-        sx += 82;
-        toolbarLayer.addChild(chip);
-      }
-      // 选中某种地形券后，提示语换成它到底干什么。
-      // 「河流券×2」这个名字本身讲不出任何效果，玩家买它只能靠猜。
       const pickedBadge = terrainPickId ? terrainBadge(terrainPickId) : null;
       const terHint = makeText(
         terrainPickId
-          ? `👆 点击地图上任意空格放置${
-            pickedBadge ? `（站上去：${pickedBadge.text}）` : '（不可通行，用来堵路）'
+          ? `点空格放置，点已放的地形可收回${
+            pickedBadge ? `（${pickedBadge.text}）` : '（不可通行，用来堵路）'
           }`
-          : '先选择要放置的地形类型',
+          : (run.terrainOverlay.length > 0
+            ? '点棋盘上自己放的地形可收回'
+            : '先在下方选一种地形'),
         'caption',
         { fill: 0xffdd88, fontSize: 10 },
       );
       terHint.x = 0;
-      terHint.y = sy + 32;
+      terHint.y = 32;
       toolbarLayer.addChild(terHint);
     } else if (selectedRosterId) {
       const m = getCharacter(state, selectedRosterId);
@@ -754,6 +766,89 @@ export function createDeployView(
     detailOverlay.visible = true;
   }
 
+  function redrawTerrainHand(sw: number, slotH: number): void {
+    const owned = PLACEABLE_TERRAIN_IDS.filter((id) => (run.terrainCharges[id] ?? 0) > 0);
+    if (owned.length === 0) {
+      const tx = makeText(
+        run.terrainOverlay.length > 0 ? '点棋盘上自己放的地形可收回' : '没有地形券',
+        'caption',
+        { fill: 0xcccccc },
+      );
+      tx.anchor.set(0.5, 0.5);
+      tx.x = sw / 2;
+      tx.y = slotH / 2;
+      handLayer.addChild(tx);
+      return;
+    }
+    const slotW = 64;
+    const gap = 8;
+    const totalW = owned.length * slotW + (owned.length - 1) * gap;
+    let hx = Math.floor((sw - totalW) / 2);
+    for (const id of owned) {
+      const cnt = run.terrainCharges[id] ?? 0;
+      const selected = terrainPickId === id;
+      const cell = new PIXI.Container();
+      cell.x = hx;
+      const g = new PIXI.Graphics();
+      g.lineStyle(selected ? 2.5 : 1.5, selected ? C.accent : C.ink, 1);
+      g.beginFill(C.paper, selected ? 0.98 : 0.92);
+      g.drawRoundedRect(0, 0, slotW, slotH, 8);
+      g.endFill();
+      cell.addChild(g);
+
+      const artBox = 44;
+      const art = createTerrainCell(id, artBox);
+      art.x = (slotW - artBox) / 2;
+      art.y = 6;
+      cell.addChild(art);
+
+      const name = getTerrainSpec(id).name;
+      const label = makeText(cnt > 1 ? `${name}×${cnt}` : name, 'caption', {
+        fill: C.text, fontSize: 10, fontWeight: 'bold',
+      });
+      label.anchor.set(0.5, 1);
+      label.x = slotW / 2;
+      label.y = slotH - 5;
+      cell.addChild(label);
+
+      cell.eventMode = 'static';
+      cell.cursor = 'pointer';
+      cell.hitArea = new PIXI.Rectangle(0, 0, slotW, slotH);
+      attachPress(cell);
+      if (selected) attachGlowRing(cell, slotW, slotH).setActive(true);
+      cell.on('pointertap', () => {
+        terrainPickId = id;
+        redrawToolbar();
+        redrawHand();
+      });
+
+      const infoBtn = new PIXI.Container();
+      const infoBg = new PIXI.Graphics();
+      infoBg.beginFill(0x000000, 0.5);
+      infoBg.drawCircle(8, 8, 8);
+      infoBg.endFill();
+      infoBtn.addChild(infoBg);
+      const infoTx = makeText('i', 'caption', { fill: 0xffffff, fontSize: 10, fontWeight: 'bold' });
+      infoTx.anchor.set(0.5);
+      infoTx.x = 8;
+      infoTx.y = 8;
+      infoBtn.addChild(infoTx);
+      infoBtn.x = slotW - 18;
+      infoBtn.y = 2;
+      infoBtn.eventMode = 'static';
+      infoBtn.cursor = 'pointer';
+      infoBtn.hitArea = new PIXI.Circle(8, 8, 12);
+      infoBtn.on('pointertap', (e: PIXI.FederatedPointerEvent) => {
+        e.stopPropagation();
+        showTerrainInfo(id);
+      });
+      cell.addChild(infoBtn);
+
+      handLayer.addChild(cell);
+      hx += slotW + gap;
+    }
+  }
+
   function redrawHand(): void {
     handLayer.removeChildren();
     const bench = benchCharacters(state);
@@ -766,6 +861,11 @@ export function createDeployView(
     bgBar.endFill();
     handLayer.addChild(bgBar);
 
+    if (deployTool === 'terrain') {
+      redrawTerrainHand(sw, slotH);
+      return;
+    }
+
     if (bench.length === 0) {
       const tx = makeText('全部角色已上阵', 'caption', { fill: 0xcccccc });
       tx.anchor.set(0.5, 0.5);
@@ -775,6 +875,7 @@ export function createDeployView(
       return;
     }
 
+    benchRects.clear();
     const slotW = Math.min(72, Math.floor((sw - 16) / Math.max(1, bench.length)) - 6);
     const imgSize = Math.min(48, slotW - 8);
     const totalW = bench.length * slotW + (bench.length - 1) * 6;
@@ -820,6 +921,7 @@ export function createDeployView(
         terrainPickId = null;
         redrawToolbar();
         redrawHand();
+        callbacks.onSelectRoster?.(m.rosterId);
       });
 
       // 详情按钮（右上角小圆）
@@ -847,6 +949,7 @@ export function createDeployView(
       c.addChild(infoBtn);
 
       handLayer.addChild(c);
+      benchRects.set(m.rosterId, { x: hx, y: handY, w: slotW, h: slotH });
       hx += slotW + 6;
     }
   }
@@ -894,6 +997,17 @@ export function createDeployView(
   root.addChild(settingsOverlay);
   root.addChild(detailOverlay);
 
-  return root;
+  return {
+    root,
+    cellRect: (x, y) => ({
+      x: ORIGIN_X + x * CELL,
+      y: ORIGIN_Y + y * CELL,
+      w: CELL - 2,
+      h: CELL - 2,
+    }),
+    benchRect: (rosterId) => benchRects.get(rosterId) ?? null,
+    fightRect: () => ({ x: fightC.x, y: fightC.y, w: btnW, h: fh }),
+    selectedRosterId: () => selectedRosterId,
+  };
 }
 

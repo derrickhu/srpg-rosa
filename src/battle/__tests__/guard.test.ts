@@ -152,10 +152,11 @@ describe('减伤（guard）', () => {
       spec: { ...guardSkill(0.5, 2, 'self'), damage },
       terrain: flat,
       defs: UNIT_DEFS,
+      rng: () => 1,
     });
 
-    const before = computeSkillHitDamage(ctxFor(bare));
-    const after = computeSkillHitDamage(ctxFor(shielded));
+    const before = computeSkillHitDamage(ctxFor(bare)).damage;
+    const after = computeSkillHitDamage(ctxFor(shielded)).damage;
     expect(before).toBeGreaterThan(1);
     expect(after).toBe(Math.max(1, Math.floor(before * 0.5)));
   });

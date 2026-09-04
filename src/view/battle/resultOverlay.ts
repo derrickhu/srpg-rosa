@@ -1,7 +1,8 @@
 import * as PIXI from 'pixi.js';
 import { makeText } from '@/theme/typography';
-import { C } from '@/view/mvpTheme';
+import { C, shade } from '@/view/mvpTheme';
 import { makeButton } from '@/ui/Button';
+import { makePanel } from '@/ui/Panel';
 import { AudioManager } from '@/core/AudioManager';
 import { createUiIcon } from '@/view/renderHelpers';
 import type { SkillModRarity } from '@/data/skillModCatalog';
@@ -74,6 +75,8 @@ export interface LootCard {
   desc: string;
   rarity: SkillModRarity;
   exclusive?: boolean;
+  /** 可叠层时：选完后的星级，如 ★★☆。空或不写 = 不画 */
+  stars?: string;
 }
 
 export interface LootSummary {
@@ -91,14 +94,69 @@ export interface LootOverlayOpts {
   onNeedPick?: () => void;
 }
 
+export interface DefeatHint {
+  iconKey: string;
+  title: string;
+  desc: string;
+}
+
+export type DefeatHintSet = 'chapter' | 'endless' | 'tutorial';
+
+const HINT_REDEPLOY: DefeatHint = {
+  iconKey: 'icon_deploy',
+  title: '重新布阵',
+  desc: '换站位、换技能，重打这一关',
+};
+const HINT_RECRUIT: DefeatHint = {
+  iconKey: 'tab_recruit',
+  title: '招募同伴',
+  desc: '回大厅招人，队伍齐了再进',
+};
+const HINT_UPGRADE: DefeatHint = {
+  iconKey: 'tab_roster',
+  title: '升级角色',
+  desc: '用已得魂晶升级、学技能',
+};
+
+/** 失败页「还能变强」三条。教程还不能离章，只留布阵。 */
+export function defeatHintsFor(set: DefeatHintSet): DefeatHint[] {
+  if (set === 'tutorial') return [HINT_REDEPLOY];
+  if (set === 'endless') return [HINT_RECRUIT, HINT_UPGRADE];
+  return [HINT_REDEPLOY, HINT_RECRUIT, HINT_UPGRADE];
+}
+
+export interface AbandonConfirmCopy {
+  title: string;
+  keep: string;
+  lose: string;
+  confirmLabel: string;
+  cancelLabel: string;
+}
+
+/** 放弃副本二次确认。小关首通已经入账；章节奖要下次从头打完。 */
+export const ABANDON_RUN_CONFIRM: AbandonConfirmCopy = {
+  title: '放弃副本？',
+  keep: '已打通的小关卡，首次奖励已经发放，不会收回。',
+  lose: '章节通关奖励要下次进入本章后，从头打完才能拿。局内金币和纹章会清空。',
+  confirmLabel: '确认放弃',
+  cancelLabel: '再想想',
+};
+
+export function formatAbandonConfirmBody(copy: AbandonConfirmCopy): string {
+  return `${copy.keep}\n\n${copy.lose}`;
+}
+
 export interface DefeatOverlayOpts {
   screenW: number;
   screenH: number;
   subtitle: string;
+  hints?: DefeatHint[];
   primaryLabel: string;
   onPrimary: () => void;
   secondaryLabel?: string;
   onSecondary?: () => void;
+  /** 有这份文案时，点放弃先弹确认，确认才走 onSecondary */
+  abandonConfirm?: AbandonConfirmCopy;
 }
 
 /** 稀有度 → 卡框色。史诗要一眼比另外两档扎眼，否则三选一没有轻重 */
@@ -494,7 +552,18 @@ function buildLootCard(card: LootCard, cardW: number, cardH: number): PIXI.Conta
   modTx.x = rx;
   modTx.y = y;
   cc.addChild(modTx);
-  y += modTx.height + 4;
+  y += modTx.height + (card.stars ? 1 : 4);
+
+  if (card.stars) {
+    const starTx = makeText(card.stars, 'caption', {
+      fill: 0xc9a227, fontSize: 11, fontWeight: 'bold',
+    });
+    starTx.anchor.set(0.5, 0);
+    starTx.x = cardW / 2;
+    starTx.y = y;
+    cc.addChild(starTx);
+    y += starTx.height + 3;
+  }
 
   // 中文无空格：必须 breakWords，否则整句当一个词撑破卡宽。
   // 居中锚点 + wordWrap 在 Pixi 里会把本地原点算偏，改左对齐再在卡内居中。
@@ -658,6 +727,183 @@ export function createLootOverlay(opts: LootOverlayOpts): PIXI.Container {
   return root;
 }
 
+const DEFEAT_BANNER = 0x8a3a3a;
+const HINT_ROW_H = 50;
+const HINT_ICON = 32;
+
+function createDefeatBanner(width: number, height: number): PIXI.Container {
+  const bar = new PIXI.Container();
+  const g = new PIXI.Graphics();
+  g.beginFill(C.paper, 1);
+  g.drawRoundedRect(-2, -2, width + 4, height + 4, 14);
+  g.endFill();
+  g.lineStyle(2.5, C.ink, 1);
+  g.beginFill(shade(DEFEAT_BANNER, 0.72), 1);
+  g.drawRoundedRect(0, 0, width, height, 12);
+  g.endFill();
+  g.lineStyle(0);
+  g.beginFill(DEFEAT_BANNER, 1);
+  g.drawRoundedRect(2, 2, width - 4, height - 6, 10);
+  g.endFill();
+  bar.addChild(g);
+  const title = makeText('失  败', 'display', {
+    fill: 0xfff4d8,
+    fontSize: 28,
+    stroke: 0x4a1818,
+    strokeThickness: 4,
+  });
+  title.anchor.set(0.5);
+  title.x = width / 2;
+  title.y = height / 2 - 1;
+  bar.addChild(title);
+  return bar;
+}
+
+function buildHintRow(hint: DefeatHint, width: number): PIXI.Container {
+  const row = new PIXI.Container();
+  const well = new PIXI.Graphics();
+  well.beginFill(0xf0ebe0, 1);
+  well.drawRoundedRect(0, (HINT_ROW_H - 40) / 2, 40, 40, 10);
+  well.endFill();
+  row.addChild(well);
+  const icon = createUiIcon(hint.iconKey, HINT_ICON);
+  if (icon) {
+    icon.x = (40 - icon.width) / 2;
+    icon.y = (HINT_ROW_H - icon.height) / 2;
+    row.addChild(icon);
+  }
+  const title = makeText(hint.title, 'uiStrong', { fill: C.text, fontSize: 13 });
+  title.x = 48;
+  title.y = 8;
+  row.addChild(title);
+  const desc = makeText(hint.desc, 'caption', {
+    fill: C.muted,
+    wordWrap: true,
+    wordWrapWidth: width - 52,
+    breakWords: true,
+  });
+  desc.x = 48;
+  desc.y = 26;
+  row.addChild(desc);
+  return row;
+}
+
+function buildDefeatCard(
+  lead: string,
+  hints: DefeatHint[],
+  width: number,
+): { card: PIXI.Container; height: number } {
+  const pad = 14;
+  const innerW = width - pad * 2;
+  const leadTx = makeText(lead, 'body', {
+    fill: C.text,
+    fontSize: 13,
+    wordWrap: true,
+    wordWrapWidth: innerW,
+    breakWords: true,
+    lineHeight: 18,
+  });
+  const head = makeText(hints.length > 0 ? '还可以这样变强' : '', 'caption', {
+    fill: C.muted, fontWeight: 'bold',
+  });
+  const rowsH = hints.length * HINT_ROW_H;
+  const headH = hints.length > 0 ? 18 : 0;
+  const height = pad + leadTx.height + (hints.length > 0 ? 12 + headH + 4 + rowsH : 0) + pad;
+  const card = new PIXI.Container();
+  card.addChild(makePanel({ width, height, light: true, radius: 14 }));
+  leadTx.x = pad;
+  leadTx.y = pad;
+  card.addChild(leadTx);
+  let y = pad + leadTx.height + 10;
+  if (hints.length > 0) {
+    head.x = pad;
+    head.y = y;
+    card.addChild(head);
+    y += headH + 4;
+    hints.forEach((hint, i) => {
+      if (i > 0) {
+        const line = new PIXI.Graphics();
+        line.lineStyle(1, C.ink, 0.08);
+        line.moveTo(pad, y);
+        line.lineTo(width - pad, y);
+        card.addChild(line);
+      }
+      const row = buildHintRow(hint, innerW);
+      row.x = pad;
+      row.y = y;
+      card.addChild(row);
+      y += HINT_ROW_H;
+    });
+  }
+  return { card, height };
+}
+
+export function attachAbandonConfirm(
+  root: PIXI.Container,
+  screenW: number,
+  screenH: number,
+  copy: AbandonConfirmCopy,
+  onConfirm: () => void,
+): void {
+  if (root.getChildByName('abandonConfirm')) return;
+  const layer = new PIXI.Container();
+  layer.name = 'abandonConfirm';
+  const scrim = createScrim(screenW, screenH, 0.55);
+  layer.addChild(scrim);
+
+  const w = Math.min(300, screenW - 48);
+  const pad = 16;
+  const title = makeText(copy.title, 'heading', { fill: C.text, fontSize: 17 });
+  const body = makeText(formatAbandonConfirmBody(copy), 'body', {
+    fill: C.text,
+    fontSize: 13,
+    wordWrap: true,
+    wordWrapWidth: w - pad * 2,
+    breakWords: true,
+    lineHeight: 19,
+  });
+  const btnH = 42;
+  const h = pad + title.height + 10 + body.height + 18 + 38 + 10 + btnH + pad;
+  const panel = makePanel({ width: w, height: h, light: true, radius: 14 });
+  panel.x = (screenW - w) / 2;
+  panel.y = Math.max(36, (screenH - h) / 2 - 20);
+  layer.addChild(panel);
+
+  title.x = pad;
+  title.y = pad;
+  panel.addChild(title);
+  body.x = pad;
+  body.y = pad + title.height + 10;
+  panel.addChild(body);
+
+  const closeLayer = (): void => {
+    if (layer.parent) layer.parent.removeChild(layer);
+    if (!layer.destroyed) layer.destroy({ children: true });
+  };
+  scrim.on('pointertap', closeLayer);
+
+  const btnW = w - pad * 2;
+  let by = pad + title.height + 10 + body.height + 18;
+  const cancel = makeButton(copy.cancelLabel, closeLayer, {
+    variant: 'secondary', width: btnW, height: 38, fontSize: 14, radius: 12,
+  });
+  cancel.x = pad;
+  cancel.y = by;
+  panel.addChild(cancel);
+  by += 38 + 10;
+  const confirm = makeButton(copy.confirmLabel, () => {
+    closeLayer();
+    onConfirm();
+  }, {
+    variant: 'danger', width: btnW, height: btnH, fontSize: 15, radius: 12,
+  });
+  confirm.x = pad;
+  confirm.y = by;
+  panel.addChild(confirm);
+
+  root.addChild(layer);
+}
+
 /** 战败：盖在棋盘上，不换页。失败不撒彩纸。 */
 export function createDefeatOverlay(opts: DefeatOverlayOpts): PIXI.Container {
   const { screenW: W, screenH: H } = opts;
@@ -666,53 +912,51 @@ export function createDefeatOverlay(opts: DefeatOverlayOpts): PIXI.Container {
   root.addChild(fadeScrim(W, H));
 
   const cx = W / 2;
-  const bannerW = Math.min(280, W - 48);
+  const cardW = Math.min(320, W - 40);
+  const bannerW = Math.min(280, cardW);
   const bannerH = 56;
-  const bannerY = Math.max(48, H * 0.16);
-  const bar = new PIXI.Container();
-  const g = new PIXI.Graphics();
-  g.beginFill(0x8a3a3a, 0.94);
-  g.lineStyle(3, C.ink, 1);
-  g.drawRoundedRect(0, 0, bannerW, bannerH, 12);
-  g.endFill();
-  bar.addChild(g);
-  const title = makeText('失  败', 'display', { fill: 0xffffff, fontSize: 28 });
-  title.anchor.set(0.5);
-  title.x = bannerW / 2;
-  title.y = bannerH / 2;
-  bar.addChild(title);
+  const hints = opts.hints ?? [];
+  const { card, height: cardH } = buildDefeatCard(opts.subtitle, hints, cardW);
+
+  const btnH = 46;
+  const hasSecondary = Boolean(opts.secondaryLabel && opts.onSecondary);
+  const stackH = bannerH + 18 + cardH + 16 + btnH + (hasSecondary ? 10 + 40 : 0);
+  const top = Math.max(36, Math.min(H * 0.12, (H - stackH) / 2 - 8));
+
+  const bar = createDefeatBanner(bannerW, bannerH);
   bar.pivot.x = bannerW / 2;
   bar.x = cx;
   root.addChild(bar);
-  dropBanner(bar, bannerY);
+  dropBanner(bar, top);
 
-  const cardW = Math.min(320, W - 40);
-  const card = new PIXI.Container();
-  card.addChild(panelBg(cardW, 64, 12));
-  const sub = makeText(opts.subtitle, 'ui', { fill: C.text });
-  sub.x = 16;
-  sub.y = 22;
-  card.addChild(sub);
   card.pivot.x = cardW / 2;
   card.x = cx;
-  card.y = bannerY + bannerH + 28;
+  card.y = top + bannerH + 18;
   root.addChild(card);
   staggerPop([card], 40);
 
-  const btnW = cardW;
+  const requestAbandon = (): void => {
+    if (!opts.onSecondary) return;
+    if (opts.abandonConfirm) {
+      attachAbandonConfirm(root, W, H, opts.abandonConfirm, opts.onSecondary);
+      return;
+    }
+    opts.onSecondary();
+  };
+
   const primary = makeButton(opts.primaryLabel, opts.onPrimary, {
-    variant: 'primary', width: btnW, height: 46, fontSize: 16, radius: 12,
+    variant: 'primary', width: cardW, height: btnH, fontSize: 16, radius: 12,
   });
-  primary.x = cx - btnW / 2;
-  primary.y = card.y + 64 + 18;
+  primary.x = cx - cardW / 2;
+  primary.y = card.y + cardH + 16;
   root.addChild(primary);
 
-  if (opts.secondaryLabel && opts.onSecondary) {
-    const secondary = makeButton(opts.secondaryLabel, opts.onSecondary, {
-      variant: 'secondary', width: btnW, height: 40, fontSize: 14, radius: 12,
+  if (hasSecondary) {
+    const secondary = makeButton(opts.secondaryLabel!, requestAbandon, {
+      variant: 'danger', width: cardW, height: 40, fontSize: 15, radius: 12,
     });
-    secondary.x = cx - btnW / 2;
-    secondary.y = primary.y + 56;
+    secondary.x = cx - cardW / 2;
+    secondary.y = primary.y + btnH + 10;
     root.addChild(secondary);
   }
 

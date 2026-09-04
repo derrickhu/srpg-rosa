@@ -14,11 +14,13 @@ import {
   endlessAiDifficulty,
   isEndlessDungeon,
 } from '@/data/endlessCatalog';
-import { getSkillMod, isExclusiveMod } from '@/data/skillModCatalog';
+import { formatModStars, getSkillMod, isExclusiveMod, modStacks } from '@/data/skillModCatalog';
 import {
+  ABANDON_RUN_CONFIRM,
   createDefeatOverlay,
   createLootOverlay,
   createRewardOverlay,
+  defeatHintsFor,
   type LootCard,
   type RewardEntry,
 } from '@/view/battle/resultOverlay';
@@ -50,6 +52,8 @@ import {
   skipLoot,
   startRun,
   undoDeployForRetry,
+  activateRunLane,
+  adventureRunOf,
   type BuyShopContext,
   type LootOption,
   type MvpGameState,
@@ -83,6 +87,28 @@ import { getSkillSpec } from '@/data/skillCatalog';
 import { AudioManager } from '@/core/AudioManager';
 import { analytics, EVENT_NAMES, initAnalytics, setAnalyticsUserId } from '@/analytics/gpAnalytics';
 import { Platform } from '@/platform/wxPlatform';
+import { attachTutorialOverlay } from '@/view/tutorial/TutorialOverlay';
+import {
+  advanceTutorial,
+  completeTutorial,
+  isTutorialCompleted,
+  notifyTutorial,
+  readTutorialStep,
+  startTutorial,
+} from '@/game/tutorial/TutorialManager';
+import { TutorialStep, isTutorialAtLeast, isTutorialBefore } from '@/game/tutorial/tutorialSteps';
+import {
+  applyTutorialBattle1Placement,
+  grantTutorialJoinerAfterBattle,
+  isTutorialRun,
+  TUTORIAL_DUNGEON_ID,
+  TUTORIAL_GRON_ID,
+  TUTORIAL_HILL_ID,
+  TUTORIAL_RAYEN_ID,
+  tutorialScriptedSpawns,
+  shouldHintHealPotion,
+  shouldSkipTutorialDeploy,
+} from '@/game/tutorial/tutorialRules';
 
 /** 地形/单位/特效/背景四个 bundle 的总预算，超了先进大厅，剩下的后台补 */
 const REST_BUNDLE_BUDGET_MS = 25000;
@@ -94,8 +120,8 @@ function containerScene(container: PIXI.Container): Scene {
 /**
  * 战利品 → 三选一卡片的展示数据。
  *
- * 词条叠层写进 `desc`（`describe(下一层)`），卡面上不再单画一个数字：
- * 第一次永远是 1，没有标签的「1」玩家读不出意思。
+ * 叠层用星星标在词条名下（选完后的级数），数值仍写进 `desc`：
+ * 「★★☆」只回答叠到第几级，+50% 才回答这一级到底加了什么。
  */
 function lootToCard(state: MvpGameState, o: LootOption): LootCard {
   if (o.kind === 'potion') {
@@ -113,6 +139,8 @@ function lootToCard(state: MvpGameState, o: LootOption): LootCard {
   const mod = getSkillMod(o.modId);
   const m = getCharacter(state, o.rosterId);
   const spec = getSkillSpec(o.skillId);
+  const owned = state.run?.skillMods[o.rosterId] ?? [];
+  const next = mod ? Math.min(mod.maxStacks, modStacks(owned, o.modId) + 1) : 0;
   return {
     // 头像用棋盘上那套 token，玩家不用在两种画法之间做二次对应
     portrait: m ? createUnitToken(characterArtKey(m), 'player', 40) : null,
@@ -124,6 +152,7 @@ function lootToCard(state: MvpGameState, o: LootOption): LootCard {
     desc: o.desc,
     rarity: mod?.rarity ?? 'common',
     exclusive: mod ? isExclusiveMod(mod) : false,
+    stars: mod ? formatModStars(next, mod.maxStacks) || undefined : undefined,
   };
 }
 
@@ -263,7 +292,30 @@ export class GameFlow {
     this.started = true;
     this.loading?.setProgress(1);
     this.loading = null;
+    if (!isTutorialCompleted(this.state.meta)) {
+      this.enterTutorialFromBoot();
+      return;
+    }
     this.renderShell();
+  }
+
+  private enterTutorialFromBoot(): void {
+    if (!this.state.run) {
+      if (readTutorialStep(this.state.meta) === TutorialStep.NOT_STARTED) {
+        startTutorial(this.state);
+      }
+      const party = this.state.meta.roster.map((m) => m.rosterId);
+      startRun(this.state, TUTORIAL_DUNGEON_ID, party.length > 0 ? party : [TUTORIAL_RAYEN_ID]);
+      const s = readTutorialStep(this.state.meta);
+      if (isTutorialAtLeast(s, TutorialStep.BATTLE3_WATCH_GRON)) this.state.run!.nodeIndex = 3;
+      else if (isTutorialAtLeast(s, TutorialStep.SHOP_INTRO)) this.state.run!.nodeIndex = 2;
+      else if (isTutorialAtLeast(s, TutorialStep.DEPLOY2_INTRO)) this.state.run!.nodeIndex = 1;
+      if (this.state.run!.nodeIndex === 0) applyTutorialBattle1Placement(this.state);
+      this.shopOffers = null;
+      this.trackRunStart(TUTORIAL_DUNGEON_ID);
+      SaveManager.save(this.state);
+    }
+    this.renderNode();
   }
 
   private get screen(): { screenWidth: number; screenHeight: number } {
@@ -307,7 +359,10 @@ export class GameFlow {
           this.adventureChapter,
           {
             onStartRun: (dungeonId, party) => this.startRunAndEnter(dungeonId, party),
-            onContinueRun: () => this.renderNode(),
+            onContinueRun: () => {
+              activateRunLane(this.state, 'adventure');
+              this.renderNode();
+            },
             onSweepChapter: (dungeonId) => this.sweepChapter(dungeonId),
             onChanged: persistAndRedraw,
             onChapterChange: (i) => { this.adventureChapter = i; },
@@ -366,10 +421,15 @@ export class GameFlow {
     this.renderNode();
   }
 
-  /** 无尽从副本页直接开打，不绕冒险页选章 */
+  /** 无尽从副本页直接开打，不绕冒险页选章；进行中的冒险停在另一条线，互不影响 */
   private startEndless(): void {
-    if (this.state.run) {
-      this.showToast('先结束当前的冒险');
+    if (isTutorialRun(this.state)) {
+      this.showToast('先打完这一章的教学', { deny: true });
+      return;
+    }
+    if (activateRunLane(this.state, 'challenge')) {
+      SaveManager.save(this.state);
+      this.renderNode();
       return;
     }
     const party = this.state.meta.roster.map((m) => m.rosterId);
@@ -400,7 +460,6 @@ export class GameFlow {
       if (e?.clearedCurrent && e.wave >= ENDLESS_MAX_WAVES) {
         this.trackRunEnd('clear');
         const bonus = finishEndlessRun(this.state);
-        SaveManager.saveRun(null);
         SaveManager.save(this.state);
         this.showToast(bonus > 0 ? `试炼完成，额外魂晶 +${bonus}` : '试炼结束');
         this.renderShell('challenge');
@@ -416,6 +475,9 @@ export class GameFlow {
     const node = currentNode(this.state);
     if (node.kind === 'shop') {
       this.renderShop();
+    } else if (shouldSkipTutorialDeploy(this.state)) {
+      applyTutorialBattle1Placement(this.state);
+      void this.resolveBattle('manual');
     } else {
       this.renderDeploy();
     }
@@ -423,30 +485,65 @@ export class GameFlow {
 
   private renderDeploy(): void {
     this.state.phase = 'deploy';
-    const container = createDeployView(
+    if (isTutorialRun(this.state) && this.state.run!.nodeIndex === 1) {
+      const step = readTutorialStep(this.state.meta);
+      if (isTutorialBefore(step, TutorialStep.DEPLOY2_INTRO)) advanceTutorial(this.state, TutorialStep.DEPLOY2_INTRO);
+      const placed = new Set(this.state.run!.placements.map((p) => p.rosterId));
+      if (placed.has(TUTORIAL_RAYEN_ID) && readTutorialStep(this.state.meta) === TutorialStep.DEPLOY2_PLACE_SWORD) {
+        advanceTutorial(this.state, TutorialStep.DEPLOY2_PLACE_BOW);
+      }
+      if (placed.has(TUTORIAL_HILL_ID) && readTutorialStep(this.state.meta) === TutorialStep.DEPLOY2_PLACE_BOW) {
+        advanceTutorial(this.state, TutorialStep.DEPLOY2_START);
+      }
+    }
+    const handle = createDeployView(
       this.state,
       {
         onStartBattle: (mode) => void this.resolveBattle(mode),
         onWarn: (msg) => this.showToast(msg),
         onReset: () => {
+          if (isTutorialRun(this.state)) {
+            this.showToast('先打完这一章的教学', { deny: true });
+            return;
+          }
           const endless = isEndlessRun(this.state);
           this.trackRunEnd('abandon');
           if (endless) finishEndlessRun(this.state);
           else abandonRun(this.state);
-          SaveManager.saveRun(null);
           SaveManager.save(this.state);
           this.showToast(endless ? '已离开试炼' : '已放弃副本');
           this.renderShell(endless ? 'challenge' : 'adventure');
         },
-        onHome: () => this.renderShell(),
+        onHome: () => {
+          if (isTutorialRun(this.state)) {
+            this.showToast('先打完这一章的教学', { deny: true });
+            return;
+          }
+          this.renderShell();
+        },
         onRefresh: () => this.renderDeploy(),
+        onPlacementChange: (rosterId) => {
+          notifyTutorial(this.state, { type: 'placed', rosterId });
+          SaveManager.save(this.state);
+        },
+        onSelectRoster: () => notifyTutorial(this.state, { type: 'refresh' }),
       },
       this.screen,
     );
-    // 布阵期间提前拉本场要用的 Boss 外观与技能特效（非核心集合走后台加载），
-    // 免得进战瞬间图集还没就位、回退成静态贴图
     void ensureAnimSets(animSetsForUnits(buildBattleUnits(this.state)));
-    this.scenes.replaceAll(containerScene(container));
+    this.scenes.replaceAll(containerScene(handle.root));
+    if (isTutorialRun(this.state) && this.state.run!.nodeIndex === 1) {
+      attachTutorialOverlay(handle.root, {
+        getState: () => this.state,
+        scope: 'deploy',
+        screenW: this.app.screen.width,
+        screenH: this.app.screen.height,
+        benchRect: (id) => handle.benchRect(id),
+        fightRect: () => handle.fightRect(),
+        cellRect: (x, y) => handle.cellRect(x, y),
+        selectedRosterId: () => handle.selectedRosterId(),
+      });
+    }
     AudioManager.playBgm('deploy');
   }
 
@@ -454,7 +551,7 @@ export class GameFlow {
    * 整章扫荡：不建 run、不进战斗。已通关章节在冒险页点一次，拿重复通关魂晶。
    */
   private sweepChapter(dungeonId: string): void {
-    if (this.state.run) {
+    if (adventureRunOf(this.state)) {
       this.showToast('先结束当前的冒险', { deny: true });
       return;
     }
@@ -494,14 +591,16 @@ export class GameFlow {
     // 自动模式（扫荡）走同一个引擎的程序决策分支，不存在两套结算规则。
     const endless = isEndlessRun(this.state);
     const sandbox = isSandboxDungeon(run.dungeonId);
+    const tut = isTutorialRun(this.state);
     const sim = createBattleSim(units, map, UNIT_DEFS, {
       aiDifficulty: endless ? endlessAiDifficulty(run.endless?.wave ?? 1) : stage.aiDifficulty,
       mode,
       enableDrops: endless,
       sandboxFreeCast: sandbox,
+      scriptedSpawns: tut ? tutorialScriptedSpawns(this.state) : undefined,
     });
     this.state.phase = 'battle';
-    const container = createBattlePlaybackView(
+    const handle = createBattlePlaybackView(
       this.app,
       sim,
       units,
@@ -550,9 +649,34 @@ export class GameFlow {
               run.potions[potionId] = (run.potions[potionId] ?? 0) + 1;
             }
           : undefined,
+        tutorialLock: tut && (run.nodeIndex === 0 || run.nodeIndex === 1 || run.nodeIndex === 3),
+        tutorialAllowPilot: tut && run.nodeIndex === 1,
+        onTutorialEvent: (e) => notifyTutorial(this.state, e),
       },
     );
-    this.scenes.replaceAll(containerScene(container));
+    this.scenes.replaceAll(containerScene(handle.root));
+    if (tut && run.nodeIndex === 1 && isTutorialBefore(readTutorialStep(this.state.meta), TutorialStep.BATTLE2_PILOT)) {
+      advanceTutorial(this.state, TutorialStep.BATTLE2_PILOT);
+    }
+    if (tut && (run.nodeIndex === 0 || run.nodeIndex === 1 || run.nodeIndex === 3)) {
+      attachTutorialOverlay(handle.root, {
+        getState: () => this.state,
+        scope: 'battle',
+        screenW: this.app.screen.width,
+        screenH: this.app.screen.height,
+        cellRect: (x, y) => handle.cellRect(x, y),
+        skillButtonRect: () => handle.skillButtonRect(),
+        skillSpent: () => handle.skillSpent(),
+        skillAiming: () => handle.skillAiming(),
+        hillOnField: () => handle.hasRoster(TUTORIAL_HILL_ID),
+        pilotRect: () => handle.pilotRect(),
+        potionRect: () => handle.potionRect('heal'),
+        potionHint: () => run.nodeIndex === 3 && shouldHintHealPotion(
+          sim.getUnits(),
+          run.potions.heal ?? 0,
+        ),
+      });
+    }
     AudioManager.playBgm('battle');
   }
 
@@ -578,7 +702,19 @@ export class GameFlow {
       applyVictory(this.state);
     }
     const last = isRunComplete(this.state);
+    const joined = grantTutorialJoinerAfterBattle(this.state);
+    if (joined === TUTORIAL_HILL_ID) advanceTutorial(this.state, TutorialStep.HILL_REVEAL);
+    if (joined === TUTORIAL_GRON_ID) advanceTutorial(this.state, TutorialStep.GRON_REVEAL);
     SaveManager.save(this.state);
+    if (joined) {
+      this.presentUnlocksThen([joined], () => {
+        if (joined === TUTORIAL_GRON_ID) completeTutorial(this.state);
+        if (joined === TUTORIAL_HILL_ID) advanceTutorial(this.state, TutorialStep.DEPLOY2_INTRO);
+        SaveManager.save(this.state);
+        this.presentBattleWin(last);
+      });
+      return;
+    }
     this.presentBattleWin(last);
   }
 
@@ -721,7 +857,6 @@ export class GameFlow {
             if (endless) {
               this.trackRunEnd('clear');
               const bonus = finishEndlessRun(this.state);
-              SaveManager.saveRun(null);
               SaveManager.save(this.state);
               this.showToast(bonus > 0 ? `试炼完成，额外魂晶 +${bonus}` : '试炼结束');
               this.renderShell('challenge');
@@ -801,44 +936,57 @@ export class GameFlow {
 
   /**
    * 战败盖在棋盘上：保留「刚输掉那一局」的上下文，再给回去改站位的出口。
-   * 失败不撒彩纸。放弃按钮用 secondary——ghost 在深色遮罩上读不出来。
+   * 失败不撒彩纸。章节失败先讲变强的办法；放弃要二次确认，避免误清章节进度。
    */
   private showDefeatOverlay(): void {
     const endless = isEndlessRun(this.state);
+    const tutorial = isTutorialRun(this.state);
     const waves = endlessWavesCleared(this.state);
+    const hintSet = endless ? 'endless' : tutorial ? 'tutorial' : 'chapter';
     let close = (): void => undefined;
     close = this.pushOverlay(
       createDefeatOverlay({
         screenW: this.app.screen.width,
         screenH: this.app.screen.height,
-        subtitle: endless ? `撑到第 ${waves} 波` : '本节点可重新布阵再试',
-        primaryLabel: endless ? '离开试炼（保留已得魂晶）' : '返回布阵',
+        subtitle: endless
+          ? `撑到第 ${waves} 波。已得魂晶保留，回大厅还能招募和升级。`
+          : tutorial
+            ? '这一关可以立刻再打。返回布阵会重打本节点。'
+            : '返回布阵会重打本节点，已得魂晶保留。',
+        hints: defeatHintsFor(hintSet),
+        primaryLabel: endless
+          ? '离开试炼（保留已得魂晶）'
+          : (shouldSkipTutorialDeploy(this.state) ? '再打一次' : '返回布阵'),
         onPrimary: () => {
           close();
           if (endless) {
             this.trackRunEnd('fail');
             finishEndlessRun(this.state);
-            SaveManager.saveRun(null);
             SaveManager.save(this.state);
             this.showToast(`试炼结束，最高记录 ${this.state.meta.endlessBestFloor ?? waves} 波`);
             this.renderShell('challenge');
             return;
           }
           undoDeployForRetry(this.state);
+          if (shouldSkipTutorialDeploy(this.state)) {
+            applyTutorialBattle1Placement(this.state);
+            void this.resolveBattle('manual');
+            return;
+          }
           this.renderDeploy();
         },
-        secondaryLabel: endless ? undefined : '放弃副本（保留已得魂晶）',
-        onSecondary: endless
+        secondaryLabel: endless || tutorial ? undefined : '放弃副本',
+        onSecondary: endless || tutorial
           ? undefined
           : () => {
               close();
               this.trackRunEnd('abandon');
               abandonRun(this.state);
-              SaveManager.saveRun(null);
               SaveManager.save(this.state);
               this.showToast('已放弃副本，局内物资清空');
               this.renderShell('adventure');
             },
+        abandonConfirm: endless || tutorial ? undefined : ABANDON_RUN_CONFIRM,
       }),
     );
   }
@@ -859,8 +1007,11 @@ export class GameFlow {
 
   private renderShop(): void {
     this.state.phase = 'shop';
+    if (isTutorialRun(this.state) && isTutorialBefore(readTutorialStep(this.state.meta), TutorialStep.SHOP_INTRO)) {
+      advanceTutorial(this.state, TutorialStep.SHOP_INTRO);
+    }
     if (!this.shopOffers) this.shopOffers = rollShop(this.state);
-    const container = createShopView(
+    const handle = createShopView(
       this.state,
       this.shopOffers,
       {
@@ -870,7 +1021,10 @@ export class GameFlow {
             return;
           }
           AudioManager.playSfx('sfx_buy');
-          // 购买成功：移除该 offer，留在商店可继续买
+          notifyTutorial(this.state, {
+            type: 'bought',
+            offer: offer.type === 'potion' ? 'potion' : 'tempSkill',
+          });
           this.shopOffers = (this.shopOffers ?? []).filter((o) => o !== offer);
           SaveManager.save(this.state);
           this.renderShop();
@@ -884,7 +1038,18 @@ export class GameFlow {
       },
       this.screen,
     );
-    this.scenes.replaceAll(containerScene(container));
+    this.scenes.replaceAll(containerScene(handle.root));
+    if (isTutorialRun(this.state)) {
+      attachTutorialOverlay(handle.root, {
+        getState: () => this.state,
+        scope: 'shop',
+        screenW: this.app.screen.width,
+        screenH: this.app.screen.height,
+        potionRect: () => handle.potionRect(),
+        buyRect: () => handle.buyRect(),
+        leaveRect: () => handle.leaveRect(),
+      });
+    }
     AudioManager.playBgm('shop');
   }
 

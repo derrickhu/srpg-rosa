@@ -10,7 +10,10 @@ import {
 } from '@/config/CloudConfig';
 import { PersistService } from '@/core/PersistService';
 import { SaveManager } from '@/core/SaveManager';
-import { createInitialMeta } from '@/game/state/GameState';
+import { createInitialMeta, createInitialState } from '@/game/state/GameState';
+import { startRun } from '@/game/state/ProgressManager';
+import { DUNGEON_DEFS } from '@/data/dungeonCatalog';
+import { ENDLESS_DUNGEON_ID } from '@/data/endlessCatalog';
 
 const mem = new Map<string, string>();
 
@@ -85,5 +88,19 @@ describe('SaveManager 经 Persist 落盘', () => {
     const snap = PersistService.exportCloudSnapshot();
     expect(snap.payloadKeys).toContain(SAVE_META_KEY);
     expect(PersistService.isCloudDirty()).toBe(true);
+  });
+
+  it('冒险和无尽两局一起落盘，读回不丢挂起的那条', () => {
+    const s = createInitialState();
+    const party = s.meta.roster.slice(0, 3).map((m) => m.rosterId);
+    startRun(s, DUNGEON_DEFS[0]!.id, party);
+    s.run!.nodeIndex = 2;
+    startRun(s, ENDLESS_DUNGEON_ID, party);
+    expect(SaveManager.save(s)).toBe(true);
+
+    const loaded = SaveManager.load();
+    expect(loaded?.run?.dungeonId).toBe(ENDLESS_DUNGEON_ID);
+    expect(loaded?.parkedRun?.dungeonId).toBe(DUNGEON_DEFS[0]!.id);
+    expect(loaded?.parkedRun?.nodeIndex).toBe(2);
   });
 });

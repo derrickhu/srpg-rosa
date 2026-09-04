@@ -21,11 +21,13 @@ import { battleSkillIdsForCharacter } from './DeployManager';
 import { instantiateCharacter } from '@/game/characterFactory';
 import type { Character } from '@/game/characterTypes';
 import {
+  adventureRunOf,
   createRunState,
   deployedCharacters,
   currentDungeon,
   currentNode,
   currentStage,
+  prepareLaneForStart,
   requireRun,
   resetPid,
   type EndlessCarry,
@@ -162,7 +164,9 @@ export function previewChapterClear(state: MvpGameState, dungeonId: string): Cha
 /** 进入副本：建立 run，定位首节点 */
 export function startRun(state: MvpGameState, dungeonId: string, partyRosterIds: string[]): void {
   resetPid();
-  state.run = createRunState(dungeonId, partyRosterIds);
+  const next = createRunState(dungeonId, partyRosterIds);
+  prepareLaneForStart(state, next);
+  state.run = next;
   state.phase = currentNode(state).kind === 'shop' ? 'shop' : 'deploy';
 }
 
@@ -263,12 +267,13 @@ export function sweepLeftToday(meta: MetaState, dungeonId: string): number {
 /**
  * 这一章能不能扫荡：整章通关过 + 今天还有配额 + 当前没有进行中的冒险。
  *
- * 没通关不能扫，否则等于白送通关。进行中的 run 先结束——扫荡不再进副本，
+ * 没通关不能扫，否则等于白送通关。进行中的冒险先结束——扫荡不再进副本，
  * 和「继续冒险」抢入口会让玩家搞不清自己还在哪一节。
+ * 无尽 / 活动那条线不挡扫荡，两条线互不影响。
  */
 export function canSweepChapter(state: MvpGameState, dungeonId: string): boolean {
   if (isEndlessDungeon(dungeonId) || isSandboxDungeon(dungeonId)) return false;
-  if (state.run) return false;
+  if (adventureRunOf(state)) return false;
   if (!state.meta.clearedDungeonIds.includes(dungeonId)) return false;
   return sweepLeftToday(state.meta, dungeonId) > 0;
 }

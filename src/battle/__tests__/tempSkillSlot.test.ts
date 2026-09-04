@@ -8,9 +8,7 @@ import type { UnitState } from '../types';
 /**
  * 第二技能槽（局内商店买到的临时技能）。
  *
- * 这一组守的是**行动经济没被改坏**：临时技能给的是「主技能冷却时还有别的事做」，
- * 不是每回合多打一发。放开成两次出手的话，同一套敌人血量会突然变得过软，
- * 而这件事在单场对局里看不出来，要跑完整章胜率才暴露。
+ * 主 / 临时两槽冷却各自独立，本回合也各自可施放一次。
  */
 function makeSim(mode: 'manual' | 'auto' = 'manual'): BattleSim {
   const d = UNIT_DEFS.sword;
@@ -36,7 +34,7 @@ function makeSim(mode: 'manual' | 'auto' = 'manual'): BattleSim {
     skillCd: 0,
     movedInTurn: false,
   };
-  return createBattleSim([p, e], emptyTerrain(3, 3), UNIT_DEFS, { mode });
+  return createBattleSim([p, e], emptyTerrain(3, 3), UNIT_DEFS, { mode, battleRng: () => 1 });
 }
 
 function toPending(sim: BattleSim): void {
@@ -61,20 +59,39 @@ describe('临时技能槽', () => {
     expect(u.skillCd).toBe(0);
   });
 
-  it('一回合只能放一次：放完临时技能后主技能也不能再放', () => {
+  it('放完临时技能后，主技能仍可再放（两槽独立计次）', () => {
     const sim = makeSim();
     toPending(sim);
     sim.commandSkill('p1', 'e1', 'temp');
-    // 回合可能已经因为「无事可做」自动收尾，那本身就说明放不了了
     const p = sim.pending();
-    if (p) {
-      expect(p.canSkill).toBe(false);
-      expect(p.castableSlots).toEqual([]);
-    }
-    expect(sim.getUnit('p1')!.skillCd).toBe(0);
+    expect(p).not.toBeNull();
+    expect(p!.castableSlots).toContain('main');
+    expect(sim.skillAiming('p1', 'main')?.skillId).toBe('whirl');
+    sim.commandSkill('p1', undefined, 'main');
+    expect(sim.getUnit('p1')!.skillCd).toBeGreaterThan(0);
+    expect(sim.getUnit('p1')!.tempSkillCd).toBe(2);
   });
 
-  it('自动模式优先用主技能', () => {
+  it('放主技能后，只有主槽打勾', () => {
+    const sim = makeSim();
+    toPending(sim);
+    sim.commandSkill('p1', undefined, 'main');
+    const p = sim.pending();
+    expect(p?.didSkill).toBe(true);
+    expect(p?.spentSkillSlots).toEqual(['main']);
+    expect(p?.castableSlots).toContain('temp');
+  });
+
+  it('放临时技能后，只有临时槽打勾', () => {
+    const sim = makeSim();
+    toPending(sim);
+    sim.commandSkill('p1', 'e1', 'temp');
+    const p = sim.pending();
+    expect(p?.didSkill).toBe(true);
+    expect(p?.spentSkillSlots).toEqual(['temp']);
+  });
+
+  it('自动模式两槽都就绪时，同一回合会按主→临时各放一次', () => {
     const sim = makeSim('auto');
     for (let i = 0; i < 6 && !sim.isDone(); i++) {
       sim.stepTurn();
@@ -82,7 +99,7 @@ describe('临时技能槽', () => {
     }
     const u = sim.getUnit('p1')!;
     expect(u.skillCd, '主技能应该被放掉了').toBeGreaterThan(0);
-    expect(u.tempSkillCd ?? 0, '同一回合不该再放临时技能').toBe(0);
+    expect(u.tempSkillCd ?? 0, '临时技能也应在本回合施放').toBeGreaterThan(0);
   });
 
   it('词条强化主技能', () => {

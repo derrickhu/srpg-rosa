@@ -1,0 +1,10 @@
+A single mobile-game tutorial POINTER HAND icon, one object only, centered.
+
+Classic cartoon white glove (Mickey / mascot glove): three rounded fingers + one thumb, solid flat white #FFFFFF, thick clean black #111111 outline, NO skin, NO peach, NO sleeve, NO cuff, NO wrinkles beyond one tiny knuckle crease. Flat cel, no gradient, no shadow under the hand.
+
+Pose: index finger pointing UP and LEFT (about 10 o'clock). Wrist sits lower-right. Fingertip is the focus. Leave a little empty margin around the glove.
+
+NO gold, no sparkles, no arrows, no rings, no extra icons.
+NO TEXT, no letters, no numbers, no watermark.
+Background 100% solid flat MAGENTA #FF00FF.
+Simple flat casual-game UI icon, not realistic, not 3D, not emoji, not a human skin hand.

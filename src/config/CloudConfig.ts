@@ -21,7 +21,7 @@ export const BACKEND_ANON_ID_KEY = `${GAME_KEY}_anon_id`;
 export const CLOUD_SYNC_SCHEMA_VERSION = 1;
 export const CLOUD_SYNC_META_KEY = `${GAME_KEY}_cloud_meta`;
 
-/** 与 SaveManager 一致：长期档 + 当前一局 */
+/** 与 SaveManager 一致：长期档 + 当前一局（含挂起的另一条线） */
 export const SAVE_META_KEY = 'srpg_meta_v3';
 export const SAVE_RUN_KEY = 'srpg_run_v4';
 

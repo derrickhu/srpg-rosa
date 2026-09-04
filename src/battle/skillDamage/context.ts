@@ -13,4 +13,6 @@ export interface SkillDamageContext {
   spec: SkillSpec;
   terrain: TerrainGrid;
   defs: Record<UnitKind, UnitArchetypeDef>;
+  /** 暴击掷点；测试传入固定序列 */
+  rng?: () => number;
 }

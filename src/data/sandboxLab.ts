@@ -133,7 +133,7 @@ export const SANDBOX_DUNGEON: DungeonDef = {
   themeColor: 0x4a3a6a,
 };
 
-/** 冒险页章节：正式五章 + 试炼 */
+/** 冒险页章节：正式章节 + 试炼 */
 export function adventureChapterList(official: readonly DungeonDef[]): DungeonDef[] {
   return [...official, SANDBOX_DUNGEON];
 }

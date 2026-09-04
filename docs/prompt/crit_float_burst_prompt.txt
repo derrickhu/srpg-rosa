@@ -1,0 +1,47 @@
+暴击飘字前缀 · 炸裂标（当前使用中）
+产出 → images/ui/crit_burst.png
+生成器：Cursor 内置 GenerateImage，aspect_ratio 1:1
+参考图：用户给的战斗截图里，伤害数字左侧那枚橙黄爆点（只学这一枚，不要抄数字、角色、特效）
+
+这不是词条卡图标。`mod_crit.png` 是会心词条用的玩具爆点，画幅大、平涂、给米白卡看。
+这张是压在暴击飘字左边的前缀标，游戏里大约 16~22px，必须和数字同一套「厚描边贴纸」语言。
+
+为什么不程序画：Pixi Graphics 只能铺两层平涂多边形。截图那枚标的质感来自
+黄核→橙→红尖的热色层次 + 中心白火花 + 和不规则剪影，程序画出来永远是廉价八角星。
+
+切图：
+    python3 scripts/split-tile-sheet.py --input <raw>.png --out-dir <tmp> --size 64 \
+        --names burst --key-threshold 170
+    python3 scripts/despill-magenta.py <tmp>/burst.png --min-spill 80
+
+形状禁区：
+    对角叉 / 十字    剑    骷髅    紫色星爆    规则八角星（旧程序标）
+    词条卡那种又圆又胖的六角玩具爆点（mod_crit）
+
+---
+
+A SINGLE GAME UI ICON. One icon only, centred, filling about 65% of the frame, with a clear magenta margin on all four sides.
+
+CRITICAL BACKGROUND: the entire background, including all space around the icon, must be 100% solid flat MAGENTA, hex #FF00FF. It is a chroma key and will be deleted. No white, no grey, no gradient, no drop shadows onto the background, no glow bleeding into the magenta.
+
+CRITICAL SIZE CONSTRAINT: this mark is displayed at only 16 to 22 pixels beside a damage number. It must be ONE bold, chunky, instantly readable silhouette. NO thin lines, NO tiny sparks detached from the body, NO text, NO numbers.
+
+CRITICAL CONNECTIVITY: ONE single connected shape. No floating sparkles beside the burst.
+
+This is a floating-damage PREFIX MARK, not a card icon. Think of a comic-book HIT SPARK stuck to the left of a fat outlined number, like a sticker.
+
+SUBJECT — a compact jagged IMPACT BURST / hit spark:
+- 4 to 6 irregular triangular points, slightly uneven lengths, like a hand-drawn POW explosion. NOT a regular 8-point star, NOT a symmetric badge.
+- Tight and dense: the mass sits in the centre, points are short and fat, not long needles.
+- Thick dark reddish-brown outline (#5A1408), same weight as outlined damage numbers. The outline is part of the sticker, not a drop shadow.
+- Interior colour steps (cel-shaded, not painterly): deep crimson just inside the outline → saturated orange → bright golden yellow core → one tiny white/cream 4-point glint fused in the very centre.
+- Warm hot colours only. Absolutely NO purple, NO violet, NO magenta in the icon itself.
+
+It must read as "a critical hit spark next to a damage number", NOT as:
+- a diagonal X or plus
+- a sword or skull
+- a purple starburst
+- a fat toy hex-burst badge for a skill-mod card
+- an additive VFX glow blob
+
+NO text, no labels, no captions, no letters, no numbers, no watermark anywhere in the image.

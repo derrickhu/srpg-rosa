@@ -32,7 +32,7 @@ export type SkillButtonState =
   | 'noTarget'
   /** 冷却中 */
   | 'cooldown'
-  /** 这回合的技能额度已经用掉了 */
+  /** 这回合放过的是这一槽 */
   | 'spent';
 
 export interface SkillButtonSpec {
@@ -271,6 +271,7 @@ export interface ManualTurnUi {
    */
   abortWait(): void;
   destroy(): void;
+  skillButtonRect(): { x: number; y: number; w: number; h: number; r?: number } | null;
 }
 
 export function createManualTurnUi(opts: ManualTurnUiOptions): ManualTurnUi {
@@ -347,6 +348,7 @@ export function createManualTurnUi(opts: ManualTurnUiOptions): ManualTurnUi {
   let resolver: ((i: ManualInput) => void) | null = null;
   let active: Vec2 | null = null;
   let destroyed = false;
+  let lastSkillRect: { x: number; y: number; w: number; h: number; r?: number } | null = null;
 
   function showToast(msg: string): void {
     if (destroyed) return;
@@ -747,6 +749,7 @@ export function createManualTurnUi(opts: ManualTurnUiOptions): ManualTurnUi {
     switch (sb.state) {
       case 'noTarget': return `${sb.name}：范围内没有目标`;
       case 'cooldown': return `${sb.name}：冷却中，还要 ${sb.cooldown} 回合`;
+      case 'spent': return `${sb.name}：这回合已经放过了`;
       default: return '这回合的技能已经放过了';
     }
   }
@@ -818,6 +821,20 @@ export function createManualTurnUi(opts: ManualTurnUiOptions): ManualTurnUi {
     }
 
     layoutBar(s, btns, glowIdx);
+    lastSkillRect = null;
+    if (s.phase === 'act') {
+      const readyIdx = s.skillButtons.findIndex((sb) => sb.state === 'ready');
+      if (readyIdx >= 0) {
+        const b = btns[readyIdx]!;
+        lastSkillRect = {
+          x: bar.x + b.x,
+          y: bar.y + b.y,
+          w: BAR_H,
+          h: BAR_H,
+          r: BAR_H / 2,
+        };
+      }
+    }
   }
 
   return {
@@ -880,6 +897,7 @@ export function createManualTurnUi(opts: ManualTurnUiOptions): ManualTurnUi {
     },
 
     destroy: teardown,
+    skillButtonRect: () => lastSkillRect,
   };
 }
 

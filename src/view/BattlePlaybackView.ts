@@ -53,7 +53,7 @@ import {
 } from '@/view/renderHelpers';
 import { makeButton } from '@/ui/Button';
 import { attachPress } from '@/ui/press';
-import { AudioManager, muteButtonLabel } from '@/core/AudioManager';
+import { AudioManager } from '@/core/AudioManager';
 import { sfxForAttack, sfxForAttackHit, sfxForSkillCast, sfxForSkillHit } from '@/data/audioCatalog';
 import { AssetManager } from '@/core/AssetManager';
 import {
@@ -120,6 +120,22 @@ export interface PlaybackState {
   sandbox?: boolean;
   /** 本章俯视底图；缺省第一章草地 */
   battleBg?: string;
+  /** 新手引导：关掉跳过 / 回大厅 */
+  tutorialLock?: boolean;
+  /** 第 2 战：锁住跳过，但仍显示并可点托管 */
+  tutorialAllowPilot?: boolean;
+  onTutorialEvent?: (e: { type: 'moved'; x: number; y: number } | { type: 'skill' } | { type: 'spawn'; rosterId: string } | { type: 'refresh' } | { type: 'pilot' }) => void;
+}
+
+export interface BattlePlaybackHandle {
+  root: PIXI.Container;
+  cellRect(x: number, y: number): { x: number; y: number; w: number; h: number };
+  skillButtonRect(): { x: number; y: number; w: number; h: number; r?: number } | null;
+  pilotRect(): { x: number; y: number; w: number; h: number; r?: number } | null;
+  potionRect(potionId?: string): { x: number; y: number; w: number; h: number; r?: number } | null;
+  skillAiming(): boolean;
+  skillSpent(): boolean;
+  hasRoster(rosterId: string): boolean;
 }
 
 export interface PlaybackCallbacks {
@@ -196,7 +212,7 @@ export function createBattlePlaybackView(
   screen: PlaybackScreen,
   callbacks: PlaybackCallbacks,
   gameState: PlaybackState,
-): PIXI.Container {
+): BattlePlaybackHandle {
   const root = new PIXI.Container();
   const { w: GW, h: GH } = gridSize(terrain);
   const { cell, originX, originY } = computeBoardLayout(screen, GW, GH);
@@ -218,6 +234,8 @@ export function createBattlePlaybackView(
    * 引擎决定，播放的时机只归主循环——单一播放者是这套回放能保持顺序的前提。
    */
   let takeOverStep: BattleStep | null = null;
+  let aimingNow = false;
+  let spentSkill = false;
 
   function dur(ms: number): number {
     return ms / speedMul;
@@ -434,6 +452,10 @@ export function createBattlePlaybackView(
   skipBtn.cursor = 'pointer';
   skipBtn.hitArea = new PIXI.Rectangle(0, 0, skipBtnW, ctrlH);
   // GM 跳过：当场判玩家胜。跑 AI 可能输，那就没调试价值。
+  if (gameState.tutorialLock) {
+    skipBtn.visible = false;
+    skipBtn.eventMode = 'none';
+  }
   skipBtn.on('pointertap', () => {
     if (skipping || completed) return;
     skipping = true;
@@ -627,7 +649,11 @@ export function createBattlePlaybackView(
   // 用 pointerdown：微信上 window.pointerup 经常丢，pointertap 就不会响。
   // 防抖避免 down+tap 各切一次又切回去。
   let lastPilotAt = 0;
+  let tutorialPilotLocked = false;
+  const showPilot = !gameState.tutorialLock || !!gameState.tutorialAllowPilot;
   const onPilotPress = (): void => {
+    if (gameState.tutorialLock && !gameState.tutorialAllowPilot) return;
+    if (tutorialPilotLocked) return;
     const now = Date.now();
     if (now - lastPilotAt < 280) return;
     lastPilotAt = now;
@@ -641,6 +667,12 @@ export function createBattlePlaybackView(
     if (toAuto) {
       manualUi?.hide();
       manualUi?.abortWait();
+      if (gameState.tutorialAllowPilot) {
+        tutorialPilotLocked = true;
+        pilotBtn.visible = false;
+        pilotBtn.eventMode = 'none';
+        gameState.onTutorialEvent?.({ type: 'pilot' });
+      }
     }
   };
   pilotBtn.on('pointerdown', () => {
@@ -757,7 +789,10 @@ export function createBattlePlaybackView(
 
     const panelW = Math.min(280, sw - 40);
     const allowDeploy = gameState.allowReturnDeploy !== false;
-    const panelH = allowDeploy ? 272 : 220;
+    const settingBtns = 1
+      + (allowDeploy && !gameState.tutorialLock ? 1 : 0)
+      + (!gameState.tutorialLock ? 1 : 0);
+    const panelH = 50 + settingBtns * 42 + Math.max(0, settingBtns - 1) * 10 + 16;
     const panelX = Math.floor((sw - panelW) / 2);
     const panelY = Math.floor((sh - panelH) / 2) - 30;
     const panel = new PIXI.Container();
@@ -784,21 +819,17 @@ export function createBattlePlaybackView(
       { variant: 'primary', width: btnW, height: 42, fontSize: 15 });
     btnContinue.x = 16; btnContinue.y = by; panel.addChild(btnContinue); by += 52;
 
-    if (allowDeploy) {
+    if (allowDeploy && !gameState.tutorialLock) {
       const btnDeploy = makeButton('返回布阵', () => { settingsOverlay.visible = false; callbacks.onReturnDeploy(); },
         { variant: 'secondary', width: btnW, height: 42, fontSize: 15 });
       btnDeploy.x = 16; btnDeploy.y = by; panel.addChild(btnDeploy); by += 52;
     }
 
-    const btnHome = makeButton('返回大厅', () => { settingsOverlay.visible = false; callbacks.onHome(); },
-      { variant: 'ghost', width: btnW, height: 42, fontSize: 15 });
-    btnHome.x = 16; btnHome.y = by; panel.addChild(btnHome); by += 52;
-
-    const btnMute = makeButton(muteButtonLabel(), () => {
-      AudioManager.toggleMute();
-      buildBattleSettings();
-    }, { variant: 'secondary', width: btnW, height: 42, fontSize: 15 });
-    btnMute.x = 16; btnMute.y = by; panel.addChild(btnMute);
+    if (!gameState.tutorialLock) {
+      const btnHome = makeButton('返回大厅', () => { settingsOverlay.visible = false; callbacks.onHome(); },
+        { variant: 'ghost', width: btnW, height: 42, fontSize: 15 });
+      btnHome.x = 16; btnHome.y = by; panel.addChild(btnHome);
+    }
 
     settingsOverlay.addChild(panel);
   }
@@ -949,7 +980,14 @@ export function createBattlePlaybackView(
     dropMarkers.delete(key);
   }
 
-  for (const u of initialUnits) {
+  function mountUnitView(u: UnitState): void {
+    if (tokens.has(u.uid)) return;
+    posByUid.set(u.uid, { ...u.pos });
+    defIdByUid.set(u.uid, u.defId);
+    animSetByUid.set(u.uid, u.animSet ?? u.defId);
+    for (const sk of [u.battleSkill, u.tempSkill]) {
+      if (sk?.vfxId) skillVfxOverride.set(`${u.uid}:${sk.id}`, sk.vfxId);
+    }
     const ed = effectiveUnitDef(u, UNIT_DEFS);
     const c = new PIXI.Container();
     const setId = u.animSet ?? u.defId;
@@ -965,8 +1003,6 @@ export function createBattlePlaybackView(
       faction: u.faction,
       cell,
     });
-    // 血条底边贴在身体头顶上方；body.scale 会把头顶一起放大，所以 headY 也要乘。
-    // 空隙用固定像素而不是再乘 cell——小格子上多留一点反而更干净。
     oh.root.y = body.y + unitHeadLocalY(setId, cell) * bossScale - 4;
     c.addChild(body);
     c.addChild(oh.root);
@@ -977,6 +1013,10 @@ export function createBattlePlaybackView(
     tokenLayer.addChild(c);
     tokens.set(u.uid, c);
     tokenOverheads.set(u.uid, oh);
+  }
+
+  for (const u of initialUnits) {
+    mountUnitView(u);
   }
 
   async function flashRangeCells(cells: Vec2[], color: number, durationMs: number): Promise<void> {
@@ -1006,7 +1046,11 @@ export function createBattlePlaybackView(
   });
 
   /** 伤害 / 治疗 / 用药 —— 样式见 combatFloatText */
-  function floatDamage(x: number, y: number, dmg: number): void {
+  function floatDamage(x: number, y: number, dmg: number, crit?: boolean): void {
+    if (crit) {
+      spawnCombatFloat(floatHost(), x, y, `${dmg}`, 'crit');
+      return;
+    }
     spawnCombatFloat(floatHost(), x, y, `-${dmg}`, 'damage');
   }
   function floatHeal(x: number, y: number, amount: number): void {
@@ -1479,6 +1523,7 @@ export function createBattlePlaybackView(
         const evs = sim.usePotion(pid);
         renderPotionEvents(evs);
         updateOrderStrip(sim.pending()?.uid ?? null);
+        gameState.onTutorialEvent?.({ type: 'refresh' });
       });
 
       hudLayer.addChild(c);
@@ -1494,9 +1539,11 @@ export function createBattlePlaybackView(
     });
 
     // 圆盘和药井同一条中线；底下名牌探进安全区，不把整行顶高
-    pilotBtn.x = sw - HUD_PAD - PILOT_D;
-    pilotBtn.y = slotTop;
-    hudLayer.addChild(pilotBtn);
+    if (showPilot) {
+      pilotBtn.x = sw - HUD_PAD - PILOT_D;
+      pilotBtn.y = slotTop;
+      hudLayer.addChild(pilotBtn);
+    }
   }
 
   // ============ 行动顺序条 ============
@@ -1655,7 +1702,8 @@ export function createBattlePlaybackView(
     for (const { slot, def, cd } of slots) {
       const spec = def ? getSkillSpec(def.id) : undefined;
       if (!spec || spec.timing === 'passive') continue;
-      const state: SkillButtonState = pending.didSkill ? 'spent'
+      const state: SkillButtonState = pending.spentSkillSlots.includes(slot)
+        ? 'spent'
         : cd > 0 ? 'cooldown'
           : !sim.skillAiming(uid, slot) ? 'noTarget'
             : 'ready';
@@ -1680,6 +1728,8 @@ export function createBattlePlaybackView(
     while (!root.destroyed && !skipping) {
       const pending = sim.pending();
       if (!pending || pending.uid !== uid) break;
+      aimingNow = phase === 'aim';
+      spentSkill = pending.didSkill;
       const self = sim.getUnit(uid);
       if (!self || self.hp <= 0) break;
 
@@ -1726,6 +1776,9 @@ export function createBattlePlaybackView(
         skillButtons: skillButtonSpecs(uid, pending),
         attackButton,
       });
+      // 技能钮坐标是这次 update 才写进 lastSkillRect 的；走位刚进技能步时
+      // Overlay 若立刻去问会拿到 null，遮罩和手指都出不来。
+      gameState.onTutorialEvent?.({ type: 'refresh' });
       updateOrderStrip(uid);
 
       const input = await ui.next();
@@ -1756,9 +1809,12 @@ export function createBattlePlaybackView(
           const needsAim = aim.candidates.length > 0 || aim.aimCells.length > 0;
           if (!needsAim) {
             await playEvents(sim.commandSkill(uid, undefined, input.slot).events);
+            gameState.onTutorialEvent?.({ type: 'skill' });
           } else {
             phase = 'aim';
             aimSlot = input.slot;
+            aimingNow = true;
+            gameState.onTutorialEvent?.({ type: 'refresh' });
           }
           break;
         }
@@ -1782,6 +1838,7 @@ export function createBattlePlaybackView(
             // 单体点名
             if (hitUid && aiming.candidates.includes(hitUid)) {
               await playEvents(sim.commandSkill(uid, hitUid, aimSlot).events);
+              gameState.onTutorialEvent?.({ type: 'skill' });
               phase = 'act';
               aimSlot = null;
               break;
@@ -1794,6 +1851,7 @@ export function createBattlePlaybackView(
               await playEvents(
                 sim.commandSkill(uid, undefined, aimSlot, { ...input.cell }).events,
               );
+              gameState.onTutorialEvent?.({ type: 'skill' });
               phase = 'act';
               aimSlot = null;
             }
@@ -1817,7 +1875,10 @@ export function createBattlePlaybackView(
           if (hitUid) {
             break;
           }
-          if (pending.canMove) await playEvents(sim.commandMove(uid, input.cell).events);
+          if (pending.canMove) {
+            await playEvents(sim.commandMove(uid, input.cell).events);
+            gameState.onTutorialEvent?.({ type: 'moved', x: input.cell.x, y: input.cell.y });
+          }
           break;
         }
       }
@@ -1854,6 +1915,14 @@ export function createBattlePlaybackView(
       case 'round': {
         setRoundLabel();
         await spawnRoundBanner(floatHost(), sw / 2, 56, `第 ${ev.round} 回合`);
+        break;
+      }
+      case 'spawn': {
+        mountUnitView(ev.unit);
+        if (ev.unit.rosterId) {
+          gameState.onTutorialEvent?.({ type: 'spawn', rosterId: ev.unit.rosterId });
+        }
+        await awaitEase(dur(280), () => {});
         break;
       }
       case 'dot': {
@@ -1968,7 +2037,7 @@ export function createBattlePlaybackView(
                 AudioManager.playSfx(sfxForSkillHit(ev.skillId, ev.vfxId));
               }
               applyHitFeel(h.target, { x: cx, y: cy });
-              floatDamage(tt.x, tt.y, h.damage);
+              floatDamage(tt.x, tt.y, h.damage, h.crit);
               floatTerrainNote(tt.x, tt.y, h.defTerrainNote, h.guardNote);
               floatModNote(tt.x, tt.y, h.modNote);
               // 处决是逐目标的：一圈里只有残血的那个身上多一记斩杀闪光
@@ -2092,12 +2161,12 @@ export function createBattlePlaybackView(
           }
           applyHitFeel(ev.target, { x: a.x, y: a.y });
           await awaitEase(dur(HIT_STOP_MS), () => {});
-          floatDamage(t.x, t.y, ev.damage);
+          floatDamage(t.x, t.y, ev.damage, ev.crit);
           floatTerrainNote(t.x, t.y, ev.defTerrainNote, ev.guardNote);
           tokenOverheads.get(ev.target)?.updateHp(ev.hpLeft);
           await awaitEase(dur(260), () => {});
         } else if (t) {
-          floatDamage(t.x, t.y, ev.damage);
+          floatDamage(t.x, t.y, ev.damage, ev.crit);
           tokenOverheads.get(ev.target)?.updateHp(ev.hpLeft);
           await awaitEase(dur(260), () => {});
         }
@@ -2205,6 +2274,7 @@ export function createBattlePlaybackView(
         if (!stillWalking) animByUid.get(ev.uid)?.playIdle();
       }
     }
+    gameState.onTutorialEvent?.({ type: 'refresh' });
   }
 
   /** 主循环：AI 单位边模拟边播，玩家单位停下来等指令 */
@@ -2273,5 +2343,40 @@ export function createBattlePlaybackView(
 
   void run();
 
-  return root;
+  return {
+    root,
+    cellRect: (x, y) => ({
+      x: originX + x * cell,
+      y: originY + y * cell,
+      w: cell - 2,
+      h: cell - 2,
+      r: 6,
+    }),
+    skillButtonRect: () => manualUi?.skillButtonRect() ?? null,
+    potionRect: (potionId = 'heal') => {
+      const slot = potionBtns.get(potionId);
+      if (!slot) return null;
+      const r = POTION_SLOT / 2 + 8;
+      return {
+        x: slot.container.x - r,
+        y: slot.container.y - r,
+        w: r * 2,
+        h: r * 2,
+        r,
+      };
+    },
+    pilotRect: () => {
+      if (!pilotBtn.parent || !pilotBtn.visible) return null;
+      return {
+        x: pilotBtn.x - 8,
+        y: pilotBtn.y - 8,
+        w: PILOT_D + 16,
+        h: pilotH + 8,
+        r: 26,
+      };
+    },
+    skillAiming: () => aimingNow,
+    skillSpent: () => spentSkill,
+    hasRoster: (rosterId) => sim.getUnits().some((u) => u.rosterId === rosterId && u.hp > 0),
+  };
 }

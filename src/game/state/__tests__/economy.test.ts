@@ -69,8 +69,8 @@ describe('魂晶只按首通发放', () => {
 
   it('Boss 节点首通给得更多', () => {
     const s = newGame();
-    startRun(s, DUNGEON_ID, party(s));
-    while (!isRunComplete(s)) winCurrentNode(s);
+    // 教学章没有 Boss；用单关的血牙祭坛验这笔加给
+    startRun(s, 'dungeon_bloodfang', party(s));
     expect(currentNode(s).kind).toBe('boss');
     applyVictory(s);
     expect(s.run!.lastVictory?.soul).toBe(BOSS_FIRST_CLEAR_SOUL);

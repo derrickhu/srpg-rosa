@@ -24,7 +24,9 @@ export type CharacterUnlock =
   /** 在大厅用 meta 货币（魂晶）解锁 */
   | { kind: 'meta'; cost: number }
   /** 通关指定副本后解锁 */
-  | { kind: 'clearDungeon'; dungeonId: string };
+  | { kind: 'clearDungeon'; dungeonId: string }
+  /** 新手流程里入队，不出现在开局名册 */
+  | { kind: 'story' };
 
 export interface CharacterDef {
   /** 全表唯一，既作 catalogId 也作角色 id */
@@ -93,7 +95,7 @@ export const CHARACTER_DEFS: CharacterDef[] = [
     base: { maxHp: 58, atk: 23, spd: 8, move: 2 },
     growth: { maxHp: 5, atk: 2, spd: 0, move: 0 },
     defaultSkillId: sid('bow'),
-    unlock: { kind: 'starter' },
+    unlock: { kind: 'story' },
   },
   {
     id: 'hero_shield_gron',
@@ -103,7 +105,7 @@ export const CHARACTER_DEFS: CharacterDef[] = [
     base: { maxHp: 148, atk: 11, spd: 3, move: 2 },
     growth: { maxHp: 12, atk: 1, spd: 0, move: 0 },
     defaultSkillId: sid('shield'),
-    unlock: { kind: 'starter' },
+    unlock: { kind: 'story' },
   },
   {
     id: 'hero_cav_lance',

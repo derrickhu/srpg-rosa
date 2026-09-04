@@ -15,7 +15,7 @@ import type { UnitInfoModel, UnitInfoSkillSection } from '@/view/unitInfoPanel';
 const MAIN_SKILL_COLOR = 0xcc8833;
 const TEMP_SKILL_COLOR = 0x3a7a5a;
 
-const TEMP_SKILL_NOTE = '与主技能共用每回合一次的技能额度';
+const TEMP_SKILL_NOTE = '冷却独立，每回合可与主技能各放一次';
 
 function mainSection(
   specId: string,

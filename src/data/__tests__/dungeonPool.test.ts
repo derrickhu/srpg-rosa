@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { DUNGEON_DEFS } from '@/data/dungeonCatalog';
 import { CHARACTER_DEFS } from '@/data/characterCatalog';
 import { allSkillSpecs, getSkillSpec } from '@/data/skillCatalog';
+import { STAGES_MVP } from '@/data/stagesMvp';
 
 /**
  * 临时技能不挑职业（`rosterEligibleForTempSkill` 不做职业校验），所以池里混进
@@ -27,6 +28,32 @@ describe('副本商店池', () => {
   it('每个副本都买得到药剂：Boss 前的补给点必须能补续航', () => {
     for (const d of DUNGEON_DEFS) {
       expect(d.roguelikePool.some((r) => r.category === 'potion'), d.id).toBe(true);
+    }
+  });
+
+  /**
+   * 补给点插在每两场战斗之后，首店手上就是刚打完的两笔金币。
+   * 三件最便宜的还买得齐，玩家就不会选，每次清空货架就行。
+   */
+  it('首店金币买不齐三件最便宜的货', () => {
+    for (const d of DUNGEON_DEFS) {
+      const shopAt = d.nodes.findIndex((n) => n.kind === 'shop');
+      if (shopAt < 0 || d.roguelikePool.length < 3) continue;
+      const gold = d.nodes.slice(0, shopAt).reduce((sum, n) => {
+        if (n.stageIndex === undefined) return sum;
+        return sum + (STAGES_MVP[n.stageIndex]?.goldReward ?? 0);
+      }, 0);
+      const prices = d.roguelikePool.map((row) => {
+        if (row.category === 'tempSkill') {
+          return row.price ?? getSkillSpec(row.skillId)?.shopPrice ?? 7;
+        }
+        return row.price;
+      }).sort((a, b) => a - b);
+      const trio = prices[0]! + prices[1]! + prices[2]!;
+      expect(
+        trio,
+        `${d.name} 最便宜三件 ${trio} ≤ 首店金币 ${gold}，会清空货架`,
+      ).toBeGreaterThan(gold);
     }
   });
 

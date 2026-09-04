@@ -2,7 +2,7 @@ import * as PIXI from 'pixi.js';
 import { makeText, textStyle } from '@/theme/typography';
 import type { SkillSpec } from '@/data/skillCatalog';
 import { describeReach, describeSkillSpec } from '@/data/skillText';
-import { getSkillMod, isExclusiveMod, type SkillModRarity } from '@/data/skillModCatalog';
+import { formatModStars, getSkillMod, isExclusiveMod, type SkillModRarity } from '@/data/skillModCatalog';
 import { createUiIcon } from '@/view/renderHelpers';
 import { isDisplayLive } from '@/view/pixiLive';
 
@@ -68,9 +68,9 @@ const MOD_TEXT_COLOR: Record<SkillModRarity, number> = {
 };
 
 /**
- * 「本局纹章」清单：图标 + 名称×层数 + 这一层的实际效果。
+ * 「本局纹章」清单：图标 + 名称 + 星级 + 这一层的实际效果。
  *
- * 只写名字不够——「锋锐×2」到底是 +25% 还是 +50%，玩家没法从名字里读出来，
+ * 只写名字不够——「锋锐 ★★☆」到底是 +25% 还是 +50%，玩家没法从星星里读出来，
  * 而这正是他决定要不要再叠一层的依据，所以每条都带上按层数算好的描述。
  *
  * 挂不上当前技能的词条（比如给纯治疗技挂「淬毒」）也列，压暗并注明原因：
@@ -108,7 +108,12 @@ function buildRunModList(
     const textX = icon ? 18 : 0;
 
     // 专属词条标出来：它换个技能就再也拿不到，玩家换招前得知道自己会丢什么
-    const label = isExclusiveMod(mod) ? `${mod.name}（专属纹章）` : n > 1 ? `${mod.name}×${n}` : mod.name;
+    const stars = formatModStars(n, mod.maxStacks);
+    const label = isExclusiveMod(mod)
+      ? `${mod.name}（专属纹章）`
+      : stars
+        ? `${mod.name} ${stars}`
+        : mod.name;
     const name = makeText(label, 'caption', {
       fill: live ? MOD_TEXT_COLOR[mod.rarity] : 0x8a8a7a,
       fontSize: 10,

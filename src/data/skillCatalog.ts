@@ -253,6 +253,10 @@ export interface SkillSpec {
    */
   executeBonus?: { belowHpRatio: number; mul: number };
   /**
+   * 暴击：在基础暴击率上叠加 `chance`，触发时伤害再乘 `mul`（与 `BASE_CRIT_MUL` 相乘）。
+   */
+  critBonus?: { chance: number; mul: number };
+  /**
    * 溅射：单体技能额外对**主目标邻格**的敌人按此比例造成伤害；缺省 0。
    *
    * 只溅伤害不溅 debuff。「减速溅射」听起来更强，但那等于把单体控制变成群控，
@@ -468,7 +472,7 @@ const SPECS: Record<string, SkillSpec> = {
     displayKind: 'whirlwind',
     shape: { type: 'squareAoE', radius: 1 },
     damage: { kind: 'scaledAtk', atkMul: 0.52 },
-    onCastSelfEffects: [{ kind: 'atkBonus', addAtk: 6, rounds: 2 }],
+    onCastSelfEffects: [{ kind: 'atkBonus', addAtk: 3, rounds: 2 }],
   },
   /** `enemyOnly`：一人一招之后从雷恩身上摘下来，转给敌方剑兵换皮用 */
   cleave: {
@@ -555,7 +559,7 @@ const SPECS: Record<string, SkillSpec> = {
     displayKind: 'whirlwind',
     shape: { type: 'neighborAoE', manhattan: 1 },
     damage: { kind: 'scaledAtk', atkMul: 0.32 },
-    shopPrice: 8,
+    shopPrice: 24,
     onCastFoeEffects: [{ kind: 'atkDown', subAtk: 3, rounds: 2 }],
   },
   /**
@@ -582,8 +586,8 @@ const SPECS: Record<string, SkillSpec> = {
    * 只在第一章商店出现，装进**临时槽**，任何职业都能带（`exclusiveProfession: null`）。
    * 设计口径有三条，偏离哪一条都会出问题：
    *
-   * 1. **主打功能而不是伤害。** 临时技能和主技能共用每回合一次的施放额度，
-   *    如果它也是「打一发伤害」，那玩家每回合就是在两个伤害技能里挑大的，
+   * 1. **主打功能而不是伤害。** 两槽冷却、计次各自独立，
+   *    但如果临时技能也是「打一发伤害」，那玩家每回合就是在两个伤害技能里挑大的，
    *    临时槽退化成一次静默的数值升级。做成控制/治疗/群体减益，
    *    它才有「主技能进冷却时我还能干点别的」这个存在理由。
    * 2. **不吃伤害类词条。** 由 `role`（`control` / `support`）保证，不靠 `damage: none`——
@@ -607,7 +611,7 @@ const SPECS: Record<string, SkillSpec> = {
     // hex_mark 仍是 2 格环；长驱突刺已经改成 2 格内。
     shape: { type: 'neighborPickFoe', manhattan: 1 },
     damage: { kind: 'none' },
-    shopPrice: 6,
+    shopPrice: 12,
     onCastFoeEffects: [{ kind: 'spdDown', subSpd: 4, rounds: 2 }],
   },
   temp_gl_salve: {
@@ -620,7 +624,7 @@ const SPECS: Record<string, SkillSpec> = {
     displayKind: 'whirlwind',
     shape: { type: 'neighborPickAlly', manhattan: 1 },
     damage: { kind: 'none' },
-    shopPrice: 7,
+    shopPrice: 20,
     onCastAllyEffects: [{ kind: 'heal', amount: 14 }],
   },
   temp_gl_swarm: {
@@ -634,7 +638,7 @@ const SPECS: Record<string, SkillSpec> = {
     shape: { type: 'discAoE', radius: 1 },
     // 即时伤要能看见飘字；主功能仍是随后两回合毒（每跳 3）
     damage: { kind: 'flat', amount: 8, applyCounter: false, applyTerrain: false },
-    shopPrice: 8,
+    shopPrice: 24,
     onCastFoeEffects: [{ kind: 'poison', dmgPerRound: 3, rounds: 2 }],
   },
   temp_gl_horn: {
@@ -647,7 +651,7 @@ const SPECS: Record<string, SkillSpec> = {
     displayKind: 'whirlwind',
     shape: { type: 'selfCast' },
     damage: { kind: 'none' },
-    shopPrice: 7,
+    shopPrice: 22,
     onCastSelfEffects: [{ kind: 'taunt', rounds: 2 }, { kind: 'atkBonus', addAtk: 5, rounds: 2 }],
   },
   /**
@@ -681,7 +685,7 @@ const SPECS: Record<string, SkillSpec> = {
     // 每回合 8 点的地形掉血。不吃克制和地形，免得一个「主要拿来改地形」的招
     // 因为站位不同打出三种数字，反而让人以为这招的重点是伤害。
     damage: { kind: 'flat', amount: 6, applyCounter: false, applyTerrain: false },
-    shopPrice: 8,
+    shopPrice: 18,
     onCastTerrainEffects: [{ kind: 'ignite' }],
   },
   temp_fo_thorn: {
@@ -703,7 +707,7 @@ const SPECS: Record<string, SkillSpec> = {
      */
     shape: { type: 'neighborAoE', manhattan: 2 },
     damage: { kind: 'flat', amount: 5, applyCounter: false, applyTerrain: false },
-    shopPrice: 7,
+    shopPrice: 16,
     onCastFoeEffects: [{ kind: 'spdDown', subSpd: 3, rounds: 2 }],
   },
   temp_fo_bark: {
@@ -716,7 +720,7 @@ const SPECS: Record<string, SkillSpec> = {
     displayKind: 'whirlwind',
     shape: { type: 'neighborPickAlly', manhattan: 1 },
     damage: { kind: 'none' },
-    shopPrice: 8,
+    shopPrice: 22,
     // 全游戏第一个减伤技能。挂在临时槽先跑一遍，是因为减伤这个动词的手感
     // （35% / 2 回合合不合适）得在真实对局里量过，再决定要不要给某个职业当看家本领。
     onCastAllyEffects: [{ kind: 'guard', reduceRatio: 0.35, rounds: 2 }],
@@ -731,7 +735,7 @@ const SPECS: Record<string, SkillSpec> = {
     displayKind: 'whirlwind',
     shape: { type: 'selfCast' },
     damage: { kind: 'none' },
-    shopPrice: 7,
+    shopPrice: 22,
     /**
      * 和草原「牧野号角」都是自身嘲讽，但那个配增攻、这个配减伤——一个是拿自己当诱饵
      * 换输出，一个是拿自己当墙。配上火把就是这一章的组合拳：烧掉隘口的林子，
@@ -775,7 +779,7 @@ const SPECS: Record<string, SkillSpec> = {
      */
     shape: { type: 'lineBestRayAllFoes' },
     damage: { kind: 'scaledAtk', atkMul: 0.6 },
-    shopPrice: 9,
+    shopPrice: 20,
   },
   temp_ft_suppress: {
     id: 'temp_ft_suppress',
@@ -794,7 +798,7 @@ const SPECS: Record<string, SkillSpec> = {
      */
     shape: { type: 'neighborPickFoe', manhattan: 2, reach: 'within' },
     damage: { kind: 'none' },
-    shopPrice: 7,
+    shopPrice: 18,
     onCastFoeEffects: [{ kind: 'atkDown', subAtk: 6, rounds: 2 }],
   },
   temp_ft_banner: {
@@ -814,7 +818,7 @@ const SPECS: Record<string, SkillSpec> = {
      */
     shape: { type: 'neighborPickAlly', manhattan: 1 },
     damage: { kind: 'none' },
-    shopPrice: 8,
+    shopPrice: 22,
     onCastAllyEffects: [
       { kind: 'atkBonus', addAtk: 5, rounds: 2 },
       { kind: 'spdBonus', addSpd: 3, rounds: 2 },
@@ -830,7 +834,7 @@ const SPECS: Record<string, SkillSpec> = {
     displayKind: 'whirlwind',
     shape: { type: 'selfCast' },
     damage: { kind: 'none' },
-    shopPrice: 7,
+    shopPrice: 18,
     /**
      * 自身加速，全游戏第一个。它存在的理由是这一章的**代价结构**：
      * 开闸门要押一个人站机关，那个回合队伍就是三打四。
@@ -1241,7 +1245,7 @@ const SPECS: Record<string, SkillSpec> = {
     displayKind: 'whirlwind',
     shape: { type: 'neighborPickAlly', manhattan: 1 },
     damage: { kind: 'none' },
-    shopPrice: 8,
+    shopPrice: 22,
     onCastAllyEffects: [
       { kind: 'atkBonus', addAtk: 4, rounds: 2 },
       { kind: 'spdBonus', addSpd: 1, rounds: 2 },

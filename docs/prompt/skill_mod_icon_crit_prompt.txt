@@ -1,0 +1,58 @@
+技能词条图标 · 会心（当前使用中）
+产出 → images/ui/mod_crit.png
+生成器：Cursor 内置 GenerateImage，aspect_ratio 1:1
+参考图：images/ui/mod_{sharpen,overwhelm,execute,fury}.png（只学画法不抄题材）
+
+规则来源：《美术风格圣经》§6.1。这是一条**史诗档普通词条**，不是专属徽记。
+语义以 `src/data/skillModCatalog.ts` 的 `crit_strike` / 「会心」为准：技能额外暴击率。
+
+为什么单独补一张：普通词条一条一张。会心是后加的，第一、二批已经出完，
+不能重出整套，所以必须把现役图标当参考图锁画法。
+
+上一版是对角紫叉 + 金心，读成「取消 / 错误」而不是暴击，已弃。
+这版改成**橙金炸裂标**：和战斗里暴击飘字同一套热色语言。
+
+切图：
+    python3 scripts/split-tile-sheet.py --input <raw>.png --out-dir <tmp> --size 64 \
+        --names crit --key-threshold 170
+    python3 scripts/despill-magenta.py <tmp>/crit.png --min-spill 80
+    # 这版主体是橙金，不再是紫，despill 不用抬到 150。
+
+形状禁区（改 prompt 前先对一遍现役图）：
+    sharpen 完整竖剑    rout 断剑    execute 骷髅斜砍
+    overwhelm 紫色多角星爆   fury 拳+火    siphon / bloodthirst 红心
+    signature 蜡印金星   splash 冲击环    mend 绿十字
+    旧版会心 对角紫叉（禁止再画）
+会心必须是**橙金炸裂 / 命中爆点**，不能再画叉、不能再画剑、不能再画骷髅、不能再画紫色星爆。
+
+---
+
+A SINGLE GAME UI ICON for a cartoon fantasy tactics mobile game. One icon only, centred, filling about 70% of the frame, with a clear magenta margin on all four sides.
+
+CRITICAL BACKGROUND: the entire background, including all space around the icon, must be 100% solid flat MAGENTA, hex #FF00FF. It is a chroma key and will be deleted. No white, no grey, no gradient, no drop shadows onto the background.
+
+CRITICAL SIZE CONSTRAINT — the most important rule: this icon is displayed at only 16 to 44 pixels in the game. It must be ONE bold, chunky, instantly readable silhouette that survives being shrunk to the size of a fingernail. Think of a chess piece, not an illustration. NO thin lines, NO small parts, NO fine detail, NO tiny sparkles, NO text, NO numbers. If an element would be less than a tenth of the icon's width, delete it.
+
+CRITICAL CONNECTIVITY: the icon must be ONE single connected shape. No detached floating sparks, no separate droplets, no pieces sitting beside the main mass.
+
+CRITICAL — THIS SITS ON A CREAM WHITE CARD (#FCFCF6). The icon needs a THICK near-black outline (#1A1410) all the way around it and a saturated fill inside, so it does not float on the pale card.
+
+STYLE — must match the reference skill-mod icons: chunky cartoon, heavy black outlines, flat colours:
+- SOLID FILLED SILHOUETTE with a thick near-black outline. Not a line icon. Not an outline icon.
+- Flat saturated colour fills, at most 3 colours plus the outline, plus one simple lighter shade for a single cel-shaded highlight.
+- Chunky, rounded, friendly, slightly toy-like.
+- No gradients, no glow, no bevel, no gloss, no photographic detail, no pixel art, no thin strokes.
+- Drawn straight-on, upright, centred. Learn outline thickness and simplification from the references. Do NOT copy their subjects.
+
+SUBJECT (CRIT / 会心, epic-tier extra crit chance) — a fat comic-book HIT BURST, like a toy explosion mark beside a critical damage number. FIVE or SIX CHUNKY rounded triangular points radiating from the centre (not eight skinny needles, not a many-pointed violet star). Outer points bright golden-yellow (#FCB40C) with one lighter cream facet on the top-left point. Inner core a bold deep orange-red (#F08C2A) disc fused into the middle so the whole burst is one connected mass. This is an epic-tier icon: make it visually heavier and bolder than a common icon. WARM HOT COLOURS ONLY — gold, orange, cream. Absolutely NO purple, NO violet, NO magenta in the icon itself.
+
+It must read as "a critical impact burst / hitting the vital point", NOT as:
+- a diagonal X or crossed slashes
+- an upright or broken sword
+- a skull
+- a purple or violet starburst
+- an axis-aligned plus or healing cross
+- a wax seal or star medallion
+- a shield or bullseye target
+
+NO text, no labels, no captions, no letters, no numbers, no watermark anywhere in the image.

@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { DUNGEON_DEFS } from '@/data/dungeonCatalog';
+import { CHARACTER_DEFS, MAX_CHARACTER_LEVEL } from '@/data/characterCatalog';
 import { allSkillMods, getSkillMod, isExclusiveMod } from '@/data/skillModCatalog';
+import { instantiateCharacter } from '@/game/characterFactory';
 import { rollLoot, startRun } from '../ProgressManager';
 import { playerDeployRowRange } from '@/battle/constants';
 import { gridSize } from '@/battle/grid';
 import { createInitialState, currentStage, partyCharacters, type MvpGameState } from '../GameState';
-import { MAX_CHARACTER_LEVEL } from '@/data/characterCatalog';
 
 const DUNGEON_ID = DUNGEON_DEFS[0]!.id;
 
@@ -20,7 +21,9 @@ function seeded(seed: number): () => number {
 
 function newRun(): MvpGameState {
   const s = createInitialState();
-  startRun(s, DUNGEON_ID, s.meta.roster.slice(0, 3).map((m) => m.rosterId));
+  // 开局名册只剩雷恩；三选一要测「给谁」必须凑出一支小队
+  s.meta.roster = CHARACTER_DEFS.slice(0, 3).map(instantiateCharacter);
+  startRun(s, DUNGEON_ID, s.meta.roster.map((m) => m.rosterId));
   deployParty(s);
   return s;
 }
@@ -145,6 +148,27 @@ describe('战后三选一的池子', () => {
       }
       expect(exclusives).toBeGreaterThan(0);
     });
+  });
+
+  it('某个人把一条词条叠满后，他自己不再抽到这条，别人还能抽', () => {
+    const s = newRun();
+    const party = partyCharacters(s);
+    const owner = party[0]!;
+    const sharpen = getSkillMod('sharpen')!;
+    s.run!.skillMods[owner.rosterId] = Array(sharpen.maxStacks).fill('sharpen');
+
+    const rng = seeded(2026);
+    let otherSharpen = 0;
+    for (let i = 0; i < 200; i += 1) {
+      for (const p of rollLoot(s, rng)) {
+        if (p.kind !== 'skillMod') continue;
+        if (p.rosterId === owner.rosterId) {
+          expect(p.modId, `${owner.name} 的锋锐已经满级，不该再出现`).not.toBe('sharpen');
+        }
+        if (p.modId === 'sharpen' && p.rosterId !== owner.rosterId) otherSharpen += 1;
+      }
+    }
+    expect(otherSharpen, '别人的锋锐也被误伤剔出池了').toBeGreaterThan(0);
   });
 
   it('词条全点满后退化成药剂，而不是给出空的三选一', () => {

@@ -103,6 +103,11 @@ export interface SkillModDef {
   /** 把 `stacks` 层的效果折进技能规格 */
   apply(spec: SkillSpec, stacks: number): SkillSpec;
   maxStacks: number;
+  /**
+   * 每升一级加的量。文案和结算都只读这一份，不许再各写一个字面量。
+   * 只能叠 1 层的质变词条没有这个字段。
+   */
+  perLevel?: number;
 }
 
 /**
@@ -123,6 +128,29 @@ interface ModSeed {
   fits(spec: SkillSpec): boolean;
   describe(stacks: number): string;
   apply(spec: SkillSpec, stacks: number): SkillSpec;
+  /** 见 `SkillModDef.perLevel` */
+  perLevel?: number;
+}
+
+/**
+ * 可叠层词条：每级加值只写一次，描述和结算闭包共用。
+ *
+ * 叠层是线性的（2 级 = 2 × 每级），不是逐层相乘。`perLevel` 的单位跟这条词条
+ * 自己的文案走——百分比就是 25，点数就是 4，缩短回合就是 1。
+ */
+function linearStack(
+  perLevel: number,
+  seed: Omit<ModSeed, 'perLevel' | 'describe' | 'apply'> & {
+    describe: (stacks: number, perLevel: number) => string;
+    apply: (spec: SkillSpec, stacks: number, perLevel: number) => SkillSpec;
+  },
+): ModSeed {
+  return {
+    ...seed,
+    perLevel,
+    describe: (n) => seed.describe(n, perLevel),
+    apply: (spec, n) => seed.apply(spec, n, perLevel),
+  };
 }
 
 /**
@@ -325,6 +353,16 @@ function withExecute(spec: SkillSpec, belowHpRatio: number, mul: number): SkillS
   };
 }
 
+function withCrit(spec: SkillSpec, chance: number, mul: number): SkillSpec {
+  const cur = spec.critBonus;
+  return {
+    ...spec,
+    critBonus: cur
+      ? { chance: cur.chance + chance, mul: cur.mul * mul }
+      : { chance, mul },
+  };
+}
+
 /**
  * 同类效果**相加**地并进去。
  *
@@ -446,17 +484,17 @@ function boostHeal(spec: SkillSpec, plus: number): SkillSpec {
  * 完全推不出这个结果。所以这三条改写型的词条一律排在最后。
  */
 const GENERIC_SEEDS: readonly ModSeed[] = [
-  {
+  linearStack(25, {
     id: 'sharpen',
     name: '锋锐',
     rarity: 'common',
     icon: 'mod_sharpen',
     maxStacks: 3,
     fits: isOutputSkill,
-    describe: (n) => `技能伤害提升 ${25 * n}%`,
-    apply: (spec, n) => scaleDamage(spec, 1 + 0.25 * n),
-  },
-  {
+    describe: (n, step) => `技能伤害提升 ${step * n}%`,
+    apply: (spec, n, step) => scaleDamage(spec, 1 + (step / 100) * n),
+  }),
+  linearStack(1, {
     id: 'quick_cast',
     name: '迅捷',
     rarity: 'common',
@@ -464,29 +502,29 @@ const GENERIC_SEEDS: readonly ModSeed[] = [
     maxStacks: 2,
     // 冷却 1 的技能已经几乎每回合能放，再减没有可感知的变化。
     fits: (spec) => spec.cooldown >= 2,
-    describe: (n) => `技能冷却缩短 ${n} 回合`,
-    apply: (spec, n) => cutCooldown(spec, n),
-  },
-  {
+    describe: (n, step) => `技能冷却缩短 ${step * n} 回合`,
+    apply: (spec, n, step) => cutCooldown(spec, step * n),
+  }),
+  linearStack(4, {
     id: 'rout',
     name: '挫锐',
     rarity: 'common',
     icon: 'mod_rout',
     maxStacks: 2,
     fits: (spec) => isDamaging(spec) && isActive(spec),
-    describe: (n) => `命中后目标攻击 -${4 * n}，持续 2 回合`,
-    apply: (spec, n) => mergeFoe(spec, { kind: 'atkDown', subAtk: 4 * n, rounds: 2 }),
-  },
-  {
+    describe: (n, step) => `命中后目标攻击 -${step * n}，持续 2 回合`,
+    apply: (spec, n, step) => mergeFoe(spec, { kind: 'atkDown', subAtk: step * n, rounds: 2 }),
+  }),
+  linearStack(2, {
     id: 'hobble',
     name: '迟滞',
     rarity: 'common',
     icon: 'mod_hobble',
     maxStacks: 2,
     fits: (spec) => isDamaging(spec) && isActive(spec),
-    describe: (n) => `命中后目标速度 -${2 * n}，持续 2 回合`,
-    apply: (spec, n) => mergeFoe(spec, { kind: 'spdDown', subSpd: 2 * n, rounds: 2 }),
-  },
+    describe: (n, step) => `命中后目标速度 -${step * n}，持续 2 回合`,
+    apply: (spec, n, step) => mergeFoe(spec, { kind: 'spdDown', subSpd: step * n, rounds: 2 }),
+  }),
   {
     id: 'guard_stance',
     name: '护阵',
@@ -500,46 +538,46 @@ const GENERIC_SEEDS: readonly ModSeed[] = [
     describe: () => '施放后吸引敌人攻击，持续 2 回合',
     apply: (spec) => mergeSelf(spec, { kind: 'taunt', rounds: 2 }),
   },
-  {
+  linearStack(3, {
     id: 'venom',
     name: '淬毒',
     rarity: 'rare',
     icon: 'mod_venom',
     maxStacks: 3,
     fits: (spec) => isDamaging(spec) && isActive(spec),
-    describe: (n) => `命中后中毒，每回合 -${3 * n} 血，持续 2 回合`,
-    apply: (spec, n) => mergeFoe(spec, { kind: 'poison', dmgPerRound: 3 * n, rounds: 2 }),
-  },
-  {
+    describe: (n, step) => `命中后中毒，每回合 -${step * n} 血，持续 2 回合`,
+    apply: (spec, n, step) => mergeFoe(spec, { kind: 'poison', dmgPerRound: step * n, rounds: 2 }),
+  }),
+  linearStack(30, {
     id: 'siphon',
     name: '汲取',
     rarity: 'rare',
     icon: 'mod_siphon',
     maxStacks: 2,
     fits: isOutputSkill,
-    describe: (n) => `技能伤害的 ${30 * n}% 回复自身`,
-    apply: (spec, n) => addLifesteal(spec, 0.3 * n),
-  },
-  {
+    describe: (n, step) => `技能伤害的 ${step * n}% 回复自身`,
+    apply: (spec, n, step) => addLifesteal(spec, (step / 100) * n),
+  }),
+  linearStack(5, {
     id: 'battle_fury',
     name: '战意',
     rarity: 'rare',
     icon: 'mod_fury',
     maxStacks: 2,
     fits: isActive,
-    describe: (n) => `施放后自身攻击 +${5 * n}，持续 2 回合`,
-    apply: (spec, n) => mergeSelf(spec, { kind: 'atkBonus', addAtk: 5 * n, rounds: 2 }),
-  },
-  {
+    describe: (n, step) => `施放后自身攻击 +${step * n}，持续 2 回合`,
+    apply: (spec, n, step) => mergeSelf(spec, { kind: 'atkBonus', addAtk: step * n, rounds: 2 }),
+  }),
+  linearStack(2, {
     id: 'haste',
     name: '疾风',
     rarity: 'rare',
     icon: 'mod_haste',
     maxStacks: 2,
     fits: isActive,
-    describe: (n) => `施放后自身速度 +${2 * n}，持续 2 回合`,
-    apply: (spec, n) => mergeSelf(spec, { kind: 'spdBonus', addSpd: 2 * n, rounds: 2 }),
-  },
+    describe: (n, step) => `施放后自身速度 +${step * n}，持续 2 回合`,
+    apply: (spec, n, step) => mergeSelf(spec, { kind: 'spdBonus', addSpd: step * n, rounds: 2 }),
+  }),
   {
     id: 'wide_swing',
     name: '横扫',
@@ -550,26 +588,26 @@ const GENERIC_SEEDS: readonly ModSeed[] = [
     describe: () => '作用范围扩大到周围 2 格',
     apply: (spec) => widenAoE(spec, 1),
   },
-  {
+  linearStack(35, {
     id: 'splash',
     name: '溅射',
     rarity: 'rare',
     icon: 'mod_splash',
     maxStacks: 2,
     fits: (spec) => isSingleFoePick(spec) && isOutputSkill(spec),
-    describe: (n) => `对目标周围的敌人造成 ${35 * n}% 伤害`,
-    apply: (spec, n) => addSplash(spec, 0.35 * n),
-  },
-  {
+    describe: (n, step) => `对目标周围的敌人造成 ${step * n}% 伤害`,
+    apply: (spec, n, step) => addSplash(spec, (step / 100) * n),
+  }),
+  linearStack(35, {
     id: 'execute',
     name: '处决',
     rarity: 'rare',
     icon: 'mod_execute',
     maxStacks: 2,
     fits: isOutputSkill,
-    describe: (n) => `目标血量低于 40% 时，伤害提升 ${35 * n}%`,
-    apply: (spec, n) => withExecute(spec, 0.4, 1 + 0.35 * n),
-  },
+    describe: (n, step) => `目标血量低于 40% 时，伤害提升 ${step * n}%`,
+    apply: (spec, n, step) => withExecute(spec, 0.4, 1 + (step / 100) * n),
+  }),
   {
     id: 'overwhelm',
     name: '势不可挡',
@@ -580,6 +618,16 @@ const GENERIC_SEEDS: readonly ModSeed[] = [
     describe: () => '范围扩大到 2 格，且伤害提升 40%',
     apply: (spec) => scaleDamage(widenAoE(spec, 1), 1.4),
   },
+  linearStack(10, {
+    id: 'crit_strike',
+    name: '会心',
+    rarity: 'epic',
+    icon: 'mod_crit',
+    maxStacks: 2,
+    fits: isOutputSkill,
+    describe: (n, step) => `技能额外 ${step * n}% 概率暴击`,
+    apply: (spec, n, step) => withCrit(spec, (step / 100) * n, 1),
+  }),
   {
     id: 'bloodthirst',
     name: '嗜血',
@@ -601,36 +649,36 @@ const GENERIC_SEEDS: readonly ModSeed[] = [
     apply: (spec) => scaleDamage(cutCooldown(spec, 1), 1.25),
   },
   // ↓ 改写「已有效果」的三条，必须排在加效果的词条之后
-  {
+  linearStack(1, {
     id: 'lasting',
     name: '顽疾',
     rarity: 'common',
     icon: 'mod_lasting',
     maxStacks: 2,
     fits: (spec) => hasFoeDebuff(spec) && isActive(spec),
-    describe: (n) => `技能施加的减益延长 ${n} 回合`,
-    apply: (spec, n) => extendFoeRounds(spec, n),
-  },
-  {
+    describe: (n, step) => `技能施加的减益延长 ${step * n} 回合`,
+    apply: (spec, n, step) => extendFoeRounds(spec, step * n),
+  }),
+  linearStack(3, {
     id: 'blessing',
     name: '恩泽',
     rarity: 'common',
     icon: 'mod_blessing',
     maxStacks: 2,
     fits: (spec) => hasAllyBuff(spec) && isActive(spec),
-    describe: (n) => `给友方的增益数值 +${3 * n}，并延长 ${n} 回合`,
-    apply: (spec, n) => boostAllyBuff(spec, 3 * n, n),
-  },
-  {
+    describe: (n, step) => `给友方的增益数值 +${step * n}，并延长 ${n} 回合`,
+    apply: (spec, n, step) => boostAllyBuff(spec, step * n, n),
+  }),
+  linearStack(8, {
     id: 'mend',
     name: '妙手',
     rarity: 'common',
     icon: 'mod_mend',
     maxStacks: 2,
     fits: (spec) => hasHeal(spec) && isActive(spec),
-    describe: (n) => `治疗量提升 ${8 * n}`,
-    apply: (spec, n) => boostHeal(spec, 8 * n),
-  },
+    describe: (n, step) => `治疗量提升 ${step * n}`,
+    apply: (spec, n, step) => boostHeal(spec, step * n),
+  }),
 ];
 
 // ── 专属词条 ──────────────────────────────────────────────────────────────
@@ -988,6 +1036,7 @@ function toDef(seed: ModSeed): SkillModDef {
     minLevel: seed.minLevel ?? (seed.only ? (EXCLUSIVE_LEVELS.get(seed.id) ?? 2) : 1),
     icon: seed.icon ?? EXCLUSIVE_ICON,
     maxStacks: seed.maxStacks,
+    perLevel: seed.perLevel,
     describe: seed.describe,
     apply: seed.apply,
     // 专属校验在这里统一合成：抽卡池、折算、界面问的都是同一个函数，
@@ -1116,4 +1165,14 @@ export function modStacks(modIds: readonly string[] | undefined, modId: string):
   let n = 0;
   for (const id of modIds) if (id === modId) n += 1;
   return n;
+}
+
+/**
+ * 叠层用星星表示：实心 = 已有（或选完后）的级，空心 = 还能再叠。
+ * 上限 1 的词条是有/无，不画星——再画一颗 ★ 只是噪音。
+ */
+export function formatModStars(filled: number, maxStacks: number): string {
+  if (maxStacks <= 1) return '';
+  const n = Math.max(0, Math.min(maxStacks, Math.floor(filled)));
+  return `${'★'.repeat(n)}${'☆'.repeat(maxStacks - n)}`;
 }

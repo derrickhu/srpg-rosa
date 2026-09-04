@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { castSkillManual } from '../skills';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { castSkillManual, setHitRng } from '../skills';
 import { tickTimedBattleEffects } from '../timedBattleEffects';
 import type { TerrainGrid } from '../grid';
 import type { BattleEvent, SkillHit, UnitArchetypeDef, UnitKind, UnitState, Vec2 } from '../types';
@@ -59,6 +59,10 @@ function skillHits(events: BattleEvent[]): { target: string; damage: number }[] 
 }
 
 describe('词条在实际战斗中生效', () => {
+  beforeEach(() => {
+    setHitRng(() => 1);
+  });
+
   it('锋锐真的提高打出的伤害', () => {
     const a = hero({ x: 3, y: 3 });
     const b = hero({ x: 3, y: 3 }, ['sharpen']);

@@ -13,6 +13,7 @@ import {
   type MvpGameState,
   type ShopOffer,
 } from './GameState';
+import { isTutorialShop, tutorialShopOffers } from '@/game/tutorial/tutorialRules';
 
 /** 当前副本的 roguelike 池（局内商店候选） */
 function dungeonPool(state: MvpGameState): ShopPoolRow[] {
@@ -25,6 +26,26 @@ function poolPriceFor(
 ): number | undefined {
   const row = dungeonPool(state).find(match);
   return row ? row.price ?? undefined : undefined;
+}
+
+/** 货架标价的校验基准。教程店不走章节池——涨价后池子是 10，货架仍是 5。 */
+function listedPriceFor(state: MvpGameState, offer: ShopOffer): number | undefined {
+  if (isTutorialShop(state)) {
+    return tutorialShopOffers().find((o) => {
+      if (o.type !== offer.type) return false;
+      if (o.type === 'potion' && offer.type === 'potion') return o.potionId === offer.potionId;
+      if (o.type === 'tempSkill' && offer.type === 'tempSkill') return o.skillId === offer.skillId;
+      return false;
+    })?.price;
+  }
+  if (offer.type === 'tempSkill') {
+    const pool = poolPriceFor(state, (r) => r.category === 'tempSkill' && r.skillId === offer.skillId);
+    return pool ?? getSkillSpec(offer.skillId)?.shopPrice ?? 7;
+  }
+  if (offer.type === 'terrain') {
+    return poolPriceFor(state, (r) => r.category === 'terrain' && r.terrainId === offer.terrainId);
+  }
+  return poolPriceFor(state, (r) => r.category === 'potion' && r.potionId === offer.potionId);
 }
 
 function offersFromPool(state: MvpGameState): ShopOffer[] {
@@ -80,6 +101,7 @@ export function rosterEligibleForTempSkill(state: MvpGameState, skillId: string)
 
 /** 抽 3 件商品；只要池里有药剂就保底 1 件（Boss 前的补给点必须能买到续航） */
 export function rollShop(state: MvpGameState): ShopOffer[] {
+  if (isTutorialShop(state)) return tutorialShopOffers();
   const offers = shuffle(offersFromPool(state));
   const potionIdx = offers.findIndex((o) => o.type === 'potion');
   if (potionIdx < 0) return offers.slice(0, 3);
@@ -100,10 +122,9 @@ export function buyShopOffer(
       if (!rid) return false;
       const m = getCharacter(state, rid);
       if (!m || !run.partyRosterIds.includes(rid)) return false;
-      const price = poolPriceFor(state, (r) => r.category === 'tempSkill' && r.skillId === offer.skillId);
       const spec = getSkillSpec(offer.skillId);
       if (!spec) return false;
-      if ((price ?? spec.shopPrice ?? 7) !== offer.price) return false;
+      if (listedPriceFor(state, offer) !== offer.price) return false;
       if (run.runTempSkill[rid] === offer.skillId) return false;
       // 顶掉他原来的临时技能。这里不用像主槽那样担心「把优势换没了」：
       // 词条挂在角色身上，换临时技能不动它。
@@ -111,13 +132,13 @@ export function buyShopOffer(
       break;
     }
     case 'terrain': {
-      if (poolPriceFor(state, (r) => r.category === 'terrain' && r.terrainId === offer.terrainId) !== offer.price) return false;
+      if (listedPriceFor(state, offer) !== offer.price) return false;
       run.terrainCharges[offer.terrainId] = (run.terrainCharges[offer.terrainId] ?? 0) + 1;
       break;
     }
     case 'potion': {
       if (!POTION_DEFS[offer.potionId]) return false;
-      if (poolPriceFor(state, (r) => r.category === 'potion' && r.potionId === offer.potionId) !== offer.price) return false;
+      if (listedPriceFor(state, offer) !== offer.price) return false;
       run.potions[offer.potionId] = (run.potions[offer.potionId] ?? 0) + 1;
       break;
     }

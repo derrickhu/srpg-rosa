@@ -1,0 +1,10 @@
+A single mobile-game UI DIALOG PANEL, one object only, perfectly left-right symmetric, centered.
+
+Shape: wide horizontal rounded rectangle, about 16:9, large empty cream well in the middle for later text. Same family as the game's chapter_plaque: thick near-black outer outline, a thinner inner frame line, simple L-shaped corner brackets in all four inner corners. No tail, no speech-bubble point, no avatar circle, no ribbon.
+
+Color: old parchment face #D8C8A4, inner well slightly lighter #E2D2B0, inner frame #5A4030. Thick near-black #1A1410 outline. One cel shade only on the bottom edge.
+
+NO gold, no filigree, no jewels, no icons, no stars.
+NO TEXT, no letters, no numbers, no watermark.
+Background 100% solid flat MAGENTA #FF00FF.
+Chunky cartoon, flat fill, same adventure-card chrome as the rest of the game.

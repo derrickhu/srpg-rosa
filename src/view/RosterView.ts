@@ -110,6 +110,7 @@ export function rosterUnlockHint(def: CharacterDef): string {
     const d = getDungeonDef(def.unlock.dungeonId);
     return d ? `通关${d.name}` : '通关解锁';
   }
+  if (def.unlock.kind === 'story') return '跟随冒险加入';
   return '开局拥有';
 }
 

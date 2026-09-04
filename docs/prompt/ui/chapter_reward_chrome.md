@@ -13,7 +13,7 @@
 | `chapter_repeat_title` | 16:9 | 本关奖励标题牌，居中，空井叠字 |
 | `chapter_repeat_frame` | 4:3 | 本关奖励魂晶框，与标题同宽居中 |
 | `chapter_ribbon` | 16:9 | 「通关奖励」分区绶带（石蓝，不是金） |
-| `chapter_star_on` / `chapter_star_off` | 1:1 并排 | 点亮 / 空心星，叠在每列牌顶 |
+| `chapter_star_on` / `chapter_star_off` | 1:1 并排 | 点亮 / 空心星，叠在每列牌顶；点亮星运行时染 `#EEC462` |
 
 ## 共用
 
