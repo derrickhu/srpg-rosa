@@ -1,0 +1,23 @@
+# 微信小游戏头像 v2 · chibi 半身 / 草原底
+#
+# 同 v1 的剑士身份和 chibi 画法，底色换成游戏战场的暖黄绿，让图标一眼像这款战棋，
+# 而不是通用蓝底头像。微信圆裁，正方形满出血，主体中央 70%。
+
+Square 1:1 WeChat mini-game app icon, full-bleed square, every pixel painted. The store will circular-crop it later. Do NOT draw a circular frame, round badge, white margin, or transparent edge.
+
+Same hero as the attached circular portrait, translated into the project's chibi sprite language: vibrant cobalt-blue spiky hair, silver pauldrons, blue tunic, determined young swordsman. Do NOT copy the realistic anime bust. Do NOT keep detailed eyes, gold trim, leather strap, or the circular frame.
+
+ART STYLE:
+hand-drawn cartoon game sprite, extreme super-deformed chibi, giant head about half the visible height, thick near-black outlines (#120B0A), flat saturated fills, light cel shading (one highlight, one shadow). No gradients, no texture, no painterly rendering, no photo detail.
+
+Face: two simple dark oval eyes, thick angled brows, tiny mouth line. No nose, no blush, no ears.
+
+COLOURS:
+- Hair + tunic: vibrant cobalt #2B6CDB
+- Pauldrons: silver-white #E8E8E0
+- Skin: warm tan #EEC49A
+- Background: the game's sunny yellow-green grassland, anchors #CCE43C and #B4D45A, filling the whole square. A few chunky flat grass-blade marks only. Optional thin band of pale sky-blue at the very top. No trees, no UI, no horizon line heavy enough to fight the face.
+
+COMPOSITION: head-and-shoulders bust, 3/4 toward camera, central 70% safe circle. Hair is the largest shape. Pauldrons readable. Corners are grass.
+
+NO TEXT, no letters, no Chinese characters, no logo, no watermark, no numbers, no UI.

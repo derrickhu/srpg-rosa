@@ -1,0 +1,26 @@
+# 微信小游戏头像 v4 · 全身吉祥物 + 巨剑
+#
+# 最接近棋盘 token：1.5 头身、肩扛比人还长的宽刃巨剑（剑士唯一记忆点）。
+# 微信圆裁后应仍能读出「蓝发小人扛大剑」。正方形满出血，人落在中央 70%，剑可伸向边角。
+
+Square 1:1 WeChat mini-game app icon, full-bleed square, every pixel painted. Circular crop later. Do NOT draw a circular frame, badge, white margin, or transparent edge.
+
+Full-body chibi mascot of the game's swordsman, matching the attached in-game sprite more than the realistic circular portrait. Vibrant cobalt-blue spiky hair, silver breastplate and pauldrons, blue tunic, warm tan rounded boots, determined simple face.
+
+ART STYLE:
+hand-drawn cartoon game sprite, 1.5-head mascot: HEAD INCLUDING HAIR is about half of body height. Short chunky limbs, mitten hands, two rounded boots. Thick near-black outlines (#120B0A), flat saturated fills, light cel shading. No gradients, no texture, no painterly rendering.
+
+Face: two simple dark oval eyes, thick angled brows, tiny mouth line. No nose, no blush, no helmet.
+
+SIGNATURE PROP: a HUGE two-handed greatsword LONGER THAN HE IS TALL, resting on one shoulder on a clear diagonal. Broad silver-white blade, simple straight crossguard, brown grip. The blade tip rising above his head is required. The sword may reach toward a corner.
+
+COLOURS:
+- Hair + tunic: vibrant cobalt #2B6CDB
+- Armor + blade: silver-white #E8E8E0
+- Boots + grip: warm brown #C48A48
+- Skin: #EEC49A
+- Background: solid bright cobalt blue filling the entire square
+
+COMPOSITION: whole body centered in the middle 70% safe circle. Sword may extend toward corners. Readable as "blue chibi kid with oversized sword" at thumbnail size.
+
+NO TEXT, no letters, no Chinese characters, no logo, no watermark, no numbers, no UI.

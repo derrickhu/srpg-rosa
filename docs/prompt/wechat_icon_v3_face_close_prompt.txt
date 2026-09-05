@@ -1,0 +1,24 @@
+# 微信小游戏头像 v3 · 大头特写
+#
+# 微信头像最终只有 144px，半身甲会糊。这版把蓝发巨头推到中央 70% 几乎铺满，
+# 肩甲只露一角，保证缩到指甲盖仍认得出是这个剑士。正方形满出血，不要自画圆框。
+
+Square 1:1 WeChat mini-game app icon, full-bleed square, every pixel painted. Circular crop will happen later. Do NOT draw a circular frame, badge, white margin, or transparent edge.
+
+Tight close-up of the game's chibi swordsman. Keep the attached portrait's identity (vibrant medium-blue spiky hair, silver pauldron, determined boy) but redraw as extreme super-deformed cartoon, not realistic anime.
+
+ART STYLE:
+hand-drawn cartoon game sprite, giant chibi head filling most of the central 70%, thick near-black outlines (#120B0A), flat saturated fills, light cel shading. No gradients, no texture, no painterly rendering, no photo detail.
+
+Face: two simple dark oval eyes, thick angled brows, tiny mouth line. No nose, no blush, no ears, no eyelashes, no iris sparkle.
+
+COLOURS:
+- Hair: vibrant cobalt #2B6CDB, huge spiky silhouette, the one memory shape
+- One silver-white pauldron #E8E8E0 peeking at the lower right or lower left
+- A sliver of matching blue tunic
+- Skin: warm tan #EEC49A
+- Background: solid bright cobalt blue filling the entire square
+
+COMPOSITION: face and hair dominate. Keep eyes and the tallest hair spikes inside the central 70% circle. Corners are just hair or blue field — they will be cropped.
+
+NO TEXT, no letters, no Chinese characters, no logo, no watermark, no numbers, no UI.

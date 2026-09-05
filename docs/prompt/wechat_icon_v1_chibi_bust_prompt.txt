@@ -1,0 +1,27 @@
+# 微信小游戏头像 v1 · chibi 半身 / 钴蓝底
+#
+# 现役图标是偏写实的 JRPG 半身像（蓝发银肩甲）。游戏角色已经压成
+# 圣经 chibi：巨头、粗近黑描边、平涂 cel。这版只换画法，构图尽量贴近现役图标。
+# 参考：现役圆形头像（锁蓝发/银肩甲/蓝衣身份），units/sword.png（锁头身比和描边）。
+# 微信会圆裁：必须正方形满出血，不要自画圆框。主体落在中央 70%。
+# 禁止文字、水印、徽章、白边、透明边。
+
+Square 1:1 WeChat mini-game app icon, full-bleed square, every pixel painted. The store will circular-crop it later. Do NOT draw a circular frame, round badge, white margin, letterbox, or transparent edge.
+
+REDRAW the attached circular portrait into the game's chibi sprite language. Keep the same hero identity: vibrant medium-blue spiky hair, silver pauldrons, blue high-collar tunic, determined young swordsman. Do NOT copy the realistic anime bust. Do NOT keep detailed irises, eyelashes, gold collar trim, leather chest strap, or the circular frame.
+
+ART STYLE (project style bible):
+hand-drawn cartoon game sprite, extreme super-deformed chibi, giant head about half the visible height, short chunky shoulders, thick near-black outlines (#120B0A), flat saturated fills with light cel shading (one highlight tone, one shadow tone). No gradients, no texture noise, no painterly rendering, no photographic detail, no metallic sheen.
+
+Face budget: two simple dark oval eyes, thick angled brows, one tiny mouth line. No nose, no blush, no ears, no eyelashes, no iris sparkle.
+
+COLOURS:
+- Hair + tunic: vibrant cobalt #2B6CDB
+- Pauldrons + small breastplate: silver-white #E8E8E0 (the only light metal)
+- Skin: warm tan #EEC49A
+- Outline: near-black #120B0A
+- Background: solid bright cobalt blue filling the entire square, slightly lighter behind the head as one flat patch, not a smooth gradient
+
+COMPOSITION: head-and-shoulders bust, 3/4 facing the camera, locked in the central 70% safe circle. Spiky blue hair is the largest shape. Silver pauldrons must read at thumbnail size. Corners may be simple background — they will be cropped.
+
+NO TEXT, no letters, no Chinese characters, no logo, no watermark, no numbers, no UI, no store badges.

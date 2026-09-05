@@ -144,30 +144,6 @@
         "type": "folder"
       },
       {
-        "value": "images/explosion*.png",
-        "type": "glob"
-      },
-      {
-        "value": "images/Common.png",
-        "type": "file"
-      },
-      {
-        "value": "images/bg.jpg",
-        "type": "file"
-      },
-      {
-        "value": "images/bullet.png",
-        "type": "file"
-      },
-      {
-        "value": "images/enemy.png",
-        "type": "file"
-      },
-      {
-        "value": "images/hero.png",
-        "type": "file"
-      },
-      {
         "value": "package.json",
         "type": "file"
       },

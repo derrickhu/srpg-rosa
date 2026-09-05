@@ -1,0 +1,26 @@
+# 微信小游戏头像 v5 · 半身 + 斜扛巨剑
+#
+# 折中：保留现役图标的半身构图，把圣经记忆点（斜杠巨剑）加进画面。
+# 头 + 肩甲 + 一把穿过画面的宽刃，缩到 144px 仍能同时读出人和剑。正方形满出血。
+
+Square 1:1 WeChat mini-game app icon, full-bleed square, every pixel painted. Circular crop later. Do NOT draw a circular frame, badge, white margin, or transparent edge.
+
+Chibi head-and-shoulders of the attached blue-haired swordsman, plus his signature oversized greatsword. Translate into the game's cartoon sprite language — not realistic anime.
+
+ART STYLE:
+hand-drawn cartoon game sprite, extreme super-deformed chibi, giant head, thick near-black outlines (#120B0A), flat saturated fills, light cel shading. No gradients, no texture, no painterly rendering, no photo detail.
+
+Face: two simple dark oval eyes, thick angled brows, tiny mouth line. No nose, no blush, no ears, no helmet.
+
+SIGNATURE SHAPE: a BROAD silver-white greatsword on a strong diagonal behind or beside him, from lower-left toward upper-right (or the reverse). The blade is thick and simple, longer than the bust, with a straight crossguard. At thumbnail size the silhouette must read as "big sword + blue hair".
+
+COLOURS:
+- Hair + tunic: vibrant cobalt #2B6CDB
+- Pauldrons + blade: silver-white #E8E8E0
+- Skin: #EEC49A
+- Grip: warm brown #C48A48
+- Background: solid bright cobalt blue filling the entire square
+
+COMPOSITION: bust locked in the central 70% safe circle. Hair and the wide blade are the two largest shapes. Corners may hold blade tip or blue field.
+
+NO TEXT, no letters, no Chinese characters, no logo, no watermark, no numbers, no UI.
