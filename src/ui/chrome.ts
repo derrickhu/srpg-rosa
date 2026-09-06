@@ -12,7 +12,6 @@ import { C } from '@/view/mvpTheme';
  * 调用方走原来的色块，布局不变。
  */
 
-export const HUB_BG_KEY = 'hub_bg';
 export const REVEAL_HALL_KEY = 'reveal_hall';
 
 export const FRAME_INSETS = { left: 48, top: 48, right: 48, bottom: 48 };

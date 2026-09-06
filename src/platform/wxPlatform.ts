@@ -1,12 +1,18 @@
 /**
  * 微信 / H5 平台能力：本地存储、登录、HTTP。
- * 广告位 ID 请仅在公众平台创建后填入，勿提交真实线上 ID 到公开仓库。
+ * 激励视频广告位与公众平台流量主一一对应。
  */
 declare const wx: any;
 
 export const AdConfigKeys = {
-  rewardRevive: 'WX_REWARD_ADUNIT_REVIVE',
-  rewardShopRefresh: 'WX_REWARD_ADUNIT_SHOP_REFRESH',
+  /** 三选一刷新 */
+  rewardLootRefresh: 'adunit-e4b32e99968edcea',
+  /** 补给点刷新 */
+  rewardShopRefresh: 'adunit-acf6a35bbf1db91b',
+  /** 布阵多上阵一人 */
+  rewardExtraDeploy: 'adunit-d38d1888866177c1',
+  /** 局内复活指定队员 */
+  rewardRevive: 'adunit-75d725546bf4aacd',
 } as const;
 
 export function hasWx(): boolean {
@@ -114,6 +120,14 @@ class PlatformClass {
 
   get isDevtools(): boolean {
     return isWxDevtools();
+  }
+
+  /**
+   * GM 工具：跳过战斗、特效试炼、作弊钮。
+   * 只给微信开发者工具；真机和其他玩家看不到。
+   */
+  get isGmTools(): boolean {
+    return this.isDevtools;
   }
 
   get canUseBackend(): boolean {

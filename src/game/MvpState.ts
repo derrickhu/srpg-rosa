@@ -61,6 +61,9 @@ export {
   buildBattleUnits,
   undoDeployForRetry,
   getMaxDeploy,
+  getBaseMaxDeploy,
+  canOfferAdExtraSlot,
+  grantAdExtraSlot,
 } from './state/DeployManager';
 
 export {
@@ -85,6 +88,7 @@ export {
   consumeSweep,
   applyChapterSweep,
   rollLoot,
+  refreshPendingLoot,
   claimLoot,
   skipLoot,
   advanceNode,

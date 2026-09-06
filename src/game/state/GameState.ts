@@ -148,8 +148,13 @@ export interface RunState {
   runTempSkill: Record<string, string>;
   /** 局内主技能装配覆盖（rosterId → skillId），不写回 meta */
   runEquip: Record<string, string>;
-  /** 本节点广告额外上阵位。入口先关掉，字段还留着以免旧档对不上 */
+  /** 本节点看广告多出来的上阵位（0 或 1） */
   adExtraSlot: number;
+  /**
+   * 本屏三选一看广告刷新了几次。
+   * 第 1 次起压低普通词条权重；选完 / 跳过 / 进下一节点清零。
+   */
+  lootAdRefreshCount: number;
   /** 战斗胜利后待选的三选一战利品（选完 / 跳过后清空） */
   pendingLoot: LootOption[] | null;
   lastReportWinner: 'player' | 'enemy' | null;
@@ -306,6 +311,7 @@ export function createRunState(dungeonId: string, partyRosterIds: string[]): Run
     runTempSkill: {},
     runEquip: {},
     adExtraSlot: 0,
+    lootAdRefreshCount: 0,
     pendingLoot: null,
     lastReportWinner: null,
     lastVictory: null,

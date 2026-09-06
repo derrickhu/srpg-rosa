@@ -1,0 +1,20 @@
+# C · 密林遭遇
+
+Vertical 9:16 full-bleed mobile game LOADING SPLASH / KEY ART. Edge-to-edge, no borders.
+
+Poster illustration, NOT a screenshot, NOT a chessboard. Slightly elevated 3/4 forest path.
+
+ART STYLE: hand-drawn cartoon, flat saturated fills, simple cel shading (one highlight, one shadow). Thick near-black outlines ONLY on characters, monsters, trunks, weapons. Foliage has NO thick black outline. Rounded three-tone tree crowns. No gradients, no painterly brush, no photo detail.
+
+THEME: a small heroic squad fighting plant-monsters on a forest path.
+Heroes (chunky chibi, head ≈ half body): cobalt-blue swordsman with a giant sword mid-swing; leaf-green archer; teal pointed-hat mage casting a simple flat orange fire puff; cream-robe priest holding a gold sun-staff behind them.
+Enemies are NOT human: a green vine-cocoon blob with wrapping tendrils; a low leaf-panther (four-legged, leafy hide); a mossy stone-golem hunched like a boulder. The heroes have the plant-monsters surrounded on the path — two in front, one flanking.
+
+COLOUR: forest mid-green / yellow-green floor (keep it bright enough, not muddy olive). Path tan. Skin #EEC49A.
+
+LAYOUT:
+- TOP third: sky gap between canopies, UPPER CENTER empty for a logo.
+- MIDDLE: the fight on the path, slightly below center.
+- BOTTOM third: darker moss and ferns, BOTTOM CENTER empty.
+
+Hard bans: NO TEXT, NO letters, NO numbers, NO Chinese, NO logos, NO watermarks, NO UI, NO blood, NO gore, NO photo realism.

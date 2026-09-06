@@ -7,25 +7,27 @@ import { getSafeAreaInsets } from '@/core/safeArea';
 import { makeText, showcaseFontFamily } from '@/theme/typography';
 import { C, shade } from '@/view/mvpTheme';
 
-const LEGAL_BOTTOM_INSET = 28;
-const BAR_ABOVE_LEGAL_GAP = 14;
-const LEGAL_FONT_SIZE = 12;
-const LEGAL_LINE_HEIGHT = 18;
+const LEGAL_BOTTOM_INSET = 10;
+const BAR_ABOVE_LEGAL_GAP = 8;
+const LEGAL_FONT_SIZE = 10;
+const LEGAL_LINE_HEIGHT = 13;
 
 /** 软著尚未下证，编号空着；下证后补一行即可 */
 export const LOADING_LEGAL_TEXT = [
   '著作权人：深圳幸运呱科技有限公司',
-  '',
   '《健康游戏忠告》',
   '抵制不良游戏，拒绝盗版游戏。注意自我保护，谨防受骗上当。',
   '适度游戏益脑，沉迷游戏伤身。合理安排时间，享受健康生活。',
 ].join('\n');
 
-const BAR_MAX_W = 320;
-const BAR_PAD_X = 24;
-const BAR_H = 28;
+const BAR_MAX_W = 240;
+const BAR_PAD_X = 48;
+const BAR_H = 20;
 const BAR_R = BAR_H / 2;
-const INNER_PAD = 3;
+const INNER_PAD = 2;
+const FOOTER_PAD_ABOVE_BAR = 8;
+const TITLE_SAFE_PAD = 28;
+const TITLE_Y_RATIO = 0.145;
 
 export interface LoadingView {
   root: PIXI.Container;
@@ -74,7 +76,7 @@ export function createLoadingView(screen: {
 
   const pctText = makeText('0%', 'uiStrong', {
     fill: 0x4a3a12,
-    fontSize: 14,
+    fontSize: 11,
   });
   pctText.anchor.set(0.5);
   root.addChild(pctText);
@@ -86,7 +88,7 @@ export function createLoadingView(screen: {
     align: 'center',
     lineHeight: LEGAL_LINE_HEIGHT,
     wordWrap: true,
-    wordWrapWidth: barW,
+    wordWrapWidth: Math.min(W - 36, 340),
     dropShadow: true,
     dropShadowColor: C.ink,
     dropShadowBlur: 2,
@@ -103,7 +105,7 @@ export function createLoadingView(screen: {
 
   const placeTitle = (): void => {
     const safeTop = getSafeAreaInsets().top;
-    const cy = Math.max(safeTop + 48, H * 0.22);
+    const cy = Math.max(safeTop + TITLE_SAFE_PAD, H * TITLE_Y_RATIO);
     if (logo) {
       logo.x = W / 2;
       logo.y = cy;
@@ -115,8 +117,8 @@ export function createLoadingView(screen: {
 
   const drawFooter = (): void => {
     footer.clear();
-    const top = Math.max(0, barY - 18);
-    footer.beginFill(0x1a2838, 0.72);
+    const top = Math.max(0, barY - FOOTER_PAD_ABOVE_BAR);
+    footer.beginFill(0x1a2838, 0.62);
     footer.drawRect(0, top, W, H - top);
     footer.endFill();
   };
@@ -141,7 +143,7 @@ export function createLoadingView(screen: {
     if (w < 0.5) return;
     const x0 = barX + INNER_PAD;
     const y0 = barY + INNER_PAD;
-    const r = Math.max(8, BAR_R - INNER_PAD);
+    const r = Math.max(6, BAR_R - INNER_PAD);
     fill.beginFill(shade(C.primary, 0.78), 0.98);
     fill.drawRoundedRect(x0, y0, w, innerH, r);
     fill.endFill();
@@ -152,7 +154,7 @@ export function createLoadingView(screen: {
   };
 
   const layout = (): void => {
-    const bottom = Math.max(LEGAL_BOTTOM_INSET, getSafeAreaInsets().bottom + 12);
+    const bottom = Math.max(LEGAL_BOTTOM_INSET, getSafeAreaInsets().bottom + 4);
     legal.position.set(W / 2, H - bottom);
     barY = legal.position.y - legal.height - BAR_ABOVE_LEGAL_GAP - BAR_H;
     pctText.position.set(W / 2, barY + BAR_H * 0.5);
@@ -199,7 +201,7 @@ export function createLoadingView(screen: {
         logo = null;
       }
       const sp = new PIXI.Sprite(tex);
-      const maxW = Math.min(W * 0.78, 320);
+      const maxW = Math.min(W * 0.72, 280);
       const aspect = tex.width / tex.height;
       sp.width = maxW;
       sp.height = maxW / aspect;

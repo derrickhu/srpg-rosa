@@ -1,7 +1,7 @@
 import * as PIXI from 'pixi.js';
 import { makeText } from '@/theme/typography';
 import { C, shade } from '@/view/mvpTheme';
-import { makeButton } from '@/ui/Button';
+import { makeAdButton, makeButton } from '@/ui/Button';
 import { makePanel } from '@/ui/Panel';
 import { AudioManager } from '@/core/AudioManager';
 import { createUiIcon } from '@/view/renderHelpers';
@@ -92,6 +92,8 @@ export interface LootOverlayOpts {
   onConfirm: (index: number) => void;
   onSkip: () => void;
   onNeedPick?: () => void;
+  /** 看广告刷新三选一。不传就不画这颗钮（教学局） */
+  onRefresh?: () => void;
 }
 
 export interface DefeatHint {
@@ -716,14 +718,87 @@ export function createLootOverlay(opts: LootOverlayOpts): PIXI.Container {
   setConfirmLook(confirm, false);
   root.addChild(confirm);
 
-  const skipW = Math.min(200, W - 100);
+  let nextY = confirm.y + 52;
+  if (opts.onRefresh) {
+    const subW = Math.min(220, W - 80);
+    const refresh = makeAdButton('刷新选项', opts.onRefresh, {
+      width: subW, height: 40, fontSize: 14, radius: 12,
+    });
+    refresh.x = cx - subW / 2;
+    refresh.y = nextY;
+    root.addChild(refresh);
+    nextY += 48;
+  }
+
+  const subW = Math.min(220, W - 80);
   const skip = makeButton('都不要，继续前进', opts.onSkip, {
-    variant: 'secondary', width: skipW, height: 34, fontSize: 13,
+    variant: 'secondary', width: subW, height: 40, fontSize: 14, radius: 12,
   });
-  skip.x = cx - skipW / 2;
-  skip.y = confirm.y + 52;
+  skip.x = cx - subW / 2;
+  skip.y = nextY;
   root.addChild(skip);
 
+  return root;
+}
+
+export interface AdReviveChoice {
+  uid: string;
+  name: string;
+}
+
+export interface AdReviveOverlayOpts {
+  screenW: number;
+  screenH: number;
+  units: AdReviveChoice[];
+  onPick: (uid: string) => void;
+  onSkip: () => void;
+}
+
+/** 看广告复活：点谁就救谁 */
+export function createAdReviveOverlay(opts: AdReviveOverlayOpts): PIXI.Container {
+  const { screenW: W, screenH: H } = opts;
+  const root = new PIXI.Container();
+  root.addChild(fadeScrim(W, H));
+
+  const panelW = Math.min(300, W - 36);
+  const rowH = 44;
+  const titleH = 52;
+  const skipH = 40;
+  const pad = 14;
+  const listH = opts.units.length * (rowH + 8) - 8;
+  const panelH = titleH + listH + skipH + pad * 2 + 12;
+  const panel = makePanel({
+    width: panelW,
+    height: panelH,
+    light: true,
+  });
+  panel.x = (W - panelW) / 2;
+  panel.y = Math.max(24, (H - panelH) / 2);
+  root.addChild(panel);
+
+  const title = makeText('看广告复活一名队员', 'uiStrong', { fill: C.text, fontSize: 16 });
+  title.anchor.set(0.5, 0);
+  title.x = panelW / 2;
+  title.y = 14;
+  panel.addChild(title);
+
+  let y = titleH;
+  for (const u of opts.units) {
+    const btn = makeButton(u.name, () => opts.onPick(u.uid), {
+      variant: 'primary', width: panelW - pad * 2, height: rowH, fontSize: 15,
+    });
+    btn.x = pad;
+    btn.y = y;
+    panel.addChild(btn);
+    y += rowH + 8;
+  }
+
+  const skip = makeButton('不复活', opts.onSkip, {
+    variant: 'ghost', width: panelW - pad * 2, height: skipH, fontSize: 14,
+  });
+  skip.x = pad;
+  skip.y = y + 4;
+  panel.addChild(skip);
   return root;
 }
 

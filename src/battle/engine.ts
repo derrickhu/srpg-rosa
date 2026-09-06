@@ -12,7 +12,7 @@ import { canAttackFrom, chooseTurnAction, selectAttackTarget, type AiDifficulty 
 import { computeDamage, guardNote, terrainAttackNote, terrainDefenseNote } from './damage';
 import { applyCritToDamage } from './crit';
 import { POTION_DEFS } from '@/data/potionCatalog';
-import { getTerrainAt, type TerrainGrid } from './grid';
+import { getTerrainAt, inBounds, neighbors4, type TerrainGrid } from './grid';
 import { MAX_BATTLE_ROUNDS } from './constants';
 import { cellsFromDist, reachableCells, shortestPath4 } from './path';
 import {
@@ -27,7 +27,7 @@ import {
 } from './skills';
 import { tickTimedBattleEffects } from './timedBattleEffects';
 import { createTerrainRuntime } from './terrainDynamics';
-import { getTerrainSpec } from '@/data/terrainSpec';
+import { getTerrainSpec, isPassable } from '@/data/terrainSpec';
 
 function key(p: Vec2): string {
   return `${p.x},${p.y}`;
@@ -283,6 +283,11 @@ export interface BattleSim {
   isDone(): boolean;
   /** 中途加人；`auto` 时该玩家单位由 AI 走 */
   spawnUnit(unit: UnitState, auto?: boolean): BattleEvent[];
+  /**
+   * 看广告复活一名已阵亡的我方。半血站回原格（被占则就近空格），
+   * 若刚才已经判负则把战局重新打开。
+   */
+  reviveUnit(uid: string): BattleEvent[];
   /** 试炼 GM：当场清掉所有单位的技能冷却 */
   clearSkillCds(): void;
 }
@@ -440,6 +445,74 @@ export function createBattleSim(
       order = next;
     }
     return [{ type: 'spawn', unit: { ...copy, pos: { ...copy.pos } } }];
+  }
+
+  function standable(pos: Vec2, selfUid: string): boolean {
+    if (!inBounds(pos, terrain)) return false;
+    if (!isPassable(getTerrainAt(terrain, pos))) return false;
+    return !units.some(
+      (u) => u.hp > 0 && u.uid !== selfUid && u.pos.x === pos.x && u.pos.y === pos.y,
+    );
+  }
+
+  function nearestStand(from: Vec2, selfUid: string): Vec2 {
+    if (standable(from, selfUid)) return from;
+    const seen = new Set<string>([key(from)]);
+    const q: Vec2[] = [from];
+    while (q.length > 0) {
+      const cur = q.shift()!;
+      for (const n of neighbors4(cur, terrain)) {
+        const k = key(n);
+        if (seen.has(k)) continue;
+        seen.add(k);
+        if (standable(n, selfUid)) return n;
+        q.push(n);
+      }
+    }
+    return from;
+  }
+
+  function insertIntoOrder(uid: string): void {
+    if (order.includes(uid)) return;
+    if (order.length === 0) {
+      order.push(uid);
+      return;
+    }
+    const self = units.find((u) => u.uid === uid);
+    if (!self) return;
+    const spd = effectiveUnitDef(self, defs).spd;
+    let inserted = false;
+    const next: string[] = [];
+    for (const id of order) {
+      if (!inserted) {
+        const other = liveUnit(id);
+        const ospd = other ? effectiveUnitDef(other, defs).spd : 0;
+        if (spd > ospd || (spd === ospd && uid.localeCompare(id) < 0)) {
+          next.push(uid);
+          inserted = true;
+        }
+      }
+      next.push(id);
+    }
+    if (!inserted) next.push(uid);
+    order = next;
+  }
+
+  function reviveUnit(uid: string): BattleEvent[] {
+    const u = units.find((x) => x.uid === uid);
+    if (!u || u.faction !== 'player' || u.hp > 0) return [];
+    const maxHp = effectiveUnitDef(u, defs).maxHp;
+    u.hp = Math.max(1, Math.floor(maxHp * 0.5));
+    u.movedInTurn = false;
+    u.timedBattleEffects = [];
+    u.pos = nearestStand(u.pos, u.uid);
+    if (done && winner === 'enemy') {
+      done = false;
+      winner = null;
+    }
+    pendingTurn = null;
+    insertIntoOrder(u.uid);
+    return [{ type: 'spawn', unit: { ...u, pos: { ...u.pos } } }];
   }
 
   function startRound(): BattleStep {
@@ -986,6 +1059,7 @@ export function createBattleSim(
     getRound: () => rounds,
     isDone: () => done,
     spawnUnit,
+    reviveUnit,
     clearSkillCds: () => {
       for (const u of units) {
         if (u.hp <= 0) continue;

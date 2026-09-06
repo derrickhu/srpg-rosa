@@ -1130,6 +1130,16 @@ export function modRollWeight(def: SkillModDef, depth: number): number {
 }
 
 /**
+ * 三选一看广告刷新后，普通词条权重乘这个系数。
+ * 第 1 次刷新起就压低最低档，再刷一次压得更狠，好牌更容易露头。
+ */
+export function lootCommonWeightMul(refreshCount: number): number {
+  if (refreshCount <= 0) return 1;
+  if (refreshCount === 1) return 0.55;
+  return 0.3;
+}
+
+/**
  * 把词条折进技能规格。`modIds` 里同一个 id 出现几次就是几层。
  *
  * 层数是一次性算好再 `apply` 的，不是逐层套用：「伤害 +25%」叠三层要的是 +75%，

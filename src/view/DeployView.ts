@@ -25,6 +25,7 @@ import {
   effectiveOwnedSkillIds,
   tempSkillIdForRoster,
   getMaxDeploy,
+  canOfferAdExtraSlot,
   getCharacter,
   placeCharacter,
   placeTerrainCell,
@@ -52,7 +53,7 @@ import {
 import { ENDLESS_MAX_WAVES, isEndlessDungeon } from '@/data/endlessCatalog';
 import { createNodeStrip } from '@/view/NodeStrip';
 import { AssetManager } from '@/core/AssetManager';
-import { makeButton } from '@/ui/Button';
+import { makeAdButton, makeButton } from '@/ui/Button';
 import { AudioManager } from '@/core/AudioManager';
 import { ABANDON_RUN_CONFIRM, attachAbandonConfirm } from '@/view/battle/resultOverlay';
 import { attachPress } from '@/ui/press';
@@ -178,6 +179,8 @@ export interface DeployCallbacks {
   onPlacementChange?: (rosterId: string) => void;
   /** 替补席点选，教程用来把手指从人转到格子上 */
   onSelectRoster?: (rosterId: string) => void;
+  /** 看广告多上阵一人 */
+  onAdExtraSlot?: () => void;
 }
 
 export interface DeployViewHandle {
@@ -630,6 +633,8 @@ export function createDeployView(
     return c;
   }
 
+  let relayoutFightBar: () => void = () => {};
+
   function redrawToolbar(): void {
     toolbarLayer.removeChildren();
     let tx = 0;
@@ -726,6 +731,7 @@ export function createDeployView(
         }
       }
     }
+    relayoutFightBar();
   }
 
   // --- 人物详情弹窗 ---
@@ -975,24 +981,54 @@ export function createDeployView(
   const potionCount = Object.values(run.potions).reduce((a, b) => a + b, 0);
   const needsPotionWarning = bossNodeNow && potionCount === 0;
   let warned = false;
+  const fightBar = new PIXI.Container();
+  fightBar.y = fightY;
+  root.addChild(fightBar);
+  let startRect = { x: fightX, y: fightY, w: btnW, h: fh };
 
-  const fightC = makeButton(needsPotionWarning ? '开始战斗（无药剂）' : '开始战斗', () => {
-    if (needsPotionWarning && !warned) {
-      warned = true;
-      callbacks.onWarn?.('Boss 战没带药剂，胜算极低。再点一次仍要开打');
-      return;
+  /**
+   * 「+1人」只在满编且替补还有人时出现。上阵是当场发生的，
+   * 开页时不够条件、放满之后才够——必须跟着重画，不能只在 create 时判断一次。
+   */
+  function layoutFightBar(): void {
+    fightBar.removeChildren().forEach((c) => c.destroy({ children: true }));
+    const offerExtra = Boolean(callbacks.onAdExtraSlot) && canOfferAdExtraSlot(state);
+    const adW = offerExtra ? Math.min(132, Math.floor(btnW * 0.38)) : 0;
+    const gapFight = offerExtra ? 8 : 0;
+    const startW = btnW - adW - gapFight;
+
+    const fightC = makeButton(needsPotionWarning ? '开始战斗（无药剂）' : '开始战斗', () => {
+      if (needsPotionWarning && !warned) {
+        warned = true;
+        callbacks.onWarn?.('Boss 战没带药剂，胜算极低。再点一次仍要开打');
+        return;
+      }
+      callbacks.onStartBattle('manual');
+    }, {
+      variant: 'primary',
+      width: startW,
+      height: fh,
+      fontSize: needsPotionWarning ? 13 : 15,
+      radius: 10,
+    });
+    fightC.x = fightX + (offerExtra ? adW + gapFight : 0);
+    fightBar.addChild(fightC);
+    startRect = { x: fightC.x, y: fightY, w: startW, h: fh };
+
+    if (offerExtra) {
+      const extraBtn = makeAdButton('+1人', () => callbacks.onAdExtraSlot?.(), {
+        width: adW,
+        height: fh,
+        fontSize: 14,
+        radius: 10,
+        iconSize: 22,
+      });
+      extraBtn.x = fightX;
+      fightBar.addChild(extraBtn);
     }
-    callbacks.onStartBattle('manual');
-  }, {
-    variant: 'primary',
-    width: btnW,
-    height: fh,
-    fontSize: needsPotionWarning ? 13 : 15,
-    radius: 10,
-  });
-  fightC.x = fightX;
-  fightC.y = fightY;
-  root.addChild(fightC);
+  }
+  relayoutFightBar = layoutFightBar;
+  layoutFightBar();
 
   root.addChild(settingsOverlay);
   root.addChild(detailOverlay);
@@ -1006,7 +1042,7 @@ export function createDeployView(
       h: CELL - 2,
     }),
     benchRect: (rosterId) => benchRects.get(rosterId) ?? null,
-    fightRect: () => ({ x: fightC.x, y: fightC.y, w: btnW, h: fh }),
+    fightRect: () => startRect,
     selectedRosterId: () => selectedRosterId,
   };
 }

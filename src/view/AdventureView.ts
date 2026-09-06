@@ -1,6 +1,7 @@
 import * as PIXI from 'pixi.js';
 import { makeText } from '@/theme/typography';
 import { DUNGEON_DEFS, getDungeonDef, type DungeonDef } from '@/data/dungeonCatalog';
+import { Platform } from '@/platform/wxPlatform';
 import { isStarBit, starCondLabel, LEGACY_CLEARED_STAR_MASK } from '@/data/chapterStars';
 import {
   adventureChapterList,
@@ -484,7 +485,7 @@ export function createAdventureView(
   const root = new PIXI.Container();
   root.addChild(createBackground(W, H, 'adventure_bg'));
 
-  const chapters = adventureChapterList(DUNGEON_DEFS);
+  const chapters = adventureChapterList(DUNGEON_DEFS, Platform.isGmTools);
   let chapter = Math.max(0, Math.min(chapterIndex, chapters.length - 1));
 
   // 顶栏走四页共用的那一份，胶囊避让在它内部处理。

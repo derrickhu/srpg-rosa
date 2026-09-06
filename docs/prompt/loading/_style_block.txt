@@ -1,0 +1,32 @@
+Vertical 9:16 full-bleed mobile game LOADING SPLASH / KEY ART.
+Edge-to-edge, no borders, no frames, no UI chrome.
+
+This is a poster illustration, NOT a gameplay screenshot, NOT a chessboard, NOT a top-down battle map.
+Camera: slightly elevated 3/4 landscape view with a visible horizon.
+
+ART STYLE — lock to the existing game (Endless Emblem / 无尽纹章):
+- Hand-drawn cartoon, flat saturated fills, simple cel shading (ONE highlight, ONE shadow per form).
+- Thick near-black outlines ONLY on characters, buildings, tents, weapons, monsters.
+- Grass, hills, sky, distant trees have NO thick black outline.
+- No gradients, no texture noise, no painterly brushwork, no photographic detail, no glossy highlights, no bloom.
+- 4–6 flat colors per character. Mitten hands, no fingers. Faces: eyes + brows + one mouth line only. No noses, no ears, no blush.
+
+CHARACTERS (when present) — super-deformed chibi, head ≈ half of body height, chunky near-square body, almost no neck.
+Job colors (must match the game exactly):
+- Swordsman: cobalt-blue hair AND tunic #2B6CDB, silver chestplate, HUGE silver sword on the shoulder
+- Archer: leaf-green #549C0C hooded hunter, wooden bow oversized
+- Cavalry: gold armor #FCB40C, white chubby horse, long lance
+- Shield: closed silver helmet, grey plate, tall cream tower-shield with a charcoal cross
+- Mage: deep teal robe + pointed hat #0E7A7A, wooden staff
+- Priest: cream-white robe #F5E6C8, oversized gold sun-staff
+Shared skin: warm peach #EEC49A.
+Enemies are NOT human-shaped mooks (slime blob, mushroom, wolf, turtle) OR green-skin orc bosses. Never give heroes red as a main color.
+
+LAYOUT for UI overlay:
+- TOP third: open sky / distant hills. UPPER CENTER must stay empty for a gold title logo.
+- BOTTOM third: slightly darker, simple, few props. BOTTOM CENTER strip empty for a progress bar.
+
+Hard bans:
+NO TEXT in any language, NO letters, NO numbers, NO Chinese, NO logos, NO watermarks, NO signatures,
+NO UI, NO buttons, NO progress bars, NO HUD, NO phone frames, NO black/white outer border.
+NO photo realism, NO metallic sheen, NO smooth gradients, NO glow fog.

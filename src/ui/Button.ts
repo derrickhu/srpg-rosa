@@ -1,8 +1,12 @@
 import * as PIXI from 'pixi.js';
 import { AudioManager } from '@/core/AudioManager';
 import { textStyle } from '@/theme/typography';
+import { createUiIcon } from '@/view/renderHelpers';
 import { C, shade } from '@/view/mvpTheme';
 import { makeButtonSkin } from './chrome';
+
+/** 四处激励广告入口共用的「看视频」剪影 */
+export const AD_ICON_KEY = 'icon_ad';
 
 /**
  * 按钮语义档位。**优先用 variant，不要逐处传颜色**——散在各 View 里的一次性配色
@@ -12,8 +16,9 @@ import { makeButtonSkin } from './chrome';
  * - `secondary` 蓝灰次行动。
  * - `danger`   破坏性操作（放弃副本一类）。
  * - `ghost`    透明底，只有描边，用于「关闭 / 取消」这种不该抢视线的操作。
+ * - `ad`       看广告。青绿，和播放剪影同族，不当主 CTA。
  */
-export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
+export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'ad';
 
 export interface ButtonOptions {
   variant?: ButtonVariant;
@@ -28,6 +33,9 @@ export interface ButtonOptions {
   textColor?: number;
   /** 禁用：发灰、点不动、不沉底 */
   disabled?: boolean;
+  /** UI_BUNDLE 图标，画在文字左边 */
+  iconKey?: string;
+  iconSize?: number;
 }
 
 export type ButtonNode = PIXI.Container & {
@@ -62,6 +70,7 @@ const VARIANTS: Record<ButtonVariant, VariantStyle> = {
   secondary: { fill: C.secondary, text: C.textOnDark, rim: true },
   danger: { fill: C.danger, text: C.textOnDark, rim: true },
   ghost: { fill: 0xffffff, base: 0x000000, alpha: 0.22, text: C.text },
+  ad: { fill: C.ad, text: C.textOnDark, rim: true },
 };
 
 /** 按下时下沉的像素数，也是静止时底部露出的深色下沿厚度 */
@@ -89,7 +98,11 @@ export function makeButton(
 ): ButtonNode {
   const variant = opts?.variant ?? 'secondary';
   const style = VARIANTS[variant];
-  const w = opts?.width ?? Math.max(140, label.length * 14 + 24);
+  const iconSize = opts?.iconSize ?? 20;
+  const icon = opts?.iconKey ? createUiIcon(opts.iconKey, iconSize) : null;
+  const iconGap = icon ? 6 : 0;
+  const iconSlot = icon ? iconSize + iconGap : 0;
+  const w = opts?.width ?? Math.max(140, label.length * 14 + 24 + iconSlot);
   const h = opts?.height ?? 40;
   const radius = opts?.radius ?? 10;
   const fill = opts?.fillColor ?? style.fill;
@@ -139,10 +152,21 @@ export function makeButton(
 
   // 按钮文案用展示字体，和正文系统字拉开层级
   const tx = new PIXI.Text(label, textStyle('title', { fill: textColor, fontSize }));
-  tx.anchor.set(0.5);
-  tx.x = w / 2;
-  tx.y = (h - (skin ? 0 : LIP)) / 2;
-  inner.addChild(tx);
+  const faceH = h - (skin ? 0 : LIP);
+  const row = new PIXI.Container();
+  const rowH = Math.max(icon ? iconSize : 0, tx.height);
+  if (icon) {
+    icon.y = (rowH - iconSize) / 2;
+    row.addChild(icon);
+  }
+  tx.anchor.set(0, 0.5);
+  tx.x = iconSlot;
+  tx.y = rowH / 2;
+  row.addChild(tx);
+  row.x = Math.round((w - (iconSlot + tx.width)) / 2);
+  const restRowY = Math.round((faceH - rowH) / 2);
+  row.y = restRowY;
+  inner.addChild(row);
 
   c.eventMode = 'static';
   c.cursor = 'pointer';
@@ -150,11 +174,10 @@ export function makeButton(
 
   let disabled = false;
 
-  const restTextY = (h - (skin ? 0 : LIP)) / 2;
   const press = (down: boolean): void => {
     if (disabled) return;
     face.y = down ? LIP : 0;
-    tx.y = restTextY + (down ? LIP : 0);
+    row.y = restRowY + (down ? LIP : 0);
     inner.scale.set(down ? PRESS_SCALE : 1);
   };
 
@@ -166,7 +189,7 @@ export function makeButton(
     c.cursor = on ? 'default' : 'pointer';
     if (on) {
       face.y = 0;
-      tx.y = restTextY;
+      row.y = restRowY;
       inner.scale.set(1);
     }
   };
@@ -184,6 +207,20 @@ export function makeButton(
   applyDisabled(opts?.disabled ?? false);
 
   return c;
+}
+
+/** 激励广告次按钮：青绿底 + 播放剪影，不抢主 CTA 的金 */
+export function makeAdButton(
+  label: string,
+  onPress: () => void,
+  opts?: ButtonOptions,
+): ButtonNode {
+  return makeButton(label, onPress, {
+    variant: 'ad',
+    iconKey: AD_ICON_KEY,
+    iconSize: 20,
+    ...opts,
+  });
 }
 
 export function makeMiniButton(

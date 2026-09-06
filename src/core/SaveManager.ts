@@ -134,6 +134,8 @@ function normalizeRun(run: RunState): RunState {
         ? null
         : rest.pendingLoot ?? null,
     starStats: rest.starStats ?? emptyRunStarStats(),
+    adExtraSlot: rest.adExtraSlot ?? 0,
+    lootAdRefreshCount: rest.lootAdRefreshCount ?? 0,
     nodeIndex: clampRunNodeIndex(rest),
   };
 }

@@ -11,6 +11,7 @@ import { resolveEnemyBattleSkill } from '@/data/enemySkillCatalog';
 import { characterEffectiveStats } from '@/game/characterFactory';
 import type { Character } from '@/game/characterTypes';
 import {
+  benchCharacters,
   currentEnemyScale,
   currentStage,
   getCharacter,
@@ -44,12 +45,52 @@ function overlayAt(run: RunState, pos: Vec2): boolean {
 
 const DEFAULT_MAX_DEPLOY = 3;
 
-/** 当前节点的有效最大上阵人数 */
-export function getMaxDeploy(state: MvpGameState): number {
+/** 关卡写死的上阵上限，不含广告加位 */
+export function getBaseMaxDeploy(state: MvpGameState): number {
   const run = requireRun(state);
   // 第一章第一关 maxDeploy=2，无尽复用那张地形但不能沿用 2 人上限
   if (isEndlessDungeon(run.dungeonId)) return ENDLESS_DUNGEON.maxParty;
   return currentStage(state).maxDeploy ?? DEFAULT_MAX_DEPLOY;
+}
+
+/** 当前节点的有效最大上阵人数（含本节点看广告多出来的那一个） */
+export function getMaxDeploy(state: MvpGameState): number {
+  return getBaseMaxDeploy(state) + (requireRun(state).adExtraSlot ?? 0);
+}
+
+function hasOpenDeployCell(state: MvpGameState): boolean {
+  const run = requireRun(state);
+  const stage = currentStage(state);
+  const { w, h } = gridSize(stage.terrain);
+  const [r0, r1] = playerDeployRowRange(h);
+  for (let y = r0; y <= r1; y += 1) {
+    for (let x = 0; x < w; x += 1) {
+      const pos = { x, y };
+      if (run.placements.some((p) => p.pos.x === x && p.pos.y === y)) continue;
+      if (overlayAt(run, pos)) continue;
+      if (enemyAt(state, pos)) continue;
+      return true;
+    }
+  }
+  return false;
+}
+
+/** 看广告多上一人：满编、替补还有人、棋盘还空得下、本节点还没加过 */
+export function canOfferAdExtraSlot(state: MvpGameState): boolean {
+  // 前两战的布阵被教程手指钉死，旁边突然多一颗广告钮会把遮罩指错。
+  // 整章教学都藏起来又太狠：第三章节的 3/3 明明替补有人，玩家会以为功能丢了。
+  if (isTutorialRun(state) && requireRun(state).nodeIndex <= 1) return false;
+  const run = requireRun(state);
+  if ((run.adExtraSlot ?? 0) > 0) return false;
+  if (benchCharacters(state).length === 0) return false;
+  if (run.placements.length < getBaseMaxDeploy(state)) return false;
+  return hasOpenDeployCell(state);
+}
+
+export function grantAdExtraSlot(state: MvpGameState): boolean {
+  if (!canOfferAdExtraSlot(state)) return false;
+  requireRun(state).adExtraSlot = 1;
+  return true;
 }
 
 export function canPlaceAt(state: MvpGameState, pos: Vec2): boolean {

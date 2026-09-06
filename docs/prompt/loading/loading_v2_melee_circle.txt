@@ -1,0 +1,18 @@
+# A · 草原围殴
+
+Vertical 9:16 full-bleed mobile game LOADING SPLASH / KEY ART. Edge-to-edge, no borders.
+
+Poster illustration, NOT a screenshot, NOT a chessboard. Slightly elevated 3/4 landscape with a horizon.
+
+ART STYLE: hand-drawn cartoon, flat saturated fills, simple cel shading (one highlight, one shadow). Thick near-black outlines ONLY on characters, weapons, tents, the wooden tower. Grass and hills have NO thick black outline. No gradients, no texture noise, no painterly brushwork, no photo detail, no glow.
+
+THEME: a joyful chaotic pile-on. Six chunky chibi heroes encircle ONE big green-skin orc war-chief in the middle of a sunny yellow-green grassland and beat him together. The orc is larger (about 1.4× a hero), horned helmet, notched cleaver, fur mantle — menacing but cartoon, never gory. Heroes lean in from all sides like a huddle: swordsman (cobalt-blue hair + silver chest, giant sword raised) at front-left; gold cavalry on a white chubby horse charging from the right; grey-helmet shield-guard bracing a tall cream tower-shield; leaf-green archer drawing an oversized bow; teal pointed-hat mage and cream-robe priest with a huge gold sun-staff at the back of the circle. One cyan slime blob and one red-capped mushroom monster are getting knocked aside at the edge. Action, motion lines as simple flat wedges only, no sparks text.
+
+COLOUR: grass bright warm yellow-green #B4D45A / #C2DE6E. Sky flat pale blue with 2–3 chunky cream clouds. Timber warm brown. Skin #EEC49A.
+
+LAYOUT:
+- TOP third: open pale-blue sky + soft distant hills. UPPER CENTER empty for a logo.
+- MIDDLE: the fight huddle, slightly below center. Keep the very top of heads out of the sky band.
+- BOTTOM third: darker dusk-teal grass, a few round bushes only. BOTTOM CENTER empty.
+
+Hard bans: NO TEXT, NO letters, NO numbers, NO Chinese, NO logos, NO watermarks, NO UI, NO HUD, NO phone frame, NO blood, NO gore, NO photo realism.

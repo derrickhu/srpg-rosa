@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { DUNGEON_DEFS } from '@/data/dungeonCatalog';
-import { CHARACTER_DEFS, MAX_CHARACTER_LEVEL } from '@/data/characterCatalog';
-import { allSkillMods, getSkillMod, isExclusiveMod } from '@/data/skillModCatalog';
+import { CHARACTER_DEFS } from '@/data/characterCatalog';
+import { MAX_CHARACTER_LEVEL } from '@/game/state/MetaManager';
+import { allSkillMods, getSkillMod, isExclusiveMod, lootCommonWeightMul } from '@/data/skillModCatalog';
 import { instantiateCharacter } from '@/game/characterFactory';
-import { rollLoot, startRun } from '../ProgressManager';
+import { refreshPendingLoot, rollLoot, startRun } from '../ProgressManager';
 import { playerDeployRowRange } from '@/battle/constants';
 import { gridSize } from '@/battle/grid';
 import { createInitialState, currentStage, partyCharacters, type MvpGameState } from '../GameState';
@@ -212,5 +213,38 @@ describe('战后三选一的池子', () => {
       if (owners.size === 1) allSame += 1;
     }
     expect(allSame).toBe(0);
+  });
+
+  it('看广告刷新后普通词条权重下降，好牌更容易出来', () => {
+    expect(lootCommonWeightMul(0)).toBe(1);
+    expect(lootCommonWeightMul(1)).toBeLessThan(1);
+    expect(lootCommonWeightMul(2)).toBeLessThan(lootCommonWeightMul(1));
+
+    const s = newRun();
+    levelAll(s, MAX_CHARACTER_LEVEL);
+    const count = (refresh: number): number => {
+      s.run!.lootAdRefreshCount = refresh;
+      const rng = seeded(77);
+      let common = 0;
+      for (let i = 0; i < 240; i += 1) {
+        for (const p of rollLoot(s, rng)) {
+          if (p.kind !== 'skillMod') continue;
+          if (getSkillMod(p.modId)?.rarity === 'common') common += 1;
+        }
+      }
+      return common;
+    };
+    expect(count(2)).toBeLessThan(count(0));
+  });
+
+  it('刷新会换掉 pendingLoot 并记下次数', () => {
+    const s = newRun();
+    s.run!.pendingLoot = rollLoot(s, seeded(1));
+    const first = s.run!.pendingLoot;
+    const next = refreshPendingLoot(s, seeded(2));
+    expect(s.run!.lootAdRefreshCount).toBe(1);
+    expect(next).toHaveLength(3);
+    expect(next).toBe(s.run!.pendingLoot);
+    expect(next).not.toBe(first);
   });
 });

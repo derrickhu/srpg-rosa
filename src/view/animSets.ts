@@ -57,7 +57,6 @@ import tempGlSwarmManifest from '@/data/anim/temp_gl_swarm.json';
 import emberOrbManifest from '@/data/anim/ember_orb.json';
 import emberBurstManifest from '@/data/anim/ember_burst.json';
 import emberSplatManifest from '@/data/anim/ember_splat.json';
-import emberWaveManifest from '@/data/anim/ember_wave.json';
 import flameRingManifest from '@/data/anim/flame_ring.json';
 import holyOrbManifest from '@/data/anim/holy_orb.json';
 import holyBurstManifest from '@/data/anim/holy_burst.json';
@@ -200,6 +199,7 @@ const MANIFESTS: Record<string, AnimManifest> = {
   drakelord: drakelordManifest as AnimManifest,
   // 第二至五章精英：血牙部族人形兽人，同为单帧静止。**不算 MOOK**（按英雄身高，
   // 理由见 MOOK_ART_SETS 的说明）。第一章精英沿用 bloodfang，不在这里。
+  // 四五章精英关还没铺（沼语者 / 龙裔），图集先登记，关卡接上就能用。
   torun: torunManifest as AnimManifest,
   castellan: castellanManifest as AnimManifest,
   mirespeaker: mirespeakerManifest as AnimManifest,
@@ -232,7 +232,6 @@ const MANIFESTS: Record<string, AnimManifest> = {
   ember_orb: emberOrbManifest as AnimManifest,
   ember_burst: emberBurstManifest as AnimManifest,
   ember_splat: emberSplatManifest as AnimManifest,
-  ember_wave: emberWaveManifest as AnimManifest,
   flame_ring: flameRingManifest as AnimManifest,
   holy_orb: holyOrbManifest as AnimManifest,
   holy_burst: holyBurstManifest as AnimManifest,
@@ -332,14 +331,7 @@ const CORE_SET_IDS: readonly string[] = [
   // 默认技能特效：一进第一关就会看到（AI 杂兵也放），合计 170KB。
   // 优先段的意义是「第一关就要就位」，排错位置等于让首关多等一份别处才用的图集。
   //
-  // `ember_wave` 曾经排在这里，被移出的理由当时写成「它只给撞城槌用」，两处都不准：
-  // 撞城槌在**第三章**（不是第四章），而且它现在也不用 `ember_wave` 了——
-  // 那是一张火系素材，挂在攻城器械上完全不搭，当时塞进去只为救活一个死资产。
-  // 所以 `ember_wave` 现在**没有任何配方引用**，是明确的待用状态。
-  //
-  // 顺带修正一个我自己用错过的口径：优先段之外的图集是**按需**加载的，
-  // 所以一个没人引用的 anim set 并不「照样占下载量」，它只占清单 JSON 那几百字节。
-  // 真正会因为死条目白掉流量的是 `FX_BUNDLE`——那个是 `loadBundle` 整包拉的。
+  // 优先段之外的图集是按需加载的；真正会因为死条目白掉流量的是 `FX_BUNDLE`。
   'whirl',
   'pierce',
   'quake',

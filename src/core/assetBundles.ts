@@ -65,18 +65,18 @@ export const UNIT_BUNDLE: AssetBundleDef = {
     magmacore: 'images/units/magmacore.png',
     emberbat: 'images/units/emberbat.png',
     scalewyrm: 'images/units/scalewyrm.png',
-      ashshell: 'images/units/ashshell.png',
-      // 第二至五章 · 血牙部族精英（第一章精英沿用 bloodfang）
-      torun: 'images/units/torun.png',
-      castellan: 'images/units/castellan.png',
-      mirespeaker: 'images/units/mirespeaker.png',
-      drakekin: 'images/units/drakekin.png',
-      // Boss
-      bloodfang: 'images/units/bloodfang.png',
-      bloodshaman: 'images/units/bloodshaman.png',
-      bloodcastellan: 'images/units/bloodcastellan.png',
-      mirequeen: 'images/units/mirequeen.png',
-      drakelord: 'images/units/drakelord.png',
+    ashshell: 'images/units/ashshell.png',
+    // 第二至五章精英（第一章精英沿用 bloodfang）。四五章精英关卡还没铺，图先留着。
+    torun: 'images/units/torun.png',
+    castellan: 'images/units/castellan.png',
+    mirespeaker: 'images/units/mirespeaker.png',
+    drakekin: 'images/units/drakekin.png',
+    // Boss
+    bloodfang: 'images/units/bloodfang.png',
+    bloodshaman: 'images/units/bloodshaman.png',
+    bloodcastellan: 'images/units/bloodcastellan.png',
+    mirequeen: 'images/units/mirequeen.png',
+    drakelord: 'images/units/drakelord.png',
   },
 };
 
@@ -93,7 +93,6 @@ export const UI_BUNDLE: AssetBundleDef = {
     frame_panel: 'images/ui/frame_panel.png',
     ribbon_title: 'images/ui/ribbon_title.png',
     chapter_plaque: 'images/ui/chapter_plaque.png',
-    chapter_strip: 'images/ui/chapter_strip.png',
     chapter_repeat_title: 'images/ui/chapter_repeat_title.png',
     chapter_repeat_frame: 'images/ui/chapter_repeat_frame.png',
     chapter_ribbon: 'images/ui/chapter_ribbon.png',
@@ -120,6 +119,8 @@ export const UI_BUNDLE: AssetBundleDef = {
     // 战斗底部托管开关。只出剪影，圆钮壳和「托管 / 接手」字在回放层画。
     icon_pilot_auto: 'images/ui/icon_pilot_auto.png',
     icon_pilot_take: 'images/ui/icon_pilot_take.png',
+    // 看广告共用剪影：屏幕里一枚播放三角。矩形钮和右下圆钮都用它。
+    icon_ad: 'images/ui/icon_ad.png',
     // 三种药剂共用同一个瓶型，只有液体颜色不同，键名对齐 POTION_DEFS 的 id
     icon_potion_heal: 'images/ui/icon_potion_heal.png',
     icon_potion_draught: 'images/ui/icon_potion_draught.png',
@@ -131,8 +132,7 @@ export const UI_BUNDLE: AssetBundleDef = {
     node_supply: 'images/ui/node_supply.png',
     node_battle: 'images/ui/node_battle.png',
     node_boss: 'images/ui/node_boss.png',
-    // 底部导航。背包 tab 已删，tab_inventory 随之下架
-    tab_shop: 'images/ui/tab_shop.png',
+    // 底部导航。背包 / 商店 tab 已删，只留四页
     tab_recruit: 'images/ui/tab_recruit.png',
     tab_roster: 'images/ui/tab_roster.png',
     tab_adventure: 'images/ui/tab_adventure.png',
@@ -172,7 +172,6 @@ export const UI_BUNDLE: AssetBundleDef = {
     // 漏了会退成灰色占位圆，由 skillIcons.test.ts 守着。
     skill_whirl: 'images/ui/skill_whirl.png',
     skill_pierce: 'images/ui/skill_pierce.png',
-    skill_charge: 'images/ui/skill_charge.png',
     skill_bash: 'images/ui/skill_bash.png',
     skill_blade_rush: 'images/ui/skill_blade_rush.png',
     skill_cleave: 'images/ui/skill_cleave.png',
@@ -248,7 +247,6 @@ export const FX_BUNDLE: AssetBundleDef = {
     proj_arrow_heavy: 'images/fx/proj_arrow_heavy.png',
     /** 速射：极短的轻镖箭，后掠箭羽表达速度 */
     proj_arrow_snap: 'images/fx/proj_arrow_snap.png',
-    proj_holy: 'images/fx/proj_holy.png',
     /**
      * 实体道具。这一族的存在理由是玩家自己给的：号角「比较有特点」，
      * 而特点来自那支**看得见的号**，不是它那圈光环——
@@ -262,7 +260,10 @@ export const FX_BUNDLE: AssetBundleDef = {
      */
     prop_horn: 'images/fx/prop_horn.png',
     prop_salve: 'images/fx/prop_salve.png',
-    /** 松脂火把：斜举的树脂火把，柄上缠布、顶端燃烧 */
+    /**
+     * 松脂火把：斜举的树脂火把。第二章招牌招是现役的，圣经也写了要挂这件道具，
+     * 配方还没接线，图先留着——和号角 / 槌 / 旗同一套。
+     */
     prop_torch: 'images/fx/prop_torch.png',
     /** 撞城槌：横置槌身 + 三道铁箍 + 钝槌头朝右。钝，不是尖的 */
     prop_ram: 'images/fx/prop_ram.png',
@@ -279,8 +280,6 @@ export const BG_BUNDLE: AssetBundleDef = {
     battle_bg_fortress: 'images/bg/battle_bg_fortress.png',
     battle_bg_swamp: 'images/bg/battle_bg_swamp.png',
     battle_bg_dragon: 'images/bg/battle_bg_dragon.png',
-    // 旧四页共用底，留给未改到的入口兜底
-    hub_bg: 'images/bg/hub_bg.png',
     recruit_bg: 'images/bg/recruit_bg.png',
     roster_bg: 'images/bg/roster_bg.png',
     adventure_bg: 'images/bg/adventure_bg.png',

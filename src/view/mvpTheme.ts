@@ -47,6 +47,8 @@ export const C = {
   primary: 0xeec462,
   secondary: 0x54708c,
   danger: 0xd2543c,
+  /** 看广告次按钮。青绿，和播放剪影同族，不跟次行动蓝灰挤在一起，也不抢主 CTA 的金 */
+  ad: 0x2f8a7a,
 
   // --- 语义色（锁死） ---
   /** 局内金币，出关就清空 */

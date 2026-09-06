@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { BG_BUNDLE, TERRAIN_BUNDLE, UI_BUNDLE, UNIT_BUNDLE } from '@/core/assetBundles';
+import { BG_BUNDLE, FX_BUNDLE, TERRAIN_BUNDLE, UI_BUNDLE, UNIT_BUNDLE } from '@/core/assetBundles';
 import { ENEMY_SKILL_SKINS } from '@/data/enemySkillCatalog';
 import { allPlayerSkillSpecs, getSkillSpec } from '@/data/skillCatalog';
 import { allSkillMods } from '@/data/skillModCatalog';
@@ -92,6 +92,10 @@ describe('图标资源完整性', () => {
     expect(UI_BUNDLE.assets.icon_pilot_take).toBe('images/ui/icon_pilot_take.png');
   });
 
+  it('看广告共用剪影已登记', () => {
+    expect(UI_BUNDLE.assets.icon_ad).toBe('images/ui/icon_ad.png');
+  });
+
   /**
    * 登记了 key **不等于**图真的在。
    *
@@ -100,7 +104,7 @@ describe('图标资源完整性', () => {
    * 和忘了登记完全一样的表现，却少了一道拦。加技能配图标是两步，两步都得有人盯。
    */
   it('bundle 里登记的每张图在磁盘上都存在', () => {
-    for (const bundle of [UI_BUNDLE, UNIT_BUNDLE, TERRAIN_BUNDLE, BG_BUNDLE]) {
+    for (const bundle of [UI_BUNDLE, UNIT_BUNDLE, TERRAIN_BUNDLE, BG_BUNDLE, FX_BUNDLE]) {
       for (const [key, path] of Object.entries(bundle.assets)) {
         expect(existsSync(path), `${key} 指向的 ${path} 不存在`).toBe(true);
       }

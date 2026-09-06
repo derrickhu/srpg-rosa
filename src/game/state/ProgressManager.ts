@@ -15,7 +15,7 @@ import {
 } from '@/data/chapterStars';
 import { POTION_DEFS } from '@/data/potionCatalog';
 import { getSkillSpec } from '@/data/skillCatalog';
-import { allSkillMods, modRollWeight, modStacks } from '@/data/skillModCatalog';
+import { allSkillMods, lootCommonWeightMul, modRollWeight, modStacks } from '@/data/skillModCatalog';
 import { describePotion } from '@/data/itemText';
 import { battleSkillIdsForCharacter } from './DeployManager';
 import { instantiateCharacter } from '@/game/characterFactory';
@@ -205,6 +205,7 @@ export function applyVictory(state: MvpGameState): void {
   state.meta.metaCurrency += soul;
 
   run.lastVictory = { gold, soul, firstClear };
+  run.lootAdRefreshCount = 0;
   run.pendingLoot = isRunComplete(state) ? null : rollLoot(state);
   markNodeCleared(state.meta, run.dungeonId, run.nodeIndex);
 }
@@ -338,7 +339,12 @@ interface WeightedLoot {
   weight: number;
 }
 
-function lootCandidatesFor(state: MvpGameState, m: Character, depth: number): WeightedLoot[] {
+function lootCandidatesFor(
+  state: MvpGameState,
+  m: Character,
+  depth: number,
+  commonMul: number,
+): WeightedLoot[] {
   const run = state.run;
   if (!run) return [];
   const owned = run.skillMods[m.rosterId] ?? [];
@@ -358,7 +364,7 @@ function lootCandidatesFor(state: MvpGameState, m: Character, depth: number): We
     const next = modStacks(owned, mod.id) + 1;
     if (next > mod.maxStacks) continue;
     out.push({
-      weight: modRollWeight(mod, depth),
+      weight: modRollWeight(mod, depth) * (mod.rarity === 'common' ? commonMul : 1),
       opt: {
         kind: 'skillMod',
         modId: mod.id,
@@ -413,8 +419,9 @@ function drawFrom(pool: WeightedLoot[], avoid: ReadonlySet<string>, rng: LootRng
 export function rollLoot(state: MvpGameState, rng: LootRng = Math.random): LootOption[] {
   // 节点越深，稀有/史诗越常见。前几场就狂出史诗的话，后面的三选一只会越来越平淡。
   const depth = state.run?.endless?.wave ?? state.run?.nodeIndex ?? 0;
+  const commonMul = lootCommonWeightMul(state.run?.lootAdRefreshCount ?? 0);
   const byChar = shuffleWith(deployedCharacters(state), rng).map((m) =>
-    lootCandidatesFor(state, m, depth),
+    lootCandidatesFor(state, m, depth, commonMul),
   );
 
   // 先每人抽一张（轮转），抽完一圈还不够 3 张再回头拿第二张。
@@ -456,12 +463,22 @@ export function claimLoot(state: MvpGameState, opt: LootOption): boolean {
       break;
   }
   run.pendingLoot = null;
+  run.lootAdRefreshCount = 0;
   return true;
+}
+
+/** 看广告后重掷本屏三选一；刷新次数记在 run 上，下一次起压低普通词条。 */
+export function refreshPendingLoot(state: MvpGameState, rng: LootRng = Math.random): LootOption[] {
+  const run = requireRun(state);
+  run.lootAdRefreshCount = (run.lootAdRefreshCount ?? 0) + 1;
+  run.pendingLoot = rollLoot(state, rng);
+  return run.pendingLoot;
 }
 
 export function skipLoot(state: MvpGameState): void {
   const run = requireRun(state);
   run.pendingLoot = null;
+  run.lootAdRefreshCount = 0;
 }
 
 /** 是否已通关（节点走完） */
@@ -498,6 +515,7 @@ export function applyEndlessWaveVictory(state: MvpGameState): void {
   const soul = ENDLESS_WAVE_SOUL;
   state.meta.metaCurrency += soul;
   run.lastVictory = { gold: 0, soul, firstClear: false };
+  run.lootAdRefreshCount = 0;
   run.pendingLoot = isRunComplete(state) ? null : rollLoot(state);
 }
 
@@ -527,6 +545,7 @@ export function continueEndlessWave(state: MvpGameState, lastUnits: readonly Uni
   run.endless.wave += 1;
   run.endless.clearedCurrent = false;
   run.pendingLoot = null;
+  run.lootAdRefreshCount = 0;
   run.lastReportWinner = null;
   // 部署格跟着人走，断线重进时 buildBattleUnits 才找得到这些人
   for (const c of carry) {
@@ -563,6 +582,7 @@ export function advanceNode(state: MvpGameState): void {
   run.placements = [];
   run.terrainOverlay = [];
   run.adExtraSlot = 0;
+  run.lootAdRefreshCount = 0;
   run.pendingLoot = null;
   run.lastReportWinner = null;
   run.nodeIndex += 1;

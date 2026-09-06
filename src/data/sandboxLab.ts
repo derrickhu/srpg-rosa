@@ -133,7 +133,12 @@ export const SANDBOX_DUNGEON: DungeonDef = {
   themeColor: 0x4a3a6a,
 };
 
-/** 冒险页章节：正式章节 + 试炼 */
-export function adventureChapterList(official: readonly DungeonDef[]): DungeonDef[] {
-  return [...official, SANDBOX_DUNGEON];
+/**
+ * 冒险页章节。特效试炼只给 GM（微信模拟器），正式包不露这张卡。
+ */
+export function adventureChapterList(
+  official: readonly DungeonDef[],
+  includeSandbox = false,
+): DungeonDef[] {
+  return includeSandbox ? [...official, SANDBOX_DUNGEON] : [...official];
 }

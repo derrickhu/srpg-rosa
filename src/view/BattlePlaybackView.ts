@@ -51,8 +51,13 @@ import {
   RUN_GOLD_X,
   runGoldYBelow,
 } from '@/view/renderHelpers';
-import { makeButton } from '@/ui/Button';
+import { AD_ICON_KEY, makeButton } from '@/ui/Button';
+import { makeRoundHudButton } from '@/ui/hudGlyphButton';
 import { attachPress } from '@/ui/press';
+import { AdManager } from '@/platform/AdManager';
+import { Platform } from '@/platform/wxPlatform';
+import { createBusyGate } from '@/view/battle/busyGate';
+import { createAdReviveOverlay } from '@/view/battle/resultOverlay';
 import { AudioManager } from '@/core/AudioManager';
 import { sfxForAttack, sfxForAttackHit, sfxForSkillCast, sfxForSkillHit } from '@/data/audioCatalog';
 import { AssetManager } from '@/core/AssetManager';
@@ -202,7 +207,7 @@ export function animSetsForUnits(units: readonly UnitState[]): string[] {
  * 战斗回放（边模拟边播）：
  * - 人工模式下轮到玩家单位就停下等指令，交互层见 `battle/manualTurnUi`；
  * - 自动模式全程播 AI 的行动；
- * - 两种模式共有：倍速 x1/x2、GM 跳过（直接判胜）、战斗中用药。
+ * - 两种模式共有：战斗中用药。模拟器里另有 GM 跳过（直接判胜）。
  */
 export function createBattlePlaybackView(
   app: PixiHost,
@@ -221,9 +226,10 @@ export function createBattlePlaybackView(
   const inset = getSafeAreaInsets();
 
   // --- 回放控制状态 ---
-  let speedMul = 1;
+  const speedMul = 1;
   let skipping = false;
   let completed = false;
+  const reviveGate = createBusyGate();
   /** 人工操作 UI，自动模式下为 null */
   let manualUi: ManualTurnUi | null = null;
   /**
@@ -376,41 +382,13 @@ export function createBattlePlaybackView(
     })();
   }
 
-  // --- 右上：倍速 + 跳过。贴在胶囊**下方**右对齐，不要和微信 ···/⊙ 叠在一起 ---
-  const speedBtnW = 46;
+  // --- 右上 GM 钮：贴在胶囊**下方**右对齐，不要和微信 ···/⊙ 叠在一起 ---
   const skipBtnW = 54;
+  const cdBtnW = 54;
   const ctrlH = 30;
   const topCtrlY = inset.top + 6;
-  const speedBtn = new PIXI.Container();
-  const speedBg = new PIXI.Graphics();
-  const speedLbl = makeText('x1', 'uiStrong', { fill: 0xffffff });
-  speedLbl.anchor.set(0.5);
-  speedLbl.x = speedBtnW / 2;
-  speedLbl.y = ctrlH / 2;
-  function drawSpeedBtn(): void {
-    speedBg.clear();
-    speedBg.lineStyle(1.5, speedMul > 1 ? 0x52c4dc : 0x888888, 1);
-    speedBg.beginFill(speedMul > 1 ? 0x2a7a8c : 0x000000, speedMul > 1 ? 0.85 : 0.4);
-    speedBg.drawRoundedRect(0, 0, speedBtnW, ctrlH, 10);
-    speedBg.endFill();
-    speedLbl.text = `x${speedMul}`;
-  }
-  drawSpeedBtn();
-  speedBtn.addChild(speedBg);
-  speedBtn.addChild(speedLbl);
-  const cdBtnW = 54;
-  speedBtn.x = sw - skipBtnW - 8 - 6 - speedBtnW - (gameState.sandbox ? cdBtnW + 6 : 0);
-  speedBtn.y = topCtrlY;
-  speedBtn.eventMode = 'static';
-  speedBtn.cursor = 'pointer';
-  speedBtn.hitArea = new PIXI.Rectangle(0, 0, speedBtnW, ctrlH);
-  speedBtn.on('pointertap', () => {
-    speedMul = speedMul >= 2 ? 1 : 2;
-    drawSpeedBtn();
-  });
-  root.addChild(speedBtn);
-
-  if (gameState.sandbox) {
+  const showGmSkip = Platform.isGmTools && !gameState.tutorialLock;
+  if (gameState.sandbox && Platform.isGmTools) {
     const cdBtn = new PIXI.Container();
     const cdBg = new PIXI.Graphics();
     cdBg.lineStyle(1.5, 0xc4a052, 1);
@@ -423,7 +401,7 @@ export function createBattlePlaybackView(
     cdLbl.x = cdBtnW / 2;
     cdLbl.y = ctrlH / 2;
     cdBtn.addChild(cdLbl);
-    cdBtn.x = sw - skipBtnW - 8 - 6 - cdBtnW;
+    cdBtn.x = sw - (showGmSkip ? skipBtnW + 8 + 6 : 0) - cdBtnW - 8;
     cdBtn.y = topCtrlY;
     cdBtn.eventMode = 'static';
     cdBtn.cursor = 'pointer';
@@ -434,36 +412,34 @@ export function createBattlePlaybackView(
     root.addChild(cdBtn);
   }
 
-  const skipBtn = new PIXI.Container();
-  const skipBg = new PIXI.Graphics();
-  skipBg.lineStyle(1.5, 0x888888, 1);
-  skipBg.beginFill(0x000000, 0.4);
-  skipBg.drawRoundedRect(0, 0, skipBtnW, ctrlH, 10);
-  skipBg.endFill();
-  skipBtn.addChild(skipBg);
-  const skipLbl = makeText(gameState.sandbox ? '回布阵' : '跳过', 'ui', { fill: 0xffffff, fontSize: 13 });
-  skipLbl.anchor.set(0.5);
-  skipLbl.x = skipBtnW / 2;
-  skipLbl.y = ctrlH / 2;
-  skipBtn.addChild(skipLbl);
-  skipBtn.x = sw - skipBtnW - 8;
-  skipBtn.y = topCtrlY;
-  skipBtn.eventMode = 'static';
-  skipBtn.cursor = 'pointer';
-  skipBtn.hitArea = new PIXI.Rectangle(0, 0, skipBtnW, ctrlH);
-  // GM 跳过：当场判玩家胜。跑 AI 可能输，那就没调试价值。
-  if (gameState.tutorialLock) {
-    skipBtn.visible = false;
-    skipBtn.eventMode = 'none';
+  if (showGmSkip) {
+    const skipBtn = new PIXI.Container();
+    const skipBg = new PIXI.Graphics();
+    skipBg.lineStyle(1.5, 0x888888, 1);
+    skipBg.beginFill(0x000000, 0.4);
+    skipBg.drawRoundedRect(0, 0, skipBtnW, ctrlH, 10);
+    skipBg.endFill();
+    skipBtn.addChild(skipBg);
+    const skipLbl = makeText(gameState.sandbox ? '回布阵' : '跳过', 'ui', { fill: 0xffffff, fontSize: 13 });
+    skipLbl.anchor.set(0.5);
+    skipLbl.x = skipBtnW / 2;
+    skipLbl.y = ctrlH / 2;
+    skipBtn.addChild(skipLbl);
+    skipBtn.x = sw - skipBtnW - 8;
+    skipBtn.y = topCtrlY;
+    skipBtn.eventMode = 'static';
+    skipBtn.cursor = 'pointer';
+    skipBtn.hitArea = new PIXI.Rectangle(0, 0, skipBtnW, ctrlH);
+    // GM 跳过：当场判玩家胜。跑 AI 可能输，那就没调试价值。
+    skipBtn.on('pointertap', () => {
+      if (skipping || completed) return;
+      skipping = true;
+      manualUi?.hide();
+      // 正在等指令时必须解开那个 await，否则协程挂死、战场彻底不动（见 abortWait）
+      manualUi?.abortWait();
+    });
+    root.addChild(skipBtn);
   }
-  skipBtn.on('pointertap', () => {
-    if (skipping || completed) return;
-    skipping = true;
-    manualUi?.hide();
-    // 正在等指令时必须解开那个 await，否则协程挂死、战场彻底不动（见 abortWait）
-    manualUi?.abortWait();
-  });
-  root.addChild(skipBtn);
 
   // --- 左上金币栏：击杀掉落飞进这里，数字当场涨。位置和布阵 / 补给点同一条线 ---
   const goldIconSize = 22;
@@ -652,6 +628,7 @@ export function createBattlePlaybackView(
   let tutorialPilotLocked = false;
   const showPilot = !gameState.tutorialLock || !!gameState.tutorialAllowPilot;
   const onPilotPress = (): void => {
+    if (reviveGate.busy) return;
     if (gameState.tutorialLock && !gameState.tutorialAllowPilot) return;
     if (tutorialPilotLocked) return;
     const now = Date.now();
@@ -1425,6 +1402,81 @@ export function createBattlePlaybackView(
   hudLayer.zIndex = 20;
   root.addChild(hudLayer);
 
+  let reviveUsed = false;
+  const allowReviveAd = !gameState.tutorialLock && !gameState.sandbox;
+
+  function deadPlayerUnits(): UnitState[] {
+    return sim.getUnits().filter((u) => u.faction === 'player' && u.hp <= 0);
+  }
+
+  function deadPlayerChoices(): { uid: string; name: string }[] {
+    return deadPlayerUnits().map((u) => ({
+      uid: u.uid,
+      name: u.displayName ?? UNIT_DEFS[u.defId].name,
+    }));
+  }
+
+  function waitReviveChoice(): Promise<string | 'skip'> {
+    const units = deadPlayerChoices();
+    if (units.length === 0) return Promise.resolve('skip');
+    return new Promise((resolve) => {
+      const overlay = createAdReviveOverlay({
+        screenW: sw,
+        screenH: sh,
+        units,
+        onPick: (uid) => {
+          overlay.destroy({ children: true });
+          resolve(uid);
+        },
+        onSkip: () => {
+          overlay.destroy({ children: true });
+          resolve('skip');
+        },
+      });
+      root.addChild(overlay);
+    });
+  }
+
+  async function applyRevive(uid: string): Promise<boolean> {
+    const ok = await AdManager.showRewarded('revive');
+    if (!ok) return false;
+    const evs = sim.reviveUnit(uid);
+    if (evs.length === 0) return false;
+    await playEvents(evs);
+    reviveUsed = true;
+    updateReviveHud();
+    return true;
+  }
+
+  const reviveBtn = makeRoundHudButton({
+    iconKey: AD_ICON_KEY,
+    label: '复活',
+    tone: C.ad,
+    onPress: () => {
+      void (async () => {
+        if (reviveGate.busy || reviveUsed || completed || skipping) return;
+        reviveGate.set(true);
+        const choice = await waitReviveChoice();
+        if (choice !== 'skip') {
+          const ok = await applyRevive(choice);
+          if (!ok) floatUtility(sw / 2, originY + 28, '广告未播完，没有复活');
+        }
+        reviveGate.set(false);
+        updateReviveHud();
+      })();
+    },
+  });
+  reviveBtn.visible = false;
+
+  function updateReviveHud(): void {
+    reviveBtn.visible = allowReviveAd
+      && !reviveUsed
+      && !completed
+      && !skipping
+      && deadPlayerUnits().length > 0
+      && sim.getUnits().some((u) => u.faction === 'player' && u.hp > 0);
+  }
+
   const potionBtns = new Map<string, {
     count: number;
     countLbl: PIXI.Text;
@@ -1517,7 +1569,7 @@ export function createBattlePlaybackView(
       c.hitArea = new PIXI.Circle(0, 0, POTION_SLOT / 2 + 2);
       c.on('pointertap', () => {
         const h = potionBtns.get(pid);
-        if (!h || h.count <= 0 || completed || sim.isDone()) return;
+        if (!h || h.count <= 0 || completed || sim.isDone() || reviveGate.busy) return;
         paintPotionSlot(pid, h.count - 1);
         gameState.onConsumePotion(pid);
         const evs = sim.usePotion(pid);
@@ -1543,7 +1595,12 @@ export function createBattlePlaybackView(
       pilotBtn.x = sw - HUD_PAD - PILOT_D;
       pilotBtn.y = slotTop;
       hudLayer.addChild(pilotBtn);
+      reviveBtn.x = pilotBtn.x - 8 - PILOT_D;
+    } else {
+      reviveBtn.x = sw - HUD_PAD - PILOT_D;
     }
+    reviveBtn.y = slotTop;
+    hudLayer.addChild(reviveBtn);
   }
 
   // ============ 行动顺序条 ============
@@ -2212,6 +2269,7 @@ export function createBattlePlaybackView(
           tokenOverheads.delete(ev.uid);
         }
         if (inspectUid === ev.uid) hideUnitInfo();
+        updateReviveHud();
         break;
       }
       case 'drop': {
@@ -2280,21 +2338,61 @@ export function createBattlePlaybackView(
   /** 主循环：AI 单位边模拟边播，玩家单位停下来等指令 */
   async function run(): Promise<void> {
     while (!root.destroyed) {
+      // 托管时点复活会去播广告。不在这里停住的话，主循环还在 stepTurn，
+      // 广告结束时人已经死光。选人和看片期间下一回合不准推进。
+      await reviveGate.wait();
+      if (root.destroyed) return;
+      if (reviveGate.busy) continue;
       // 中途切托管时，引擎已经把手上那个单位打完了（见 pilotBtn），先把它的动作播出来。
       // 走同一条 playEvents 是有意的：托管接手看起来必须和 AI 平时行动一模一样，
       // 否则玩家会以为自己那一下点出了别的效果。
       const step = takeOverStep ?? sim.stepTurn();
       takeOverStep = null;
-      await playEvents(step.events);
+      const wipeOffer = allowReviveAd
+        && !reviveUsed
+        && step.done
+        && step.winner === 'enemy'
+        && deadPlayerUnits().length > 0;
+      await playEvents(wipeOffer ? step.events.filter((e) => e.type !== 'end') : step.events);
       if (root.destroyed) return;
       if (skipping) {
         finishPlayback('player');
+        return;
+      }
+      if (wipeOffer) {
+        // 本步动画里可能已经点了右下复活：先等那次结束，避免叠第二层选人，
+        // 也避免广告还在播就按全灭结算。
+        await reviveGate.wait();
+        if (root.destroyed) return;
+        if (!sim.isDone()) {
+          updateReviveHud();
+          continue;
+        }
+        if (reviveUsed) {
+          finishPlayback('enemy');
+          return;
+        }
+        reviveGate.set(true);
+        const choice = await waitReviveChoice();
+        if (choice !== 'skip') {
+          const ok = await applyRevive(choice);
+          reviveGate.set(false);
+          if (ok) {
+            updateReviveHud();
+            continue;
+          }
+          floatUtility(sw / 2, originY + 28, '广告未播完，没有复活');
+        } else {
+          reviveGate.set(false);
+        }
+        finishPlayback('enemy');
         return;
       }
       if (step.done) {
         finishPlayback(step.winner ?? 'enemy');
         return;
       }
+      updateReviveHud();
       // 轮到玩家单位：交互直到它的回合结束。托管时 pending 由 AI 接管
       const pending = sim.pending();
       if (pending && !sim.isAuto()) {

@@ -35,6 +35,8 @@ import {
   applyChapterSweep,
   canSweepChapter,
   claimLoot,
+  refreshPendingLoot,
+  grantAdExtraSlot,
   continueEndlessWave,
   currentDungeon,
   currentNode,
@@ -75,6 +77,7 @@ import { SceneManager } from '@/scene/SceneManager';
 import type { Scene } from '@/scene/Scene';
 import { PersistService } from '@/core/PersistService';
 import { SaveManager } from '@/core/SaveManager';
+import { AdManager } from '@/platform/AdManager';
 import { CloudSyncManager } from '@/managers/CloudSyncManager';
 import { AssetManager } from '@/core/AssetManager';
 import { ALL_BUNDLES, LOADING_BUNDLE, UI_BUNDLE } from '@/core/assetBundles';
@@ -289,6 +292,7 @@ export class GameFlow {
   private finishLoadingIntoHub(): void {
     if (this.started) return;
     this.state = SaveManager.loadOrCreate();
+    this.dropHiddenGmRun();
     this.started = true;
     this.loading?.setProgress(1);
     this.loading = null;
@@ -411,6 +415,7 @@ export class GameFlow {
 
   private startRunAndEnter(dungeonId: string, party: string[]): void {
     if (isSandboxDungeon(dungeonId)) {
+      if (!Platform.isGmTools) return;
       gmPrepareSandboxRoster(this.state);
       party = this.state.meta.roster.map((m) => m.rosterId);
     }
@@ -438,7 +443,17 @@ export class GameFlow {
 
   // ---------------- 副本节点路由 ----------------
 
+  /** 真机不进特效试炼：清掉模拟器留下的局，避免冒险页还露「继续」。 */
+  private dropHiddenGmRun(): void {
+    if (Platform.isGmTools) return;
+    if (this.state.run && isSandboxDungeon(this.state.run.dungeonId)) this.state.run = null;
+    if (this.state.parkedRun && isSandboxDungeon(this.state.parkedRun.dungeonId)) {
+      this.state.parkedRun = null;
+    }
+  }
+
   private renderNode(): void {
+    this.dropHiddenGmRun();
     if (!this.state.run) {
       this.renderShell('adventure');
       return;
@@ -527,6 +542,22 @@ export class GameFlow {
           SaveManager.save(this.state);
         },
         onSelectRoster: () => notifyTutorial(this.state, { type: 'refresh' }),
+        onAdExtraSlot: () => {
+          void (async () => {
+            const ok = await AdManager.showRewarded('extraDeploy');
+            if (!ok) {
+              this.showToast('广告未播完，上阵位没有增加', { deny: true });
+              return;
+            }
+            if (!grantAdExtraSlot(this.state)) {
+              this.showToast('现在加不了人', { deny: true });
+              return;
+            }
+            SaveManager.save(this.state);
+            this.showToast('可以再上阵一人');
+            this.renderDeploy();
+          })();
+        },
       },
       this.screen,
     );
@@ -930,6 +961,22 @@ export class GameFlow {
           this.advanceAfterVictory();
         },
         onNeedPick: () => this.showToast('先选一张纹章', { deny: true }),
+        onRefresh: isTutorialRun(this.state)
+          ? undefined
+          : () => {
+              void (async () => {
+                const ok = await AdManager.showRewarded('lootRefresh');
+                if (!ok) {
+                  this.showToast('广告未播完，选项没有换', { deny: true });
+                  return;
+                }
+                refreshPendingLoot(this.state);
+                SaveManager.save(this.state);
+                close();
+                this.showToast('选项已刷新，普通纹章更少见了');
+                this.showLootOverlay();
+              })();
+            },
       }),
     );
   }
@@ -1035,6 +1082,21 @@ export class GameFlow {
           SaveManager.save(this.state);
           this.renderNode();
         },
+        onRefresh: isTutorialRun(this.state)
+          ? undefined
+          : () => {
+              void (async () => {
+                const ok = await AdManager.showRewarded('shopRefresh');
+                if (!ok) {
+                  this.showToast('广告未播完，货架没有换', { deny: true });
+                  return;
+                }
+                this.shopOffers = rollShop(this.state);
+                SaveManager.save(this.state);
+                this.showToast('货架已换新');
+                this.renderShop();
+              })();
+            },
       },
       this.screen,
     );

@@ -10,6 +10,7 @@ import {
   type MvpGameState,
   type ShopOffer,
 } from '@/game/MvpState';
+import { isTutorialShop } from '@/game/tutorial/tutorialRules';
 import {
   createBackground,
   createCurrencyPill,
@@ -18,7 +19,7 @@ import {
   RUN_GOLD_Y_STANDALONE,
 } from '@/view/renderHelpers';
 import { AssetManager } from '@/core/AssetManager';
-import { makeButton } from '@/ui/Button';
+import { makeAdButton, makeButton } from '@/ui/Button';
 import { makeCard } from '@/ui/Card';
 import { createModal, type ModalHandle } from '@/ui/Modal';
 import { attachPress } from '@/ui/press';
@@ -137,7 +138,11 @@ export interface ShopViewHandle {
 export function createShopView(
   state: MvpGameState,
   offers: ShopOffer[],
-  callbacks: { onBuy: (offer: ShopOffer, ctx?: BuyShopContext) => void; onSkip: () => void },
+  callbacks: {
+    onBuy: (offer: ShopOffer, ctx?: BuyShopContext) => void;
+    onSkip: () => void;
+    onRefresh?: () => void;
+  },
   screen: { screenWidth: number; screenHeight: number },
 ): ShopViewHandle {
   const root = new PIXI.Container();
@@ -211,6 +216,8 @@ export function createShopView(
    * 2 行药切到 3 行技能时只在槽里长，整块不再重新居中——否则摊会跟着跳。
    * 槽按「标题 + 最多约 5 行说明」估；真溢出才把离开按钮往下挤，场景仍不动。
    */
+  const allowRefresh = Boolean(callbacks.onRefresh) && !isTutorialShop(state);
+  const refreshH = 44;
   const leaveH = 44;
   const DETAIL_SLOT_H = 132;
   /** 当前详情内容高度（可能大于槽）；画板和离开按钮用 max(槽, 这个值) */
@@ -384,8 +391,12 @@ export function createShopView(
 
   function layoutMainBlock(): void {
     detail.y = sceneH + gapSceneDetail;
-    leaveBtn.y = detail.y + Math.max(DETAIL_SLOT_H, detailH) + gapDetailLeave;
-    const reservedMainH = sceneH + gapSceneDetail + DETAIL_SLOT_H + gapDetailLeave + leaveH;
+    const refreshGap = allowRefresh ? refreshH + 8 : 0;
+    leaveBtn.y = detail.y + Math.max(DETAIL_SLOT_H, detailH) + gapDetailLeave + refreshGap;
+    if (refreshBtn) {
+      refreshBtn.y = leaveBtn.y - refreshH - 8;
+    }
+    const reservedMainH = sceneH + gapSceneDetail + DETAIL_SLOT_H + gapDetailLeave + refreshGap + leaveH;
     const availH = H - bottomSafe - contentTop;
     // 偏下：让摊脚落在 shop_bg 的泥地空地上，而不是悬在半空草地
     main.y = contentTop + Math.max(0, (availH - reservedMainH) * 0.72);
@@ -518,14 +529,28 @@ export function createShopView(
   }
 
   // --- 离开（紧贴详情下方） ---
+  const footerW = W - PAD * 2;
   const leaveBtn = makeButton('离开补给点，继续前进', () => callbacks.onSkip(), {
     variant: 'secondary',
-    width: W - PAD * 2,
+    width: footerW,
     height: leaveH,
     fontSize: 15,
   });
   leaveBtn.x = PAD;
   main.addChild(leaveBtn);
+
+  const refreshBtn = allowRefresh
+    ? makeAdButton('刷新货物', () => callbacks.onRefresh?.(), {
+        width: footerW,
+        height: refreshH,
+        fontSize: 15,
+        radius: 10,
+      })
+    : null;
+  if (refreshBtn) {
+    refreshBtn.x = PAD;
+    main.addChild(refreshBtn);
+  }
 
   rebuildSlots();
   refreshDetail();

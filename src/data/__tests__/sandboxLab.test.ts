@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DUNGEON_DEFS, getDungeonDef } from '@/data/dungeonCatalog';
+import { Platform } from '@/platform/wxPlatform';
 import {
   adventureChapterList,
   isSandboxDungeon,
@@ -28,10 +29,18 @@ describe('特效试炼不进正式章节表', () => {
     expect(isSandboxDungeon('dungeon_grassland')).toBe(false);
   });
 
-  it('冒险页章节表把试炼接在最后', () => {
-    const list = adventureChapterList(DUNGEON_DEFS);
-    expect(list[list.length - 1]!.id).toBe(SANDBOX_DUNGEON_ID);
-    expect(list.length).toBe(DUNGEON_DEFS.length + 1);
+  it('单测环境不是微信模拟器，不给 GM 工具', () => {
+    expect(Platform.isGmTools).toBe(false);
+    expect(Platform.isDevtools).toBe(false);
+  });
+
+  it('正式冒险页不露试炼，GM 才把试炼接在最后', () => {
+    const official = adventureChapterList(DUNGEON_DEFS);
+    expect(official.some((d) => d.id === SANDBOX_DUNGEON_ID)).toBe(false);
+    expect(official).toHaveLength(DUNGEON_DEFS.length);
+    const gm = adventureChapterList(DUNGEON_DEFS, true);
+    expect(gm[gm.length - 1]!.id).toBe(SANDBOX_DUNGEON_ID);
+    expect(gm).toHaveLength(DUNGEON_DEFS.length + 1);
   });
 
   it('木桩场有各职业木桩和五章 Boss 皮', () => {
