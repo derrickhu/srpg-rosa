@@ -8,6 +8,7 @@ import { startRun } from '@/game/state/ProgressManager';
 import { buyShopOffer, rollShop } from '@/game/state/ShopManager';
 import {
   advanceTutorial,
+  hasLeftTutorial,
   hydrateTutorial,
   isVeteranMeta,
   notifyTutorial,
@@ -51,6 +52,25 @@ describe('教程进度', () => {
     expect(isVeteranMeta(meta)).toBe(true);
     hydrateTutorial(meta);
     expect(meta.tutorialStep).toBe(TutorialStep.COMPLETED);
+  });
+
+  it('云档还停在教学中途、但已经有格隆时直接标完成', () => {
+    const meta = createInitialMeta();
+    meta.tutorialStep = TutorialStep.BATTLE1_INTRO;
+    meta.roster.push({ ...meta.roster[0]!, rosterId: TUTORIAL_GRON_ID, catalogId: TUTORIAL_GRON_ID });
+    expect(hasLeftTutorial(meta)).toBe(true);
+    hydrateTutorial(meta);
+    expect(meta.tutorialStep).toBe(TutorialStep.COMPLETED);
+  });
+
+  it('教程打到希尔入队、步骤还在进行中，不要误判毕业', () => {
+    const meta = createInitialMeta();
+    meta.tutorialStep = TutorialStep.DEPLOY2_INTRO;
+    meta.roster.push({ ...meta.roster[0]!, rosterId: TUTORIAL_HILL_ID, catalogId: TUTORIAL_HILL_ID });
+    meta.clearedNodesByDungeonId = { dungeon_grassland: 1 };
+    expect(hasLeftTutorial(meta)).toBe(false);
+    hydrateTutorial(meta);
+    expect(meta.tutorialStep).toBe(TutorialStep.DEPLOY2_INTRO);
   });
 
   it('新档从 NOT_STARTED 开始，只能往前走', () => {

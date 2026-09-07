@@ -95,6 +95,7 @@ import { attachTutorialOverlay } from '@/view/tutorial/TutorialOverlay';
 import {
   advanceTutorial,
   completeTutorial,
+  hasLeftTutorial,
   isTutorialCompleted,
   notifyTutorial,
   readTutorialStep,
@@ -183,6 +184,9 @@ export class GameFlow {
   private loading: LoadingView | null = null;
   /** 启动云同步完成、大厅已可渲染后才接受下行覆盖 */
   private started = false;
+  /** 清缓存后等云档，避免先开教程再被进度档打断卡死 */
+  private cloudTutorialHold = false;
+  private cloudTutorialHoldTimer: ReturnType<typeof setTimeout> | null = null;
   /** 本局开战时刻，给 level_clear / level_fail 算 duration_ms */
   private runStartedAt = 0;
   private runEndTracked = false;
@@ -205,7 +209,8 @@ export class GameFlow {
       const loaded = SaveManager.load();
       if (!loaded) return;
       this.state = loaded;
-      if (this.state.phase === 'hub') this.renderShell();
+      this.dropHiddenGmRun();
+      this.routeAfterLoad();
     });
     Platform.onHide(() => {
       void CloudSyncManager.flushNow('app-hide');
@@ -241,6 +246,8 @@ export class GameFlow {
     loading?.applySplash(AssetManager.texture('loading', 'splash'));
     loading?.applyLogo(AssetManager.texture('ui', 'logo_emblem'));
     setP(0.12);
+    // 开屏画出来再登录，避免华为卡在微信白底；剩下的读盘时间足够拉云档。
+    CloudSyncManager.prewarm();
 
     await AssetManager.loadBundle(UI_BUNDLE, (n, t) => {
       setP(0.12 + (t > 0 ? n / t : 1) * 0.28);
@@ -299,14 +306,70 @@ export class GameFlow {
     this.started = true;
     this.loading?.setProgress(1);
     this.loading = null;
-    if (!isTutorialCompleted(this.state.meta)) {
-      this.enterTutorialFromBoot();
+    this.routeAfterLoad();
+  }
+
+  private shouldSkipTutorial(): boolean {
+    return isTutorialCompleted(this.state.meta) || hasLeftTutorial(this.state.meta);
+  }
+
+  private persistTutorialCompleted(): void {
+    if (isTutorialCompleted(this.state.meta) || !hasLeftTutorial(this.state.meta)) return;
+    completeTutorial(this.state);
+    SaveManager.save(this.state);
+  }
+
+  private clearCloudTutorialHold(): void {
+    this.cloudTutorialHold = false;
+    if (this.cloudTutorialHoldTimer) {
+      clearTimeout(this.cloudTutorialHoldTimer);
+      this.cloudTutorialHoldTimer = null;
+    }
+  }
+
+  private shouldWaitForCloudBeforeTutorial(): boolean {
+    if (this.shouldSkipTutorial()) return false;
+    if (this.state.run) return false;
+    if (!CloudSyncManager.enabled) return false;
+    return CloudSyncManager.cacheOnly || CloudSyncManager.authorityState === 'unknown';
+  }
+
+  private routeAfterLoad(): void {
+    if (this.shouldSkipTutorial()) {
+      this.clearCloudTutorialHold();
+      this.persistTutorialCompleted();
+      this.renderShell();
       return;
     }
-    this.renderShell();
+    if (this.shouldWaitForCloudBeforeTutorial()) {
+      this.cloudTutorialHold = true;
+      this.renderShell();
+      this.showToast('正在同步云档…');
+      if (!this.cloudTutorialHoldTimer) {
+        this.cloudTutorialHoldTimer = setTimeout(() => {
+          this.cloudTutorialHoldTimer = null;
+          if (!this.cloudTutorialHold) return;
+          this.cloudTutorialHold = false;
+          if (this.shouldSkipTutorial()) {
+            this.persistTutorialCompleted();
+            this.renderShell();
+            return;
+          }
+          this.enterTutorialFromBoot();
+        }, 8000);
+      }
+      return;
+    }
+    this.clearCloudTutorialHold();
+    this.enterTutorialFromBoot();
   }
 
   private enterTutorialFromBoot(): void {
+    if (this.shouldSkipTutorial()) {
+      this.persistTutorialCompleted();
+      this.renderShell();
+      return;
+    }
     if (!this.state.run) {
       if (readTutorialStep(this.state.meta) === TutorialStep.NOT_STARTED) {
         startTutorial(this.state);

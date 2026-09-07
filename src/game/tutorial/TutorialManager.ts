@@ -1,9 +1,17 @@
+import { DEFAULT_DUNGEON_IDS } from '@/data/dungeonCatalog';
 import type { MetaState, MvpGameState } from '@/game/state/GameState';
 import {
   TutorialStep,
   canAdvanceTutorial,
   isTutorialBefore,
 } from './tutorialSteps';
+
+const TUTORIAL_DUNGEON_ID = 'dungeon_grassland';
+const TUTORIAL_HILL_ID = 'hero_bow_hill';
+const TUTORIAL_GRON_ID = 'hero_shield_gron';
+const TUTORIAL_CAST = new Set(['hero_sword_ray', TUTORIAL_HILL_ID, TUTORIAL_GRON_ID]);
+/** 教程占用草原前 4 个节点（两战 + 店 + 格隆战）。超过就是在继续推图。 */
+const TUTORIAL_GRASSLAND_NODE_CAP = 4;
 
 const listeners = new Set<() => void>();
 
@@ -31,18 +39,41 @@ export function isTutorialActive(state: MvpGameState): boolean {
   return step > TutorialStep.NOT_STARTED && step < TutorialStep.COMPLETED;
 }
 
-/** 老档：已经打过关或名册里已有希尔/格隆，直接标完成，避免再被拉进教程。 */
+/** 老档没写 tutorialStep：有希尔/格隆/任意首通就算打过。 */
 export function isVeteranMeta(meta: MetaState): boolean {
   if ((meta.clearedDungeonIds?.length ?? 0) > 0) return true;
   if (Object.values(meta.clearedNodesByDungeonId ?? {}).some((n) => n > 0)) return true;
-  if (meta.roster.some((m) => m.rosterId === 'hero_bow_hill' || m.rosterId === 'hero_shield_gron')) {
+  if (meta.roster.some((m) => m.rosterId === TUTORIAL_HILL_ID || m.rosterId === TUTORIAL_GRON_ID)) {
     return true;
+  }
+  return hasLeftTutorial(meta);
+}
+
+/**
+ * 已经离开新手该有的进度。云档若还留着半截 tutorialStep，也必须跳过教程，
+ * 否则换机 / 清缓存会带着名册再进教学，遮罩指错格子就卡住。
+ */
+export function hasLeftTutorial(meta: MetaState): boolean {
+  if ((meta.clearedDungeonIds?.length ?? 0) > 0) return true;
+  if ((meta.endlessBestFloor ?? 0) > 0) return true;
+  if (Object.values(meta.chapterStarsByDungeonId ?? {}).some((n) => n > 0)) return true;
+  if ((meta.unlockedDungeonIds ?? []).some((id) => !DEFAULT_DUNGEON_IDS.includes(id))) return true;
+  if (meta.roster.some((m) => m.rosterId === TUTORIAL_GRON_ID)) return true;
+  if (meta.roster.some((m) => !TUTORIAL_CAST.has(m.rosterId))) return true;
+  const grassland = meta.clearedNodesByDungeonId?.[TUTORIAL_DUNGEON_ID] ?? 0;
+  if (grassland > TUTORIAL_GRASSLAND_NODE_CAP) return true;
+  for (const [id, n] of Object.entries(meta.clearedNodesByDungeonId ?? {})) {
+    if (id !== TUTORIAL_DUNGEON_ID && n > 0) return true;
   }
   return false;
 }
 
 export function hydrateTutorial(meta: MetaState): void {
   if (meta.tutorialStep === TutorialStep.COMPLETED) return;
+  if (hasLeftTutorial(meta)) {
+    meta.tutorialStep = TutorialStep.COMPLETED;
+    return;
+  }
   if (meta.tutorialStep != null && meta.tutorialStep > TutorialStep.NOT_STARTED) return;
   if (isVeteranMeta(meta)) {
     meta.tutorialStep = TutorialStep.COMPLETED;

@@ -3,7 +3,7 @@ import { PersistService } from '@/core/PersistService';
 import { safeStorageGet, safeStorageSet } from '@/platform/wxPlatform';
 import type { MetaState, MvpGameState, RunState } from '@/game/state/GameState';
 import { emptyRunStarStats } from '@/data/chapterStars';
-import { createInitialMeta, createInitialState, META_VERSION } from '@/game/state/GameState';
+import { createInitialState, META_VERSION } from '@/game/state/GameState';
 import { hydrateChapterProgress } from '@/game/state/ProgressManager';
 import { hydrateTutorial } from '@/game/tutorial/TutorialManager';
 import { getDungeonDef } from '@/data/dungeonCatalog';
@@ -312,9 +312,8 @@ export const SaveManager = {
   loadOrCreate(): MvpGameState {
     const loaded = SaveManager.load();
     if (loaded) return loaded;
-    const fresh = createInitialState();
-    // 确保新档落地（含初始 meta）
-    SaveManager.saveMeta(fresh.meta ?? createInitialMeta());
-    return fresh;
+    // 空档先不落盘。清缓存后立刻写入新档会标 dirty，云同步迟到时可能把老档盖掉，
+    // 还会把已经打过的人重新推进新手指引。
+    return createInitialState();
   },
 };
