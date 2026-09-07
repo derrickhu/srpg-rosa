@@ -180,6 +180,10 @@
         "type": "file"
       },
       {
+        "value": "**/.DS_Store",
+        "type": "glob"
+      },
+      {
         "value": "fonts/.charset.txt",
         "type": "file"
       },
