@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CHARACTER_DEFS } from '@/data/characterCatalog';
+import { CHARACTER_DEFS, STARTER_CHARACTER_IDS } from '@/data/characterCatalog';
 import { SANDBOX_DUNGEON_ID } from '@/data/sandboxLab';
 import { applyVictory, startRun } from '../ProgressManager';
 import { createInitialState } from '../GameState';
@@ -11,7 +11,7 @@ describe('GM 作弊', () => {
     const state = createInitialState();
     const added = gmUnlockAllCharacters(state);
     expect(state.meta.roster).toHaveLength(CHARACTER_DEFS.length);
-    expect(added).toBe(CHARACTER_DEFS.length - 3);
+    expect(added).toBe(CHARACTER_DEFS.length - STARTER_CHARACTER_IDS.length);
     expect(gmUnlockAllCharacters(state)).toBe(0);
   });
 

@@ -15,34 +15,15 @@ declare const tt: any;
 const _api: any = typeof wx !== 'undefined' ? wx : typeof tt !== 'undefined' ? tt : null;
 if (_api) {
   try {
-    // 创建 2D 离屏 canvas 的辅助函数
-    // 优先 createOffscreenCanvas({ type:'2d' }) 确保真机 canvas 2D 上下文可用；
-    // 部分设备（如鸿蒙/旧版微信）可能不支持，安全降级到 createCanvas()
-    let _useOffscreen = false;
-    try {
-      if (typeof _api.createOffscreenCanvas === 'function') {
-        const _test = _api.createOffscreenCanvas({ type: '2d', width: 1, height: 1 });
-        const _testCtx = _test.getContext('2d');
-        if (_testCtx) _useOffscreen = true;
-      }
-    } catch (_) { /* 不支持则回退 */ }
-    console.log('[pixiPatch] createOffscreenCanvas 可用:', _useOffscreen);
-
+    // 不要探测 createOffscreenCanvas。API 在华为鸿蒙上经常“函数在、一调就原生崩”，
+    // try/catch 接不住，游戏卡在微信开屏。createCanvas() 全端可用。
     const _create2DCanvas = (w?: number, h?: number): any => {
-      let c: any;
-      if (_useOffscreen) {
-        try {
-          c = _api.createOffscreenCanvas({ type: '2d', width: w || 1, height: h || 1 });
-        } catch (_) {
-          c = _api.createCanvas();
-        }
-      } else {
-        c = _api.createCanvas();
-      }
+      const c = _api.createCanvas();
       if (w !== undefined) c.width = w;
       if (h !== undefined) c.height = h;
       return c;
     };
+    console.log('[pixiPatch] 2D canvas 走 createCanvas，不探测 OffscreenCanvas');
 
     settings.ADAPTER = {
       createCanvas: _create2DCanvas,

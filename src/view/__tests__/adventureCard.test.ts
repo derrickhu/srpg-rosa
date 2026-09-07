@@ -1,11 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import { DUNGEON_DEFS } from '@/data/dungeonCatalog';
+import { ELITE_REPEAT_SOUL, eliteDungeonOf } from '@/data/eliteCatalog';
 import { ENDLESS_DUNGEON_ID } from '@/data/endlessCatalog';
 import { adventureChapterList, SANDBOX_DUNGEON_ID } from '@/data/sandboxLab';
 import { DUNGEON_REPEAT_SOUL, startRun } from '@/game/state/ProgressManager';
 import { createInitialMeta, createInitialState, createRunState } from '@/game/state/GameState';
 import { C, mix } from '@/view/mvpTheme';
-import { chapterRewardModel, defaultAdventureChapterIndex } from '@/view/AdventureView';
+import {
+  adventureActiveDef,
+  adventureCardTitle,
+  chapterRewardModel,
+  defaultAdventureChapterIndex,
+  eliteModeUnlocked,
+} from '@/view/AdventureView';
 
 const DUNGEON = DUNGEON_DEFS[0]!;
 
@@ -41,6 +48,28 @@ describe('章节卡奖励分行', () => {
     const m = chapterRewardModel(DUNGEON, meta);
     expect(m.starFilled).toBe(3);
     expect(m.stars.every((s) => s.claimed)).toBe(true);
+  });
+
+  it('精英本本关奖励是 5，不和主线 3 串', () => {
+    const elite = eliteDungeonOf(DUNGEON.id)!;
+    const meta = createInitialMeta();
+    const m = chapterRewardModel(elite, meta);
+    expect(m.repeatSoul).toBe(ELITE_REPEAT_SOUL);
+    expect(m.firstClaimed).toBe(false);
+    expect(m.pendingNodeFirstClears).toBe(1);
+  });
+});
+
+describe('冒险卡普通 / 精英开关', () => {
+  it('未通关不能开精英；通关后奖励井改读精英本', () => {
+    const meta = createInitialMeta();
+    expect(eliteModeUnlocked(meta, DUNGEON.id)).toBe(false);
+    expect(adventureActiveDef(DUNGEON, false).id).toBe(DUNGEON.id);
+    expect(adventureActiveDef(DUNGEON, true).id).toBe('elite_grassland');
+    meta.clearedDungeonIds.push(DUNGEON.id);
+    expect(eliteModeUnlocked(meta, DUNGEON.id)).toBe(true);
+    expect(adventureCardTitle(0, DUNGEON.name, true)).toBe('第 1 章 · 草原战线 · 精英');
+    expect(adventureCardTitle(0, DUNGEON.name, false)).toBe('第 1 章 · 草原战线');
   });
 });
 
@@ -82,6 +111,13 @@ describe('冒险页默认章节', () => {
     s.parkedRun = createRunState(DUNGEON_DEFS[1]!.id, party(s));
     s.run = createRunState(ENDLESS_DUNGEON_ID, party(s));
     expect(defaultAdventureChapterIndex(s, chapters)).toBe(1);
+  });
+
+  it('进行中的精英局：停在对应主线卡，不另开一张', () => {
+    const s = createInitialState();
+    s.meta.clearedDungeonIds.push(DUNGEON_DEFS[0]!.id);
+    startRun(s, 'elite_grassland', party(s));
+    expect(defaultAdventureChapterIndex(s, chapters)).toBe(0);
   });
 
   it('正式章全通：停在最后一章，不落到试炼卡', () => {

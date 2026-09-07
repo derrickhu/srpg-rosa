@@ -17,19 +17,29 @@ export interface PixiHost {
   ticker: PIXI.Ticker;
 }
 
-function getWxInfo(): { w: number; h: number; dpr: number } {
+/** 华为 / 鸿蒙 / 安卓：WebGL 开抗锯齿或 3x DPR 容易建上下文失败或挂死，卡在微信开屏。 */
+export function isAndroidLikeSystem(si: { platform?: unknown; brand?: unknown } | null | undefined): boolean {
+  const p = String(si?.platform ?? '').toLowerCase();
+  const b = String(si?.brand ?? '').toLowerCase();
+  return p === 'android' || p === 'ohos' || p === 'harmony' || p === 'harmonyos'
+    || b.includes('huawei') || b.includes('honor');
+}
+
+function getWxInfo(): { w: number; h: number; dpr: number; androidLike: boolean } {
   if (typeof wx === 'undefined') {
-    return { w: 375, h: 667, dpr: 2 };
+    return { w: 375, h: 667, dpr: 2, androidLike: false };
   }
   try {
     const si = wx.getSystemInfoSync();
     const w = Math.max(2, si.windowWidth || si.screenWidth || 375);
     const h = Math.max(2, si.windowHeight || si.screenHeight || 667);
-    const dpr = Math.max(1, Math.min(si.pixelRatio || 2, 3));
-    return { w, h, dpr };
+    const androidLike = isAndroidLikeSystem(si);
+    const dprCap = androidLike ? 2 : 3;
+    const dpr = Math.max(1, Math.min(si.pixelRatio || 2, dprCap));
+    return { w, h, dpr, androidLike };
   } catch (e) {
     console.warn('[getWxInfo]', e);
-    return { w: 375, h: 667, dpr: 2 };
+    return { w: 375, h: 667, dpr: 2, androidLike: false };
   }
 }
 
@@ -80,9 +90,10 @@ function patchEventSystemCoords(renderer: PIXI.IRenderer, screenW: number, scree
  * 创建可渲染的 Pixi 宿主；若 Application 缺 ticker/renderer 则降级。
  */
 export function createPixiHost(canvas: PIXI.ICanvas): PixiHost {
-  const { w, h, dpr } = getWxInfo();
+  const { w, h, dpr, androidLike } = getWxInfo();
   applyCanvasSize(canvas, w * dpr, h * dpr);
-  console.log(`[createPixiHost] logical=${w}x${h} dpr=${dpr} canvas=${w * dpr}x${h * dpr}`);
+  const antialias = !androidLike;
+  console.log(`[createPixiHost] logical=${w}x${h} dpr=${dpr} canvas=${w * dpr}x${h * dpr} antialias=${antialias}`);
 
   let app: PIXI.Application | null = null;
   try {
@@ -91,7 +102,7 @@ export function createPixiHost(canvas: PIXI.ICanvas): PixiHost {
       width: w,
       height: h,
       backgroundColor: 0x2a3548,
-      antialias: true,
+      antialias,
       resolution: dpr,
       autoDensity: true,
     });
@@ -117,7 +128,7 @@ export function createPixiHost(canvas: PIXI.ICanvas): PixiHost {
     width: w,
     height: h,
     backgroundColor: 0x2a3548,
-    antialias: true,
+    antialias,
     resolution: dpr,
   });
   const stage = new PIXI.Container();

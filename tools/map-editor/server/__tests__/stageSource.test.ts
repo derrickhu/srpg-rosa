@@ -39,18 +39,18 @@ describe('stagesMvp 源码读写', () => {
     };
   };
 
-  it('解析出全部 29 关，且章节分组与 CHAPTERS 一致', () => {
+  it('解析出全部主线关，且章节分组与 CHAPTERS 一致', () => {
     const keys = Object.keys(parsed.stages);
-    expect(keys.length).toBe(29);
-    expect(parsed.chapters.map((c) => c.length)).toEqual([4, 5, 6, 7, 7]);
+    expect(keys.length).toBe(31);
+    expect(parsed.chapters.map((c) => c.length)).toEqual([3, 5, 6, 8, 8, 1]);
     // CHAPTERS 里引用的每个常量都必须真的存在，否则编辑器会开出一个空白关卡
     for (const row of parsed.chapters) {
       for (const key of row) expect(parsed.stages[key], `${key} 未解析到`).toBeDefined();
     }
     const map = stageIndexMap(parsed.chapters);
     expect(map.c1_1).toEqual({ chapter: 1, indexInChapter: 1, globalIndex: 0 });
-    // 第二章第一关的全局下标接在第一章 4 关之后
-    expect(map.c2_1!.globalIndex).toBe(4);
+    // 第二章第一关的全局下标接在第一章 3 关之后
+    expect(map.c2_1!.globalIndex).toBe(3);
   });
 
   it('每关都解析出矩形地形和至少一个敌人', () => {
@@ -84,7 +84,7 @@ describe('stagesMvp 源码读写', () => {
     expect(parsed.stages.c5_1!.enemies.every((e) => e.template === 'drake')).toBe(true);
     // 裸字面量分支仍要有覆盖：Boss / 精英是手写对象（要挂 name / boss / skillSkin），
     // 认成 null 才对。杂兵全走模板之后，这是唯一还会走「形式三」的写法。
-    expect(parsed.stages.c1_4!.enemies.map((e) => e.template))
+    expect(parsed.stages.c6_1!.enemies.map((e) => e.template))
       .toEqual([null, 'rookie', 'rookie']);
   });
 

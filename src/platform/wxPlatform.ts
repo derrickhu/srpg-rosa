@@ -244,13 +244,30 @@ class PlatformClass {
         resolve('');
         return;
       }
+      let settled = false;
+      const finish = (code: string): void => {
+        if (settled) return;
+        settled = true;
+        resolve(code);
+      };
+      const timer = setTimeout(() => {
+        console.warn('[Platform] wx.login 超时，跳过云登录');
+        finish('');
+      }, 4000);
       try {
         wx.login({
-          success: (res: any) => resolve(res?.code || ''),
-          fail: () => resolve(''),
+          success: (res: any) => {
+            clearTimeout(timer);
+            finish(res?.code || '');
+          },
+          fail: () => {
+            clearTimeout(timer);
+            finish('');
+          },
         });
       } catch {
-        resolve('');
+        clearTimeout(timer);
+        finish('');
       }
     });
   }

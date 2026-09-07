@@ -1,6 +1,12 @@
 import * as PIXI from 'pixi.js';
 import { makeText } from '@/theme/typography';
 import { DUNGEON_DEFS, getDungeonDef, type DungeonDef } from '@/data/dungeonCatalog';
+import {
+  ELITE_REPEAT_SOUL,
+  eliteDungeonOf,
+  isEliteDungeon,
+  officialDungeonIdOfElite,
+} from '@/data/eliteCatalog';
 import { Platform } from '@/platform/wxPlatform';
 import { isStarBit, starCondLabel, LEGACY_CLEARED_STAR_MASK } from '@/data/chapterStars';
 import {
@@ -47,6 +53,8 @@ export interface AdventureCallbacks {
   onChanged: () => void;
   /** 记住章节页码，Tab 切换回来不丢 */
   onChapterChange: (index: number) => void;
+  /** 记住普通 / 精英开关 */
+  onEliteModeChange?: (elite: boolean) => void;
 }
 
 export interface ChapterStarRewardView {
@@ -87,10 +95,32 @@ export function chapterRewardModel(
   return {
     stars,
     starFilled: stars.filter((s) => s.claimed).length,
-    repeatSoul: DUNGEON_REPEAT_SOUL,
+    repeatSoul: isEliteDungeon(d.id) ? ELITE_REPEAT_SOUL : DUNGEON_REPEAT_SOUL,
     firstClaimed: chapterClearedForSweep(meta, d.id),
     pendingNodeFirstClears: d.nodes.filter((n, i) => n.kind !== 'shop' && i >= doneNodes).length,
   };
+}
+
+export const ELITE_LOCKED_TOAST = '通关本章后开启';
+
+/** 通关对应主线章后，这张卡才开得了精英 */
+export function eliteModeUnlocked(
+  meta: Pick<MetaState, 'clearedDungeonIds'>,
+  officialId: string,
+): boolean {
+  return chapterClearedForSweep(meta, officialId) && !!eliteDungeonOf(officialId);
+}
+
+/** 开关打开且本章已通关时，奖励井 / 底钮读精英本 */
+export function adventureActiveDef(official: DungeonDef, eliteMode: boolean): DungeonDef {
+  if (!eliteMode || isSandboxDungeon(official.id)) return official;
+  return eliteDungeonOf(official.id) ?? official;
+}
+
+export function adventureCardTitle(chapterIndex: number, officialName: string, elite: boolean): string {
+  return elite
+    ? `第 ${chapterIndex + 1} 章 · ${officialName} · 精英`
+    : `第 ${chapterIndex + 1} 章 · ${officialName}`;
 }
 
 /**
@@ -104,7 +134,8 @@ export function defaultAdventureChapterIndex(
   if (chapters.length === 0) return 0;
   const run = adventureRunOf(state);
   if (run) {
-    const i = chapters.findIndex((d) => d.id === run.dungeonId);
+    const officialId = officialDungeonIdOfElite(run.dungeonId) ?? run.dungeonId;
+    const i = chapters.findIndex((d) => d.id === officialId);
     if (i >= 0) return i;
   }
   for (let i = 0; i < chapters.length; i++) {
@@ -504,6 +535,7 @@ export function createAdventureView(
   chapterIndex: number,
   cb: AdventureCallbacks,
   screen: { screenWidth: number; screenHeight: number },
+  eliteModeInit = false,
 ): PIXI.Container {
   const W = screen.screenWidth;
   const H = screen.screenHeight;
@@ -512,6 +544,7 @@ export function createAdventureView(
 
   const chapters = adventureChapterList(DUNGEON_DEFS, Platform.isGmTools);
   let chapter = Math.max(0, Math.min(chapterIndex, chapters.length - 1));
+  let eliteMode = eliteModeInit;
 
   // 顶栏走四页共用的那一份，胶囊避让在它内部处理。
   const header = createHubHeader({
@@ -535,10 +568,74 @@ export function createAdventureView(
     return chapters[chapter]!;
   }
 
+  function viewingEliteOf(d: DungeonDef): boolean {
+    return eliteMode && eliteModeUnlocked(state.meta, d.id);
+  }
+
+  function activeDefOf(d: DungeonDef): DungeonDef {
+    return adventureActiveDef(d, viewingEliteOf(d));
+  }
+
+  function setEliteMode(next: boolean): void {
+    const d = currentDef();
+    if (isSandboxDungeon(d.id)) return;
+    if (next && !eliteModeUnlocked(state.meta, d.id)) {
+      showToast(root, ELITE_LOCKED_TOAST, { screenWidth: W, deny: true });
+      return;
+    }
+    if (eliteMode === next) return;
+    eliteMode = next;
+    cb.onEliteModeChange?.(next);
+    refreshCard();
+  }
+
+  function buildModeToggle(d: DungeonDef): PIXI.Container | null {
+    if (isSandboxDungeon(d.id) || !eliteDungeonOf(d.id)) return null;
+    const unlocked = eliteModeUnlocked(state.meta, d.id);
+    const on = viewingEliteOf(d);
+    const box = new PIXI.Container();
+    const w = 168;
+    const h = 28;
+    const bg = flatFill(w, h, 10, C.paper, 0.4);
+    box.addChild(bg);
+    const half = w / 2;
+    const mkSeg = (label: string, elite: boolean, x: number): void => {
+      const active = elite === on;
+      const gray = elite && !unlocked;
+      if (active) {
+        const pill = flatFill(half - 4, h - 4, 8, mix(C.primary, C.paper, gray ? 0.45 : 0.15));
+        pill.x = x + 2;
+        pill.y = 2;
+        box.addChild(pill);
+      }
+      const tx = makeText(label, 'caption', {
+        fill: gray ? C.muted : C.ink,
+        fontSize: 13,
+      });
+      tx.anchor.set(0.5);
+      tx.x = x + half / 2;
+      tx.y = h / 2;
+      box.addChild(tx);
+      const hit = new PIXI.Graphics();
+      hit.beginFill(0xffffff, 0.001);
+      hit.drawRoundedRect(x, 0, half, h, 8);
+      hit.endFill();
+      hit.eventMode = 'static';
+      hit.cursor = 'pointer';
+      attachPress(hit);
+      hit.on('pointertap', () => setEliteMode(elite));
+      box.addChild(hit);
+    };
+    mkSeg('普通', false, 0);
+    mkSeg('精英', true, half);
+    return box;
+  }
+
   function buildChapterCard(d: DungeonDef): PIXI.Container {
     const c = new PIXI.Container();
     const unlocked = isDungeonUnlocked(state.meta, d.id);
-    const cleared = state.meta.clearedDungeonIds.includes(d.id);
+    const viewingElite = viewingEliteOf(d);
+    const cleared = state.meta.clearedDungeonIds.includes(viewingElite ? activeDefOf(d).id : d.id);
 
     const cardW = W - 48;
     const cardX = 24;
@@ -559,7 +656,7 @@ export function createAdventureView(
     c.addChild(border);
 
     const title = makeText(
-      isSandboxDungeon(d.id) ? `测试 · ${d.name}` : `第 ${chapter + 1} 章 · ${d.name}`,
+      isSandboxDungeon(d.id) ? `测试 · ${d.name}` : adventureCardTitle(chapter, d.name, viewingElite),
       'title',
       { fill: C.ink, fontSize: 18 },
     );
@@ -587,12 +684,20 @@ export function createAdventureView(
       c.addChild(tick);
     }
 
+    const toggle = buildModeToggle(d);
+    if (toggle) {
+      toggle.x = W / 2 - toggle.width / 2;
+      toggle.y = cardY + 16;
+      c.addChild(toggle);
+    }
+
     const artH = cardH * ART_RATIO;
     const bodyTop = cardY + artH;
     const innerL = cardX + 16;
     const innerW = cardW - 32;
 
-    const rewards = isSandboxDungeon(d.id) ? null : chapterRewardModel(d, state.meta);
+    const rewardDef = activeDefOf(d);
+    const rewards = isSandboxDungeon(d.id) ? null : chapterRewardModel(rewardDef, state.meta);
 
     if (unlocked) {
       if (rewards) {
@@ -642,7 +747,9 @@ export function createAdventureView(
     const adventure = adventureRunOf(state);
     if (adventure) {
       const runD = getDungeonDef(adventure.dungeonId);
-      const label = adventure.dungeonId === d.id ? '继续冒险' : `继续冒险（${runD?.name ?? ''}）`;
+      const sameLane = adventure.dungeonId === d.id
+        || officialDungeonIdOfElite(adventure.dungeonId) === d.id;
+      const label = sameLane ? '继续冒险' : `继续冒险（${runD?.name ?? ''}）`;
       const btn = makeButton(label, () => cb.onContinueRun(), {
         variant: 'primary', width: W - 96, height: 48, fontSize: 17, radius: 14,
       });
@@ -680,8 +787,10 @@ export function createAdventureView(
       return;
     }
 
-    const cleared = chapterClearedForSweep(state.meta, d.id);
-    const left = sweepLeftToday(state.meta, d.id);
+    const action = activeDefOf(d);
+    const viewingElite = viewingEliteOf(d);
+    const cleared = chapterClearedForSweep(state.meta, action.id);
+    const left = sweepLeftToday(state.meta, action.id);
     const note = cleared
       ? (left > 0 ? `今日还可扫荡 ${left} 次` : '今日扫荡已用完')
       : '';
@@ -697,9 +806,9 @@ export function createAdventureView(
       actionLayer.addChild(noteTx);
     }
 
-    const start = (): void => cb.onStartRun(d.id, state.meta.roster.map((m) => m.rosterId));
+    const start = (): void => cb.onStartRun(action.id, state.meta.roster.map((m) => m.rosterId));
     if (!cleared) {
-      const btn = makeButton('开  始', start, {
+      const btn = makeButton(viewingElite ? '挑战精英' : '开  始', start, {
         variant: 'primary', width: W - 96, height: 48, fontSize: 18, radius: 14,
       });
       btn.x = 48; btn.y = btnY;
@@ -709,7 +818,7 @@ export function createAdventureView(
 
     const gap = 8;
     const btnW = Math.floor((W - 96 - gap) / 2);
-    const canSweepNow = canSweepChapter(state, d.id);
+    const canSweepNow = canSweepChapter(state, action.id);
     const startBtn = makeButton('开  始', start, {
       variant: canSweepNow ? 'secondary' : 'primary',
       width: btnW, height: 48, fontSize: 16, radius: 14,
@@ -718,7 +827,7 @@ export function createAdventureView(
     actionLayer.addChild(startBtn);
 
     const sweepBtn = makeButton(canSweepNow ? `扫荡 (${left})` : '扫荡 (0)', () => {
-      cb.onSweepChapter(d.id);
+      cb.onSweepChapter(action.id);
     }, {
       variant: canSweepNow ? 'primary' : 'secondary',
       disabled: !canSweepNow,
@@ -727,6 +836,17 @@ export function createAdventureView(
     sweepBtn.x = 48 + btnW + gap;
     sweepBtn.y = btnY;
     actionLayer.addChild(sweepBtn);
+  }
+
+  function refreshCard(): void {
+    const next = buildChapterCard(currentDef());
+    chapterLayer.removeChildren();
+    if (currentCard && !currentCard.destroyed) {
+      currentCard.destroy({ children: true });
+    }
+    currentCard = next;
+    chapterLayer.addChild(currentCard);
+    rebuildActions();
   }
 
   let currentCard = buildChapterCard(currentDef());

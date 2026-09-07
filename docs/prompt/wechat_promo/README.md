@@ -7,6 +7,8 @@
 | 横版宣传图 | 1280×720 | ≤ 200 KB | JPG |
 | 竖版宣传图 | 720×1280 | < 200 KB | JPG |
 | 通用素材封面 / banner | 650×250 | < 80 KB | JPG |
+| 竖版视频封面 | 1080×1920 | < 500 KB | JPG |
+| 竖版宣传视频 | 1080×1920，20–30 秒 | < 50 MB | MP4 H.264 |
 
 母版 / 成品放仓库外，确认前不入库：
 
@@ -25,6 +27,8 @@
 | `landscape_03_party` | 全队出击 cinematic | 全队出击 | 轻战棋也能打到爽 |
 | `cover_banner` | 通用素材封面 | 无尽纹章 | 轻战棋也能打到爽 |
 | `video_cover_portrait` | 竖版视频封面（loading + 官方标题） | 无尽纹章 | — |
+| `video_cover_loading_forest_fight` | 竖版视频封面（备选 loading 密林遭遇 + 标题） | 无尽纹章 | — |
+| `video_cover_loading_melee_circle` | 竖版视频封面（备选 loading 草原围殴 + 标题） | 无尽纹章 | — |
 
 成品校验（2026-09-07）：
 
@@ -38,3 +42,5 @@
 | `landscape_03_party_1280x720.jpg` | 1280×720 | 192.2 KB | 过 |
 | `cover_banner_650x250.jpg` | 650×250 | 78.8 KB | 过 |
 | `video_cover_portrait_1080x1920.jpg` | 1080×1920 | 361.3 KB | 过（竖版视频封面，无 200KB 上限） |
+| `video_cover_loading_forest_fight_1080x1920.jpg` | 1080×1920 | 474.3 KB | 过（< 500 KB） |
+| `video_cover_loading_melee_circle_1080x1920.jpg` | 1080×1920 | 441.5 KB | 过 |

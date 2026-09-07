@@ -1,6 +1,7 @@
 import type { TerrainId } from '@/battle/types';
 import { CHAPTER_STAGE_INDICES, STAGES_MVP, type StageDefMvp } from '@/data/stagesMvp';
 import { ENDLESS_DUNGEON, ENDLESS_DUNGEON_ID } from '@/data/endlessCatalog';
+import { getEliteDungeonDef } from '@/data/eliteCatalog';
 import { SANDBOX_DUNGEON, SANDBOX_DUNGEON_ID } from '@/data/sandboxLab';
 import { getTerrainSpec } from '@/data/terrainSpec';
 import type { ChapterStars } from '@/data/chapterStars';
@@ -411,9 +412,11 @@ const DUNGEON_BY_ID: Record<string, DungeonDef> = Object.fromEntries(
 );
 
 export function getDungeonDef(id: string): DungeonDef | undefined {
-  // 无尽试炼 / 特效试炼都不进 DUNGEON_DEFS（那是冒险页正式章节表）
+  // 无尽 / 试炼 / 精英都不进 DUNGEON_DEFS（那是冒险页正式章节表）
   if (id === ENDLESS_DUNGEON_ID) return ENDLESS_DUNGEON;
   if (id === SANDBOX_DUNGEON_ID) return SANDBOX_DUNGEON;
+  const elite = getEliteDungeonDef(id);
+  if (elite) return elite;
   return DUNGEON_BY_ID[id];
 }
 

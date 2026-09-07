@@ -4,7 +4,7 @@ import { safeStorageGet, safeStorageSet } from '@/platform/wxPlatform';
 import type { MetaState, MvpGameState, RunState } from '@/game/state/GameState';
 import { emptyRunStarStats } from '@/data/chapterStars';
 import { createInitialMeta, createInitialState, META_VERSION } from '@/game/state/GameState';
-import { hydrateChapterStars } from '@/game/state/ProgressManager';
+import { hydrateChapterProgress } from '@/game/state/ProgressManager';
 import { hydrateTutorial } from '@/game/tutorial/TutorialManager';
 import { getDungeonDef } from '@/data/dungeonCatalog';
 import { isEndlessDungeon } from '@/data/endlessCatalog';
@@ -170,7 +170,7 @@ function normalizeMeta(meta: MetaState): MetaState {
     chapterStarsByDungeonId: meta.chapterStarsByDungeonId ?? {},
     tutorialStep: meta.tutorialStep,
   };
-  hydrateChapterStars(next);
+  hydrateChapterProgress(next);
   hydrateTutorial(next);
   return next;
 }

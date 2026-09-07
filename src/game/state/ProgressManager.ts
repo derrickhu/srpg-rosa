@@ -4,6 +4,12 @@ import {
 } from '@/data/characterCatalog';
 import { DUNGEON_DEFS, getDungeonDef } from '@/data/dungeonCatalog';
 import {
+  ELITE_DUNGEON_DEFS,
+  ELITE_FIRST_CLEAR_SOUL,
+  ELITE_REPEAT_SOUL,
+  isEliteDungeon,
+} from '@/data/eliteCatalog';
+import {
   LEGACY_CLEARED_STAR_MASK,
   emptyRunStarStats,
   evaluateChapterStars,
@@ -69,6 +75,7 @@ export const BOSS_FIRST_CLEAR_SOUL = 5;
  * 刷的成本就是完整打一遍，而不是进副本赢两场就跑。
  */
 export const DUNGEON_REPEAT_SOUL = 3;
+export { ELITE_FIRST_CLEAR_SOUL, ELITE_REPEAT_SOUL };
 
 export function recordRunBattleStats(
   run: RunState,
@@ -110,6 +117,28 @@ export function hydrateChapterStars(meta: MetaState): Record<string, number> {
   return stars;
 }
 
+/**
+ * 主线插关后的老档：已经通关的章把新节点算作已首通，卡片上不冒「还差本关奖励」。
+ * 同时把对应精英本写进解锁表。
+ */
+export function hydrateChapterProgress(meta: MetaState): void {
+  hydrateChapterStars(meta);
+  for (const d of DUNGEON_DEFS) {
+    if (!meta.clearedDungeonIds.includes(d.id)) continue;
+    const done = meta.clearedNodesByDungeonId[d.id] ?? 0;
+    if (done < d.nodes.length) {
+      meta.clearedNodesByDungeonId[d.id] = d.nodes.length;
+    }
+  }
+  for (const e of ELITE_DUNGEON_DEFS) {
+    if (e.unlock.kind !== 'clearDungeon') continue;
+    if (!meta.clearedDungeonIds.includes(e.unlock.dungeonId)) continue;
+    if (!meta.unlockedDungeonIds.includes(e.id)) {
+      meta.unlockedDungeonIds.push(e.id);
+    }
+  }
+}
+
 export interface ChapterClearPreview {
   soul: number;
   firstClear: boolean;
@@ -123,10 +152,11 @@ function previewFrom(
   stats: RunStarStats,
   claimedMask: number,
   firstClear: boolean,
+  repeatSoul = DUNGEON_REPEAT_SOUL,
 ): ChapterClearPreview {
   if (!stars || stars.length === 0) {
     return {
-      soul: firstClear ? 0 : DUNGEON_REPEAT_SOUL,
+      soul: firstClear ? 0 : repeatSoul,
       firstClear,
       newStars: [],
       labels: [],
@@ -146,7 +176,7 @@ function previewFrom(
       labels.push(starCondLabel(s.cond));
     }
   });
-  if (!firstClear) soul += DUNGEON_REPEAT_SOUL;
+  if (!firstClear) soul += repeatSoul;
   return { soul, firstClear, newStars, labels, starMask: next };
 }
 
@@ -155,10 +185,11 @@ export function previewChapterClear(state: MvpGameState, dungeonId: string): Cha
   const firstClear = !state.meta.clearedDungeonIds.includes(dungeonId);
   const claimed = chapterStarMask(state.meta, dungeonId);
   const stats = state.run?.starStats ?? emptyRunStarStats();
+  const repeat = isEliteDungeon(dungeonId) ? ELITE_REPEAT_SOUL : DUNGEON_REPEAT_SOUL;
   if (!d?.stars) {
-    return previewFrom(undefined, stats, claimed, firstClear);
+    return previewFrom(undefined, stats, claimed, firstClear, repeat);
   }
-  return previewFrom(d.stars, stats, claimed, firstClear);
+  return previewFrom(d.stars, stats, claimed, firstClear, repeat);
 }
 
 /** 进入副本：建立 run，定位首节点 */
@@ -200,7 +231,9 @@ export function applyVictory(state: MvpGameState): void {
   // 顺序要紧：`markNodeCleared` 会把这个节点记成已通过，判首通必须在它之前
   const firstClear = isNodeFirstClear(state.meta, run.dungeonId, run.nodeIndex);
   const soul = firstClear
-    ? (node.kind === 'boss' ? BOSS_FIRST_CLEAR_SOUL : NODE_FIRST_CLEAR_SOUL)
+    ? (isEliteDungeon(run.dungeonId)
+      ? ELITE_FIRST_CLEAR_SOUL
+      : (node.kind === 'boss' ? BOSS_FIRST_CLEAR_SOUL : NODE_FIRST_CLEAR_SOUL))
     : 0;
   state.meta.metaCurrency += soul;
 
@@ -312,8 +345,9 @@ export function consumeSweep(state: MvpGameState, dungeonId: string): void {
 export function applyChapterSweep(state: MvpGameState, dungeonId: string): { soul: number } {
   if (!canSweepChapter(state, dungeonId)) return { soul: 0 };
   consumeSweep(state, dungeonId);
-  state.meta.metaCurrency += DUNGEON_REPEAT_SOUL;
-  return { soul: DUNGEON_REPEAT_SOUL };
+  const soul = isEliteDungeon(dungeonId) ? ELITE_REPEAT_SOUL : DUNGEON_REPEAT_SOUL;
+  state.meta.metaCurrency += soul;
+  return { soul };
 }
 
 /**
@@ -646,7 +680,7 @@ export function applyDungeonClearUnlocks(meta: MetaState, dungeonId: string): st
   if (!meta.clearedDungeonIds.includes(dungeonId)) {
     meta.clearedDungeonIds.push(dungeonId);
   }
-  for (const dd of DUNGEON_DEFS) {
+  for (const dd of [...DUNGEON_DEFS, ...ELITE_DUNGEON_DEFS]) {
     if (
       dd.unlock.kind === 'clearDungeon' &&
       dd.unlock.dungeonId === dungeonId &&

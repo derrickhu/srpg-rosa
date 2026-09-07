@@ -182,6 +182,8 @@ export const SWORD = 'hero_sword_ray';
 export const BOW = 'hero_bow_hill';
 export const SHIELD = 'hero_shield_gron';
 export const CAVALRY = 'hero_cav_lance';
+export const MAGE = 'hero_mage_aoli';
+export const HEALER = 'hero_healer_mir';
 export const TRIO = [SWORD, BOW, SHIELD];
 
 /**

@@ -26,6 +26,7 @@ describe('微信转发卡片', () => {
     const main = readFileSync('src/main.ts', 'utf8');
     expect(main).toContain("from '@/platform/wxShare'");
     expect(main).toContain('installWxShare()');
+    expect(main).toContain('timeout-300');
     const share = readFileSync('src/platform/wxShare.ts', 'utf8');
     expect(share).toContain('showShareMenu');
     expect(share).toContain('onShareAppMessage');

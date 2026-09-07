@@ -115,12 +115,12 @@ function euid(): string {
  * | 1 草原战线 | 3 |  4 | 高地 | 站上去打得更疼 |
  * | 2 密林深处 | 5 |  7 | 森林、燃烧 | 掩体对双方都生效，而且能烧 |
  * | 3 要塞攻防 | 6 |  8 | 城墙、机关/闸门 | 地形挡视线，而且可以被操作 |
- * | 4 毒沼泥潭 | 7 | 10 | 河流、沼泽 | 走得慢、打得软、还掉血 |
- * | 5 龙岭绝巅 | 7 | 10 | 深渊 | 绝壁切断路线但不挡箭 |
+ * | 4 毒沼泥潭 | 8 | 11 | 河流、沼泽 | 走得慢、打得软、还掉血 |
+ * | 5 龙岭绝巅 | 8 | 11 | 深渊 | 绝壁切断路线但不挡箭 |
  * | 6 血牙祭坛 | 1 |  1 | — | 原第一章末战：血牙酋长 |
  *
  * 节点数由 `dungeonCatalog.buildNodes` 从关数推出（每两场战斗插一个补给点），
- * 3/5/6/7/7/1 关对应 4/7/8/10/10/1 个节点。教学章打完精英即通关，酋长单独成章。
+ * 3/5/6/8/8/1 关对应 4/7/8/11/11/1 个节点。教学章打完精英即通关，酋长单独成章。
  *
  * 推论：一关只能用**它所在章节及更早**登场过的地形。想给第四章的图摆一堵墙可以
  * （城墙第三章就登场了），想给第二章的图摆一条河不行。地形券的售卖章节同理，
@@ -767,14 +767,14 @@ const c3_6: StageBlueprint = {
 
 // ─── Chapter 4: 毒沼泥潭 · 河流 + 沼泽 ───
 //
-// 七关：河道隘口 → 浅滩林隘 → 沼泽初见 → 毒沼围困 → 全宽河道 → 迷雾沼泽 → Boss。
+// 八关：河道隘口 → 浅滩林隘 → 沼泽初见 → 毒沼围困 → 全宽河道 → 迷雾沼泽 → 精英沼语者 → Boss。
 //
 // 这一章的两种地形是同一个动词的两个强度：**地形本身在削你**。
 // 河流让人走得慢（消耗 3）、打得软（攻击 ×0.8），沼泽在此之上每回合还掉 5 血。
 // 前三章的地形都是「站对了有便宜」，这一章第一次出现「站错了持续付账」，
 // 所以商店池在这里转向续航（草药敷治、树皮庇护、攻城战旗、战场祝福）。
 //
-// 这也是节点数第一次到 10 的一章。前三章 5/7/8 个节点是在教东西，
+// 这也是节点数第一次到 11 的一章。前三章 4/7/8 个节点是在教东西，
 // 到这里玩家该学的地形已经齐了，可以开始要求耐力。
 //
 // 敌人换成**本章专属的四只沼生节肢**。它们的共同特点是「叠加持续伤害」：
@@ -921,7 +921,40 @@ const c4_6: StageBlueprint = {
   aiDifficulty: 'hard',
 };
 
+/**
+ * 关：精英 · 沼语者。Boss 前的综合考试，对齐 2/3 章「猎长 / 城卫长」。
+ *
+ * 塔玛只普攻、靠面板压人。毒和沼泽掉血已经由吹箭虫、沼行鳄和地形提供，
+ * 再给精英一招会让失败原因变成「没看懂那一招」，而不是「该集火了」。
+ */
 const c4_7: StageBlueprint = {
+  title: '沼语者',
+  goldReward: 28,
+  terrain: withCells(emptyTerrain(10, 11), [
+    { x: 4, y: 3, t: 'high' }, { x: 5, y: 3, t: 'high' },
+    { x: 2, y: 3, t: 'swamp' }, { x: 3, y: 4, t: 'swamp' },
+    { x: 6, y: 4, t: 'swamp' }, { x: 7, y: 3, t: 'swamp' },
+    { x: 1, y: 5, t: 'forest' }, { x: 8, y: 5, t: 'forest' },
+  ]),
+  enemies: [
+    {
+      defId: 'sword', x: 4, y: 3, uid: euid(),
+      name: '沼语者·塔玛',
+      animSet: 'mirespeaker',
+      // 城卫长是 250/26。这一章 5 人 4 级 + 1.2 缩放，240 血会被秒成 100%。
+      // 有效旋钮是总血量；毒和沼泽已经在扣，攻击只微调。
+      stats: { maxHp: 400, atk: 25, spd: 6 },
+    },
+    mire('bow', 2, 2),
+    mire('cavalry', 7, 2),
+    mire('shield', 3, 1),
+    mire('sword', 5, 1),
+  ],
+  aiDifficulty: 'hard',
+  maxDeploy: 5,
+};
+
+const c4_8: StageBlueprint = {
   title: '沼母',
   goldReward: 32,
   terrain: withCells(emptyTerrain(10, 11), [
@@ -939,13 +972,15 @@ const c4_7: StageBlueprint = {
       // 腐沼瘟息是半径 2 的群体中毒（每人 4 点 ×3 回合），压力来自持续掉血叠沼泽地形，
       // 不是来自单体挨一下有多疼。攻击再高会变成「一发 AoE 秒掉整个后排」。
       //
-      // 和第四、五章的其余数值一样，这组**是没量过的**——这两章没有 `chapter*Sim`
-      // 那样的胜率回归。要动之前先照前三章补一个 sim，别凭手感调。
+      // 调这一组必须重跑 `chapter4Sim`。有效旋钮是总血量，别只加攻击。
       stats: { maxHp: 232, atk: 21, spd: 6 },
       skillSkin: 'mirequeen_miasma',
     },
     mire('cavalry', 5, 3),
-    mire('shield', 4, 1),
+    {
+      ...mire('shield', 4, 1),
+      stats: { maxHp: 130 },
+    },
     mire('bow', 2, 0),
     mire('bow', 7, 0),
     mire('sword', 3, 2),
@@ -957,7 +992,7 @@ const c4_7: StageBlueprint = {
 
 // ─── Chapter 5: 龙岭绝巅 · 深渊 ───
 //
-// 七关：绝壁初见 → 龙岭隘口 → 瓮城窄道 → 双门齐落 → 火山裂谷 → 龙脊峰 → 龙王。
+// 八关：绝壁初见 → 龙岭隘口 → 瓮城窄道 → 双门齐落 → 火山裂谷 → 龙脊峰 → 精英龙裔 → 龙王。
 //
 // 只新增一种地形，而它是靠**和城墙的对比**来定义的：深渊同样不可通行，
 // 但**不挡视线**——箭从裂谷上方飞过去是合理的。于是两种不可通行地形第一次
@@ -967,7 +1002,7 @@ const c4_7: StageBlueprint = {
 // 这一章还把第三章的两关闸门题搬了过来（瓮城窄道、双门齐落）：终章该是复习加压，
 // 而闸门是全游戏唯一「可以被操作」的地形，值得在最后一次用满编阵容重考一遍。
 //
-// 这一章没有难度回归测试（前三章有 `chapter*Sim`），所以数值是没量过的。
+// 调这一章必须重跑 `chapter5Sim`。有效旋钮是总血量，别只加攻击。
 //
 // 敌人换成**本章专属的四只火山生物**。搬过来的两关闸门题也用本章的怪，不留第三章的
 // 兽人守军：终章同屏出现两套阵营美术会冲淡章节辨识度，而「古龙岭的旧关隘被火山生物
@@ -1131,7 +1166,38 @@ const c5_6: StageBlueprint = {
   aiDifficulty: 'hard',
 };
 
+/**
+ * 关：精英 · 龙裔。终章 Boss 前的集火考试。
+ *
+ * 中路深渊切断对冲，卡尔萨站一侧高地。只普攻；火翼蝠和灰烬甲虫复习
+ * 「先打会出手的，别硬啃硬化」。
+ */
 const c5_7: StageBlueprint = {
+  title: '龙裔',
+  goldReward: 34,
+  terrain: withCells(emptyTerrain(10, 11), [
+    { x: 4, y: 4, t: 'abyss' }, { x: 5, y: 4, t: 'abyss' },
+    { x: 3, y: 3, t: 'high' }, { x: 6, y: 3, t: 'high' },
+    { x: 2, y: 5, t: 'forest' }, { x: 7, y: 5, t: 'forest' },
+  ]),
+  enemies: [
+    {
+      defId: 'sword', x: 6, y: 3, uid: euid(),
+      name: '龙裔·卡尔萨',
+      animSet: 'drakekin',
+      // 5 人 5 级 + 1.3 缩放时 250 血接近白给。压力留给切路，攻击不往上堆。
+      stats: { maxHp: 380, atk: 26, spd: 6 },
+    },
+    drake('bow', 3, 2),
+    drake('shield', 7, 2),
+    drakeYoung('shield', 5, 2),
+    drakeYoung('cavalry', 2, 1),
+  ],
+  aiDifficulty: 'hard',
+  maxDeploy: 5,
+};
+
+const c5_8: StageBlueprint = {
   title: '龙王',
   goldReward: 40,
   terrain: withCells(withHighCells(emptyTerrain(11, 12), [
@@ -1151,17 +1217,18 @@ const c5_7: StageBlueprint = {
       // 但**血量给得比攻击克制**：这一关玩家有 5 个上场位，压力主要来自
       // 灭世龙息按最大血量收费（护甲堆不动它），再往上加单体攻击只会变成随机秒人。
       //
-      // 第四、五章没有 `chapter*Sim` 那样的胜率回归，所以这组数字**是没量过的**。
-      // 要动之前先照前三章的做法补一个 sim，别凭手感调——第一章的教训是
-      // Boss 血量 240→242 就能让裸打胜率从 37% 掉到 20%。
-      stats: { maxHp: 260, atk: 26, spd: 6 },
+      // 调这一组必须重跑 `chapter5Sim`。第一章的教训是 Boss 血量 240→242
+      // 就能让裸打胜率从 37% 掉到 20%。有效旋钮是总血量。
+      stats: { maxHp: 215, atk: 24, spd: 6 },
       skillSkin: 'drake_cataclysm',
     },
     drake('cavalry', 5, 3),
-    drake('shield', 4, 2),
-    drake('shield', 6, 2),
+    {
+      ...drake('shield', 4, 2),
+      stats: { maxHp: 125 },
+    },
     drake('bow', 3, 1),
-    drake('bow', 7, 1),
+    drakeYoung('bow', 7, 1),
   ],
   isBoss: true,
   aiDifficulty: 'hard',
@@ -1215,6 +1282,172 @@ const c6_1: StageBlueprint = {
   maxDeploy: 4,
 };
 
+// ─── 精英难度：每章一场再战，追加在主线表后面，不进 CHAPTERS ───
+
+const e1_centurion: StageBlueprint = {
+  title: '百夫长再战',
+  goldReward: 22,
+  terrain: withHighCells(emptyTerrain(9, 10), [
+    { x: 4, y: 3 },
+    { x: 2, y: 5 }, { x: 6, y: 5 },
+  ]),
+  enemies: [
+    {
+      defId: 'sword', x: 4, y: 2, uid: euid(),
+      name: '百夫长·卡格',
+      animSet: 'bloodfang',
+      stats: { maxHp: 220, atk: 26, spd: 6 },
+    },
+    {
+      ...rookie('bow', 2, 1),
+      stats: { maxHp: 60, atk: 21 },
+    },
+    {
+      ...rookie('cavalry', 7, 3),
+      stats: { maxHp: 92, atk: 22 },
+    },
+    {
+      ...rookie('cavalry', 1, 3),
+      stats: { maxHp: 80, atk: 19 },
+    },
+  ],
+  aiDifficulty: 'hard',
+  maxDeploy: 4,
+};
+
+const e2_hunter: StageBlueprint = {
+  title: '猎长再战',
+  goldReward: 24,
+  terrain: withCells(emptyTerrain(9, 10), [
+    { x: 4, y: 3, t: 'high' },
+    { x: 2, y: 2, t: 'forest' }, { x: 6, y: 2, t: 'forest' },
+    { x: 2, y: 6, t: 'forest' }, { x: 6, y: 6, t: 'forest' },
+  ]),
+  enemies: [
+    {
+      defId: 'sword', x: 4, y: 3, uid: euid(),
+      name: '猎长·图伦',
+      animSet: 'torun',
+      stats: { maxHp: 250, atk: 26, spd: 6 },
+    },
+    forest('bow', 2, 2),
+    forest('bow', 6, 2),
+    forest('cavalry', 7, 4),
+  ],
+  aiDifficulty: 'hard',
+  maxDeploy: 4,
+};
+
+const e3_castellan: StageBlueprint = {
+  title: '城卫长再战',
+  goldReward: 26,
+  terrain: withCells(withHighCells(emptyTerrain(10, 11), [{ x: 4, y: 3 }, { x: 5, y: 3 }]), [
+    { x: 3, y: 6, t: 'wall' }, { x: 4, y: 6, t: 'wall' },
+    { x: 6, y: 6, t: 'wall' }, { x: 7, y: 6, t: 'wall' },
+    { x: 5, y: 6, t: 'gate_closed' },
+    { x: 0, y: 8, t: 'lever' },
+  ]),
+  enemies: [
+    {
+      ...garrison('sword', 4, 3),
+      name: '血牙城卫长',
+      animSet: 'castellan',
+      stats: { maxHp: 280, atk: 28 },
+    },
+    garrison('bow', 6, 2),
+    garrison('bow', 3, 2),
+    garrison('shield', 5, 5),
+    garrisonGreen('sword', 2, 4),
+  ],
+  aiDifficulty: 'hard',
+  maxDeploy: 5,
+};
+
+const e4_speaker: StageBlueprint = {
+  title: '沼语者再战',
+  goldReward: 30,
+  terrain: withCells(emptyTerrain(10, 11), [
+    { x: 4, y: 3, t: 'high' }, { x: 5, y: 3, t: 'high' },
+    { x: 2, y: 3, t: 'swamp' }, { x: 3, y: 4, t: 'swamp' },
+    { x: 6, y: 4, t: 'swamp' }, { x: 7, y: 3, t: 'swamp' },
+    { x: 1, y: 5, t: 'forest' }, { x: 8, y: 5, t: 'forest' },
+  ]),
+  enemies: [
+    {
+      defId: 'sword', x: 4, y: 3, uid: euid(),
+      name: '沼语者·塔玛',
+      animSet: 'mirespeaker',
+      stats: { maxHp: 270, atk: 27, spd: 6 },
+    },
+    mire('bow', 2, 2),
+    mire('bow', 7, 1),
+    mire('cavalry', 7, 2),
+    mireYoung('sword', 5, 1),
+  ],
+  aiDifficulty: 'hard',
+  maxDeploy: 5,
+};
+
+const e5_drakekin: StageBlueprint = {
+  title: '龙裔再战',
+  goldReward: 36,
+  terrain: withCells(emptyTerrain(10, 11), [
+    { x: 4, y: 4, t: 'abyss' }, { x: 5, y: 4, t: 'abyss' },
+    { x: 3, y: 3, t: 'high' }, { x: 6, y: 3, t: 'high' },
+    { x: 2, y: 5, t: 'forest' }, { x: 7, y: 5, t: 'forest' },
+  ]),
+  enemies: [
+    {
+      defId: 'sword', x: 6, y: 3, uid: euid(),
+      name: '龙裔·卡尔萨',
+      animSet: 'drakekin',
+      stats: { maxHp: 280, atk: 28, spd: 6 },
+    },
+    drake('bow', 3, 2),
+    drake('bow', 2, 2),
+    drake('shield', 7, 2),
+    drakeYoung('cavalry', 2, 1),
+  ],
+  aiDifficulty: 'hard',
+  maxDeploy: 5,
+};
+
+const e6_chief: StageBlueprint = {
+  title: '酋长再战',
+  goldReward: 28,
+  terrain: withHighCells(emptyTerrain(9, 11), [
+    { x: 4, y: 2 }, { x: 4, y: 3 },
+    { x: 3, y: 7 }, { x: 5, y: 7 },
+  ]),
+  enemies: [
+    {
+      defId: 'sword', x: 4, y: 2, uid: euid(),
+      name: '血牙酋长',
+      animSet: 'bloodfang',
+      stats: { maxHp: 240, atk: 23, spd: 6 },
+      skillSkin: 'bloodfang_roar',
+    },
+    {
+      ...rookie('shield', 4, 4),
+      stats: { maxHp: 118, atk: 11 },
+    },
+    {
+      ...rookie('bow', 2, 2),
+      stats: { maxHp: 58, atk: 17 },
+    },
+    {
+      ...rookie('bow', 6, 2),
+      stats: { maxHp: 52, atk: 16 },
+    },
+  ],
+  aiDifficulty: 'hard',
+  maxDeploy: 4,
+};
+
+const ELITE_BLUEPRINTS: StageBlueprint[] = [
+  e1_centurion, e2_hunter, e3_castellan, e4_speaker, e5_drakekin, e6_chief,
+];
+
 /**
  * 章节 → 关卡，顺序即游戏顺序。这是关卡编号与章节归属的**唯一来源**。
  *
@@ -1233,16 +1466,25 @@ const CHAPTERS: StageBlueprint[][] = [
   [c1_1, c1_2, c1_3],
   [c2_1, c2_2, c2_3, c2_4, c2_5],
   [c3_1, c3_2, c3_3, c3_4, c3_5, c3_6],
-  [c4_1, c4_2, c4_3, c4_4, c4_5, c4_6, c4_7],
-  [c5_1, c5_2, c5_3, c5_4, c5_5, c5_6, c5_7],
+  [c4_1, c4_2, c4_3, c4_4, c4_5, c4_6, c4_7, c4_8],
+  [c5_1, c5_2, c5_3, c5_4, c5_5, c5_6, c5_7, c5_8],
   [c6_1],
 ];
 
-export const STAGES_MVP: StageDefMvp[] = CHAPTERS.flat().map(({ title, ...rest }, i) => ({
-  id: i + 1,
-  name: `第 ${i + 1} 关 · ${title}`,
-  ...rest,
-}));
+function toStages(blueprints: readonly StageBlueprint[], startId: number): StageDefMvp[] {
+  return blueprints.map(({ title, ...rest }, i) => ({
+    id: startId + i,
+    name: `第 ${startId + i} 关 · ${title}`,
+    ...rest,
+  }));
+}
+
+const OFFICIAL_STAGES = toStages(CHAPTERS.flat(), 1);
+
+export const STAGES_MVP: StageDefMvp[] = [
+  ...OFFICIAL_STAGES,
+  ...toStages(ELITE_BLUEPRINTS, OFFICIAL_STAGES.length + 1),
+];
 
 /**
  * 每章占用的 `STAGES_MVP` 下标，供 `dungeonCatalog` 组装节点。
@@ -1253,3 +1495,8 @@ export const CHAPTER_STAGE_INDICES: readonly (readonly number[])[] = (() => {
   let next = 0;
   return CHAPTERS.map((ch) => ch.map(() => next++));
 })();
+
+/** 精英再战在 `STAGES_MVP` 里的下标，主线 `CHAPTERS` 不含这些关 */
+export const ELITE_STAGE_INDICES: readonly number[] = ELITE_BLUEPRINTS.map(
+  (_, i) => OFFICIAL_STAGES.length + i,
+);

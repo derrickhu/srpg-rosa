@@ -4,6 +4,7 @@ import type { Faction, GroundDrop, UnitState } from '@/battle/types';
 import { createBattleSim, type BattleMode } from '@/battle/engine';
 import { UNIT_DEFS } from '@/data/unitDefs';
 import { DUNGEON_DEFS, dungeonBattleBgKey } from '@/data/dungeonCatalog';
+import { isEliteDungeon } from '@/data/eliteCatalog';
 import { adventureChapterList, isSandboxDungeon } from '@/data/sandboxLab';
 import { gmPrepareSandboxRoster } from '@/game/state/gmCheats';
 import {
@@ -174,6 +175,8 @@ export class GameFlow {
   private currentTab: TabId = 'adventure';
   /** 冒险页章节页码。null = 跟当前进度走；手动翻过之后 Tab 切换回来不丢 */
   private adventureChapter: number | null = null;
+  /** 冒险卡普通 / 精英。null = 跟当前局走；手动切过之后 Tab 切换回来不丢 */
+  private adventureEliteMode: boolean | null = null;
   /** 刚结束那场战斗的单位快照，无尽用来把血量和站位带进下一波 */
   private lastBattleUnits: UnitState[] = [];
   private lastBattleDrops: GroundDrop[] = [];
@@ -197,7 +200,6 @@ export class GameFlow {
   }
 
   private bindCloudLifecycle(): void {
-    CloudSyncManager.prewarm();
     PersistService.subscribeCloudImport((info) => {
       if (!this.started || info.changedKeys.length === 0) return;
       const loaded = SaveManager.load();
@@ -362,6 +364,9 @@ export class GameFlow {
         const chapters = adventureChapterList(DUNGEON_DEFS, Platform.isGmTools);
         const chapterIndex = this.adventureChapter
           ?? defaultAdventureChapterIndex(this.state, chapters);
+        const run = adventureRunOf(this.state);
+        const eliteMode = this.adventureEliteMode
+          ?? (!!run && isEliteDungeon(run.dungeonId));
         return createAdventureView(
           this.state,
           chapterIndex,
@@ -375,8 +380,10 @@ export class GameFlow {
             onSweepChapter: (dungeonId) => this.sweepChapter(dungeonId),
             onChanged: persistAndRedraw,
             onChapterChange: (i) => { this.adventureChapter = i; },
+            onEliteModeChange: (elite) => { this.adventureEliteMode = elite; },
           },
           screen,
+          eliteMode,
         );
       }
       case 'roster':
@@ -427,6 +434,10 @@ export class GameFlow {
     }
     startRun(this.state, dungeonId, party);
     if (!isEndlessDungeon(dungeonId)) this.adventureChapter = null;
+    if (isEliteDungeon(dungeonId)) this.adventureEliteMode = true;
+    else if (!isEndlessDungeon(dungeonId) && !isSandboxDungeon(dungeonId)) {
+      this.adventureEliteMode = false;
+    }
     this.shopOffers = null;
     this.trackRunStart(dungeonId);
     SaveManager.save(this.state);
@@ -1138,7 +1149,7 @@ export class GameFlow {
     this.runStartedAt = Date.now();
     this.runEndTracked = false;
     analytics.track(EVENT_NAMES.LEVEL_START, {
-      level_id: this.dungeonChapterIndex(dungeonId) + 1,
+      level_id: isEliteDungeon(dungeonId) ? dungeonId : this.dungeonChapterIndex(dungeonId) + 1,
       level_name: dungeonId,
       endless: isEndlessDungeon(dungeonId),
     });
@@ -1149,7 +1160,7 @@ export class GameFlow {
     if (this.runEndTracked || !dungeonId || isSandboxDungeon(dungeonId)) return;
     this.runEndTracked = true;
     const params = {
-      level_id: this.dungeonChapterIndex(dungeonId) + 1,
+      level_id: isEliteDungeon(dungeonId) ? dungeonId : this.dungeonChapterIndex(dungeonId) + 1,
       level_name: dungeonId,
       duration_ms: Math.max(0, Date.now() - this.runStartedAt),
       reached_wave: this.state.run?.endless?.wave ?? (this.state.run ? this.state.run.nodeIndex + 1 : 0),

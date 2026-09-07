@@ -11,6 +11,7 @@ import '@/platform/wxPlatform';
 import { installWxShare } from '@/platform/wxShare';
 
 declare const GameGlobal: any;
+declare const wx: any;
 
 function formatBootErr(e: unknown): string {
   if (e == null) return String(e);
@@ -41,8 +42,7 @@ if (typeof GameGlobal !== 'undefined') {
   };
 }
 
-function boot(): void {
-  installWxShare();
+function boot(): boolean {
   const canvas =
     (typeof GameGlobal !== 'undefined' && GameGlobal.canvas) ||
     (typeof window !== 'undefined' && (window as unknown as { canvas?: HTMLCanvasElement }).canvas) ||
@@ -50,7 +50,7 @@ function boot(): void {
 
   if (!canvas) {
     console.error('[main] 无法获取 canvas，请确认 pixi-adapter 已加载');
-    return;
+    return false;
   }
 
   const host = createPixiHost(canvas);
@@ -62,17 +62,61 @@ function boot(): void {
     console.error('[main] 首次 render 失败:', e);
   }
 
+  // 分享 API 放在首帧之后：部分安卓 / 鸿蒙在开屏阶段调 onShareTimeline 会原生崩。
+  try {
+    installWxShare();
+  } catch (e) {
+    console.warn('[main] installWxShare 失败:', e);
+  }
+
   console.log(`[main] ${GAME_TITLE} (${GAME_KEY}) MVP 启动, screen:`, host.screen.width, 'x', host.screen.height);
   void AssetLoader.prefetchManifest();
+  return true;
 }
 
-/** 微信首帧 canvas 尺寸偶发未就绪：双 rAF 再启动（huahua 类项目常用） */
-requestAnimationFrame(() => {
-  requestAnimationFrame(() => {
-    try {
-      boot();
-    } catch (e) {
-      console.error('[main] boot 异常:', e);
-    }
-  });
-});
+let booted = false;
+
+function tryBoot(reason: string): void {
+  if (booted) return;
+  try {
+    if (!boot()) return;
+    booted = true;
+    if (typeof GameGlobal !== 'undefined') GameGlobal.__srpgBooted = true;
+  } catch (e) {
+    console.error(`[main] boot 异常 (${reason}):`, e);
+  }
+}
+
+/**
+ * 华为等安卓机双 rAF 经常不回调，只靠 rAF 会永远停在微信开屏。
+ * setTimeout / nextTick / onShow 各兜一层。
+ */
+function scheduleBoot(): void {
+  const raf = typeof requestAnimationFrame === 'function' ? requestAnimationFrame : null;
+  if (raf) {
+    raf(() => {
+      raf(() => tryBoot('raf'));
+    });
+  }
+  const later = typeof setTimeout === 'function' ? setTimeout : null;
+  if (later) {
+    later(() => tryBoot('timeout-0'), 0);
+    later(() => tryBoot('timeout-300'), 300);
+  } else if (!raf) {
+    tryBoot('sync');
+  }
+  try {
+    const wxApi = (typeof GameGlobal !== 'undefined' && GameGlobal.wx)
+      || (typeof wx !== 'undefined' ? wx : null);
+    wxApi?.nextTick?.(() => tryBoot('nextTick'));
+    wxApi?.onShow?.(() => tryBoot('onShow'));
+  } catch {
+    /* */
+  }
+}
+
+if (typeof GameGlobal !== 'undefined') {
+  GameGlobal.__srpgTryBoot = () => tryBoot('external');
+}
+
+scheduleBoot();

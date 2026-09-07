@@ -1,0 +1,12 @@
+竖版视频封面：备选 Loading 底图 + 官方标题 Logo 合成（替换战斗棋盘那两张）。
+
+尺寸：1080×1920（9:16），与 video_cover_portrait 相同。
+标题：images/ui/logo_emblem.png（无 尽 纹 章 + 交叉双剑）
+
+| 成品 | 底图母版 | 主题 |
+|---|---|---|
+| `video_cover_loading_forest_fight` | `assets/raw/loading/loading_v2_forest_fight.png` | 密林遭遇 |
+| `video_cover_loading_melee_circle` | `assets/raw/loading/loading_v2_melee_circle.png` | 草原围殴 |
+
+标题靠上居中，浅金柔光。不加进度条 / 健康忠告 / UI。
+已弃用：战斗底图合成的 `video_cover_ch2_forest` / `video_cover_ch3_fortress`。
