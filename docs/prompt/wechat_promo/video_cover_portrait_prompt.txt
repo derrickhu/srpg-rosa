@@ -1,0 +1,8 @@
+竖版视频封面：现役 loading 底图 + 官方标题 Logo 合成，不重生图。
+
+尺寸：1080×1920（9:16）。参考图标注「竖版游戏: 1920x1080px」，按竖版 1080p 理解为宽×高写反，采用 1080×1920。
+底图：game_assets/srpg-rosa/assets/raw/loading/loading_v3_dragon_chase.png（现役 loading_splash 母版）
+标题：images/ui/logo_emblem.png（无 尽 纹 章 + 交叉双剑，透明底）
+
+排版对齐参考竖版封面：标题靠上居中放大，底图全出血，不加进度条/健康忠告/UI。
+标题背后加浅金柔光，保证天空上也能读。

@@ -1,7 +1,7 @@
 import type { SfxId } from '@/core/AudioManager';
 import { getSkillSpec, remapLegacySkillId, type SkillSpec } from '@/data/skillCatalog';
 import { UNIT_DEFS } from '@/data/unitDefs';
-import type { UnitKind } from '@/battle/types';
+import type { TerrainId, UnitKind } from '@/battle/types';
 
 /**
  * 玩家招牌技能一人一音；其余（临时槽、敌方、预留招）仍按属性族复用。
@@ -146,6 +146,17 @@ export function sfxForSkillCast(skillId: string, vfxId?: string): SfxId {
 
 export function signatureSkillSfx(skillId: string): SfxId | undefined {
   return SIGNATURE_SKILL_SFX[remapLegacySkillId(skillId)];
+}
+
+const TERRAIN_PLACE_SFX: Partial<Record<TerrainId, SfxId>> = {
+  high: 'sfx_place_high',
+  forest: 'sfx_place_forest',
+  wall: 'sfx_place_wall',
+};
+
+/** 布阵放地形：高地 / 森林 / 城墙各一条，避免三种券听起来像同一声落子 */
+export function sfxForTerrainPlace(id: TerrainId): SfxId {
+  return TERRAIN_PLACE_SFX[id] ?? 'sfx_deploy';
 }
 
 export function sfxForAttack(kind: UnitKind | undefined): SfxId {

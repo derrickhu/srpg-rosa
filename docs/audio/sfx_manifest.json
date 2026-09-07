@@ -89,10 +89,35 @@
     },
     {
       "name": "sfx_deploy",
-      "text": "short soft cloth thump plus a tiny metal pin click, chess piece placed on board, dry, no wooden thud, no music, no voice",
-      "duration": 0.22,
+      "text": "leather boot and light armor landing on a wooden board tile, firm thump then a short cloth rustle, sharp attack in first 20ms, close mic, loud and present, dry, no reverb, no whisper, no silence, no music, no voice",
+      "duration": 0.4,
+      "prompt_influence": 0.55,
       "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_deploy.mp3",
-      "notes": "布阵落子"
+      "notes": "布阵上人；时长 >0.35 才会走主体抬音，否则手机上又听不见"
+    },
+    {
+      "name": "sfx_place_high",
+      "text": "packed dry earth mound and gravel dumped onto a grass tile, short dirt thud then pebble clack and grit, close mic, loud and present, dry, no reverb, no music, no voice",
+      "duration": 0.36,
+      "prompt_influence": 0.55,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_place_high.mp3",
+      "notes": "布阵放高地"
+    },
+    {
+      "name": "sfx_place_forest",
+      "text": "small wooden stakes and leafy sapling planted into soil, wood knock plus leaf rustle, sharp attack in first 20ms, close mic, loud and present, dry, no reverb, no music, no voice",
+      "duration": 0.36,
+      "prompt_influence": 0.55,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_place_forest.mp3",
+      "notes": "布阵放森林"
+    },
+    {
+      "name": "sfx_place_wall",
+      "text": "heavy stone brick set onto a dirt tile, short stone clack and grit, sharp attack in first 20ms, close mic, loud and present, dry, no reverb, no music, no voice",
+      "duration": 0.36,
+      "prompt_influence": 0.55,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_place_wall.mp3",
+      "notes": "布阵放城墙"
     },
     {
       "name": "sfx_sweep",

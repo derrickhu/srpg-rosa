@@ -11,6 +11,7 @@ import {
   sfxForAttackHit,
   sfxForSkillCast,
   sfxForSkillHit,
+  sfxForTerrainPlace,
   signatureSkillSfx,
   skillSfxFamily,
   type SkillSfxFamily,
@@ -32,6 +33,9 @@ const PACKAGED_SFX = [
   'sfx_coin',
   'sfx_buy',
   'sfx_deploy',
+  'sfx_place_high',
+  'sfx_place_forest',
+  'sfx_place_wall',
   'sfx_sweep',
   'sfx_step',
   'sfx_undo',
@@ -134,6 +138,13 @@ describe('技能音效族', () => {
   it('金币和魂晶不是同一条音', () => {
     expect('sfx_coin').not.toBe('sfx_soul_gain');
     expect('sfx_coin').not.toBe('sfx_soul_spend');
+  });
+
+  it('布阵放地形三种券各一条', () => {
+    expect(sfxForTerrainPlace('high')).toBe('sfx_place_high');
+    expect(sfxForTerrainPlace('forest')).toBe('sfx_place_forest');
+    expect(sfxForTerrainPlace('wall')).toBe('sfx_place_wall');
+    expect(sfxForTerrainPlace('plain')).toBe('sfx_deploy');
   });
 });
 

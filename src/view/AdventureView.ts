@@ -93,6 +93,31 @@ export function chapterRewardModel(
   };
 }
 
+/**
+ * 冒险页默认停在「正在打 / 下一张没打过」的章。
+ * 已通关的章可以手动翻回去看，但打开页不该还停在第一章。
+ */
+export function defaultAdventureChapterIndex(
+  state: MvpGameState,
+  chapters: readonly DungeonDef[],
+): number {
+  if (chapters.length === 0) return 0;
+  const run = adventureRunOf(state);
+  if (run) {
+    const i = chapters.findIndex((d) => d.id === run.dungeonId);
+    if (i >= 0) return i;
+  }
+  for (let i = 0; i < chapters.length; i++) {
+    const d = chapters[i]!;
+    if (isSandboxDungeon(d.id)) continue;
+    if (!chapterClearedForSweep(state.meta, d.id)) return i;
+  }
+  for (let i = chapters.length - 1; i >= 0; i--) {
+    if (!isSandboxDungeon(chapters[i]!.id)) return i;
+  }
+  return 0;
+}
+
 const RADIUS = 20;
 /** 插图占卡片高度的比例；星星改画在通关三列上，插图可以略抬回来 */
 const ART_RATIO = 0.34;

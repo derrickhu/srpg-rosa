@@ -55,6 +55,7 @@ import { createNodeStrip } from '@/view/NodeStrip';
 import { AssetManager } from '@/core/AssetManager';
 import { makeAdButton, makeButton } from '@/ui/Button';
 import { AudioManager } from '@/core/AudioManager';
+import { sfxForTerrainPlace } from '@/data/audioCatalog';
 import { ABANDON_RUN_CONFIRM, attachAbandonConfirm } from '@/view/battle/resultOverlay';
 import { attachPress } from '@/ui/press';
 import { attachGlowRing } from '@/view/fx/celebration';
@@ -552,7 +553,7 @@ export function createDeployView(
     }
     if (deployTool === 'terrain' && terrainPickId) {
       if (placeTerrainCell(state, pos, terrainPickId)) {
-        AudioManager.playSfx('sfx_deploy');
+        AudioManager.playSfx(sfxForTerrainPlace(terrainPickId));
         if ((run.terrainCharges[terrainPickId] ?? 0) <= 0) {
           const left = PLACEABLE_TERRAIN_IDS.filter((id) => (run.terrainCharges[id] ?? 0) > 0);
           terrainPickId = left[0] ?? null;
@@ -566,6 +567,7 @@ export function createDeployView(
     const placed = run.placements.find((p) => p.pos.x === x && p.pos.y === y);
     if (placed) {
       removePlacement(state, pos);
+      AudioManager.playSfx('sfx_undo');
       redrawGrid();
       redrawHand();
       redrawToolbar();

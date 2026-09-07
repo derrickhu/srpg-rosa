@@ -4,7 +4,7 @@ import type { Faction, GroundDrop, UnitState } from '@/battle/types';
 import { createBattleSim, type BattleMode } from '@/battle/engine';
 import { UNIT_DEFS } from '@/data/unitDefs';
 import { DUNGEON_DEFS, dungeonBattleBgKey } from '@/data/dungeonCatalog';
-import { isSandboxDungeon } from '@/data/sandboxLab';
+import { adventureChapterList, isSandboxDungeon } from '@/data/sandboxLab';
 import { gmPrepareSandboxRoster } from '@/game/state/gmCheats';
 import {
   ENDLESS_CLEAR_BONUS,
@@ -65,7 +65,7 @@ import { animSetsForUnits, createBattlePlaybackView } from '@/view/BattlePlaybac
 import { createDeployView } from '@/view/DeployView';
 import { createShopView } from '@/view/ShopView';
 import { createLoadingView, type LoadingView } from '@/view/LoadingView';
-import { createAdventureView } from '@/view/AdventureView';
+import { createAdventureView, defaultAdventureChapterIndex } from '@/view/AdventureView';
 import { createRosterView } from '@/view/RosterView';
 import { createRecruitView } from '@/view/RecruitView';
 import { createChallengeView } from '@/view/ChallengeView';
@@ -172,8 +172,8 @@ export class GameFlow {
   private shopOffers: ShopOffer[] | null = null;
   /** 大厅当前 Tab（Tab 间切换保留） */
   private currentTab: TabId = 'adventure';
-  /** 冒险页当前章节页码（Tab 切换回来不丢） */
-  private adventureChapter = 0;
+  /** 冒险页章节页码。null = 跟当前进度走；手动翻过之后 Tab 切换回来不丢 */
+  private adventureChapter: number | null = null;
   /** 刚结束那场战斗的单位快照，无尽用来把血量和站位带进下一波 */
   private lastBattleUnits: UnitState[] = [];
   private lastBattleDrops: GroundDrop[] = [];
@@ -358,13 +358,17 @@ export class GameFlow {
       this.renderShell();
     };
     switch (tab) {
-      case 'adventure':
+      case 'adventure': {
+        const chapters = adventureChapterList(DUNGEON_DEFS, Platform.isGmTools);
+        const chapterIndex = this.adventureChapter
+          ?? defaultAdventureChapterIndex(this.state, chapters);
         return createAdventureView(
           this.state,
-          this.adventureChapter,
+          chapterIndex,
           {
             onStartRun: (dungeonId, party) => this.startRunAndEnter(dungeonId, party),
             onContinueRun: () => {
+              this.adventureChapter = null;
               activateRunLane(this.state, 'adventure');
               this.renderNode();
             },
@@ -374,6 +378,7 @@ export class GameFlow {
           },
           screen,
         );
+      }
       case 'roster':
         // 角色页的弹窗要能连着升级不被弹回网格，所以给它一个「只存盘」的口子；
         // 重绘推迟到关窗时由它自己发起（见 RosterCallbacks.onPersist）
@@ -421,6 +426,7 @@ export class GameFlow {
       party = this.state.meta.roster.map((m) => m.rosterId);
     }
     startRun(this.state, dungeonId, party);
+    if (!isEndlessDungeon(dungeonId)) this.adventureChapter = null;
     this.shopOffers = null;
     this.trackRunStart(dungeonId);
     SaveManager.save(this.state);
@@ -528,6 +534,7 @@ export class GameFlow {
           else abandonRun(this.state);
           SaveManager.save(this.state);
           this.showToast(endless ? '已离开试炼' : '已放弃副本');
+          if (!endless) this.adventureChapter = null;
           this.renderShell(endless ? 'challenge' : 'adventure');
         },
         onHome: () => {
@@ -905,6 +912,7 @@ export class GameFlow {
               const result = finishRunVictory(this.state);
               SaveManager.save(this.state);
               this.showToast(`通关「${dungeon.name}」，魂晶 +${result.soul}`);
+              this.adventureChapter = null;
               this.presentUnlocksThen(result.unlockedRosterIds, () => this.renderShell('adventure'));
             }
           } else {
@@ -1040,6 +1048,7 @@ export class GameFlow {
               abandonRun(this.state);
               SaveManager.save(this.state);
               this.showToast('已放弃副本，局内物资清空');
+              this.adventureChapter = null;
               this.renderShell('adventure');
             },
         abandonConfirm: endless || tutorial ? undefined : ABANDON_RUN_CONFIRM,

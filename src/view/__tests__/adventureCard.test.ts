@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { DUNGEON_DEFS } from '@/data/dungeonCatalog';
-import { DUNGEON_REPEAT_SOUL } from '@/game/state/ProgressManager';
-import { createInitialMeta } from '@/game/state/GameState';
+import { ENDLESS_DUNGEON_ID } from '@/data/endlessCatalog';
+import { adventureChapterList, SANDBOX_DUNGEON_ID } from '@/data/sandboxLab';
+import { DUNGEON_REPEAT_SOUL, startRun } from '@/game/state/ProgressManager';
+import { createInitialMeta, createInitialState, createRunState } from '@/game/state/GameState';
 import { C, mix } from '@/view/mvpTheme';
-import { chapterRewardModel } from '@/view/AdventureView';
+import { chapterRewardModel, defaultAdventureChapterIndex } from '@/view/AdventureView';
 
 const DUNGEON = DUNGEON_DEFS[0]!;
 
@@ -48,5 +50,45 @@ describe('浅底混色', () => {
     expect(mix(C.paper, C.secondary, 1)).toBe(C.secondary);
     expect(mix(C.paper, C.secondary, 0.5)).not.toBe(C.paper);
     expect(mix(C.paper, C.secondary, 0.5)).not.toBe(C.secondary);
+  });
+});
+
+describe('冒险页默认章节', () => {
+  const chapters = adventureChapterList(DUNGEON_DEFS);
+  const party = (s: ReturnType<typeof createInitialState>) =>
+    s.meta.roster.slice(0, 2).map((m) => m.rosterId);
+
+  it('新档停在第一章', () => {
+    expect(defaultAdventureChapterIndex(createInitialState(), chapters)).toBe(0);
+  });
+
+  it('第一章已通、没有进行中的局：翻到下一章', () => {
+    const s = createInitialState();
+    s.meta.clearedDungeonIds.push(DUNGEON_DEFS[0]!.id);
+    expect(defaultAdventureChapterIndex(s, chapters)).toBe(1);
+    expect(chapters[1]!.id).toBe('dungeon_forest');
+  });
+
+  it('有进行中的冒险局：停在那一章', () => {
+    const s = createInitialState();
+    s.meta.clearedDungeonIds.push(DUNGEON_DEFS[0]!.id);
+    startRun(s, DUNGEON_DEFS[1]!.id, party(s));
+    expect(defaultAdventureChapterIndex(s, chapters)).toBe(1);
+  });
+
+  it('无尽挂在前台时仍跟冒险挂起局走', () => {
+    const s = createInitialState();
+    s.meta.clearedDungeonIds.push(DUNGEON_DEFS[0]!.id);
+    s.parkedRun = createRunState(DUNGEON_DEFS[1]!.id, party(s));
+    s.run = createRunState(ENDLESS_DUNGEON_ID, party(s));
+    expect(defaultAdventureChapterIndex(s, chapters)).toBe(1);
+  });
+
+  it('正式章全通：停在最后一章，不落到试炼卡', () => {
+    const s = createInitialState();
+    for (const d of DUNGEON_DEFS) s.meta.clearedDungeonIds.push(d.id);
+    const withLab = adventureChapterList(DUNGEON_DEFS, true);
+    expect(defaultAdventureChapterIndex(s, withLab)).toBe(DUNGEON_DEFS.length - 1);
+    expect(withLab[DUNGEON_DEFS.length]!.id).toBe(SANDBOX_DUNGEON_ID);
   });
 });
