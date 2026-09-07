@@ -1,0 +1,22 @@
+Ultra-wide 13:5 WeChat Mini Game cover banner for 无尽纹章, a cute chibi tactical SRPG.
+Generate as 16:9 but keep EVERY important subject in the vertical center band (sky above and grass below are empty crop padding). Readable at 650x250 thumbnail size.
+
+LAYOUT (full-bleed, no thick frame, no phone bezel):
+- Left: large hero 雷恩, chibi close-up, filling most of the left height of the safe band.
+- Center: cream parchment scroll with Chinese title, gold coins.
+- Right: 希尔 loosing a piercing arrow through 2 cute cyan slimes, plus a small tactics-grid hint.
+- Bright yellow-green grassland, blue sky, rounded cartoon bushes. Saturated casual key art.
+
+HEROES (exact identities):
+- 雷恩: huge spiky cobalt-blue hair, silver breastplate and pauldrons, blue tunic, brown boots, oversized silver greatsword, cyan whirlwind slash crescents. NO helmet.
+- 希尔: bright green pointed hood, cream cape, wooden longbow, cyan-gold piercing light trail.
+
+ACTION: flashy combat VFX (whirlwind + piercing beam + yellow sparks) but keep silhouettes clean. Not a UI screenshot. Not photoreal.
+
+CHINESE TEXT on the cream scroll, perfectly readable Simplified Chinese, no extra glyphs:
+- Large title exactly: 无尽纹章
+  bold rounded display, yellow-to-orange gradient, thick navy outline, white halo
+- Smaller subtitle exactly: 轻战棋也能打到爽
+  white fill, navy outline
+
+Hard bans: NO English, NO pinyin, NO Japanese, NO garbled characters, NO UI buttons, NO WeChat icons, NO app-store badges, NO watermark, NO black/white outer border, NO photoreal, NO hard 3D render, NO cluttered collage.

@@ -9,7 +9,7 @@ import type {
   Vec2,
 } from './types';
 import { effectiveUnitDef } from './effectiveUnit';
-import { guardNote, terrainAttackNote, terrainDefenseNote } from './damage';
+import { guardApplyNote, guardNote, terrainAttackNote, terrainDefenseNote } from './damage';
 import { computeSkillHitDamage, isExecuting } from './skillDamage';
 
 /** 战斗内伤害掷点（暴击等）。引擎开局注入，单局同时只跑一场战斗。 */
@@ -342,8 +342,10 @@ function skillCastName(self: UnitState, spec: SkillSpec): string {
 }
 
 /**
- * 属性加减的飘字。治疗走 `heal` 事件、中毒走每回合 `dot`，这里只报攻/速/嘲讽。
- * 漏了的话玩家只看见特效，会以为号角、祝福、削攻「没效果」。
+ * 属性加减的飘字。治疗走 `heal` 事件、中毒走每回合 `dot`，这里报攻/速/嘲讽/减伤。
+ *
+ * 减伤曾经漏掉：树皮庇护 / 守林人 / 硬化放完只有技能名，回放层又不飘「0」伤害，
+ * 特效一过就像没效果。中毒仍然不在这里报——那是随后每跳的 `dot`。
  */
 function pushAttrNotes(
   events: BattleEvent[],
@@ -358,6 +360,13 @@ function pushAttrNotes(
         events.push({ type: 'statusNote', target: who.self.uid, text: `速+${e.addSpd}`, tone: 'buff' });
       } else if (e.kind === 'taunt') {
         events.push({ type: 'statusNote', target: who.self.uid, text: '嘲讽', tone: 'buff' });
+      } else if (e.kind === 'guard') {
+        events.push({
+          type: 'statusNote',
+          target: who.self.uid,
+          text: guardApplyNote(e.reduceRatio),
+          tone: 'buff',
+        });
       }
     }
   }
@@ -367,6 +376,13 @@ function pushAttrNotes(
         events.push({ type: 'statusNote', target: who.ally.uid, text: `攻+${e.addAtk}`, tone: 'buff' });
       } else if (e.kind === 'spdBonus') {
         events.push({ type: 'statusNote', target: who.ally.uid, text: `速+${e.addSpd}`, tone: 'buff' });
+      } else if (e.kind === 'guard') {
+        events.push({
+          type: 'statusNote',
+          target: who.ally.uid,
+          text: guardApplyNote(e.reduceRatio),
+          tone: 'buff',
+        });
       }
     }
   }

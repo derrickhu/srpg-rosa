@@ -121,6 +121,10 @@ function normalizeRun(run: RunState): RunState {
                 rosterId: remapLegacyCharacterId(c.rosterId),
               }))
             : rest.endless.carry,
+          groundDrops: rest.endless.groundDrops?.map((d) => ({
+            pos: { ...d.pos },
+            potionId: d.potionId,
+          })) ?? [],
         }
       : (
         isEndlessDungeon(rest.dungeonId)

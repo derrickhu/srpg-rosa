@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js';
 import type { PixiHost } from '@/boot/createPixiApp';
-import type { Faction, UnitState } from '@/battle/types';
+import type { Faction, GroundDrop, UnitState } from '@/battle/types';
 import { createBattleSim, type BattleMode } from '@/battle/engine';
 import { UNIT_DEFS } from '@/data/unitDefs';
 import { DUNGEON_DEFS, dungeonBattleBgKey } from '@/data/dungeonCatalog';
@@ -176,6 +176,7 @@ export class GameFlow {
   private adventureChapter = 0;
   /** 刚结束那场战斗的单位快照，无尽用来把血量和站位带进下一波 */
   private lastBattleUnits: UnitState[] = [];
+  private lastBattleDrops: GroundDrop[] = [];
   private loading: LoadingView | null = null;
   /** 启动云同步完成、大厅已可渲染后才接受下行覆盖 */
   private started = false;
@@ -627,6 +628,7 @@ export class GameFlow {
       aiDifficulty: endless ? endlessAiDifficulty(run.endless?.wave ?? 1) : stage.aiDifficulty,
       mode,
       enableDrops: endless,
+      initialDrops: endless ? (run.endless?.groundDrops ?? []) : undefined,
       sandboxFreeCast: sandbox,
       scriptedSpawns: tut ? tutorialScriptedSpawns(this.state) : undefined,
     });
@@ -644,6 +646,7 @@ export class GameFlow {
             pos: { ...u.pos },
             timedBattleEffects: u.timedBattleEffects?.map((e) => ({ ...e })),
           }));
+          this.lastBattleDrops = sim.getDrops();
           run.lastReportWinner = winner;
           if (winner === 'player' && !sandbox && !endless) {
             recordRunBattleStats(run, {
@@ -728,7 +731,13 @@ export class GameFlow {
       applyEndlessWaveVictory(this.state);
       const e = this.state.run?.endless;
       // 立刻把站位和血量写进存档：三选一还没选完就退出时，下一波不能靠内存快照
-      if (e) e.carry = snapshotEndlessCarry(this.lastBattleUnits);
+      if (e) {
+        e.carry = snapshotEndlessCarry(this.lastBattleUnits);
+        e.groundDrops = this.lastBattleDrops.map((d) => ({
+          pos: { ...d.pos },
+          potionId: d.potionId,
+        }));
+      }
     } else {
       applyVictory(this.state);
     }

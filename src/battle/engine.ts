@@ -2,6 +2,7 @@ import type {
   BattleEvent,
   BattleReport,
   Faction,
+  GroundDrop,
   UnitArchetypeDef,
   UnitKind,
   UnitState,
@@ -135,6 +136,11 @@ export interface BattleSimOptions {
   /** 战斗内伤害掷点（暴击等），测试传入固定序列 */
   battleRng?: () => number;
   dropChance?: number;
+  /**
+   * 开局就在地上的药剂（无尽上一波没捡走的）。
+   * 刷怪侧会避开这些格；敌人之后踩上仍会踩没。
+   */
+  initialDrops?: readonly GroundDrop[];
   /**
    * 特效试炼：技能冷却立刻清零，同一单位本回合可连放。
    * 只作用于玩家指令，AI 仍是每回合一发，避免木桩怪在自己回合里死循环。
@@ -280,6 +286,8 @@ export interface BattleSim {
    */
   upcomingOrder(limit: number, currentUid?: string | null): string[];
   getRound(): number;
+  /** 还在地上的药剂（无尽跨波会把这份带去下一局） */
+  getDrops(): GroundDrop[];
   isDone(): boolean;
   /** 中途加人；`auto` 时该玩家单位由 AI 走 */
   spawnUnit(unit: UnitState, auto?: boolean): BattleEvent[];
@@ -312,7 +320,10 @@ export function createBattleSim(
   const battleRng = opts.battleRng ?? Math.random;
   setHitRng(battleRng);
   const dropChance = opts.dropChance ?? 0.35;
-  const pickups: { pos: Vec2; potionId: string }[] = [];
+  const pickups: GroundDrop[] = (opts.initialDrops ?? []).map((d) => ({
+    pos: { ...d.pos },
+    potionId: d.potionId,
+  }));
   const rolledDeaths = new Set<string>();
   const DROP_POTIONS = ['heal', 'heal', 'heal', 'draught', 'slow'] as const;
   const allEvents: BattleEvent[] = [];
@@ -349,18 +360,44 @@ export function createBattleSim(
     return extra.length ? [...events, ...extra] : events;
   }
 
+  function dropAt(pos: Vec2): number {
+    return pickups.findIndex((p) => p.pos.x === pos.x && p.pos.y === pos.y);
+  }
+
   function tryPickup(u: UnitState): BattleEvent[] {
-    const i = pickups.findIndex((p) => p.pos.x === u.pos.x && p.pos.y === u.pos.y);
+    if (u.faction !== 'player' || u.hp <= 0) return [];
+    const i = dropAt(u.pos);
     if (i < 0) return [];
     const drop = pickups.splice(i, 1)[0]!;
     return [{ type: 'pickup', uid: u.uid, pos: { ...drop.pos }, potionId: drop.potionId }];
+  }
+
+  /** 敌人踩上就清空。路过也算——药还在格子上、人从上面踏过去，玩家已经捡不到了。 */
+  function trampleDrops(u: UnitState): BattleEvent[] {
+    if (u.faction !== 'enemy' || u.hp <= 0) return [];
+    const i = dropAt(u.pos);
+    if (i < 0) return [];
+    const drop = pickups.splice(i, 1)[0]!;
+    return [{ type: 'dropLost', uid: u.uid, pos: { ...drop.pos }, potionId: drop.potionId }];
+  }
+
+  function collectTramples(): BattleEvent[] {
+    const extra: BattleEvent[] = [];
+    for (const u of units) extra.push(...trampleDrops(u));
+    return extra;
+  }
+
+  function withDropSideEffects(events: BattleEvent[]): BattleEvent[] {
+    const dropped = attachDrops(events);
+    const trampled = collectTramples();
+    return trampled.length ? [...dropped, ...trampled] : dropped;
   }
 
   function finish(w: Faction, events: BattleEvent[]): BattleStep {
     done = true;
     winner = w;
     pendingTurn = null;
-    const evs = attachDrops(events);
+    const evs = withDropSideEffects(events);
     evs.push({ type: 'end', winner: w });
     allEvents.push(...evs);
     return { events: evs, done: true, winner: w };
@@ -377,6 +414,7 @@ export function createBattleSim(
       self.pos = next;
       self.movedInTurn = true;
       events.push({ type: 'moveStep', uid: self.uid, from, to: next });
+      events.push(...trampleDrops(self));
     }
     return events;
   }
@@ -560,7 +598,7 @@ export function createBattleSim(
       if (s.round === rounds) events.push(...spawnUnit(s.unit, s.auto));
     }
     order = bySpeedOrder(units, defs).map((u) => u.uid);
-    const evs = attachDrops(events);
+    const evs = withDropSideEffects(events);
     const w = checkWinner(units);
     if (w) return finish(w, evs);
     allEvents.push(...evs);
@@ -683,7 +721,7 @@ export function createBattleSim(
 
     w = checkWinner(units);
     if (w) return finish(w, events);
-    const evs = attachDrops(events);
+    const evs = withDropSideEffects(events);
     allEvents.push(...evs);
     return { events: evs, done: false, winner: null };
   }
@@ -815,7 +853,7 @@ export function createBattleSim(
    * 但只要还有技能能放，就一定停下来等：替玩家决定放弃一次技能，比多一次点击糟得多。
    */
   function settleAfterAction(events: BattleEvent[]): BattleStep {
-    const evs = attachDrops(events);
+    const evs = withDropSideEffects(events);
     const w = checkWinner(units);
     if (w) return finish(w, evs);
     const v = pendingView();
@@ -1057,6 +1095,7 @@ export function createBattleSim(
       return out;
     },
     getRound: () => rounds,
+    getDrops: () => pickups.map((d) => ({ pos: { ...d.pos }, potionId: d.potionId })),
     isDone: () => done,
     spawnUnit,
     reviveUnit,

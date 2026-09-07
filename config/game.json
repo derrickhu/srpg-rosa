@@ -15,6 +15,7 @@
   ],
   "bundledDirs": [
     "images/ui",
+    "images/share",
     "fonts"
   ],
   "ignoreFiles": [

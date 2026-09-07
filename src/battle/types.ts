@@ -11,6 +11,12 @@ export interface Vec2 {
   y: number;
 }
 
+/** 还在地上、没人捡走的药剂 */
+export interface GroundDrop {
+  pos: Vec2;
+  potionId: string;
+}
+
 export type SkillKind = 'whirlwind' | 'lineShot' | 'singleBash' | 'passiveCharge';
 
 export interface SkillDef {
@@ -300,6 +306,11 @@ export type BattleEvent =
   | { type: 'drop'; pos: Vec2; potionId: string }
   /** 走到掉落格上待机后拾取 */
   | { type: 'pickup'; uid: string; pos: Vec2; potionId: string }
+  /**
+   * 敌人踩上没捡的药：格子清空，谁都捡不走。
+   * 无尽跨波留下的药也走这条——刷怪会避开，但之后走到了就没了。
+   */
+  | { type: 'dropLost'; pos: Vec2; potionId: string; uid: string }
   /**
    * 轮首持续伤害（中毒 / 沼泽等）。
    *

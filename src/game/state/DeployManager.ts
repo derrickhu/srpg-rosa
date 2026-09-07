@@ -309,8 +309,14 @@ export function buildBattleUnits(state: MvpGameState): UnitState[] {
   const units: UnitState[] = [];
 
   if (endless) {
-    const occupied = (run.endless?.carry ?? []).map((c) => c.pos);
-    const fallback = run.placements.map((p) => p.pos);
+    const occupied = [
+      ...(run.endless?.carry ?? []).map((c) => c.pos),
+      ...(run.endless?.groundDrops ?? []).map((d) => d.pos),
+    ];
+    const fallback = [
+      ...run.placements.map((p) => p.pos),
+      ...(run.endless?.groundDrops ?? []).map((d) => d.pos),
+    ];
     const wave = generateEndlessWave(
       run.endless?.wave ?? 1,
       battleTerrain(state),

@@ -542,6 +542,7 @@ export function continueEndlessWave(state: MvpGameState, lastUnits: readonly Uni
     ? snapshotEndlessCarry(lastUnits)
     : (run.endless.carry ?? []);
   run.endless.carry = carry;
+  // 没捡的药跟着战场留下。这里不动 groundDrops——开战结束时已经写过了。
   run.endless.wave += 1;
   run.endless.clearedCurrent = false;
   run.pendingLoot = null;

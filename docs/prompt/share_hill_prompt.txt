@@ -1,0 +1,30 @@
+4:3 WeChat Mini Game SHARE KEY ART. Same characters and board as the live game, not a 3D ad.
+
+ART STYLE (project style bible — do not deviate):
+hand-drawn cartoon game sprite, chibi / super-deformed proportions with a large head
+and short limbs, thick near-black outlines (pure black or very dark warm brown — never
+a mid-tone or colorful outline), flat saturated fills with light cel shading (one
+highlight tone, one shadow tone), no gradients, no texture noise, no painterly
+rendering, no photographic detail, 3/4 top-down camera matching a tactics grid.
+The sprite must stay readable at 40 pixels tall: silhouette first, exaggerate the
+weapon and the one signature feature, drop everything that needs zoom to appreciate.
+NO TEXT, no labels, no captions, no watermark anywhere in the image.
+
+MATCH the 2D sticker look of share_tactics. COPY THE ATTACHED SPRITES. Characters must look like those exact 2D game pieces enlarged onto a board — same faces, same colors, same outline weight. NOT 3D, NOT clay, NOT Pixar, NOT glossy mobile-ad key art, NOT painterly, NOT photoreal.
+
+CAST (exact identities):
+- 雷恩: huge spiky cobalt-blue hair #2B6CDB, skin #EEC49A, silver breastplate, blue tunic, brown boots, oversized silver greatsword. Black-dot eyes, thick brows. No helmet.
+- 希尔: bright GREEN pointed hood #549C0C, BROWN hair (not blonde), cream/white cape with one gold clasp, wooden longbow, skin #EEC49A. Same simple face as the attached archer sprite.
+- 孢子菇: wide cherry-red cap #E42418 with cream spots, short cream stalk.
+- 血牙狼: low charcoal-grey quadruped #484848, yellow eyes, short white fangs.
+
+BOARD:
+- Camera: 3/4 top-down tactics table.
+- Floor: clean lime-yellow grass #CCE43C, faint empty SQUARE grid only. Rounded green bush crowns at edges. No sky, no horizon, no watchtower postcard.
+- Terrain has NO black outlines. One sandy highland sticker #E4B46C under 希尔, like the attached high-ground tile.
+- A few adjacent tiles flash flat red #D2543C as danger range — simple fills, not 3D neon.
+
+ACTION:
+雷恩 is mid-dash in the open, almost surrounded, a half-formed FLAT cyan-gold whirlwind sticker around him. 希尔 stands on the highland tile and looses a simple cyan-gold straight arrow streak downward. The mushroom and wolf close from the flanks. Feels like one turn from dying. Graphic 2D VFX only — no motion blur, no volumetric light tubes.
+
+Hard bans: NO text, NO letters, NO Chinese, NO numbers, NO hex coordinates, NO HP bars, NO UI, NO 3D render, NO glossy highlights, NO blonde archer, NO green slime.

@@ -20,7 +20,7 @@ OUT_TTF = OUT_DIR / "SmileySans-subset.ttf"
 
 ESSENTIAL = (
     " "
-    "·：，。、！？；：（）【】/%+-×=~<>"
+    "·：，。、！？；：（）【】《》/%+-×=~<>　"
     "0123456789"
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 )
@@ -45,7 +45,11 @@ def is_game_char(ch: str) -> bool:
         return True
     if 0xFF00 <= code <= 0xFFEF:
         return True
-    return ch in "·、【】。！？（）：；×"
+    return ch in "·、【】《》。！？（）：；×　"
+
+
+def is_test_path(path: Path) -> bool:
+    return "__tests__" in path.parts or path.name.endswith(".test.ts")
 
 
 def unescape(literal: str) -> str:
@@ -64,6 +68,9 @@ def unescape(literal: str) -> str:
 def collect_chars() -> str:
     chars: set[str] = set(ESSENTIAL)
     for path in sorted(SRC_DIR.rglob("*.ts")):
+        # 单测断言里的中文不会画到屏幕上，打进去只会白白撑包
+        if is_test_path(path):
+            continue
         text = COMMENT_RE.sub("", path.read_text(encoding="utf-8"))
         for m in STR_RE.finditer(text):
             for ch in unescape(m.group(0)):
@@ -72,10 +79,21 @@ def collect_chars() -> str:
     return "".join(sorted(chars))
 
 
+def find_pyftsubset() -> str:
+    found = shutil.which("pyftsubset")
+    if found:
+        return found
+    for candidate in (
+        Path.home() / "Library/Python/3.9/bin/pyftsubset",
+        Path("/usr/local/bin/pyftsubset"),
+    ):
+        if candidate.is_file():
+            return str(candidate)
+    raise SystemExit("需要 pyftsubset：pip install fonttools")
+
+
 def run_subset(src: Path, out: Path, chars_file: Path) -> None:
-    pyft = shutil.which("pyftsubset")
-    if not pyft:
-        raise SystemExit("需要 pyftsubset：pip install fonttools")
+    pyft = find_pyftsubset()
     out.parent.mkdir(parents=True, exist_ok=True)
     subprocess.check_call(
         [

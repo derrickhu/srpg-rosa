@@ -29,7 +29,7 @@ export const ENDLESS_DROP_CHANCE = 0.35;
 export const ENDLESS_DUNGEON: DungeonDef = {
   id: ENDLESS_DUNGEON_ID,
   name: '无尽试炼',
-  desc: '同一战场连续迎敌，最多十波。没有补给点，击杀掉落的药剂要走过去待机拾取。',
+  desc: '同一战场连续迎敌，最多十波。没有补给点，击杀掉落的药剂要走过去待机拾取。没拾取的会留到下一波；敌人走到那格就没了。',
   // 单节点只用来给存档和 currentStage 一个落点；波次推进不走 nodeIndex
   nodes: [{ kind: 'battle', name: '试炼场', stageIndex: 0, enemyScale: 1 }],
   roguelikePool: [],
@@ -82,7 +82,7 @@ function posKey(p: Vec2): string {
  * 给一波敌人抽落点。
  *
  * 优先北侧（非部署行）：玩家从最下两行出发，敌人从对面刷出来才读得懂「下一波来了」。
- * 北侧不够用再放开全图。不踩玩家、不踩不可通行、同一波不叠格。
+ * 北侧不够用再放开全图。不踩玩家、不踩还在地上的药、不踩不可通行、同一波不叠格。
  */
 export function pickEndlessSpawnCells(
   terrain: TerrainGrid,

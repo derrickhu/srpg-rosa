@@ -1,4 +1,4 @@
-import type { TerrainId, TimedBattleEffect, UnitKind, Vec2 } from '@/battle/types';
+import type { GroundDrop, TerrainId, TimedBattleEffect, UnitKind, Vec2 } from '@/battle/types';
 import type { StageDefMvp } from '@/data/stagesMvp';
 import { STAGES_MVP } from '@/data/stagesMvp';
 import { isSandboxDungeon, SANDBOX_STAGE } from '@/data/sandboxLab';
@@ -189,6 +189,11 @@ export interface EndlessRunState {
   clearedCurrent: boolean;
   /** 上一波结束时还活着的我方。第一波布阵前是 null */
   carry: EndlessCarry[] | null;
+  /**
+   * 上一波没捡走的地面药剂。下一波刷怪避开这些格；
+   * 敌人之后踩上就没了。老存档没有这个字段。
+   */
+  groundDrops?: GroundDrop[];
 }
 
 /** 一场战斗胜利的固定奖励（三选一不含在内，那是另一步） */

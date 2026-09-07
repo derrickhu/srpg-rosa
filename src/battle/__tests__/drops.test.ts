@@ -1,8 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { createBattleSim } from '../engine';
 import { UNIT_DEFS } from '@/data/unitDefs';
-import { emptyTerrain } from '../grid';
-import type { BattleEvent, UnitState, Vec2 } from '../types';
+import { emptyTerrain, type TerrainGrid } from '../grid';
+import type { BattleEvent, TerrainId, UnitState, Vec2 } from '../types';
+
+/** 单行走廊：敌人去砍左边的人必须踏过中间的药，绕不开 */
+function corridor(): TerrainGrid {
+  const walk: TerrainId[] = ['plain', 'plain', 'plain', 'plain', 'plain'];
+  const wall: TerrainId[] = ['wall', 'wall', 'wall', 'wall', 'wall'];
+  return [walk, wall];
+}
 
 function unit(
   uid: string,
@@ -85,6 +92,51 @@ describe('无尽掉落与待机拾取', () => {
     expect(sim.pending()?.canUndoMove).toBe(true);
     const waited = sim.commandWait('p1');
     expect(waited.events.some((e) => e.type === 'pickup' && e.potionId)).toBe(true);
+  });
+
+  it('上一波没捡的药开局还在地上，走到格上待机才能捡', () => {
+    const leftover = { pos: { x: 1, y: 0 }, potionId: 'heal' };
+    const p1 = unit('p1', 'player', { x: 1, y: 1 });
+    p1.mercSpd = 9;
+    const sim = createBattleSim(
+      [
+        p1,
+        unit('e1', 'enemy', { x: 4, y: 4 }, 40),
+      ],
+      emptyTerrain(5, 5),
+      UNIT_DEFS,
+      { mode: 'manual', enableDrops: true, initialDrops: [leftover] },
+    );
+    expect(sim.getDrops()).toEqual([leftover]);
+
+    stepUntilPending(sim);
+    expect(sim.commandMove('p1', leftover.pos).events.some((e) => e.type === 'pickup')).toBe(false);
+    expect(sim.getDrops()).toHaveLength(1);
+    const waited = sim.commandWait('p1');
+    expect(waited.events.some((e) => e.type === 'pickup' && e.potionId === 'heal')).toBe(true);
+    expect(sim.getDrops()).toEqual([]);
+  });
+
+  it('敌人走到药上，药就没了，玩家再去捡不到', () => {
+    const leftover = { pos: { x: 1, y: 0 }, potionId: 'heal' };
+    const p1 = unit('p1', 'player', { x: 0, y: 0 });
+    p1.mercSpd = 9;
+    const e1 = unit('e1', 'enemy', { x: 3, y: 0 }, 40);
+    e1.mercSpd = 1;
+    const sim = createBattleSim(
+      [p1, e1],
+      corridor(),
+      UNIT_DEFS,
+      { mode: 'manual', enableDrops: true, initialDrops: [leftover] },
+    );
+    stepUntilPending(sim);
+    sim.commandWait('p1');
+    const evs: BattleEvent[] = [];
+    for (let i = 0; i < 8 && !sim.isDone() && sim.getDrops().length > 0; i++) {
+      evs.push(...sim.stepTurn().events);
+    }
+    expect(evs.some((e) => e.type === 'dropLost' && e.potionId === 'heal')).toBe(true);
+    expect(sim.getDrops()).toEqual([]);
   });
 
   it('主线不开掉落', () => {

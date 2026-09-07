@@ -45,7 +45,7 @@ describe('无尽试炼波次表', () => {
 describe('无尽试炼落点', () => {
   it('不踩占用格、不踩不可通行、同一波不叠格', () => {
     const terrain = endlessTerrain();
-    const occupied = [{ x: 3, y: 6 }, { x: 4, y: 6 }];
+    const occupied = [{ x: 3, y: 6 }, { x: 4, y: 6 }, { x: 2, y: 1 }];
     const cells = pickEndlessSpawnCells(terrain, occupied, 6, seeded(11));
     expect(cells).toHaveLength(6);
     const keys = cells.map((p) => `${p.x},${p.y}`);

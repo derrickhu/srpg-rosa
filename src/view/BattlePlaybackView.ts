@@ -995,6 +995,9 @@ export function createBattlePlaybackView(
   for (const u of initialUnits) {
     mountUnitView(u);
   }
+  for (const d of sim.getDrops()) {
+    showDropMarker(d.pos, d.potionId);
+  }
 
   async function flashRangeCells(cells: Vec2[], color: number, durationMs: number): Promise<void> {
     if (cells.length === 0 || skipping) return;
@@ -2287,6 +2290,13 @@ export function createBattlePlaybackView(
         const at = cellCenter(originX, originY, cell, ev.pos);
         const name = POTION_DEFS[ev.potionId]?.name ?? '药剂';
         floatUtility(at.x, at.y - cell * 0.35, `拾取 ${name}`);
+        break;
+      }
+      case 'dropLost': {
+        hideDropMarker(ev.pos);
+        const at = cellCenter(originX, originY, cell, ev.pos);
+        const name = POTION_DEFS[ev.potionId]?.name ?? '药剂';
+        floatUtility(at.x, at.y - cell * 0.35, `${name}没了`);
         break;
       }
       case 'terrain': {

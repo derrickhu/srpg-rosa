@@ -8,6 +8,7 @@ import { analytics } from '@/analytics/gpAnalytics';
 import { GAME_KEY, GAME_TITLE } from '@/config/gameKey';
 import { GameFlow } from '@/view/GameFlow';
 import '@/platform/wxPlatform';
+import { installWxShare } from '@/platform/wxShare';
 
 declare const GameGlobal: any;
 
@@ -41,6 +42,7 @@ if (typeof GameGlobal !== 'undefined') {
 }
 
 function boot(): void {
+  installWxShare();
   const canvas =
     (typeof GameGlobal !== 'undefined' && GameGlobal.canvas) ||
     (typeof window !== 'undefined' && (window as unknown as { canvas?: HTMLCanvasElement }).canvas) ||

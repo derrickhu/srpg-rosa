@@ -1,0 +1,30 @@
+4:3 WeChat Mini Game SHARE KEY ART. Same characters and board as the live game, not a 3D ad.
+
+ART STYLE (project style bible — do not deviate):
+hand-drawn cartoon game sprite, chibi / super-deformed proportions with a large head
+and short limbs, thick near-black outlines (pure black or very dark warm brown — never
+a mid-tone or colorful outline), flat saturated fills with light cel shading (one
+highlight tone, one shadow tone), no gradients, no texture noise, no painterly
+rendering, no photographic detail, 3/4 top-down camera matching a tactics grid.
+The sprite must stay readable at 40 pixels tall: silhouette first, exaggerate the
+weapon and the one signature feature, drop everything that needs zoom to appreciate.
+NO TEXT, no labels, no captions, no watermark anywhere in the image.
+
+COPY THE ATTACHED SPRITES. Characters must look like those exact 2D game pieces enlarged onto a board — same faces, same colors, same outline weight. NOT 3D, NOT clay, NOT Pixar, NOT glossy mobile-ad key art, NOT painterly, NOT photoreal.
+
+CAST (exact identities):
+- 雷恩: huge spiky cobalt-blue hair #2B6CDB, skin #EEC49A, silver breastplate and round pauldrons, blue tunic, brown boots, oversized silver greatsword. Two big black-dot eyes, thick brows, tiny mouth line. No helmet, no nose, no ears, mittens for hands.
+- 黏泥怪: fat turquoise-cyan teardrop blob #24C0CC, two big black eyes, no limbs.
+- 孢子菇: wide cherry-red cap #E42418 with cream spots, short cream stalk, two eyes under the cap.
+- 血牙狼: low charcoal-grey quadruped #484848, yellow eyes, short white fangs, bushy tail.
+
+BOARD:
+- Camera: 3/4 top-down tactics table, same as the sprites.
+- Floor: clean lime-yellow grass #CCE43C like the attached battle background, faint empty SQUARE grid lines only. Soft rounded green bush crowns at the far edges. No sky, no horizon.
+- Terrain has NO black outlines. One sandy highland sticker #E4B46C under the hero, like the attached high-ground tile.
+- Nearby tiles glow flat gold/orange as skill range — simple color fills, not molten 3D.
+
+ACTION:
+雷恩 mid whirlwind slash on the highland tile. A FLAT 2D cyan-silver crescent ring (simple outlined shapes, like a game VFX sticker) sweeps the 8 adjacent tiles. The three monsters fly outward with squash-stretch. Yellow star hit flashes. Keep VFX graphic and simple — no motion blur, no volumetric gold tube, no debris storm.
+
+Hard bans: NO text, NO letters, NO Chinese, NO numbers, NO hex coordinates, NO HP bars, NO UI, NO 3D render, NO glossy highlights, NO blonde characters, NO green slime.

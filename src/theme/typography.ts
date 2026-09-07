@@ -47,6 +47,7 @@ const ROLE_DEFAULTS: Record<
   /**
    * 人名、面板顶栏。走系统黑体，不用得意黑——子集一缺字就会
    * 同一个名字里一半斜体一半苹方，看起来像两种字型拼出来的。
+   * 展示角色用的字由 `npm run font:subset` 打进包，`showcaseCharset.test.ts` 守着。
    */
   heading: { showcase: false, fontSize: 18, fontWeight: 'bold' },
   ui: { showcase: false, fontSize: 14, fontWeight: 'normal' },

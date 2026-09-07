@@ -78,6 +78,14 @@ export function guardNote(targetDef: UnitDef): string | null {
 }
 
 /**
+ * 刚挂上减伤时的飘字。和挨打归因用同一句（`减伤 -35%`），
+ * 免得玩家在「套盾」和「这刀少了」之间学两套词。
+ */
+export function guardApplyNote(reduceRatio: number): string {
+  return `减伤 ${formatPct(1 - reduceRatio)}`;
+}
+
+/**
  * 基础伤害：`atk × 克制 × 攻击方地形 × 目标地形 × 目标减伤`，下限 1。
  *
  * `targetPos` 现在是必填。它曾经是可选的，于是技能伤害那条路径一直没传，

@@ -1,0 +1,21 @@
+9:16 vertical WeChat Mini Game promotional poster for 无尽纹章, a cute chibi tactical SRPG.
+
+LAYOUT (match Huahua promo, not a screenshot):
+- Thick sky-blue rounded rectangle frame, thin gold inner stroke, full-bleed, no white margin.
+- Center: bright yellow-green grassland tactics grid, rounded bushy tree clusters at edges.
+- Bottom: wide cream parchment scroll banner overlapping the scene.
+- Floating gold coins, colorful confetti, spark stars around the action.
+
+HERO — 雷恩 (exact identity):
+chibi swordsman, huge spiky cobalt-blue hair, silver breastplate and round pauldrons, blue tunic, brown boots, oversized silver greatsword. Determined black-dot eyes, no helmet.
+
+ACTION:
+雷恩 mid-spin on a glowing golden highland tile. A huge swirling silver-cyan wind-blade ring (3x3 whirlwind) explodes around him — motion trails, petal-like slash crescents, yellow sparks, shockwave rings. Cute cyan slimes and a red-cap white-spot mushroom monster fly outward, hit flashes. Artistic combat VFX, much flashier than in-game.
+
+CHINESE TEXT on the cream scroll, perfectly readable Simplified Chinese, no extra glyphs:
+- Large title exactly: 旋风斩阵
+  bold rounded display, yellow-to-orange vertical gradient, thick navy outline, white halo, slight drop shadow
+- Smaller subtitle exactly: 一圈敌人全清掉
+  white fill, navy outline
+
+Hard bans: NO English, NO pinyin, NO Japanese, NO garbled characters, NO UI buttons, NO WeChat icons, NO app-store badges, NO watermark, NO black/white outer border, NO photoreal, NO hard 3D render.

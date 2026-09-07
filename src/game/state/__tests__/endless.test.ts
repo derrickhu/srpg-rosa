@@ -17,6 +17,7 @@ import {
   isRunComplete,
   startRun,
 } from '../ProgressManager';
+import { buildBattleUnits } from '../DeployManager';
 import { createInitialState, type MvpGameState } from '../GameState';
 
 function newEndless(): MvpGameState {
@@ -98,5 +99,35 @@ describe('无尽试炼结算', () => {
     expect(s.run!.endless?.wave).toBe(4);
     expect(s.run!.endless?.carry?.[0]).toMatchObject({ uid: 'keep', hp: 9, pos: { x: 1, y: 5 } });
     expect(s.run!.placements[0]).toMatchObject({ pos: { x: 1, y: 5 }, uid: 'keep' });
+  });
+
+  it('没捡的药带到下一波，不会在换波时清掉', () => {
+    const s = newEndless();
+    const rid = s.run!.partyRosterIds[0]!;
+    s.run!.endless = {
+      wave: 2,
+      clearedCurrent: true,
+      carry: [{ rosterId: rid, uid: 'keep', hp: 9, pos: { x: 1, y: 5 }, skillCd: 0 }],
+      groundDrops: [{ pos: { x: 3, y: 2 }, potionId: 'heal' }],
+    };
+    s.run!.placements = [{ uid: 'keep', rosterId: rid, pos: { x: 1, y: 5 } }];
+    continueEndlessWave(s, [dummyUnit(rid, 9)]);
+    expect(s.run!.endless?.groundDrops).toEqual([{ pos: { x: 3, y: 2 }, potionId: 'heal' }]);
+  });
+
+  it('下一波刷怪不踩还在地上的药', () => {
+    const s = newEndless();
+    const rid = s.run!.partyRosterIds[0]!;
+    const drop = { pos: { x: 3, y: 1 }, potionId: 'heal' as const };
+    s.run!.placements = [{ uid: 'p1', rosterId: rid, pos: { x: 1, y: 7 } }];
+    s.run!.endless = {
+      wave: 2,
+      clearedCurrent: false,
+      carry: [{ rosterId: rid, uid: 'p1', hp: 20, pos: { x: 1, y: 7 }, skillCd: 0 }],
+      groundDrops: [drop],
+    };
+    const enemies = buildBattleUnits(s).filter((u) => u.faction === 'enemy');
+    expect(enemies.length).toBeGreaterThan(0);
+    expect(enemies.some((e) => e.pos.x === drop.pos.x && e.pos.y === drop.pos.y)).toBe(false);
   });
 });

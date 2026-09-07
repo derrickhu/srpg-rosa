@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeDamage, guardNote } from '../damage';
+import { computeDamage, guardApplyNote, guardNote } from '../damage';
 import { effectiveUnitDef } from '../effectiveUnit';
 import {
   applySkillCastAllyEffects,
@@ -123,6 +123,11 @@ describe('减伤（guard）', () => {
     const guarded = unit('t2');
     applySkillCastSelfEffects(guarded, guardSkill(0.25, 2, 'self'));
     expect(guardNote(effectiveUnitDef(guarded, UNIT_DEFS))).toBe('减伤 -25%');
+  });
+
+  it('刚挂上减伤的飘字和挨打归因用同一句', () => {
+    expect(guardApplyNote(0.35)).toBe('减伤 -35%');
+    expect(guardApplyNote(0.25)).toBe('减伤 -25%');
   });
 
   /**
