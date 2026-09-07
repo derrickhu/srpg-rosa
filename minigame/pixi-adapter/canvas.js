@@ -5,6 +5,12 @@
 
 const platform = require('./platform');
 
-const canvas = platform.createCanvas();
+let canvas;
+try {
+  canvas = platform.createCanvas();
+} catch (e) {
+  console.error('[canvas] createCanvas 失败:', e);
+  canvas = { width: 0, height: 0, getContext: function () { return null; } };
+}
 
 module.exports = { canvas };

@@ -27,32 +27,29 @@ if (_api) {
 
     settings.ADAPTER = {
       createCanvas: _create2DCanvas,
-      getCanvasRenderingContext2D: (): any => {
-        try {
-          const c = _create2DCanvas(1, 1);
-          const ctx = c.getContext('2d');
-          return ctx ? ctx.constructor : Object;
-        } catch { return Object; }
-      },
+      getCanvasRenderingContext2D: (): any => Object,
+      // 花花同款：必须带 stencil，否则鸿蒙 Filter/Mask/Graphics 全灭。
       getWebGLRenderingContext: (): any => {
         try {
           const c = _api.createCanvas();
-          const gl = c.getContext('webgl');
+          const gl = c.getContext('webgl', {
+            stencil: true,
+            antialias: true,
+            alpha: true,
+            depth: true,
+            preserveDrawingBuffer: true,
+          });
           return gl ? gl.constructor : Object;
-        } catch { return Object; }
+        } catch {
+          return Object;
+        }
       },
       getNavigator: (): any => ({
         userAgent: 'wxgame',
         gpu: null,
       }),
       getBaseUrl: (): string => '',
-      getFontFaceSet: (): any => ({
-        add() { /* mini game 无 FontFaceSet */ },
-        delete() { return false; },
-        check() { return false; },
-        forEach() { /* empty */ },
-        ready: Promise.resolve(),
-      }),
+      getFontFaceSet: (): any => null,
       fetch: ((_url: any, _opts?: any): any => {
         return Promise.reject(new Error('fetch not available in mini game'));
       }) as any,
@@ -179,19 +176,30 @@ if (_isRealDevice) {
   let _uploadLog = 0;
   let _inUpload = false;
 
-  // 预检测 getImageData 是否返回有效像素
+  // 预检测 getImageData。华为上启动期再 createCanvas 容易挂死，直接跳过。
   let _canReadPixels = false;
-  try {
-    const tc = settings.ADAPTER.createCanvas(4, 4);
-    const tctx = tc.getContext('2d');
-    if (tctx) {
-      tctx.fillStyle = '#FF0000';
-      tctx.fillRect(0, 0, 4, 4);
-      const td = tctx.getImageData(0, 0, 1, 1).data;
-      _canReadPixels = td[0] > 200 && td[3] > 200;
-    }
-  } catch (_) { /* */ }
-  console.log('[pixiPatch] canvas getImageData 可用:', _canReadPixels);
+  const _skipProbe = (() => {
+    try {
+      const info = (typeof wx !== 'undefined' && (wx.getDeviceInfo?.() || wx.getSystemInfoSync?.())) || {};
+      const p = String(info.platform || '').toLowerCase();
+      const b = String(info.brand || '').toLowerCase();
+      return p === 'ohos' || p === 'harmony' || p === 'harmonyos'
+        || b.includes('huawei') || b.includes('honor');
+    } catch { return false; }
+  })();
+  if (!_skipProbe) {
+    try {
+      const tc = settings.ADAPTER.createCanvas(4, 4);
+      const tctx = tc.getContext('2d');
+      if (tctx) {
+        tctx.fillStyle = '#FF0000';
+        tctx.fillRect(0, 0, 4, 4);
+        const td = tctx.getImageData(0, 0, 1, 1).data;
+        _canReadPixels = td[0] > 200 && td[3] > 200;
+      }
+    } catch (_) { /* */ }
+  }
+  console.log('[pixiPatch] canvas getImageData 可用:', _canReadPixels, 'skipProbe:', _skipProbe);
 
   BaseImageResource.prototype.upload = function (
     renderer: any, baseTexture: any, glTexture: any, source?: any,

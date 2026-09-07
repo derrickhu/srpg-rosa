@@ -54,10 +54,19 @@ function boot(): boolean {
   }
 
   const host = createPixiHost(canvas);
+  // 先清掉微信开屏，再跑 GameFlow。华为上 Text/云同步若卡住，至少能看见游戏底色。
+  try {
+    host.renderer.render(host.stage);
+    if (typeof GameGlobal !== 'undefined') GameGlobal.__gameRendered = true;
+  } catch (e) {
+    console.error('[main] 空舞台 render 失败:', e);
+  }
+
   new GameFlow(host);
 
   try {
     host.renderer.render(host.stage);
+    if (typeof GameGlobal !== 'undefined') GameGlobal.__gameRendered = true;
   } catch (e) {
     console.error('[main] 首次 render 失败:', e);
   }

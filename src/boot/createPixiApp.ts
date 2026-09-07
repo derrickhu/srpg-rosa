@@ -4,6 +4,9 @@
  * canvas 使用**物理像素**（逻辑尺寸 × pixelRatio），renderer 设 resolution = dpr。
  * PixiJS 内部坐标系仍然是逻辑像素（app.screen.width === windowWidth），
  * 但实际渲染使用全部物理像素，让精灵和文字在高分屏上清晰锐利。
+ *
+ * 鸿蒙对齐花花：走 WebGL1 + stencil，不要 forceCanvas。
+ * 华为假 WebGL2 / Canvas2D 路径都会卡在微信开屏。
  */
 import * as PIXI from 'pixi.js';
 import { Rectangle } from '@pixi/math';
@@ -17,7 +20,7 @@ export interface PixiHost {
   ticker: PIXI.Ticker;
 }
 
-/** 华为 / 鸿蒙 / 安卓：WebGL 开抗锯齿或 3x DPR 容易建上下文失败或挂死，卡在微信开屏。 */
+/** 华为 / 鸿蒙 / 安卓：DPR 封顶，避免 3x 物理分辨率把上下文撑爆。 */
 export function isAndroidLikeSystem(si: { platform?: unknown; brand?: unknown } | null | undefined): boolean {
   const p = String(si?.platform ?? '').toLowerCase();
   const b = String(si?.brand ?? '').toLowerCase();
@@ -25,17 +28,29 @@ export function isAndroidLikeSystem(si: { platform?: unknown; brand?: unknown } 
     || b.includes('huawei') || b.includes('honor');
 }
 
+function readWxSystemInfo(): Record<string, unknown> {
+  try {
+    if (typeof wx.getWindowInfo === 'function' && typeof wx.getDeviceInfo === 'function') {
+      return { ...(wx.getDeviceInfo() || {}), ...(wx.getWindowInfo() || {}) };
+    }
+  } catch { /* 旧基础库 */ }
+  try {
+    return wx.getSystemInfoSync?.() || {};
+  } catch {
+    return {};
+  }
+}
+
 function getWxInfo(): { w: number; h: number; dpr: number; androidLike: boolean } {
   if (typeof wx === 'undefined') {
     return { w: 375, h: 667, dpr: 2, androidLike: false };
   }
   try {
-    const si = wx.getSystemInfoSync();
-    const w = Math.max(2, si.windowWidth || si.screenWidth || 375);
-    const h = Math.max(2, si.windowHeight || si.screenHeight || 667);
+    const si = readWxSystemInfo();
+    const w = Math.max(2, Number(si.windowWidth || si.screenWidth) || 375);
+    const h = Math.max(2, Number(si.windowHeight || si.screenHeight) || 667);
     const androidLike = isAndroidLikeSystem(si);
-    const dprCap = androidLike ? 2 : 3;
-    const dpr = Math.max(1, Math.min(si.pixelRatio || 2, dprCap));
+    const dpr = Math.max(1, Math.min(Number(si.pixelRatio) || 2, androidLike ? 2 : 3));
     return { w, h, dpr, androidLike };
   } catch (e) {
     console.warn('[getWxInfo]', e);
@@ -86,26 +101,34 @@ function patchEventSystemCoords(renderer: PIXI.IRenderer, screenW: number, scree
   console.log('[createPixiHost] mapPositionToPoint 已覆盖, screenW:', screenW, 'screenH:', screenH);
 }
 
+function pixiRendererOptions(canvas: PIXI.ICanvas, w: number, h: number, dpr: number) {
+  return {
+    view: canvas,
+    width: w,
+    height: h,
+    backgroundColor: 0x2a3548,
+    antialias: true,
+    resolution: dpr,
+    autoDensity: true,
+    preserveDrawingBuffer: true,
+    // 花花同款：鸿蒙假 WebGL2 会建上下文成功但画不出来；必须 WebGL1 + stencil。
+    preferWebGLVersion: 1,
+    stencil: true,
+    hello: false,
+  } as any;
+}
+
 /**
  * 创建可渲染的 Pixi 宿主；若 Application 缺 ticker/renderer 则降级。
  */
 export function createPixiHost(canvas: PIXI.ICanvas): PixiHost {
-  const { w, h, dpr, androidLike } = getWxInfo();
+  const { w, h, dpr } = getWxInfo();
   applyCanvasSize(canvas, w * dpr, h * dpr);
-  const antialias = !androidLike;
-  console.log(`[createPixiHost] logical=${w}x${h} dpr=${dpr} canvas=${w * dpr}x${h * dpr} antialias=${antialias}`);
+  console.log(`[createPixiHost] logical=${w}x${h} dpr=${dpr} canvas=${w * dpr}x${h * dpr} webgl1+stencil`);
 
   let app: PIXI.Application | null = null;
   try {
-    app = new PIXI.Application({
-      view: canvas,
-      width: w,
-      height: h,
-      backgroundColor: 0x2a3548,
-      antialias,
-      resolution: dpr,
-      autoDensity: true,
-    });
+    app = new PIXI.Application(pixiRendererOptions(canvas, w, h, dpr));
   } catch (e) {
     console.error('[createPixiHost] new PIXI.Application 失败:', e);
   }
@@ -123,14 +146,7 @@ export function createPixiHost(canvas: PIXI.ICanvas): PixiHost {
   }
 
   console.warn('[createPixiHost] Application 不完整或失败，降级 autoDetectRenderer + Ticker');
-  const renderer = PIXI.autoDetectRenderer({
-    view: canvas,
-    width: w,
-    height: h,
-    backgroundColor: 0x2a3548,
-    antialias,
-    resolution: dpr,
-  });
+  const renderer = PIXI.autoDetectRenderer(pixiRendererOptions(canvas, w, h, dpr));
   const stage = new PIXI.Container();
   const ticker = new PIXI.Ticker();
   ticker.add(() => {
