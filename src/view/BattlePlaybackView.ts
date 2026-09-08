@@ -51,9 +51,12 @@ import {
   RUN_GEAR_SIZE,
   RUN_GEAR_X,
   RUN_GOLD_X_BESIDE_GEAR,
+  runCenterBannerMaxWidth,
+  runCenterBannerY,
   runGoldYAlign,
   runHudRowY,
 } from '@/view/renderHelpers';
+import { createRunTitleBanner } from '@/view/runTitleBanner';
 import { AD_ICON_KEY, makeButton } from '@/ui/Button';
 import { makeRoundHudButton } from '@/ui/hudGlyphButton';
 import { attachPress } from '@/ui/press';
@@ -113,6 +116,10 @@ export interface PlaybackScreen {
 
 export interface PlaybackState {
   nodeLabel: string;
+  /** 关卡名，顶栏绶带主行 */
+  nodeTitle?: string;
+  /** 节点进度，如 1/7；和回合拼成副行 */
+  nodeMark?: string;
   gold: number;
   /** 本场胜利应到手的金币总额；按击杀拆开发飞向金币栏 */
   goldReward: number;
@@ -332,33 +339,31 @@ export function createBattlePlaybackView(
     settingsBtn.addChild(gear);
   }
   settingsBtn.x = RUN_GEAR_X;
-  // 从胶囊行降到金币行：太高会贴刘海，降下来和金币并排。
-  const gearSafeY = Math.round(inset.menuRect.y + (inset.menuRect.height - settingsBtnSize) / 2);
-  settingsBtn.y = runHudRowY(gearSafeY);
+  settingsBtn.y = runHudRowY();
   settingsBtn.eventMode = 'static';
   settingsBtn.cursor = 'pointer';
   settingsBtn.hitArea = new PIXI.Rectangle(0, 0, settingsBtnSize, settingsBtnSize);
 
-  // --- 顶部：回合数 ---
-  const roundTx = makeText('准备战斗', 'combatLabel', { fill: 0xffffff });
-  roundTx.anchor.set(0.5, 0.5);
-  const roundBg = new PIXI.Graphics();
-  const roundLabelW = 120;
-  const roundLabelH = 28;
-  roundBg.beginFill(0x000000, 0.4);
-  roundBg.drawRoundedRect(0, 0, roundLabelW, roundLabelH, 8);
-  roundBg.endFill();
-  roundBg.x = Math.floor((sw - roundLabelW) / 2);
-  // 居中贴顶会撞上灵动岛；放到胶囊下沿之下
-  roundBg.y = inset.top + 6;
-  root.addChild(roundBg);
-  roundTx.x = roundBg.x + roundLabelW / 2;
-  roundTx.y = roundBg.y + roundLabelH / 2;
-  root.addChild(roundTx);
+  // --- 顶部：关卡名（米白字墨描边，贴胶囊下沿） ---
+  const stageTitle = gameState.nodeTitle ?? gameState.nodeLabel;
+  const banner = createRunTitleBanner({
+    title: stageTitle,
+    maxWidth: runCenterBannerMaxWidth(sw),
+  });
+  const placeBanner = (): void => {
+    banner.root.x = Math.floor((sw - banner.width) / 2);
+    banner.root.y = runCenterBannerY();
+  };
+  placeBanner();
+  root.addChild(banner.root);
 
   function setRoundLabel(): void {
-    roundTx.text = `${gameState.nodeLabel} · 第 ${Math.max(1, sim.getRound())} 回合`;
+    const mark = gameState.nodeMark;
+    const round = `第 ${Math.max(1, sim.getRound())} 回合`;
+    banner.setSubtitle(mark ? `${mark} · ${round}` : round);
+    placeBanner();
   }
+  setRoundLabel();
 
   // 开场提示（几秒后淡出）。两种开局说两句不同的话：手动要说清一回合能做几件事，
   // 托管要让玩家知道方向盘随时拿得回来，否则他只会盯着一场自己插不上手的战斗。
@@ -372,7 +377,7 @@ export function createBattlePlaybackView(
     });
     hintTx.anchor.set(0.5, 0);
     hintTx.x = sw / 2;
-    hintTx.y = roundBg.y + roundLabelH + 6;
+    hintTx.y = banner.root.y + banner.height + 6;
     root.addChild(hintTx);
     void (async () => {
       await awaitEase(3500, () => {});
@@ -736,7 +741,7 @@ export function createBattlePlaybackView(
           ? {
             place: 'dodgeTop' as const,
             dodge: at,
-            topInset: roundBg.y + roundLabelH + 8,
+            topInset: banner.root.y + banner.height + 8,
           }
           : {}),
       },

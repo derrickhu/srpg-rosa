@@ -25,6 +25,7 @@ import {
   rosterDetailNeighbor,
   rosterDetailPanelLayout,
   rosterDetailPanelWidth,
+  rosterFlipLockUntil,
   rosterStatTotals,
   rosterUpgradeCostItems,
 } from '@/view/RosterView';
@@ -107,6 +108,15 @@ describe('角色详情升级页', () => {
     expect(rosterDetailNeighbor(ids, 'hero_shield_gron', 1)).toBe('hero_sword_ray');
     expect(rosterDetailNeighbor(ids, 'hero_sword_ray', -1)).toBe('hero_shield_gron');
     expect(rosterDetailNeighbor(['hero_sword_ray'], 'hero_sword_ray', 1)).toBeNull();
+  });
+
+  it('四人名单一次只走隔壁，连点不会隔人跳成两两互切', () => {
+    const ids = ['hero_sword_ray', 'hero_bow_hill', 'hero_shield_gron', 'hero_mage_aoli'];
+    expect(rosterDetailNeighbor(ids, 'hero_sword_ray', 1)).toBe('hero_bow_hill');
+    expect(rosterDetailNeighbor(ids, 'hero_sword_ray', 1)).not.toBe('hero_shield_gron');
+    expect(rosterFlipLockUntil(1000, 0)).toBe(1280);
+    expect(rosterFlipLockUntil(1100, 1280)).toBeNull();
+    expect(rosterFlipLockUntil(1280, 1280)).toBe(1560);
   });
 
   it('顶栏魂晶贴着安全区顶，飞币落点和条对齐', () => {

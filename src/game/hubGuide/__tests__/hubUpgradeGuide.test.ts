@@ -97,6 +97,7 @@ describe('大厅升级指引', () => {
     expect(visibleHubUpgradeGuideStep(meta, 'adventure', null)).toBe(HubUpgradeGuideStep.OPEN_ROSTER);
     expect(visibleHubUpgradeGuideStep(meta, 'roster', null)).toBe(HubUpgradeGuideStep.TAP_RAYEN);
     expect(visibleHubUpgradeGuideStep(meta, 'roster', TUTORIAL_RAYEN_ID)).toBe(HubUpgradeGuideStep.TAP_LEVELUP);
+    expect(visibleHubUpgradeGuideStep(meta, 'roster', TUTORIAL_HILL_ID)).toBe(HubUpgradeGuideStep.TAP_RAYEN);
   });
 
   it('三步文案都点名要做什么', () => {

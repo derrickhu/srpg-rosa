@@ -28,7 +28,7 @@ import {
 } from '@/game/tutorial/tutorialRules';
 import type { MvpGameState } from '@/game/state/GameState';
 import { attachPress } from '@/ui/press';
-import { RUN_GOLD_Y_STANDALONE } from '@/view/renderHelpers';
+import { runHudRowY } from '@/view/renderHelpers';
 
 export interface SpotlightRect {
   x: number;
@@ -374,7 +374,7 @@ function makeRichBody(src: string, wrapW: number): PIXI.Container {
 
 /** 默认钉在金币栏下。洞在上半屏才让开，避免挡敌人。 */
 function dialogTop(host: TutorialHost, hole: SpotlightRect | null, rowH: number): number {
-  const topY = RUN_GOLD_Y_STANDALONE + 38;
+  const topY = runHudRowY() + 38;
   const gap = 10;
   if (!hole) return topY;
   if (hole.y >= topY + rowH + gap) return topY;

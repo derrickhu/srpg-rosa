@@ -50,9 +50,12 @@ import {
   RUN_GEAR_SIZE,
   RUN_GEAR_X,
   RUN_GOLD_X_BESIDE_GEAR,
+  runCenterBannerMaxWidth,
+  runCenterBannerY,
   runGoldYAlign,
   runHudRowY,
 } from '@/view/renderHelpers';
+import { createRunTitleBanner } from '@/view/runTitleBanner';
 import { ENDLESS_MAX_WAVES, isEndlessDungeon } from '@/data/endlessCatalog';
 import { createNodeStrip } from '@/view/NodeStrip';
 import { AssetManager } from '@/core/AssetManager';
@@ -102,7 +105,7 @@ function makeInfoBadge(cell: number, onTap: () => void): PIXI.Container {
 
 /**
  * 部署页纵向分区（避免上挤下空）：
- * - 顶栏：设置 + 金币同一行，关卡名居中（紧凑）
+ * - 顶栏：设置 + 金币同一行；关卡名居中贴胶囊下沿
  * - 中区：棋盘在「顶栏下」到「底坞上」之间垂直居中
  * - 底坞（自下而上）：开战主按钮 → 替补席 → 工具栏 → 简短说明（贴近棋盘）
  */
@@ -246,7 +249,7 @@ export function createDeployView(
     settingsBtn.addChild(gear);
   }
   settingsBtn.x = RUN_GEAR_X;
-  settingsBtn.y = runHudRowY(6);
+  settingsBtn.y = runHudRowY();
   settingsBtn.eventMode = 'static';
   settingsBtn.cursor = 'pointer';
   settingsBtn.hitArea = new PIXI.Rectangle(0, 0, settingsBtnSize, settingsBtnSize);
@@ -282,42 +285,29 @@ export function createDeployView(
   goldContainer.addChild(goldValueTx);
   root.addChild(goldContainer);
 
-  // --- 副本名（与金币同一行，居中显示）+ 节点进度链 ---
+  // --- 关卡名（米白字墨描边，贴胶囊下沿）+ 节点进度链 ---
   const dungeon0 = currentDungeon(state);
   const sandbox = isSandboxDungeon(run.dungeonId);
-  const stageText = sandbox ? '特效试炼 · 点角色切技能' : dungeon0.name;
-  const stageTx = makeText(stageText, 'uiStrong', { fill: 0xffffff });
-  stageTx.anchor.set(0.5, 0.5);
-  const stagePadX = 16;
-  const stagePadY = 6;
-  const stageLabelW = stageTx.width + stagePadX * 2;
-  const stageLabelH = stageTx.height + stagePadY * 2;
-  const stageBg = new PIXI.Graphics();
-  stageBg.beginFill(0x000000, 0.4);
-  stageBg.drawRoundedRect(0, 0, stageLabelW, stageLabelH, 8);
-  stageBg.endFill();
-  stageBg.x = Math.floor((screen.screenWidth - stageLabelW) / 2);
-  stageBg.y = goldContainer.y + Math.floor((goldBgH - stageLabelH) / 2);
-  root.addChild(stageBg);
-  stageTx.x = stageBg.x + stageLabelW / 2;
-  stageTx.y = stageBg.y + stageLabelH / 2;
-  root.addChild(stageTx);
+  const banner = createRunTitleBanner({
+    title: sandbox ? '特效试炼' : dungeon0.name,
+    subtitle: sandbox
+      ? '点角色切技能'
+      : endless
+        ? `第 ${run.endless?.wave ?? 1} / ${ENDLESS_MAX_WAVES} 波`
+        : undefined,
+    maxWidth: runCenterBannerMaxWidth(screen.screenWidth),
+  });
+  banner.root.x = Math.floor((screen.screenWidth - banner.width) / 2);
+  banner.root.y = runCenterBannerY();
+  root.addChild(banner.root);
 
-  // --- 节点进度链（代替「2/9」数字） ---
-  // 无尽没有章节节点，只显示当前波次
-  if (endless) {
-    const wave = run.endless?.wave ?? 1;
-    const waveTx = makeText(`第 ${wave} / ${ENDLESS_MAX_WAVES} 波`, 'uiStrong', { fill: 0xffffff, fontSize: 13 });
-    waveTx.anchor.set(0.5, 0);
-    waveTx.x = Math.floor(screen.screenWidth / 2);
-    waveTx.y = stageBg.y + stageLabelH + 10;
-    root.addChild(waveTx);
-  } else {
+  // 无尽波次写在牌子副行；有章节节点时，进度链跟在牌子下面
+  if (!endless) {
     const stripW = Math.min(screen.screenWidth - 32, 360);
     const strip = createNodeStrip(dungeon0, { currentIndex: run.nodeIndex, width: stripW });
     strip.x = Math.floor((screen.screenWidth - stripW) / 2);
     // 当前节点上方要留出「你在这」标记的高度，否则它会压到关卡名
-    strip.y = stageBg.y + stageLabelH + 28;
+    strip.y = banner.root.y + banner.height + 22;
     root.addChild(strip);
   }
 

@@ -17,7 +17,7 @@ import {
   createCurrencyPill,
   createUiIcon,
   RUN_GOLD_X,
-  RUN_GOLD_Y_STANDALONE,
+  runHudRowY,
 } from '@/view/renderHelpers';
 import { AssetManager } from '@/core/AssetManager';
 import { makeAdButton, makeButton } from '@/ui/Button';
@@ -156,7 +156,7 @@ export function createShopView(
   // --- 顶栏：金币 + 轻标题 ---
   const goldPill = createCurrencyPill('icon_gold', `${state.run!.gold}`);
   goldPill.x = RUN_GOLD_X;
-  goldPill.y = RUN_GOLD_Y_STANDALONE;
+  goldPill.y = runHudRowY();
   root.addChild(goldPill);
 
   const titleText = makeText('补给点', 'title', { fill: C.textOnDark, fontSize: 16 });

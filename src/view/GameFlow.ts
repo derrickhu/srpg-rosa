@@ -868,6 +868,12 @@ export class GameFlow {
           : endless
             ? `${dungeon.name} ${run.endless?.wave ?? 1}/${ENDLESS_MAX_WAVES}`
             : `${dungeon.name} ${run.nodeIndex + 1}/${dungeon.nodes.length}`,
+        nodeTitle: sandbox ? '特效试炼' : dungeon.name,
+        nodeMark: sandbox
+          ? '木桩场'
+          : endless
+            ? `${run.endless?.wave ?? 1}/${ENDLESS_MAX_WAVES}`
+            : `${run.nodeIndex + 1}/${dungeon.nodes.length}`,
         battleBg: dungeonBattleBgKey(dungeon),
         sandbox,
         gold: run.gold,

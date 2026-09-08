@@ -249,6 +249,11 @@ function placeDialogRow(
   layer.addChild(row);
 }
 
+/** 详情弹窗开着时不能铺挡点击层，否则关闭和翻页都会死。 */
+export function hubGuideShouldBlockClicks(detailOpen: boolean): boolean {
+  return !detailOpen;
+}
+
 function stepHole(step: HubUpgradeGuideStep, host: HubUpgradeGuideHost): SpotlightRect | null {
   if (step === HubUpgradeGuideStep.OPEN_ROSTER) return host.tabRect('roster');
   if (step === HubUpgradeGuideStep.TAP_RAYEN) return host.cardRect(HUB_GUIDE_RAYEN_ID);
@@ -280,31 +285,38 @@ export function attachHubUpgradeGuideOverlay(
     const copy = HUB_UPGRADE_GUIDE_COPY[step];
     const dim = new PIXI.Graphics();
     drawDim(dim, host.screenW, host.screenH, hole ? [hole] : []);
+    const detailOpen = host.detailRosterId() != null;
     if (hole) {
       dim.eventMode = 'none';
-      const maskHit = new PIXI.Graphics();
-      maskHit.beginFill(0xffffff, 0.001);
-      const pad = 4;
-      maskHit.drawRect(0, 0, host.screenW, Math.max(0, hole.y - pad));
-      maskHit.drawRect(0, hole.y - pad, Math.max(0, hole.x - pad), hole.h + pad * 2);
-      maskHit.drawRect(
-        hole.x + hole.w + pad,
-        hole.y - pad,
-        Math.max(0, host.screenW - hole.x - hole.w - pad),
-        hole.h + pad * 2,
-      );
-      maskHit.drawRect(0, hole.y + hole.h + pad, host.screenW, Math.max(0, host.screenH - hole.y - hole.h - pad));
-      maskHit.endFill();
-      maskHit.eventMode = 'static';
-      maskHit.on('pointertap', () => undefined);
       layer.addChild(dim);
       layer.addChild(makeSpot(hole));
-      layer.addChild(maskHit);
+      // 详情开着时不能按格子卡挖洞挡点击：那张卡在弹窗下面，挡完关闭、翻页、升级全死。
+      if (hubGuideShouldBlockClicks(detailOpen)) {
+        const maskHit = new PIXI.Graphics();
+        maskHit.beginFill(0xffffff, 0.001);
+        const pad = 4;
+        maskHit.drawRect(0, 0, host.screenW, Math.max(0, hole.y - pad));
+        maskHit.drawRect(0, hole.y - pad, Math.max(0, hole.x - pad), hole.h + pad * 2);
+        maskHit.drawRect(
+          hole.x + hole.w + pad,
+          hole.y - pad,
+          Math.max(0, host.screenW - hole.x - hole.w - pad),
+          hole.h + pad * 2,
+        );
+        maskHit.drawRect(0, hole.y + hole.h + pad, host.screenW, Math.max(0, host.screenH - hole.y - hole.h - pad));
+        maskHit.endFill();
+        maskHit.eventMode = 'static';
+        maskHit.on('pointertap', () => undefined);
+        layer.addChild(maskHit);
+      }
       placeHand(layer, hole);
-    } else {
+    } else if (hubGuideShouldBlockClicks(detailOpen)) {
       dim.eventMode = 'static';
       dim.hitArea = new PIXI.Rectangle(0, 0, host.screenW, host.screenH);
       dim.on('pointertap', () => undefined);
+      layer.addChild(dim);
+    } else {
+      dim.eventMode = 'none';
       layer.addChild(dim);
     }
     if (copy) placeDialogRow(layer, host, hole, copy);

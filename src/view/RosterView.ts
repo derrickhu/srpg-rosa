@@ -209,6 +209,17 @@ export function rosterDetailNeighbor(
   return rosterIds[(i + dir + rosterIds.length) % rosterIds.length] ?? null;
 }
 
+/**
+ * 微信会把一次触摸再合成一次 pointer，翻页钮会连响两下。
+ * 连响一次就隔人跳：雷恩→格隆、希尔→奥莉，看起来像两两互切。
+ */
+export const ROSTER_FLIP_LOCK_MS = 280;
+
+export function rosterFlipLockUntil(now: number, prevLock: number): number | null {
+  if (now < prevLock) return null;
+  return now + ROSTER_FLIP_LOCK_MS;
+}
+
 /** 详情弹窗高度和下移量：上沿让过顶栏魂晶，避免黄标题把数字挡住。 */
 export function rosterDetailPanelLayout(screenH: number): { panelH: number; offsetY: number } {
   const topGap = hubSoulBarBottom() + 10;
@@ -507,6 +518,7 @@ export function createRosterView(
   let levelUpBtnSize = { w: 0, h: 38 };
   let soulHud: CurrencyPill | null = null;
   let listScroll: ScrollListHandle | null = null;
+  let flipLockUntil = 0;
 
   function mountForegroundSoul(md: ModalHandle): void {
     header.setSoulVisible(false);
@@ -573,6 +585,9 @@ export function createRosterView(
   }
 
   function flipDetail(dir: -1 | 1): void {
+    const nextLock = rosterFlipLockUntil(Date.now(), flipLockUntil);
+    if (nextLock == null) return;
+    flipLockUntil = nextLock;
     const nextId = rosterDetailNeighbor(
       state.meta.roster.map((c) => c.rosterId),
       detailOpenId ?? '',
