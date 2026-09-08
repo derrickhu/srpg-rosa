@@ -48,8 +48,11 @@ import {
   createUnitToken,
   createBackground,
   createUiIcon,
-  RUN_GOLD_X,
-  runGoldYBelow,
+  RUN_GEAR_SIZE,
+  RUN_GEAR_X,
+  RUN_GOLD_X_BESIDE_GEAR,
+  runGoldYAlign,
+  runHudRowY,
 } from '@/view/renderHelpers';
 import { AD_ICON_KEY, makeButton } from '@/ui/Button';
 import { makeRoundHudButton } from '@/ui/hudGlyphButton';
@@ -315,7 +318,7 @@ export function createBattlePlaybackView(
   const shaker = createBoardShaker([gridLayer, dropLayer, rangeLayer, tokenLayer, fxLayer, floatLayer]);
 
   // --- 设置按钮（左上角齿轮） ---
-  const settingsBtnSize = 36;
+  const settingsBtnSize = RUN_GEAR_SIZE;
   const settingsBtn = new PIXI.Container();
   const settingsBg = new PIXI.Graphics();
   settingsBg.beginFill(0x000000, 0.35);
@@ -328,9 +331,10 @@ export function createBattlePlaybackView(
     gear.y = 4;
     settingsBtn.addChild(gear);
   }
-  settingsBtn.x = 8;
-  // 和胶囊同一行：左上角齿轮不能贴 y=0，否则会钻进刘海/状态栏
-  settingsBtn.y = Math.round(inset.menuRect.y + (inset.menuRect.height - settingsBtnSize) / 2);
+  settingsBtn.x = RUN_GEAR_X;
+  // 从胶囊行降到金币行：太高会贴刘海，降下来和金币并排。
+  const gearSafeY = Math.round(inset.menuRect.y + (inset.menuRect.height - settingsBtnSize) / 2);
+  settingsBtn.y = runHudRowY(gearSafeY);
   settingsBtn.eventMode = 'static';
   settingsBtn.cursor = 'pointer';
   settingsBtn.hitArea = new PIXI.Rectangle(0, 0, settingsBtnSize, settingsBtnSize);
@@ -441,7 +445,7 @@ export function createBattlePlaybackView(
     root.addChild(skipBtn);
   }
 
-  // --- 左上金币栏：击杀掉落飞进这里，数字当场涨。位置和布阵 / 补给点同一条线 ---
+  // --- 左上金币栏：击杀掉落飞进这里。和设置同一行，在齿轮右侧。 ---
   const goldIconSize = 22;
   const goldPadX = 6;
   const goldPadY = 4;
@@ -466,8 +470,8 @@ export function createBattlePlaybackView(
     }
     goldValueTx.x = goldPadX + goldIconSize + 4;
     goldValueTx.y = (bgH - goldValueTx.height) / 2;
-    goldHud.x = RUN_GOLD_X;
-    goldHud.y = runGoldYBelow(settingsBtn.y, settingsBtnSize);
+    goldHud.x = RUN_GOLD_X_BESIDE_GEAR;
+    goldHud.y = runGoldYAlign(settingsBtn.y, settingsBtnSize, bgH);
   }
   layoutGoldHud();
   root.addChild(goldHud);
@@ -2417,6 +2421,7 @@ export function createBattlePlaybackView(
   }
 
   function finishPlayback(winner: Faction): void {
+    if (completed) return;
     completed = true;
     manualUi?.hide();
     updateOrderStrip(null);

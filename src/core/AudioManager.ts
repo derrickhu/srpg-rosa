@@ -12,6 +12,7 @@ export type SfxId =
   | 'sfx_soul_gain'
   | 'sfx_reveal'
   | 'sfx_levelup'
+  | 'sfx_emblem_awaken'
   | 'sfx_coin'
   | 'sfx_buy'
   | 'sfx_deploy'
@@ -83,6 +84,7 @@ const SFX_MAP: Record<SfxId, string> = {
   sfx_soul_gain: 'audio/sfx/sfx_soul_gain.mp3',
   sfx_reveal: 'audio/sfx/sfx_reveal.mp3',
   sfx_levelup: 'audio/sfx/sfx_levelup.mp3',
+  sfx_emblem_awaken: 'audio/sfx/sfx_emblem_awaken.mp3',
   sfx_coin: 'audio/sfx/sfx_coin.mp3',
   sfx_buy: 'audio/sfx/sfx_buy.mp3',
   sfx_deploy: 'audio/sfx/sfx_deploy.mp3',

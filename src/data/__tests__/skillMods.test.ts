@@ -5,6 +5,7 @@ import {
   allSkillMods,
   effectiveSkillSpec,
   exclusiveChainForSkill,
+  exclusiveModsUnlockedBetween,
   exclusiveModsForSkill,
   formatModStars,
   getSkillMod,
@@ -468,5 +469,11 @@ describe('升级只开门专属纹章', () => {
         expect(lv, `「${spec.name}」专属开在 1 级，升级就没有东西可开`).toBeGreaterThan(1);
       }
     }
+  });
+
+  it('雷恩 1 升 2 打开旋势，再升一级不再开新的', () => {
+    const first = exclusiveModsUnlockedBetween('whirl', 1, 2);
+    expect(first.map((m) => m.id)).toEqual(['ex_whirl_momentum']);
+    expect(exclusiveModsUnlockedBetween('whirl', 2, 3)).toEqual([]);
   });
 });

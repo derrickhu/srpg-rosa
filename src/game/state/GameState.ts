@@ -105,6 +105,12 @@ export interface MetaState {
    * 不升 META_VERSION。
    */
   tutorialStep?: number;
+  /**
+   * 第一章通关后的大厅养成指引。可选：老档没有，读档时按进度补。
+   * 不升 META_VERSION。不能写进 `tutorialStep`——通关时格隆已入队，
+   * hydrate 会把教学标成完成，大厅步骤会被冲掉。
+   */
+  hubUpgradeGuideStep?: number;
 }
 
 /** 单副本一局的临时状态（roguelike 构筑都在这里，结束即弃） */
@@ -117,6 +123,13 @@ export interface RunState {
   /** 带入本局的角色 rosterId 列表 */
   partyRosterIds: string[];
   placements: PlacementEntry[];
+  /**
+   * 上一场战斗的上阵。同一章下一关默认沿用，格子被占或超员就丢掉多的。
+   * 可选：老档没有。
+   */
+  lastBattlePlacements?: PlacementEntry[];
+  /** 上一场地图高度。用来把前后排映射到下一张图，而不是死盯绝对 y。 */
+  lastBattleGridH?: number;
   /** 地形券库存：terrainId → 剩余放置次数 */
   terrainCharges: Record<string, number>;
   terrainOverlay: TerrainOverlayCell[];
@@ -309,6 +322,7 @@ export function createRunState(dungeonId: string, partyRosterIds: string[]): Run
     gold: 0,
     partyRosterIds: [...partyRosterIds],
     placements: [],
+    lastBattlePlacements: [],
     terrainCharges: {},
     terrainOverlay: [],
     potions: {},

@@ -4,6 +4,7 @@ import { DUNGEON_DEFS, getDungeonDef, type DungeonDef } from '@/data/dungeonCata
 import {
   ELITE_REPEAT_SOUL,
   eliteDungeonOf,
+  eliteIdOf,
   isEliteDungeon,
   officialDungeonIdOfElite,
 } from '@/data/eliteCatalog';
@@ -41,6 +42,7 @@ import { makeButton } from '@/ui/Button';
 import { showToast } from '@/ui/Toast';
 import { AudioManager } from '@/core/AudioManager';
 import { staggerPop } from '@/view/fx/celebration';
+import { awaitDelay, awaitEase } from '@/view/fx/tween';
 import { uiTexture } from '@/ui/chrome';
 
 export interface AdventureCallbacks {
@@ -55,6 +57,8 @@ export interface AdventureCallbacks {
   onChapterChange: (index: number) => void;
   /** 记住普通 / 精英开关 */
   onEliteModeChange?: (elite: boolean) => void;
+  /** 下一章开锁动画播完。大厅养成指引要等它，避免遮住开锁。 */
+  onUnlockRevealDone?: () => void;
 }
 
 export interface ChapterStarRewardView {
@@ -108,13 +112,13 @@ export function eliteModeUnlocked(
   meta: Pick<MetaState, 'clearedDungeonIds'>,
   officialId: string,
 ): boolean {
-  return chapterClearedForSweep(meta, officialId) && !!eliteDungeonOf(officialId);
+  return chapterClearedForSweep(meta, officialId) && !!eliteIdOf(officialId);
 }
 
 /** 开关打开且本章已通关时，奖励井 / 底钮读精英本 */
 export function adventureActiveDef(official: DungeonDef, eliteMode: boolean): DungeonDef {
   if (!eliteMode || isSandboxDungeon(official.id)) return official;
-  return eliteDungeonOf(official.id) ?? official;
+  return eliteDungeonOf(official) ?? official;
 }
 
 export function adventureCardTitle(chapterIndex: number, officialName: string, elite: boolean): string {
@@ -125,7 +129,7 @@ export function adventureCardTitle(chapterIndex: number, officialName: string, e
 
 /**
  * 冒险页默认停在「正在打 / 下一张没打过」的章。
- * 已通关的章可以手动翻回去看，但打开页不该还停在第一章。
+ * 失败离开关卡仍看当前章；通关回大厅则翻到下一章播解锁。
  */
 export function defaultAdventureChapterIndex(
   state: MvpGameState,
@@ -147,6 +151,43 @@ export function defaultAdventureChapterIndex(
     if (!isSandboxDungeon(chapters[i]!.id)) return i;
   }
   return 0;
+}
+
+export function adventureChapterIndexOf(
+  chapters: readonly DungeonDef[],
+  dungeonId: string,
+): number {
+  const officialId = officialDungeonIdOfElite(dungeonId) ?? dungeonId;
+  const i = chapters.findIndex((d) => d.id === officialId);
+  return i >= 0 ? i : 0;
+}
+
+/** 通关后首页停在下一章。没有下一章（或下一张是试炼）就停在刚打完的。 */
+export function nextAdventureChapterIndex(
+  chapters: readonly DungeonDef[],
+  clearedOfficialId: string,
+): number {
+  const i = chapters.findIndex((d) => d.id === clearedOfficialId);
+  if (i < 0) return 0;
+  for (let n = i + 1; n < chapters.length; n++) {
+    if (!isSandboxDungeon(chapters[n]!.id)) return n;
+  }
+  return i;
+}
+
+const LOCKED_ART_TINT = 0x6a6a6a;
+
+function mixTint(from: number, to: number, t: number): number {
+  const fr = (from >> 16) & 0xff;
+  const fg = (from >> 8) & 0xff;
+  const fb = from & 0xff;
+  const tr = (to >> 16) & 0xff;
+  const tg = (to >> 8) & 0xff;
+  const tb = to & 0xff;
+  const r = Math.round(fr + (tr - fr) * t);
+  const g = Math.round(fg + (tg - fg) * t);
+  const b = Math.round(fb + (tb - fb) * t);
+  return (r << 16) | (g << 8) | b;
 }
 
 const RADIUS = 20;
@@ -412,19 +453,21 @@ function buildCardArt(
   y: number,
   w: number,
   h: number,
-): PIXI.Container {
+): { root: PIXI.Container; art: PIXI.Sprite | null; veil: PIXI.Graphics | null } {
   const c = new PIXI.Container();
-  const tex =
-    unlocked && d.art && AssetManager.isBundleLoaded('bg')
-      ? AssetManager.texture('bg', d.art)
-      : null;
+  const tex = d.art && AssetManager.isBundleLoaded('bg')
+    ? AssetManager.texture('bg', d.art)
+    : null;
+  let art: PIXI.Sprite | null = null;
+  let veil: PIXI.Graphics | null = null;
 
   if (tex && tex !== PIXI.Texture.WHITE) {
-    const art = new PIXI.Sprite(tex);
+    art = new PIXI.Sprite(tex);
     const s = Math.max(w / tex.width, h / tex.height);
     art.scale.set(s);
     art.x = x + (w - tex.width * s) / 2;
     art.y = y + (h - tex.height * s) / 2;
+    art.tint = unlocked ? 0xffffff : LOCKED_ART_TINT;
     c.addChild(art);
 
     const mask = new PIXI.Graphics();
@@ -434,6 +477,15 @@ function buildCardArt(
     mask.endFill();
     c.addChild(mask);
     art.mask = mask;
+
+    if (!unlocked) {
+      veil = new PIXI.Graphics();
+      veil.beginFill(0x1a1a22, 0.5);
+      veil.drawRoundedRect(x, y, w, h, RADIUS);
+      veil.drawRect(x, y + h / 2, w, h / 2);
+      veil.endFill();
+      c.addChild(veil);
+    }
   } else {
     const flat = new PIXI.Graphics();
     flat.beginFill(unlocked ? d.themeColor : mix(C.paper, C.panel, 0.35), 1);
@@ -449,7 +501,7 @@ function buildCardArt(
   edge.lineTo(x + w, y + h);
   c.addChild(edge);
 
-  return c;
+  return { root: c, art, veil };
 }
 
 /** 未解锁章节的锁与条件文案叠在插图上，避免和下方通关奖励区抢位置。 */
@@ -527,6 +579,28 @@ function buildLockedOverlay(
   return box;
 }
 
+async function playChapterUnlockReveal(
+  art: PIXI.Sprite | null,
+  veil: PIXI.Graphics | null,
+  lockOverlay: PIXI.Container,
+): Promise<void> {
+  const live = (): boolean => isDisplayLive(lockOverlay);
+  await awaitDelay(280);
+  if (!live()) return;
+  AudioManager.playSfx('sfx_unlock');
+  const lockY = lockOverlay.y;
+  await awaitEase(720, (t) => {
+    if (!live()) return;
+    if (art) art.tint = mixTint(LOCKED_ART_TINT, 0xffffff, t);
+    if (veil) veil.alpha = 1 - t;
+    lockOverlay.alpha = 1 - t;
+    lockOverlay.y = lockY - 28 * t;
+    lockOverlay.scale.set(1 + 0.22 * t);
+  }, { live });
+  if (art && isDisplayLive(art)) art.tint = 0xffffff;
+  if (veil && isDisplayLive(veil)) veil.alpha = 0;
+}
+
 /**
  * 冒险页 = 章节地图：大幅章节卡 + 底部开打/扫荡。节点条只在局内布阵页出现。
  */
@@ -536,6 +610,7 @@ export function createAdventureView(
   cb: AdventureCallbacks,
   screen: { screenWidth: number; screenHeight: number },
   eliteModeInit = false,
+  unlockRevealId: string | null = null,
 ): PIXI.Container {
   const W = screen.screenWidth;
   const H = screen.screenHeight;
@@ -545,6 +620,7 @@ export function createAdventureView(
   const chapters = adventureChapterList(DUNGEON_DEFS, Platform.isGmTools);
   let chapter = Math.max(0, Math.min(chapterIndex, chapters.length - 1));
   let eliteMode = eliteModeInit;
+  let revealingUnlock = !!unlockRevealId && chapters[chapter]?.id === unlockRevealId;
 
   // 顶栏走四页共用的那一份，胶囊避让在它内部处理。
   const header = createHubHeader({
@@ -590,7 +666,7 @@ export function createAdventureView(
   }
 
   function buildModeToggle(d: DungeonDef): PIXI.Container | null {
-    if (isSandboxDungeon(d.id) || !eliteDungeonOf(d.id)) return null;
+    if (isSandboxDungeon(d.id) || !eliteDungeonOf(d)) return null;
     const unlocked = eliteModeUnlocked(state.meta, d.id);
     const on = viewingEliteOf(d);
     const box = new PIXI.Container();
@@ -634,6 +710,7 @@ export function createAdventureView(
   function buildChapterCard(d: DungeonDef): PIXI.Container {
     const c = new PIXI.Container();
     const unlocked = isDungeonUnlocked(state.meta, d.id);
+    const visualLocked = !unlocked || (revealingUnlock && d.id === unlockRevealId);
     const viewingElite = viewingEliteOf(d);
     const cleared = state.meta.clearedDungeonIds.includes(viewingElite ? activeDefOf(d).id : d.id);
 
@@ -644,14 +721,16 @@ export function createAdventureView(
 
     // 外壳走面板色，留白只给奖励井——整张米白会在海天底上像贴了一张纸。
     const card = new PIXI.Graphics();
-    card.beginFill(unlocked ? C.panel : mix(C.panel, C.ink, 0.22), 0.97);
+    card.beginFill(visualLocked ? mix(C.panel, C.ink, 0.22) : C.panel, 0.97);
     card.drawRoundedRect(cardX, cardY, cardW, cardH, RADIUS);
     card.endFill();
     c.addChild(card);
-    c.addChild(buildCardArt(d, unlocked, cardX, cardY, cardW, cardH * ART_RATIO));
+    const artH = cardH * ART_RATIO;
+    const artBuilt = buildCardArt(d, !visualLocked, cardX, cardY, cardW, artH);
+    c.addChild(artBuilt.root);
 
     const border = new PIXI.Graphics();
-    border.lineStyle(2, C.ink, unlocked ? 1 : 0.55);
+    border.lineStyle(2, C.ink, visualLocked ? 0.55 : 1);
     border.drawRoundedRect(cardX, cardY, cardW, cardH, RADIUS);
     c.addChild(border);
 
@@ -684,14 +763,13 @@ export function createAdventureView(
       c.addChild(tick);
     }
 
-    const toggle = buildModeToggle(d);
+    const toggle = visualLocked ? null : buildModeToggle(d);
     if (toggle) {
       toggle.x = W / 2 - toggle.width / 2;
       toggle.y = cardY + 16;
       c.addChild(toggle);
     }
 
-    const artH = cardH * ART_RATIO;
     const bodyTop = cardY + artH;
     const innerL = cardX + 16;
     const innerW = cardW - 32;
@@ -699,16 +777,32 @@ export function createAdventureView(
     const rewardDef = activeDefOf(d);
     const rewards = isSandboxDungeon(d.id) ? null : chapterRewardModel(rewardDef, state.meta);
 
-    if (unlocked) {
-      if (rewards) {
-        c.addChild(buildRewardBlock(innerL, bodyTop + 10, innerW, rewards));
-      }
-    } else {
-      c.addChild(buildLockedOverlay(
+    let lockOverlay: PIXI.Container | null = null;
+    if (visualLocked) {
+      lockOverlay = buildLockedOverlay(
         d, state, cb.onChanged, root, W, cardX, cardY, cardW, artH,
-      ));
+      );
+      c.addChild(lockOverlay);
       if (rewards) {
         c.addChild(buildRewardBlock(innerL, cardY + cardH - rewardBlockH() - 10, innerW, rewards));
+      }
+    } else if (rewards) {
+      c.addChild(buildRewardBlock(innerL, bodyTop + 10, innerW, rewards));
+    }
+
+    if (revealingUnlock && d.id === unlockRevealId) {
+      const finishUnlock = (): void => {
+        revealingUnlock = false;
+        refreshCard();
+        cb.onUnlockRevealDone?.();
+      };
+      if (lockOverlay) {
+        void playChapterUnlockReveal(artBuilt.art, artBuilt.veil, lockOverlay).then(() => {
+          if (!isDisplayLive(root)) return;
+          finishUnlock();
+        });
+      } else {
+        finishUnlock();
       }
     }
 
@@ -740,6 +834,7 @@ export function createAdventureView(
 
   function rebuildActions(): void {
     actionLayer.removeChildren();
+    if (revealingUnlock) return;
     const d = currentDef();
     const unlocked = isDungeonUnlocked(state.meta, d.id);
     const btnY = H - 70;

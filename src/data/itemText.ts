@@ -1,6 +1,7 @@
 import type { TerrainId } from '@/battle/types';
 import { getTerrainSpec } from '@/data/terrainSpec';
 import { POTION_DEFS } from '@/data/potionCatalog';
+import { applyEliteTempSkillBoost } from '@/data/eliteCatalog';
 import { getSkillSpec, type SkillSpec } from '@/data/skillCatalog';
 import { describeReach, describeSkillSpec } from '@/data/skillText';
 
@@ -75,9 +76,10 @@ export function describeTerrainTicketLines(terrainId: TerrainId): string[] {
   return lines;
 }
 
-export function describeTempSkillLines(skillId: string): string[] {
-  const spec = getSkillSpec(skillId);
-  if (!spec) return [];
+export function describeTempSkillLines(skillId: string, eliteBoost = false): string[] {
+  const raw = getSkillSpec(skillId);
+  if (!raw) return [];
+  const spec = eliteBoost ? applyEliteTempSkillBoost(raw) : raw;
   const head = `本局·第二技能位 · 冷却 ${spec.cooldown}`;
   const mid = briefShape(spec);
   const effects = briefEffectLines(spec);
@@ -93,18 +95,21 @@ export function describeTerrainTicket(terrainId: TerrainId): string {
   return describeTerrainTicketLines(terrainId).join('\n');
 }
 
-export function describeTempSkill(skillId: string): string {
-  return describeTempSkillLines(skillId).join('\n');
+export function describeTempSkill(skillId: string, eliteBoost = false): string {
+  return describeTempSkillLines(skillId, eliteBoost).join('\n');
 }
 
-export function describeShopOfferLines(o: DescribableOffer): string[] {
+export function describeShopOfferLines(
+  o: DescribableOffer,
+  opts?: { eliteTempBoost?: boolean },
+): string[] {
   switch (o.type) {
     case 'potion':
       return describePotionLines(o.potionId);
     case 'terrain':
       return describeTerrainTicketLines(o.terrainId);
     case 'tempSkill':
-      return describeTempSkillLines(o.skillId);
+      return describeTempSkillLines(o.skillId, opts?.eliteTempBoost === true);
   }
 }
 

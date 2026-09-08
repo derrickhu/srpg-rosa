@@ -106,6 +106,8 @@ export const UI_BUNDLE: AssetBundleDef = {
     title_adventure: 'images/ui/title_adventure.png',
     title_challenge: 'images/ui/title_challenge.png',
     btn_primary_skin: 'images/ui/btn_primary_skin.png',
+    // 角色详情底栏页签空心底。字用游戏字体叠，禁用态同一张皮压暗。
+    detail_tab: 'images/ui/detail_tab.png',
     platform_gold: 'images/ui/platform_gold.png',
     illust_endless: 'images/ui/illust_endless.png',
     illust_hunt: 'images/ui/illust_hunt.png',
@@ -138,6 +140,9 @@ export const UI_BUNDLE: AssetBundleDef = {
     tab_adventure: 'images/ui/tab_adventure.png',
     tab_challenge: 'images/ui/tab_challenge.png',
     logo_emblem: 'images/ui/logo_emblem.png',
+    // 升级解锁专属纹章的庆祝：夜殿底 + 交叉剑徽。图里不写字。
+    emblem_awaken_bg: 'images/ui/emblem_awaken_bg.jpg',
+    emblem_awaken_crest: 'images/ui/emblem_awaken_crest.png',
     // 战斗胜利弹窗的标题横幅。图里刻意留空——「胜利」两个字用游戏字体在代码里画，
     // 烧进贴图的话既换不了文案，字形也和界面其余部分对不上。
     banner_victory: 'images/ui/banner_victory.png',

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { CHAPTER_STAGE_INDICES, ELITE_STAGE_INDICES, STAGES_MVP } from '@/data/stagesMvp';
+import { CHAPTER_STAGE_INDICES, STAGES_MVP } from '@/data/stagesMvp';
 import { DUNGEON_DEFS, dungeonBattleBgKey } from '@/data/dungeonCatalog';
-import { ELITE_DUNGEON_DEFS } from '@/data/eliteCatalog';
+import { ELITE_ENEMY_SCALE, listEliteDungeons } from '@/data/eliteCatalog';
 import { BG_BUNDLE } from '@/core/assetBundles';
 import { isKnownTerrainId, isPassable } from '@/data/terrainSpec';
 import { getSkillSpec } from '@/data/skillCatalog';
@@ -236,11 +236,11 @@ describe('副本节点与关卡的对应关系', () => {
     });
   });
 
-  it('每个关卡被恰好一个副本节点引用', () => {
+  it('每个关卡被恰好一个主线副本节点引用', () => {
     // 漏引用 = 写好的关卡玩不到；重复引用 = 同一关在两章里出现，通关记录还会互相干扰
-    // 精英再战追加在 STAGES_MVP 末尾，必须算进引用，否则那 6 关会变成死数据
+    // 精英难度复用主线下标，不算第二个主人
     const refs = new Map<number, string[]>();
-    for (const d of [...DUNGEON_DEFS, ...ELITE_DUNGEON_DEFS]) {
+    for (const d of DUNGEON_DEFS) {
       for (const n of d.nodes) {
         if (n.stageIndex === undefined) continue;
         refs.set(n.stageIndex, [...(refs.get(n.stageIndex) ?? []), `${d.id}/${n.name}`]);
@@ -253,19 +253,21 @@ describe('副本节点与关卡的对应关系', () => {
     });
   });
 
-  it('精英再战下标不污染主线章', () => {
-    const official = new Set(CHAPTER_STAGE_INDICES.flat());
-    for (const i of ELITE_STAGE_INDICES) {
-      expect(official.has(i), `精英下标 ${i} 不该落在主线章里`).toBe(false);
-    }
-    expect(ELITE_STAGE_INDICES).toHaveLength(ELITE_DUNGEON_DEFS.length);
-    ELITE_DUNGEON_DEFS.forEach((d, i) => {
-      expect(d.nodes[0]?.stageIndex, d.id).toBe(ELITE_STAGE_INDICES[i]);
+  it('精英难度复用对应主线的关卡下标与节点序列', () => {
+    const elites = listEliteDungeons(DUNGEON_DEFS);
+    expect(elites).toHaveLength(DUNGEON_DEFS.length);
+    DUNGEON_DEFS.forEach((official, i) => {
+      const elite = elites[i]!;
+      expect(elite.nodes.map((n) => n.stageIndex)).toEqual(official.nodes.map((n) => n.stageIndex));
+      elite.nodes.forEach((n, ni) => {
+        if (n.kind === 'shop') return;
+        expect(n.enemyScale).toBeCloseTo((official.nodes[ni]!.enemyScale ?? 1) * ELITE_ENEMY_SCALE);
+      });
     });
   });
 
   it('战斗节点的 stageIndex 都指向真实关卡', () => {
-    for (const d of [...DUNGEON_DEFS, ...ELITE_DUNGEON_DEFS]) {
+    for (const d of [...DUNGEON_DEFS, ...listEliteDungeons(DUNGEON_DEFS)]) {
       for (const n of d.nodes) {
         if (n.kind === 'shop') {
           expect(n.stageIndex, `${d.id} 的商店节点不该带 stageIndex`).toBeUndefined();
@@ -306,7 +308,7 @@ describe('副本节点与关卡的对应关系', () => {
   });
 
   it('每章战斗底图都登记在 bg bundle 里', () => {
-    for (const d of [...DUNGEON_DEFS, ...ELITE_DUNGEON_DEFS]) {
+    for (const d of [...DUNGEON_DEFS, ...listEliteDungeons(DUNGEON_DEFS)]) {
       const key = dungeonBattleBgKey(d);
       expect(d.battleBg, `${d.id} 没写 battleBg，进战斗会一直铺第一章草地`).toBeDefined();
       expect(BG_BUNDLE.assets[key], `${d.id} 的底图 ${key} 不在 BG_BUNDLE`).toBeDefined();

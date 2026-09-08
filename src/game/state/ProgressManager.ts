@@ -4,8 +4,7 @@ import {
 } from '@/data/characterCatalog';
 import { DUNGEON_DEFS, getDungeonDef } from '@/data/dungeonCatalog';
 import {
-  ELITE_DUNGEON_DEFS,
-  ELITE_FIRST_CLEAR_SOUL,
+  ELITE_CHAPTERS,
   ELITE_REPEAT_SOUL,
   isEliteDungeon,
 } from '@/data/eliteCatalog';
@@ -21,9 +20,20 @@ import {
 } from '@/data/chapterStars';
 import { POTION_DEFS } from '@/data/potionCatalog';
 import { getSkillSpec } from '@/data/skillCatalog';
-import { allSkillMods, lootCommonWeightMul, modRollWeight, modStacks } from '@/data/skillModCatalog';
+import {
+  allSkillMods,
+  eliteLootWeightMul,
+  lootCommonWeightMul,
+  modRollWeight,
+  modStacks,
+} from '@/data/skillModCatalog';
 import { describePotion } from '@/data/itemText';
-import { battleSkillIdsForCharacter } from './DeployManager';
+import {
+  applyCarriedPlacements,
+  battleSkillIdsForCharacter,
+  rememberBattlePlacements,
+  shouldSkipDeployCarry,
+} from './DeployManager';
 import { instantiateCharacter } from '@/game/characterFactory';
 import type { Character } from '@/game/characterTypes';
 import {
@@ -75,7 +85,7 @@ export const BOSS_FIRST_CLEAR_SOUL = 5;
  * 刷的成本就是完整打一遍，而不是进副本赢两场就跑。
  */
 export const DUNGEON_REPEAT_SOUL = 3;
-export { ELITE_FIRST_CLEAR_SOUL, ELITE_REPEAT_SOUL };
+export { ELITE_REPEAT_SOUL };
 
 export function recordRunBattleStats(
   run: RunState,
@@ -130,9 +140,8 @@ export function hydrateChapterProgress(meta: MetaState): void {
       meta.clearedNodesByDungeonId[d.id] = d.nodes.length;
     }
   }
-  for (const e of ELITE_DUNGEON_DEFS) {
-    if (e.unlock.kind !== 'clearDungeon') continue;
-    if (!meta.clearedDungeonIds.includes(e.unlock.dungeonId)) continue;
+  for (const e of ELITE_CHAPTERS) {
+    if (!meta.clearedDungeonIds.includes(e.officialId)) continue;
     if (!meta.unlockedDungeonIds.includes(e.id)) {
       meta.unlockedDungeonIds.push(e.id);
     }
@@ -231,9 +240,7 @@ export function applyVictory(state: MvpGameState): void {
   // 顺序要紧：`markNodeCleared` 会把这个节点记成已通过，判首通必须在它之前
   const firstClear = isNodeFirstClear(state.meta, run.dungeonId, run.nodeIndex);
   const soul = firstClear
-    ? (isEliteDungeon(run.dungeonId)
-      ? ELITE_FIRST_CLEAR_SOUL
-      : (node.kind === 'boss' ? BOSS_FIRST_CLEAR_SOUL : NODE_FIRST_CLEAR_SOUL))
+    ? (node.kind === 'boss' ? BOSS_FIRST_CLEAR_SOUL : NODE_FIRST_CLEAR_SOUL)
     : 0;
   state.meta.metaCurrency += soul;
 
@@ -397,8 +404,9 @@ function lootCandidatesFor(
     if (m.level < mod.minLevel) continue;
     const next = modStacks(owned, mod.id) + 1;
     if (next > mod.maxStacks) continue;
+    const eliteMul = isEliteDungeon(run.dungeonId) ? eliteLootWeightMul(mod.rarity) : 1;
     out.push({
-      weight: modRollWeight(mod, depth) * (mod.rarity === 'common' ? commonMul : 1),
+      weight: modRollWeight(mod, depth) * (mod.rarity === 'common' ? commonMul : 1) * eliteMul,
       opt: {
         kind: 'skillMod',
         modId: mod.id,
@@ -611,9 +619,11 @@ export function finishEndlessRun(state: MvpGameState): number {
   return bonus;
 }
 
-/** 推进到下一节点：清空本节点部署/地形，按节点类型切换阶段 */
+/** 推进到下一节点：地形券布置清掉；上阵记住，下一关默认沿用 */
 export function advanceNode(state: MvpGameState): void {
   const run = requireRun(state);
+  if (run.nodeIndex >= currentDungeon(state).nodes.length - 1) return;
+  rememberBattlePlacements(state);
   run.placements = [];
   run.terrainOverlay = [];
   run.adExtraSlot = 0;
@@ -621,7 +631,12 @@ export function advanceNode(state: MvpGameState): void {
   run.pendingLoot = null;
   run.lastReportWinner = null;
   run.nodeIndex += 1;
-  state.phase = currentNode(state).kind === 'shop' ? 'shop' : 'deploy';
+  if (currentNode(state).kind === 'shop') {
+    state.phase = 'shop';
+    return;
+  }
+  state.phase = 'deploy';
+  if (!shouldSkipDeployCarry(state)) applyCarriedPlacements(state);
 }
 
 export interface FinishRunResult {
@@ -635,7 +650,10 @@ export interface FinishRunResult {
  * 整章通关：新点亮的星发魂晶；已经通关过再打，另加本关重复奖。
  */
 export function finishRunVictory(state: MvpGameState): FinishRunResult {
-  if (state.run && isSandboxDungeon(state.run.dungeonId)) {
+  if (!state.run) {
+    return { soul: 0, unlockedRosterIds: [], newStars: [], starMask: 0 };
+  }
+  if (isSandboxDungeon(state.run.dungeonId)) {
     state.run = null;
     state.phase = 'hub';
     return { soul: 0, unlockedRosterIds: [], newStars: [], starMask: 0 };
@@ -680,13 +698,18 @@ export function applyDungeonClearUnlocks(meta: MetaState, dungeonId: string): st
   if (!meta.clearedDungeonIds.includes(dungeonId)) {
     meta.clearedDungeonIds.push(dungeonId);
   }
-  for (const dd of [...DUNGEON_DEFS, ...ELITE_DUNGEON_DEFS]) {
+  for (const dd of DUNGEON_DEFS) {
     if (
       dd.unlock.kind === 'clearDungeon' &&
       dd.unlock.dungeonId === dungeonId &&
       !meta.unlockedDungeonIds.includes(dd.id)
     ) {
       meta.unlockedDungeonIds.push(dd.id);
+    }
+  }
+  for (const e of ELITE_CHAPTERS) {
+    if (e.officialId === dungeonId && !meta.unlockedDungeonIds.includes(e.id)) {
+      meta.unlockedDungeonIds.push(e.id);
     }
   }
   const unlocked: string[] = [];

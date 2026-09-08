@@ -47,8 +47,11 @@ import {
   createUnitToken,
   createBackground,
   createUiIcon,
-  RUN_GOLD_X,
-  runGoldYBelow,
+  RUN_GEAR_SIZE,
+  RUN_GEAR_X,
+  RUN_GOLD_X_BESIDE_GEAR,
+  runGoldYAlign,
+  runHudRowY,
 } from '@/view/renderHelpers';
 import { ENDLESS_MAX_WAVES, isEndlessDungeon } from '@/data/endlessCatalog';
 import { createNodeStrip } from '@/view/NodeStrip';
@@ -99,7 +102,7 @@ function makeInfoBadge(cell: number, onTap: () => void): PIXI.Container {
 
 /**
  * 部署页纵向分区（避免上挤下空）：
- * - 顶栏：关卡名 + 金币（紧凑）
+ * - 顶栏：设置 + 金币同一行，关卡名居中（紧凑）
  * - 中区：棋盘在「顶栏下」到「底坞上」之间垂直居中
  * - 底坞（自下而上）：开战主按钮 → 替补席 → 工具栏 → 简短说明（贴近棋盘）
  */
@@ -226,7 +229,7 @@ export function createDeployView(
   root.addChild(bgLayer);
 
   // --- 设置按钮（左上角齿轮） ---
-  const settingsBtnSize = 36;
+  const settingsBtnSize = RUN_GEAR_SIZE;
   const settingsBtn = new PIXI.Container();
   const settingsBg = new PIXI.Graphics();
   settingsBg.beginFill(0x000000, 0.35);
@@ -242,15 +245,15 @@ export function createDeployView(
     gear.y = (settingsBtnSize - gearSize) / 2;
     settingsBtn.addChild(gear);
   }
-  settingsBtn.x = 8;
-  settingsBtn.y = 6;
+  settingsBtn.x = RUN_GEAR_X;
+  settingsBtn.y = runHudRowY(6);
   settingsBtn.eventMode = 'static';
   settingsBtn.cursor = 'pointer';
   settingsBtn.hitArea = new PIXI.Rectangle(0, 0, settingsBtnSize, settingsBtnSize);
   settingsBtn.on('pointertap', () => toggleSettingsPanel());
   root.addChild(settingsBtn);
 
-  // --- 金币（设置按钮下方，带遮罩底板和图标） ---
+  // --- 金币（和设置同一行，在齿轮右侧） ---
   const goldIconSize = 22;
   const goldValueTx = makeText(`${run.gold}`, 'uiStrong', { fill: 0xffffff });
   const goldPadX = 6;
@@ -259,8 +262,8 @@ export function createDeployView(
   const goldBgH = Math.max(goldIconSize, goldValueTx.height) + goldPadY * 2;
 
   const goldContainer = new PIXI.Container();
-  goldContainer.x = RUN_GOLD_X;
-  goldContainer.y = runGoldYBelow(settingsBtn.y, settingsBtnSize);
+  goldContainer.x = RUN_GOLD_X_BESIDE_GEAR;
+  goldContainer.y = runGoldYAlign(settingsBtn.y, settingsBtnSize, goldBgH);
 
   const goldBg = new PIXI.Graphics();
   goldBg.beginFill(0x000000, 0.4);

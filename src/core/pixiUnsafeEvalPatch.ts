@@ -23,7 +23,7 @@ if (_api) {
       if (h !== undefined) c.height = h;
       return c;
     };
-    console.log('[pixiPatch] 2D canvas 走 createCanvas，不探测 OffscreenCanvas');
+    console.log('[pixiPatch] 2D canvas uses createCanvas, skip OffscreenCanvas probe');
 
     settings.ADAPTER = {
       createCanvas: _create2DCanvas,

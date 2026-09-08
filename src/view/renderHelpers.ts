@@ -235,15 +235,29 @@ export function drawChevron(dir: -1 | 1, r: number, color = 0xffffff): PIXI.Grap
   return g;
 }
 
-/** 局内金币栏左缘。布阵 / 战斗 / 补给点共用，玩家认的是同一个角。 */
-export const RUN_GOLD_X = 8;
-/** 金币栏相对设置齿轮的下间距。比贴着齿轮稍低一点，避开微信胶囊和云层。 */
-export const RUN_GOLD_BELOW_GAP = 12;
-/** 补给点没有齿轮时，对齐「齿轮下沿 + 间距」那条线（齿轮默认 y=6、高 36）。 */
-export const RUN_GOLD_Y_STANDALONE = 6 + 36 + RUN_GOLD_BELOW_GAP;
+/** 局内设置齿轮左缘和边长。布阵 / 战斗共用。 */
+export const RUN_GEAR_X = 8;
+export const RUN_GEAR_SIZE = 36;
+/** 齿轮和金币同一行时的间距。 */
+export const RUN_GEAR_GOLD_GAP = 8;
 
-export function runGoldYBelow(anchorY: number, anchorH: number): number {
-  return anchorY + anchorH + RUN_GOLD_BELOW_GAP;
+/** 补给点没有齿轮，金币仍贴左缘。 */
+export const RUN_GOLD_X = 8;
+/** 有齿轮时金币在右侧，给设置钮让位。 */
+export const RUN_GOLD_X_BESIDE_GEAR = RUN_GEAR_X + RUN_GEAR_SIZE + RUN_GEAR_GOLD_GAP;
+/** 齿轮从胶囊行降到金币行的落差，避开刘海和微信胶囊。 */
+export const RUN_GOLD_BELOW_GAP = 12;
+/** 补给点没有齿轮时，对齐布阵/战斗那条金币行（齿轮默认先按 y=6 算）。 */
+export const RUN_GOLD_Y_STANDALONE = 6 + RUN_GEAR_SIZE + RUN_GOLD_BELOW_GAP;
+
+/** 设置钮降到金币原来那条线，两者并排。 */
+export function runHudRowY(safeTopY: number): number {
+  return safeTopY + RUN_GEAR_SIZE + RUN_GOLD_BELOW_GAP;
+}
+
+/** 金币和齿轮垂直居中。 */
+export function runGoldYAlign(rowY: number, rowH: number, goldH: number): number {
+  return rowY + Math.round((rowH - goldH) / 2);
 }
 
 /**
@@ -253,31 +267,45 @@ export function runGoldYBelow(anchorY: number, anchorH: number): number {
  * 底色用半透明黑而不是 `C.panel`：这条压在战场背景（亮黄绿草地）上，
  * 半透明黑能跟着背景走，换背景不用回来改。
  */
-export function createCurrencyPill(iconKey: string, text: string): PIXI.Container {
-  const c = new PIXI.Container();
+export type CurrencyPill = PIXI.Container & {
+  setText: (text: string) => void;
+};
+
+export function createCurrencyPill(iconKey: string, text: string): CurrencyPill {
+  const c = new PIXI.Container() as CurrencyPill;
   const ICON = 20;
   const PAD = 8;
 
   const label = makeText(text, 'uiStrong', { fill: 0xffffff });
   const icon = createUiIcon(iconKey, ICON);
   const iconW = icon ? ICON + 4 : 0;
-  const w = PAD * 2 + iconW + label.width;
-  const h = Math.max(ICON, label.height) + 10;
 
   const bg = new PIXI.Graphics();
-  bg.beginFill(0x000000, 0.4);
-  bg.drawRoundedRect(0, 0, w, h, 8);
-  bg.endFill();
   c.addChild(bg);
-
-  if (icon) {
-    icon.x = PAD;
-    icon.y = (h - ICON) / 2;
-    c.addChild(icon);
-  }
-  label.x = PAD + iconW;
-  label.y = (h - label.height) / 2;
+  if (icon) c.addChild(icon);
   c.addChild(label);
+
+  const layout = (): void => {
+    const w = PAD * 2 + iconW + label.width;
+    const h = Math.max(ICON, label.height) + 10;
+    bg.clear();
+    bg.beginFill(0x000000, 0.4);
+    bg.drawRoundedRect(0, 0, w, h, 8);
+    bg.endFill();
+    if (icon) {
+      icon.x = PAD;
+      icon.y = (h - ICON) / 2;
+    }
+    label.x = PAD + iconW;
+    label.y = (h - label.height) / 2;
+  };
+  layout();
+
+  c.setText = (next: string): void => {
+    if (label.destroyed) return;
+    label.text = next;
+    layout();
+  };
 
   return c;
 }

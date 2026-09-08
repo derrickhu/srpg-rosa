@@ -19,8 +19,15 @@ export interface ModalOptions {
   light?: boolean;
   /** 标题栏文字。不传就没有标题栏，`body` 从面板顶部开始 */
   title?: string;
+  /** 标题栏高度。角色详情要放大头像时加高，默认 44 */
+  titleHeight?: number;
   /** 标题栏右侧的关闭按钮 */
   showClose?: boolean;
+  /**
+   * 关闭按钮贴标题栏右上角，而不是竖向居中。
+   * 角色详情标题栏加高后，居中的叉会跟招牌技能挤在一起。
+   */
+  closeCorner?: boolean;
   /**
    * 内容区可滚动。
    *
@@ -30,15 +37,38 @@ export interface ModalOptions {
   scrollable?: boolean;
   /** 关闭时的额外回调（点遮罩、点关闭按钮都会走） */
   onClose?: () => void;
+  /** 弹出动画走到 1 倍之后。挖洞要等这一下，否则量到的是缩放中的格子 */
+  onOpened?: () => void;
+  /** 面板额外下移，给顶栏货币条让路。默认居中 */
+  offsetY?: number;
+  /**
+   * 底部固定栏高度。角色详情要把「升级 / 技能详情」钉在面板底，
+   * 不跟可滚内容一起跑掉。
+   */
+  footerHeight?: number;
 }
 
 export interface ModalHandle {
   root: PIXI.Container;
   panel: PIXI.Container;
+  /**
+   * 遮罩和面板之上。角色详情要把顶栏魂晶提到遮罩前面时挂这里，
+   * 挂 `root` 里 dim 前面会被压暗，挂 panel 里会跟着弹窗一起被裁。
+   */
+  overlay: PIXI.Container;
   /** 内容容器：标题栏之下的可用区域，坐标原点在它自己的左上角 */
   body: PIXI.Container;
+  /**
+   * 黄标题栏里的内容槽。角色详情把头像和名字塞进这一行，
+   * 不再在正文再占一块人物信息。
+   */
+  titleBar: PIXI.Container;
+  titleBarSize: { width: number; height: number };
+  /** 面板底栏。高度为 0 时是空容器，别往上排东西 */
+  footer: PIXI.Container;
   /** 内容区可用宽高，排版按它算 */
   bodySize: { width: number; height: number };
+  footerSize: { width: number; height: number };
   /** `scrollable` 时内容变化后调一次；非滚动模式是空操作 */
   refresh(): void;
   /**
@@ -88,6 +118,14 @@ function makeCloseButton(size: number, onTap: () => void): PIXI.Container {
   return c;
 }
 
+/** 面板最终 y：默认垂直居中，再加 `offsetY`，并夹在屏内。 */
+export function modalPanelRestY(screenH: number, panelH: number, offsetY = 0): number {
+  const raw = Math.floor((screenH - panelH) / 2) + offsetY;
+  const minY = 8;
+  const maxY = Math.max(minY, screenH - panelH - 8);
+  return Math.max(minY, Math.min(maxY, raw));
+}
+
 /**
  * 全屏遮罩 + 居中面板。
  *
@@ -106,7 +144,7 @@ export function createModal(opts: ModalOptions): ModalHandle {
   const ph = opts.panelHeight ?? 400;
   const radius = 14;
   const restX = Math.floor((opts.screenWidth - pw) / 2);
-  const restY = Math.floor((opts.screenHeight - ph) / 2);
+  const restY = modalPanelRestY(opts.screenHeight, ph, opts.offsetY ?? 0);
   const panel = makePanel({
     width: pw,
     height: ph,
@@ -129,8 +167,13 @@ export function createModal(opts: ModalOptions): ModalHandle {
     if (!isDisplayLive(panel)) return;
     panel.alpha = 1;
     panel.scale.set(1);
+    opts.onOpened?.();
   });
   root.addChild(panel);
+
+  const overlay = new PIXI.Container();
+  overlay.eventMode = 'none';
+  root.addChild(overlay);
 
   // 先拆自己再回调：`onClose` 里常常会触发整页重绘（这棵树连着被销毁），
   // 反过来的话拆的就是一棵已经被别人销毁掉的树
@@ -147,29 +190,42 @@ export function createModal(opts: ModalOptions): ModalHandle {
 
   let bodyTop = PAD;
   let titleTx: PIXI.Text | null = null;
+  const titleBar = new PIXI.Container();
+  let titleBarSize = { width: 0, height: 0 };
   if (opts.title !== undefined) {
+    const titleH = opts.titleHeight ?? TITLE_H;
     const bar = new PIXI.Graphics();
-    drawTopRounded(bar, pw, TITLE_H, radius, C.primary);
+    drawTopRounded(bar, pw, titleH, radius, C.primary);
     panel.addChild(bar);
 
-    const t = makeText(opts.title, 'heading', {
-      fill: shade(C.primary, 0.28),
-      fontSize: 18,
-      letterSpacing: 0.6,
-    });
-    t.anchor.set(0, 0.5);
-    t.x = PAD + 2;
-    t.y = TITLE_H / 2;
-    panel.addChild(t);
-    titleTx = t;
+    const closeSize = 24;
+    const closeRight = opts.closeCorner ? 16 : PAD;
+    const closeTop = opts.closeCorner ? 6 : (titleH - closeSize) / 2;
+    const closeW = opts.showClose ? closeSize + closeRight : 0;
+    titleBar.x = PAD;
+    panel.addChild(titleBar);
+    titleBarSize = { width: pw - PAD - closeW - (opts.closeCorner ? 10 : 4), height: titleH };
+
+    if (opts.title) {
+      const t = makeText(opts.title, 'heading', {
+        fill: shade(C.primary, 0.28),
+        fontSize: 18,
+        letterSpacing: 0.6,
+      });
+      t.anchor.set(0, 0.5);
+      t.x = PAD + 2;
+      t.y = titleH / 2;
+      panel.addChild(t);
+      titleTx = t;
+    }
 
     if (opts.showClose) {
-      const btn = makeCloseButton(24, close);
-      btn.x = pw - 24 - PAD;
-      btn.y = (TITLE_H - 24) / 2;
+      const btn = makeCloseButton(closeSize, close);
+      btn.x = pw - closeSize - closeRight;
+      btn.y = closeTop;
       panel.addChild(btn);
     }
-    bodyTop = TITLE_H + PAD;
+    bodyTop = titleH + 8;
   } else if (opts.showClose) {
     const btn = makeCloseButton(24, close);
     btn.x = pw - 24 - PAD;
@@ -178,8 +234,13 @@ export function createModal(opts: ModalOptions): ModalHandle {
     bodyTop = PAD + 24 + 4;
   }
 
+  const footerH = opts.footerHeight ?? 0;
+  const footer = new PIXI.Container();
+  footer.y = ph - footerH;
+  panel.addChild(footer);
+
   const bodyW = pw - PAD * 2;
-  const bodyH = ph - bodyTop - PAD;
+  const bodyH = ph - bodyTop - (footerH > 0 ? footerH : PAD);
 
   let body: PIXI.Container;
   let scroll: ScrollListHandle | null = null;
@@ -197,8 +258,13 @@ export function createModal(opts: ModalOptions): ModalHandle {
   return {
     root,
     panel,
+    overlay,
     body,
+    titleBar,
+    titleBarSize,
+    footer,
     bodySize: { width: bodyW, height: bodyH },
+    footerSize: { width: pw, height: footerH },
     refresh: () => scroll?.refresh(),
     wasDragging: () => scroll?.wasDragging() ?? false,
     setTitle: (text: string) => {

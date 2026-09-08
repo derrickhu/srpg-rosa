@@ -1,6 +1,7 @@
 import { effectiveUnitDef } from '@/battle/effectiveUnit';
 import type { TimedBattleEffect, UnitState } from '@/battle/types';
 import { characterArtKey } from '@/data/characterCatalog';
+import { applyEliteTempSkillBoost, isEliteDungeon } from '@/data/eliteCatalog';
 import { getSkillSpec } from '@/data/skillCatalog';
 import { effectiveSkillSpec } from '@/data/skillModCatalog';
 import { UNIT_DEFS } from '@/data/unitDefs';
@@ -41,20 +42,27 @@ function mainSection(
  * 临时技能段。**不套纹章**——纹章只强化主技能（见 `unitSkillSpec`），
  * 这里套上去面板会写出一个战斗里不会发生的数值。
  */
-function tempSection(specId: string, cooldownNote?: string): UnitInfoSkillSection | null {
+function tempSection(
+  specId: string,
+  cooldownNote?: string,
+  eliteBoost = false,
+): UnitInfoSkillSection | null {
   const base = getSkillSpec(specId);
   if (!base) return null;
+  const spec = eliteBoost ? applyEliteTempSkillBoost(base) : base;
   return {
     title: '临时技能（本局）',
     name: base.name,
     nameColor: TEMP_SKILL_COLOR,
     iconKey: `skill_${base.id}`,
-    spec: base,
-    baseSpec: base,
+    spec,
+    baseSpec: spec,
     cooldownNote,
     // 不画范围格：两张格子图叠起来面板要滚动，而临时技能大多是贴脸的单体控制
     showRange: false,
-    extraDesc: [TEMP_SKILL_NOTE, '纹章只强化主技能，不影响这一招'],
+    extraDesc: eliteBoost
+      ? [TEMP_SKILL_NOTE, '精英局强化：数值更高，持续多 1 回合']
+      : [TEMP_SKILL_NOTE, '纹章只强化主技能，不影响这一招'],
   };
 }
 
@@ -72,7 +80,7 @@ export function characterInfoModel(state: MvpGameState, m: Character): UnitInfoM
   if (mainSec) skills.push(mainSec);
   const tempId = tempSkillIdForRoster(state, m.rosterId);
   if (tempId) {
-    const s = tempSection(tempId);
+    const s = tempSection(tempId, undefined, isEliteDungeon(state.run?.dungeonId));
     if (s) skills.push(s);
   }
 
@@ -145,7 +153,7 @@ export function battleUnitInfoModel(u: UnitState, opts: BattleUnitInfoOptions): 
     }
   }
   if (u.tempSkill) {
-    const s = tempSection(u.tempSkill.id, cdNote(u.tempSkillCd ?? 0));
+    const s = tempSection(u.tempSkill.id, cdNote(u.tempSkillCd ?? 0), !!u.eliteTempBoost);
     if (s) skills.push(s);
   }
 

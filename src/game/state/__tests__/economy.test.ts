@@ -159,6 +159,28 @@ describe('整章通关奖励', () => {
     expect(s.meta.metaCurrency).toBeGreaterThan(before);
   });
 
+  it('通关结算点两次不会把已经结束的局再读一遍', () => {
+    const s = newGame();
+    const soul = clearWholeDungeon(s);
+    expect(s.run).toBeNull();
+    expect(finishRunVictory(s)).toEqual({
+      soul: 0,
+      unlockedRosterIds: [],
+      newStars: [],
+      starMask: 0,
+    });
+    expect(s.meta.metaCurrency).toBeGreaterThanOrEqual(soul);
+  });
+
+  it('已经打完最后一关再推进，不会崩', () => {
+    const s = newGame();
+    startRun(s, DUNGEON_ID, party(s));
+    while (!isRunComplete(s)) winCurrentNode(s);
+    const idx = s.run!.nodeIndex;
+    expect(() => advanceNode(s)).not.toThrow();
+    expect(s.run!.nodeIndex).toBe(idx);
+  });
+
   it('首通草原解锁奥莉，再调一次不再重复入队', () => {
     const s = newGame();
     expect(s.meta.roster.some((m) => m.rosterId === 'hero_mage_aoli')).toBe(false);

@@ -4,6 +4,7 @@ import { CHARACTER_DEFS } from '@/data/characterCatalog';
 import { lockedCharacterDefs } from '@/game/characterFactory';
 import { createInitialMeta, createInitialState } from '@/game/state/GameState';
 import { acquireHint } from '@/view/RecruitView';
+import { tabSlotRect } from '@/view/TabBar';
 
 /**
  * 大厅四页的职责边界。
@@ -69,5 +70,20 @@ describe('背包 tab 的清理', () => {
     expect(ids.map((t) => t.id)).toEqual(['recruit', 'roster', 'adventure', 'challenge']);
     // 「商店」改名「招募」：这一页现在只发角色，不卖别的
     expect(ids[0]!.label).toBe('招募');
+  });
+
+  it('底栏角色格能挂升级红点', () => {
+    const tabBarSrc = readFileSync('src/view/TabBar.ts', 'utf8');
+    expect(tabBarSrc).toContain('alerts');
+    const flowSrc = readFileSync('src/view/GameFlow.ts', 'utf8');
+    expect(flowSrc).toContain('rosterHasAffordableLevelUp');
+  });
+
+  it('角色 tab 挖洞在底栏第二格', () => {
+    const screen = { screenWidth: 360, screenHeight: 640 };
+    const roster = tabSlotRect('roster', screen);
+    const recruit = tabSlotRect('recruit', screen);
+    expect(roster.x).toBeGreaterThan(recruit.x);
+    expect(roster.y).toBeGreaterThan(500);
   });
 });

@@ -80,6 +80,27 @@ describe('战后三选一的池子', () => {
     expect(count.epic).toBeGreaterThan(0);
   });
 
+  it('精英局里稀有和史诗更常出', () => {
+    const countGood = (dungeonId: string): number => {
+      const s = createInitialState();
+      s.meta.roster = CHARACTER_DEFS.slice(0, 3).map(instantiateCharacter);
+      startRun(s, dungeonId, s.meta.roster.map((m) => m.rosterId));
+      deployParty(s);
+      levelAll(s, MAX_CHARACTER_LEVEL);
+      const rng = seeded(99);
+      let good = 0;
+      for (let i = 0; i < 300; i += 1) {
+        for (const p of rollLoot(s, rng)) {
+          if (p.kind !== 'skillMod') continue;
+          const rarity = getSkillMod(p.modId)?.rarity;
+          if (rarity === 'rare' || rarity === 'epic') good += 1;
+        }
+      }
+      return good;
+    };
+    expect(countGood('elite_grassland')).toBeGreaterThan(countGood(DUNGEON_ID));
+  });
+
   it('专属词条在一局里够常见，不至于一整章都遇不上', () => {
     const s = newRun();
     levelAll(s, MAX_CHARACTER_LEVEL);

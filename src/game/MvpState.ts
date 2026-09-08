@@ -76,7 +76,6 @@ export {
   NODE_FIRST_CLEAR_SOUL,
   BOSS_FIRST_CLEAR_SOUL,
   DUNGEON_REPEAT_SOUL,
-  ELITE_FIRST_CLEAR_SOUL,
   ELITE_REPEAT_SOUL,
   startRun,
   applyVictory,
@@ -118,6 +117,8 @@ export {
 
 export {
   MAX_CHARACTER_LEVEL,
+  canAffordCharacterLevelUp,
+  rosterHasAffordableLevelUp,
   levelUpCharacter,
   unlockCharacterWithMeta,
   unlockDungeonWithMeta,

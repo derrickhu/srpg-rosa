@@ -3,7 +3,7 @@ import { AssetManager } from '@/core/AssetManager';
 import { makeText } from '@/theme/typography';
 import { isDisplayLive, safeDestroy } from '@/view/pixiLive';
 import { C } from '@/view/mvpTheme';
-import { createUiIcon } from '@/view/renderHelpers';
+import { createUiIcon, type CurrencyPill } from '@/view/renderHelpers';
 import { awaitDelay, awaitEase } from './tween';
 
 /** 半透明遮罩：压暗下层，并吃掉穿透到棋盘的点击 */
@@ -194,6 +194,30 @@ export function attachGlowRing(
   };
 }
 
+/** 几枚魂晶错帧飞向顶栏。枚数跟入账数量走，最多 5，避免扫荡 5 晶排成火车。 */
+export function sweepFlyCount(soul: number): number {
+  return Math.max(1, Math.min(5, Math.floor(soul)));
+}
+
+export async function flySoulBurstTo(
+  parent: PIXI.Container,
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+  soul: number,
+): Promise<void> {
+  const n = sweepFlyCount(soul);
+  await Promise.all(
+    Array.from({ length: n }, (_, i) =>
+      awaitDelay(i * 70).then(() =>
+        flyTokenTo(parent, 'icon_soul', {
+          x: from.x + (i - (n - 1) / 2) * 12,
+          y: from.y,
+        }, to),
+      ),
+    ),
+  );
+}
+
 export async function flyTokenTo(
   parent: PIXI.Container,
   iconKey: string,
@@ -219,6 +243,38 @@ export async function flyTokenTo(
     node.alpha = t > 0.82 ? 1 - (t - 0.82) / 0.18 : 1;
   }, { live });
   safeDestroy(node);
+}
+
+/** 顶栏魂晶花出去：数字从旧值滚到新值，旁边飘一个负数。 */
+export async function animateCurrencySpend(pill: CurrencyPill, from: number, to: number): Promise<void> {
+  const host = pill as CurrencyPill & { _spendGen?: number };
+  const gen = (host._spendGen ?? 0) + 1;
+  host._spendGen = gen;
+  const live = (): boolean => isDisplayLive(pill) && host._spendGen === gen;
+
+  const spent = from - to;
+  if (spent > 0 && pill.parent) {
+    const floatTx = makeText(`-${spent}`, 'uiStrong', { fill: 0xffe08a, fontSize: 13 });
+    floatTx.x = pill.x + pill.width + 4;
+    floatTx.y = pill.y + 4;
+    pill.parent.addChild(floatTx);
+    const startY = floatTx.y;
+    void awaitEase(520, (t) => {
+      if (!isDisplayLive(floatTx)) return;
+      floatTx.y = startY - 20 * t;
+      floatTx.alpha = 1 - t;
+    }, { live: () => isDisplayLive(floatTx) }).then(() => safeDestroy(floatTx));
+  }
+
+  await awaitEase(420, (t) => {
+    if (!live()) return;
+    pill.setText(`${Math.round(from + (to - from) * t)}`);
+    pill.scale.set(1 + Math.sin(t * Math.PI) * 0.07);
+  }, { live });
+  if (live()) {
+    pill.setText(`${to}`);
+    pill.scale.set(1);
+  }
 }
 
 /** 养成升级那种薄一层：白闪一下就够，不做全屏 */

@@ -3,8 +3,8 @@ import type { PixiHost } from '@/boot/createPixiApp';
 import type { Faction, GroundDrop, UnitState } from '@/battle/types';
 import { createBattleSim, type BattleMode } from '@/battle/engine';
 import { UNIT_DEFS } from '@/data/unitDefs';
-import { DUNGEON_DEFS, dungeonBattleBgKey } from '@/data/dungeonCatalog';
-import { isEliteDungeon } from '@/data/eliteCatalog';
+import { DUNGEON_DEFS, dungeonBattleBgKey, getDungeonDef } from '@/data/dungeonCatalog';
+import { isEliteDungeon, officialDungeonIdOfElite } from '@/data/eliteCatalog';
 import { adventureChapterList, isSandboxDungeon } from '@/data/sandboxLab';
 import { gmPrepareSandboxRoster } from '@/game/state/gmCheats';
 import {
@@ -25,6 +25,7 @@ import {
   type LootCard,
   type RewardEntry,
 } from '@/view/battle/resultOverlay';
+import { createSweepRewardOverlay } from '@/view/sweepRewardOverlay';
 import {
   abandonRun,
   advanceNode,
@@ -46,7 +47,9 @@ import {
   finishEndlessRun,
   finishRunVictory,
   isEndlessRun,
+  isDungeonUnlocked,
   isRunComplete,
+  rosterHasAffordableLevelUp,
   previewChapterClear,
   recordRunBattleStats,
   recordRunPotionUse,
@@ -66,11 +69,24 @@ import { animSetsForUnits, createBattlePlaybackView } from '@/view/BattlePlaybac
 import { createDeployView } from '@/view/DeployView';
 import { createShopView } from '@/view/ShopView';
 import { createLoadingView, type LoadingView } from '@/view/LoadingView';
-import { createAdventureView, defaultAdventureChapterIndex } from '@/view/AdventureView';
-import { createRosterView } from '@/view/RosterView';
+import {
+  adventureChapterIndexOf,
+  createAdventureView,
+  defaultAdventureChapterIndex,
+  nextAdventureChapterIndex,
+} from '@/view/AdventureView';
+import { createRosterView, type RosterViewHandle } from '@/view/RosterView';
 import { createRecruitView } from '@/view/RecruitView';
 import { createChallengeView } from '@/view/ChallengeView';
-import { createTabBar, tabBarHeight, type TabId } from '@/view/TabBar';
+import { createTabBar, tabBarHeight, tabSlotRect, type TabId } from '@/view/TabBar';
+import { createEmblemAwakenOverlay } from '@/view/emblemAwaken';
+import { attachHubUpgradeGuideOverlay } from '@/view/hubGuide/HubUpgradeGuideOverlay';
+import {
+  isHubUpgradeGuideActive,
+  isHubUpgradeGuideClear,
+  notifyHubUpgradeGuide,
+  tryBeginHubUpgradeGuide,
+} from '@/game/hubGuide/hubUpgradeGuide';
 import { C } from '@/view/mvpTheme';
 import { loadGameFonts } from '@/core/FontLoader';
 import { showToast as showSceneToast } from '@/ui/Toast';
@@ -178,6 +194,11 @@ export class GameFlow {
   private adventureChapter: number | null = null;
   /** 冒险卡普通 / 精英。null = 跟当前局走；手动切过之后 Tab 切换回来不丢 */
   private adventureEliteMode: boolean | null = null;
+  /** 通关回大厅时，下一章先按锁定态播开锁动画 */
+  private pendingChapterUnlockId: string | null = null;
+  private shellRoot: PIXI.Container | null = null;
+  private rosterHandle: RosterViewHandle | null = null;
+  private detachHubGuide: (() => void) | null = null;
   /** 刚结束那场战斗的单位快照，无尽用来把血量和站位带进下一波 */
   private lastBattleUnits: UnitState[] = [];
   private lastBattleDrops: GroundDrop[] = [];
@@ -404,13 +425,46 @@ export class GameFlow {
 
   private renderShell(tab?: TabId): void {
     if (tab) this.currentTab = tab;
+    const unlocking = this.currentTab === 'adventure' && !!this.pendingChapterUnlockId;
+    this.detachHubGuide = null;
+    this.rosterHandle = null;
     const root = new PIXI.Container();
+    this.shellRoot = root;
     root.addChild(this.buildTabContent(this.currentTab));
     root.addChild(
-      createTabBar(this.currentTab, (t) => this.renderShell(t), this.screen),
+      createTabBar(this.currentTab, (t) => {
+        if (t === 'roster' && notifyHubUpgradeGuide(this.state, { type: 'openRoster' })) {
+          SaveManager.saveMeta(this.state.meta);
+        }
+        this.renderShell(t);
+      }, this.screen, {
+        alerts: { roster: rosterHasAffordableLevelUp(this.state.meta) },
+      }),
     );
+    if (!unlocking) this.attachHubUpgradeGuide(root);
     this.scenes.replaceAll(containerScene(root));
     AudioManager.playBgm('hub');
+  }
+
+  private attachHubUpgradeGuide(root: PIXI.Container): void {
+    this.detachHubGuide?.();
+    this.detachHubGuide = null;
+    if (!isHubUpgradeGuideActive(this.state.meta)) return;
+    this.detachHubGuide = attachHubUpgradeGuideOverlay(root, {
+      getState: () => this.state,
+      screenW: this.app.screen.width,
+      screenH: this.app.screen.height,
+      currentTab: () => this.currentTab,
+      tabRect: (id) => tabSlotRect(id, this.screen),
+      cardRect: (id) => this.rosterHandle?.cardRect(id) ?? null,
+      levelUpButtonRect: () => this.rosterHandle?.levelUpButtonRect() ?? null,
+      detailRosterId: () => this.rosterHandle?.detailRosterId() ?? null,
+    });
+  }
+
+  private onChapterUnlockRevealDone(): void {
+    if (!this.shellRoot || this.shellRoot.destroyed) return;
+    this.attachHubUpgradeGuide(this.shellRoot);
   }
 
   private buildTabContent(tab: TabId): PIXI.Container {
@@ -430,6 +484,8 @@ export class GameFlow {
         const run = adventureRunOf(this.state);
         const eliteMode = this.adventureEliteMode
           ?? (!!run && isEliteDungeon(run.dungeonId));
+        const unlockRevealId = this.pendingChapterUnlockId;
+        this.pendingChapterUnlockId = null;
         return createAdventureView(
           this.state,
           chapterIndex,
@@ -444,23 +500,47 @@ export class GameFlow {
             onChanged: persistAndRedraw,
             onChapterChange: (i) => { this.adventureChapter = i; },
             onEliteModeChange: (elite) => { this.adventureEliteMode = elite; },
+            onUnlockRevealDone: () => this.onChapterUnlockRevealDone(),
           },
           screen,
           eliteMode,
+          unlockRevealId,
         );
       }
-      case 'roster':
+      case 'roster': {
         // 角色页的弹窗要能连着升级不被弹回网格，所以给它一个「只存盘」的口子；
         // 重绘推迟到关窗时由它自己发起（见 RosterCallbacks.onPersist）
-        return createRosterView(
+        if (notifyHubUpgradeGuide(this.state, { type: 'openRoster' })) {
+          persist();
+        }
+        this.rosterHandle = createRosterView(
           this.state,
           {
             onChanged: persistAndRedraw,
             onPersist: persist,
             onGoRecruit: () => this.renderShell('recruit'),
+            onGuideRefresh: () => {
+              if (this.shellRoot && !this.shellRoot.destroyed) {
+                this.attachHubUpgradeGuide(this.shellRoot);
+              }
+            },
+            onExclusiveAwaken: (info) => {
+              persist();
+              let close = (): void => undefined;
+              close = this.pushOverlay(
+                createEmblemAwakenOverlay({
+                  screenW: this.app.screen.width,
+                  screenH: this.app.screen.height,
+                  info,
+                  onConfirm: () => close(),
+                }),
+              );
+            },
           },
           screen,
         );
+        return this.rosterHandle.root;
+      }
       case 'recruit':
         return createRecruitView(this.state, { onChanged: persistAndRedraw }, screen);
       case 'challenge':
@@ -487,6 +567,27 @@ export class GameFlow {
     if (i >= 0) return i;
     if (isSandboxDungeon(dungeonId)) return DUNGEON_DEFS.length;
     return 0;
+  }
+
+  private pinAdventureToDungeon(dungeonId: string): void {
+    const chapters = adventureChapterList(DUNGEON_DEFS, Platform.isGmTools);
+    this.adventureChapter = adventureChapterIndexOf(chapters, dungeonId);
+    this.pendingChapterUnlockId = null;
+  }
+
+  private markAdventureAfterChapterClear(clearedDungeonId: string, firstClear: boolean): void {
+    if (isEliteDungeon(clearedDungeonId)) {
+      this.pinAdventureToDungeon(clearedDungeonId);
+      return;
+    }
+    const chapters = adventureChapterList(DUNGEON_DEFS, Platform.isGmTools);
+    const officialId = officialDungeonIdOfElite(clearedDungeonId) ?? clearedDungeonId;
+    this.adventureChapter = nextAdventureChapterIndex(chapters, officialId);
+    const next = chapters[this.adventureChapter];
+    this.pendingChapterUnlockId = firstClear && next && next.id !== officialId
+      && isDungeonUnlocked(this.state.meta, next.id)
+      ? next.id
+      : null;
   }
 
   private startRunAndEnter(dungeonId: string, party: string[]): void {
@@ -603,12 +704,13 @@ export class GameFlow {
             return;
           }
           const endless = isEndlessRun(this.state);
+          const leftDungeonId = this.state.run?.dungeonId;
           this.trackRunEnd('abandon');
           if (endless) finishEndlessRun(this.state);
           else abandonRun(this.state);
           SaveManager.save(this.state);
           this.showToast(endless ? '已离开试炼' : '已放弃副本');
-          if (!endless) this.adventureChapter = null;
+          if (!endless && leftDungeonId) this.pinAdventureToDungeon(leftDungeonId);
           this.renderShell(endless ? 'challenge' : 'adventure');
         },
         onHome: () => {
@@ -675,8 +777,25 @@ export class GameFlow {
     const { soul } = applyChapterSweep(this.state, dungeonId);
     AudioManager.playSfx('sfx_sweep');
     SaveManager.save(this.state);
-    this.showToast(`扫荡完成，魂晶 +${soul}`);
-    this.renderShell('adventure');
+    if (soul <= 0) {
+      this.showToast('扫荡完成', { deny: true });
+      this.renderShell('adventure');
+      return;
+    }
+    // 先不换页：顶栏还是入账前的数字，飞币才有落点。收下后再刷新配额和魂晶。
+    let close = (): void => undefined;
+    close = this.pushOverlay(
+      createSweepRewardOverlay({
+        screenW: this.app.screen.width,
+        screenH: this.app.screen.height,
+        chapterName: getDungeonDef(dungeonId)?.name ?? '本章',
+        soul,
+        onConfirm: () => {
+          close();
+          this.renderShell('adventure');
+        },
+      }),
+    );
   }
 
   private async resolveBattle(mode: BattleMode = 'manual'): Promise<void> {
@@ -796,7 +915,8 @@ export class GameFlow {
   }
 
   private finishBattleAfterPlayback(winner: Faction): void {
-    if (this.state.run && isSandboxDungeon(this.state.run.dungeonId)) {
+    if (!this.state.run) return;
+    if (isSandboxDungeon(this.state.run.dungeonId)) {
       SaveManager.save(this.state);
       this.showToast(winner === 'player' ? '试炼不记进度，可换技能再打' : '回布阵再来');
       this.renderDeploy();
@@ -975,6 +1095,7 @@ export class GameFlow {
           if (hasLoot) {
             this.showLootOverlay();
           } else if (isRunFinal) {
+            if (!this.state.run) return;
             if (endless) {
               this.trackRunEnd('clear');
               const bonus = finishEndlessRun(this.state);
@@ -982,12 +1103,20 @@ export class GameFlow {
               this.showToast(bonus > 0 ? `试炼完成，额外魂晶 +${bonus}` : '试炼结束');
               this.renderShell('challenge');
             } else {
+              const firstClear = !isEliteDungeon(dungeon.id)
+                && !this.state.meta.clearedDungeonIds.includes(dungeon.id);
               this.trackRunEnd('clear');
               const result = finishRunVictory(this.state);
               SaveManager.save(this.state);
               this.showToast(`通关「${dungeon.name}」，魂晶 +${result.soul}`);
-              this.adventureChapter = null;
-              this.presentUnlocksThen(result.unlockedRosterIds, () => this.renderShell('adventure'));
+              this.markAdventureAfterChapterClear(dungeon.id, firstClear);
+              this.presentUnlocksThen(result.unlockedRosterIds, () => {
+                if (isHubUpgradeGuideClear(dungeon.id)) {
+                  tryBeginHubUpgradeGuide(this.state.meta);
+                  SaveManager.saveMeta(this.state.meta);
+                }
+                this.renderShell('adventure');
+              });
             }
           } else {
             this.advanceAfterVictory();
@@ -999,9 +1128,15 @@ export class GameFlow {
 
   /** 通关新入队的角色先亮相，其余用 Toast；关完再回大厅 */
   private presentUnlocksThen(unlockedRosterIds: string[], then: () => void): void {
+    let settled = false;
+    const done = (): void => {
+      if (settled) return;
+      settled = true;
+      then();
+    };
     const [first, ...rest] = unlockedRosterIds;
     if (!first) {
-      then();
+      done();
       return;
     }
     for (const id of rest) {
@@ -1016,7 +1151,7 @@ export class GameFlow {
         rosterId: first,
         onConfirm: () => {
           close();
-          then();
+          done();
         },
       }),
     );
@@ -1118,11 +1253,12 @@ export class GameFlow {
           ? undefined
           : () => {
               close();
+              const leftDungeonId = this.state.run?.dungeonId;
               this.trackRunEnd('abandon');
               abandonRun(this.state);
               SaveManager.save(this.state);
               this.showToast('已放弃副本，局内物资清空');
-              this.adventureChapter = null;
+              if (leftDungeonId) this.pinAdventureToDungeon(leftDungeonId);
               this.renderShell('adventure');
             },
         abandonConfirm: endless || tutorial ? undefined : ABANDON_RUN_CONFIRM,
@@ -1131,6 +1267,7 @@ export class GameFlow {
   }
 
   private advanceAfterVictory(): void {
+    if (!this.state.run) return;
     if (isEndlessRun(this.state)) {
       SaveManager.save(this.state);
       this.renderNode();

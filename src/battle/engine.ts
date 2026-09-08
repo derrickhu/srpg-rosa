@@ -47,6 +47,7 @@ function cloneUnits(units: UnitState[]): UnitState[] {
     tempSkill: u.tempSkill,
     tempSkillCd: u.tempSkillCd ?? 0,
     skillMods: u.skillMods ? [...u.skillMods] : undefined,
+    eliteTempBoost: u.eliteTempBoost,
     bonusAtk: u.bonusAtk,
     bonusSpd: u.bonusSpd,
     bonusMove: u.bonusMove,

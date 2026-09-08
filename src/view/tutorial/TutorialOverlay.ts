@@ -38,6 +38,36 @@ export interface SpotlightRect {
   r?: number;
 }
 
+/**
+ * 把节点左上角换到 `dest` 的本地坐标。弹窗弹出时会绕中心缩放，
+ * 量的时候先当成 scale=1，否则挖洞停在缩放中的位置，按钮落下来就对不齐。
+ */
+export function spotlightRectOf(
+  dest: PIXI.Container,
+  node: PIXI.DisplayObject,
+  size: { w: number; h: number },
+  r?: number,
+): SpotlightRect | null {
+  if (!node.parent || dest.destroyed) return null;
+  const scaled: PIXI.Container[] = [];
+  const saved: { x: number; y: number }[] = [];
+  for (let cur: PIXI.Container | null = node.parent; cur; cur = cur.parent) {
+    if (Math.abs(cur.scale.x - 1) > 0.001 || Math.abs(cur.scale.y - 1) > 0.001) {
+      scaled.push(cur);
+      saved.push({ x: cur.scale.x, y: cur.scale.y });
+      cur.scale.set(1);
+    }
+  }
+  try {
+    const p = dest.toLocal(node.toGlobal(new PIXI.Point(0, 0)));
+    return { x: p.x, y: p.y, w: size.w, h: size.h, r };
+  } finally {
+    for (let i = 0; i < scaled.length; i += 1) {
+      scaled[i]!.scale.set(saved[i]!.x, saved[i]!.y);
+    }
+  }
+}
+
 export interface TutorialHost {
   getState: () => MvpGameState;
   screenW: number;
@@ -200,6 +230,7 @@ function deployCellRect(host: TutorialHost, kind: 'sword' | 'bow'): SpotlightRec
 
 function stepHole(step: TutorialStep, host: TutorialHost): SpotlightRect | null {
   switch (step) {
+    case TutorialStep.BATTLE1_INTRO:
     case TutorialStep.BATTLE1_MOVE:
       return host.cellRect?.(BATTLE1_MOVE_TO.x, BATTLE1_MOVE_TO.y) ?? null;
     case TutorialStep.BATTLE1_SKILL:
@@ -242,7 +273,6 @@ function lockClicks(step: TutorialStep, host: TutorialHost): boolean {
   if (step === TutorialStep.BATTLE2_WATCH) return false;
   if (step === TutorialStep.BATTLE3_WATCH_GRON) return false;
   return stepHole(step, host) != null
-    || step === TutorialStep.BATTLE1_INTRO
     || step === TutorialStep.BATTLE1_SKILL
     || step === TutorialStep.BATTLE1_ARCHER_JOIN
     || step === TutorialStep.DEPLOY2_INTRO
@@ -252,6 +282,7 @@ function lockClicks(step: TutorialStep, host: TutorialHost): boolean {
 }
 
 function stepCopy(step: TutorialStep, host: TutorialHost) {
+  if (step === TutorialStep.BATTLE1_INTRO) return TUTORIAL_COPY[TutorialStep.BATTLE1_MOVE];
   if (step === TutorialStep.BATTLE1_SKILL && host.skillAiming?.()) return TUTORIAL_SKILL_AIM_COPY;
   if (step === TutorialStep.DEPLOY2_PLACE_SWORD && deployPicked(host, TUTORIAL_RAYEN_ID)) {
     return TUTORIAL_DEPLOY_CELL_SWORD_COPY;

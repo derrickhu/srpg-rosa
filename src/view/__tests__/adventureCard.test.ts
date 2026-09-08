@@ -9,9 +9,11 @@ import { C, mix } from '@/view/mvpTheme';
 import {
   adventureActiveDef,
   adventureCardTitle,
+  adventureChapterIndexOf,
   chapterRewardModel,
   defaultAdventureChapterIndex,
   eliteModeUnlocked,
+  nextAdventureChapterIndex,
 } from '@/view/AdventureView';
 
 const DUNGEON = DUNGEON_DEFS[0]!;
@@ -51,12 +53,14 @@ describe('章节卡奖励分行', () => {
   });
 
   it('精英本本关奖励是 5，不和主线 3 串', () => {
-    const elite = eliteDungeonOf(DUNGEON.id)!;
+    const elite = eliteDungeonOf(DUNGEON)!;
     const meta = createInitialMeta();
     const m = chapterRewardModel(elite, meta);
     expect(m.repeatSoul).toBe(ELITE_REPEAT_SOUL);
     expect(m.firstClaimed).toBe(false);
-    expect(m.pendingNodeFirstClears).toBe(1);
+    expect(m.pendingNodeFirstClears).toBe(
+      DUNGEON.nodes.filter((n) => n.kind !== 'shop').length,
+    );
   });
 });
 
@@ -96,6 +100,12 @@ describe('冒险页默认章节', () => {
     s.meta.clearedDungeonIds.push(DUNGEON_DEFS[0]!.id);
     expect(defaultAdventureChapterIndex(s, chapters)).toBe(1);
     expect(chapters[1]!.id).toBe('dungeon_forest');
+  });
+
+  it('通关后首页下标是下一章，失败离开关卡仍指当前章', () => {
+    expect(nextAdventureChapterIndex(chapters, DUNGEON_DEFS[0]!.id)).toBe(1);
+    expect(adventureChapterIndexOf(chapters, DUNGEON_DEFS[1]!.id)).toBe(1);
+    expect(adventureChapterIndexOf(chapters, 'elite_forest')).toBe(1);
   });
 
   it('有进行中的冒险局：停在那一章', () => {

@@ -251,7 +251,7 @@ class PlatformClass {
         resolve(code);
       };
       const timer = setTimeout(() => {
-        console.warn('[Platform] wx.login 超时，跳过云登录');
+        console.warn('[Platform] wx.login timed out, skip cloud login');
         finish('');
       }, 4000);
       try {

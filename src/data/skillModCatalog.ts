@@ -1091,6 +1091,17 @@ export function exclusiveModsForSkill(skillId: string): SkillModDef[] {
   return DEFS.filter((d) => d.scope.kind === 'exclusive' && d.scope.skillIds.includes(id));
 }
 
+/** 这次升级新打开的专属纹章。用来弹庆祝，而不是每次升级都闪一下。 */
+export function exclusiveModsUnlockedBetween(
+  skillId: string,
+  fromLevel: number,
+  toLevel: number,
+): SkillModDef[] {
+  return exclusiveModsForSkill(skillId)
+    .filter((m) => m.minLevel > fromLevel && m.minLevel <= toLevel)
+    .sort((a, b) => a.minLevel - b.minLevel || a.name.localeCompare(b.name));
+}
+
 /**
  * 抽卡权重的基数。稀有度以前只是卡框颜色——池子是均匀抽的，「史诗」和「普通」
  * 出现的概率一模一样，那这个标签就是在骗玩家。
@@ -1137,6 +1148,16 @@ export function lootCommonWeightMul(refreshCount: number): number {
   if (refreshCount <= 0) return 1;
   if (refreshCount === 1) return 0.55;
   return 0.3;
+}
+
+/**
+ * 精英局里再抬一档好词条。压低普通、抬稀有/史诗，三选一更常出新鲜牌。
+ * 专属词条本身已有 `EXCLUSIVE_WEIGHT_BONUS`，这里只按稀有度乘，不叠第二次。
+ */
+export function eliteLootWeightMul(rarity: SkillModRarity): number {
+  if (rarity === 'rare') return 1.5;
+  if (rarity === 'epic') return 1.85;
+  return 0.72;
 }
 
 /**

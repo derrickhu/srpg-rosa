@@ -2,6 +2,7 @@ import { getCharacterDef, levelUpCost, type CharacterDef } from '@/data/characte
 import { getDungeonDef } from '@/data/dungeonCatalog';
 import { isSandboxDungeon } from '@/data/sandboxLab';
 import { instantiateCharacter } from '@/game/characterFactory';
+import type { Character } from '@/game/characterTypes';
 import type { MetaState, MvpGameState } from './GameState';
 
 /**
@@ -19,6 +20,17 @@ import type { MetaState, MvpGameState } from './GameState';
  * 配套要求是第 6–8 章的 `metaReward` 给够（24 / 30 / 40），否则后三章会卡在没钱升级。
  */
 export const MAX_CHARACTER_LEVEL = 16;
+
+/** 这个人还能升、且魂晶够付这一级 */
+export function canAffordCharacterLevelUp(meta: MetaState, m: Character): boolean {
+  if (m.level >= MAX_CHARACTER_LEVEL) return false;
+  return meta.metaCurrency >= levelUpCost(m.level);
+}
+
+/** 名册里有没有人能立刻升级。底栏「角色」红点用这个。 */
+export function rosterHasAffordableLevelUp(meta: MetaState): boolean {
+  return meta.roster.some((m) => canAffordCharacterLevelUp(meta, m));
+}
 
 /** 升 1 级：消耗 meta 货币 */
 export function levelUpCharacter(state: MvpGameState, rosterId: string): boolean {

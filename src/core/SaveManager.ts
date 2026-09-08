@@ -5,6 +5,7 @@ import type { MetaState, MvpGameState, RunState } from '@/game/state/GameState';
 import { emptyRunStarStats } from '@/data/chapterStars';
 import { createInitialState, META_VERSION } from '@/game/state/GameState';
 import { hydrateChapterProgress } from '@/game/state/ProgressManager';
+import { hydrateHubUpgradeGuide } from '@/game/hubGuide/hubUpgradeGuide';
 import { hydrateTutorial } from '@/game/tutorial/TutorialManager';
 import { getDungeonDef } from '@/data/dungeonCatalog';
 import { isEndlessDungeon } from '@/data/endlessCatalog';
@@ -112,6 +113,11 @@ function normalizeRun(run: RunState): RunState {
       rosterId: remapLegacyCharacterId(p.rosterId),
       pos: p.pos,
     })),
+    lastBattlePlacements: (rest.lastBattlePlacements ?? []).map((p) => ({
+      uid: p.uid,
+      rosterId: remapLegacyCharacterId(p.rosterId),
+      pos: p.pos,
+    })),
     endless: rest.endless
       ? {
           ...rest.endless,
@@ -172,6 +178,7 @@ function normalizeMeta(meta: MetaState): MetaState {
   };
   hydrateChapterProgress(next);
   hydrateTutorial(next);
+  hydrateHubUpgradeGuide(next);
   return next;
 }
 

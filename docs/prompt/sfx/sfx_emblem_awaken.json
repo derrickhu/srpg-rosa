@@ -1,0 +1,12 @@
+{
+  "defaults": { "bitrate": "96k", "prompt_influence": 0.45 },
+  "sfx": [
+    {
+      "name": "sfx_emblem_awaken",
+      "text": "a short ceremonial seal awakening: sharp metallic crack of a gold medallion splitting, then a warm rising gold shimmer and a soft low brass swell that fades quickly, dry-to-short hall, no melody, no choir, no voice, no bells looping, no whoosh tail longer than a second",
+      "duration": 1.8,
+      "output": "../../../audio/sfx/sfx_emblem_awaken.mp3",
+      "notes": "角色升级解锁专属纹章的庆祝音，不要复用 sfx_levelup / sfx_reveal / sfx_unlock"
+    }
+  ]
+}

@@ -442,7 +442,11 @@ export function createRewardOverlay(opts: RewardOverlayOpts): PIXI.Container {
   }
 
   const btnW = Math.min(220, W - 80);
+  let confirmed = false;
   const btn = makeButton(opts.confirmLabel, () => {
+    if (confirmed) return;
+    confirmed = true;
+    btn.setDisabled(true);
     const go = (): void => opts.onConfirm();
     if (soulFrom) {
       void flyTokenTo(root, 'icon_soul', soulFrom, { x: 28, y: 28 }).then(go);
@@ -693,12 +697,16 @@ export function createLootOverlay(opts: LootOverlayOpts): PIXI.Container {
   root.addChild(pickHint);
 
   const btnW = Math.min(220, W - 80);
+  let lootConfirmed = false;
   const confirm = makeButton('确认选择', () => {
+    if (lootConfirmed) return;
     const resolved = resolveLootConfirm(selected);
     if (!resolved.ok) {
       opts.onNeedPick?.();
       return;
     }
+    lootConfirmed = true;
+    confirm.setDisabled(true);
     const soulChip = summaryBits.find((_, i) => (s?.soul ?? 0) > 0 && (s?.gold ?? 0) > 0 ? i === 1 : (s?.soul ?? 0) > 0);
     const from = soulChip
       ? { x: soulChip.x + soulChip.width / 2, y: soulChip.y + 13 }

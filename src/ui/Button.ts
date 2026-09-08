@@ -36,6 +36,8 @@ export interface ButtonOptions {
   /** UI_BUNDLE 图标，画在文字左边 */
   iconKey?: string;
   iconSize?: number;
+  /** 不写字，改放几何图标（详情左右翻页这类） */
+  glyph?: PIXI.Container;
 }
 
 export type ButtonNode = PIXI.Container & {
@@ -150,20 +152,30 @@ export function makeButton(
     face = g;
   }
 
-  // 按钮文案用展示字体，和正文系统字拉开层级
-  const tx = new PIXI.Text(label, textStyle('title', { fill: textColor, fontSize }));
   const faceH = h - (skin ? 0 : LIP);
   const row = new PIXI.Container();
-  const rowH = Math.max(icon ? iconSize : 0, tx.height);
+  const glyph = opts?.glyph ?? null;
+  const glyphW = glyph ? 12 : 0;
+  const glyphH = glyph ? 16 : 0;
+  const tx = glyph
+    ? null
+    : new PIXI.Text(label, textStyle('title', { fill: textColor, fontSize }));
+  const rowH = Math.max(icon ? iconSize : 0, tx?.height ?? 0, glyphH);
   if (icon) {
     icon.y = (rowH - iconSize) / 2;
     row.addChild(icon);
   }
-  tx.anchor.set(0, 0.5);
-  tx.x = iconSlot;
-  tx.y = rowH / 2;
-  row.addChild(tx);
-  row.x = Math.round((w - (iconSlot + tx.width)) / 2);
+  if (glyph) {
+    glyph.y = (rowH - glyphH) / 2;
+    row.addChild(glyph);
+    row.x = Math.round((w - glyphW) / 2);
+  } else if (tx) {
+    tx.anchor.set(0, 0.5);
+    tx.x = iconSlot;
+    tx.y = rowH / 2;
+    row.addChild(tx);
+    row.x = Math.round((w - (iconSlot + tx.width)) / 2);
+  }
   const restRowY = Math.round((faceH - rowH) / 2);
   row.y = restRowY;
   inner.addChild(row);
@@ -236,4 +248,41 @@ export function makeMiniButton(
     fontSize: opts?.fontSize ?? 12,
     radius: opts?.radius ?? 8,
   });
+}
+
+export const ROSTER_NAV_BTN = { width: 26, height: 40 };
+export const ROSTER_NAV_GAP = 4;
+
+/** 金色厚底翻页钮，箭头用几何画，不靠字体子集。 */
+export function makeChevronButton(
+  dir: -1 | 1,
+  onPress: () => void,
+  opts?: ButtonOptions,
+): ButtonNode {
+  const w = opts?.width ?? ROSTER_NAV_BTN.width;
+  const h = opts?.height ?? ROSTER_NAV_BTN.height;
+  return makeButton('', onPress, {
+    variant: 'primary',
+    width: w,
+    height: h,
+    radius: 10,
+    ...opts,
+    glyph: drawChevronGlyph(dir),
+  });
+}
+
+function drawChevronGlyph(dir: -1 | 1): PIXI.Container {
+  const c = new PIXI.Container();
+  const g = new PIXI.Graphics();
+  const w = 12;
+  const h = 16;
+  const pts = dir < 0
+    ? [w - 1, 1, 1, h / 2, w - 1, h - 1, w - 4, h / 2]
+    : [1, 1, w - 1, h / 2, 1, h - 1, 4, h / 2];
+  g.lineStyle(2, C.ink, 1, 0.5);
+  g.beginFill(0x4a3a12, 1);
+  g.drawPolygon(pts);
+  g.endFill();
+  c.addChild(g);
+  return c;
 }

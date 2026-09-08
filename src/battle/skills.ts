@@ -23,6 +23,7 @@ import {
   applySkillCastSelfEffects,
 } from './timedBattleEffects';
 import { canProfessionEquipSkill, getSkillSpec, type SkillSpec } from '@/data/skillCatalog';
+import { applyEliteTempSkillBoost } from '@/data/eliteCatalog';
 import { effectiveSkillSpec } from '@/data/skillModCatalog';
 import { gridSize, inBounds, manhattan, neighbors4, type TerrainGrid } from './grid';
 import { rayCellsUntilBlocked } from './sight';
@@ -311,7 +312,11 @@ function canCast(self: UnitState, spec: SkillSpec): boolean {
 export function unitSkillSpec(self: UnitState, skillId: string): SkillSpec | undefined {
   const base = getSkillSpec(skillId);
   if (!base) return undefined;
-  return effectiveSkillSpec(base, mainSkillMods(self, skillId));
+  const withMods = effectiveSkillSpec(base, mainSkillMods(self, skillId));
+  if (self.eliteTempBoost && self.tempSkill?.id === skillId) {
+    return applyEliteTempSkillBoost(withMods);
+  }
+  return withMods;
 }
 
 /**

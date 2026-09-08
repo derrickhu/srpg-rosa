@@ -12,32 +12,54 @@ import {
 import { getSkillSpec, type SkillSpec } from '@/data/skillCatalog';
 import {
   exclusiveChainForSkill,
+  exclusiveModsUnlockedBetween,
   type SkillModDef,
   type SkillModRarity,
 } from '@/data/skillModCatalog';
 import { describeSkillRole } from '@/data/skillText';
 import { characterEffectiveStats } from '@/game/characterFactory';
-import type { Character } from '@/game/characterTypes';
+import type { Character, CharacterBaseStats } from '@/game/characterTypes';
 import { resolveBattleSkillIdForCharacter } from '@/game/state/DeployManager';
 import {
   MAX_CHARACTER_LEVEL,
+  canAffordCharacterLevelUp,
   levelUpCharacter,
   type MvpGameState,
 } from '@/game/MvpState';
+import { isDisplayLive } from '@/view/pixiLive';
 import { getDungeonDef } from '@/data/dungeonCatalog';
-import { createHubHeader } from '@/view/hubHeader';
-import { C, PROFESSION_ACCENT } from '@/view/mvpTheme';
-import { createBackground, createUiIcon, createUnitToken } from '@/view/renderHelpers';
+import {
+  createHubHeader,
+  hubSoulBarBottom,
+  hubSoulPillOrigin,
+} from '@/view/hubHeader';
+import { C, PROFESSION_ACCENT, shade } from '@/view/mvpTheme';
+import {
+  createBackground,
+  createCurrencyPill,
+  createUiIcon,
+  createUnitToken,
+  type CurrencyPill,
+} from '@/view/renderHelpers';
 import { characterInfoModel } from '@/view/unitInfoModel';
 import { createUnitInfoPanel } from '@/view/unitInfoPanel';
-import { makeButton } from '@/ui/Button';
+import { makeButton, makeChevronButton, ROSTER_NAV_BTN, ROSTER_NAV_GAP } from '@/ui/Button';
 import { makeRosterCardFace } from '@/ui/chrome';
-import { createModal, type ModalHandle } from '@/ui/Modal';
+import { createModal, modalPanelRestY, type ModalHandle } from '@/ui/Modal';
 import { attachPress } from '@/ui/press';
-import { createScrollList } from '@/ui/ScrollList';
+import { createScrollList, type ScrollListHandle } from '@/ui/ScrollList';
 import { showToast } from '@/ui/Toast';
 import { AudioManager } from '@/core/AudioManager';
-import { flashPop, staggerPop } from '@/view/fx/celebration';
+import { animateCurrencySpend, flashPop, staggerPop } from '@/view/fx/celebration';
+import type { EmblemAwakenInfo } from '@/view/emblemAwaken';
+import {
+  HUB_GUIDE_RAYEN_ID,
+  HubUpgradeGuideStep,
+  notifyHubUpgradeGuide,
+  readHubUpgradeGuideStep,
+  setHubUpgradeGuideStep,
+} from '@/game/hubGuide/hubUpgradeGuide';
+import { spotlightRectOf, type SpotlightRect } from '@/view/tutorial/TutorialOverlay';
 
 export interface RosterCallbacks {
   /** meta 状态变更后持久化并重绘整页 */
@@ -51,6 +73,17 @@ export interface RosterCallbacks {
   onPersist: () => void;
   /** 空名单时「去招募」 */
   onGoRecruit?: () => void;
+  /** 大厅养成指引重画挖洞 */
+  onGuideRefresh?: () => void;
+  /** 这次升级新开了专属纹章 */
+  onExclusiveAwaken?: (info: EmblemAwakenInfo) => void;
+}
+
+export interface RosterViewHandle {
+  root: PIXI.Container;
+  cardRect(rosterId: string): SpotlightRect | null;
+  levelUpButtonRect(): SpotlightRect | null;
+  detailRosterId(): string | null;
 }
 
 const PAD = 12;
@@ -97,6 +130,96 @@ const STAT_ROWS: { key: 'maxHp' | 'atk' | 'spd' | 'move'; label: string }[] = [
   { key: 'move', label: '移动' },
 ];
 
+export interface RosterStatTotal {
+  key: 'maxHp' | 'atk' | 'spd' | 'move';
+  label: string;
+  current: number;
+  /** 升一级后的总数；满级或没有成长表时为 null */
+  nextTotal: number | null;
+  gain: number;
+}
+
+/**
+ * 详情页四维：左边当前值，右边升级增量。
+ * 增量才是养成页要盯的数，展示时必须和当前值一样大。
+ */
+export function rosterStatTotals(
+  current: CharacterBaseStats,
+  next: CharacterBaseStats | null,
+): RosterStatTotal[] {
+  return STAT_ROWS.map((r) => {
+    const cur = current[r.key];
+    const nxt = next ? next[r.key] : null;
+    const gain = nxt !== null ? nxt - cur : 0;
+    return { ...r, current: cur, nextTotal: nxt, gain };
+  });
+}
+
+export interface RosterUpgradeCostItem {
+  id: string;
+  icon: string;
+  label: string;
+  need: number;
+  have: number;
+}
+
+/** 升级消耗。先只有魂晶，做成列表是为了以后加碎片/道具不用改按钮文案。 */
+export function rosterUpgradeCostItems(haveSoul: number, level: number): RosterUpgradeCostItem[] {
+  return [{
+    id: 'soul',
+    icon: 'icon_soul',
+    label: '魂晶',
+    need: levelUpCost(level),
+    have: haveSoul,
+  }];
+}
+
+export const ROSTER_DETAIL_TABS = [
+  { id: 'upgrade', label: '升级' },
+  { id: 'skill', label: '技能详情' },
+] as const;
+
+export type RosterDetailTab = (typeof ROSTER_DETAIL_TABS)[number]['id'];
+
+export const ROSTER_DETAIL_TITLE_H = 76;
+export const ROSTER_DETAIL_FOOTER_H = 40;
+export const ROSTER_STAT_ROW_H = 24;
+export const ROSTER_ACTION_BTN_H = 40;
+
+/** 钉在弹窗底、不进词条滚动的升级条高度 */
+export function rosterDetailActionH(showCost: boolean): number {
+  return (showCost ? 28 + 6 : 0) + ROSTER_ACTION_BTN_H + 10;
+}
+
+/** 详情弹窗宽度：两侧先留给翻页钮，按钮必须在窗外，不能压文字。 */
+export function rosterDetailPanelWidth(screenW: number): number {
+  const side = ROSTER_NAV_BTN.width + ROSTER_NAV_GAP + 4;
+  return Math.min(340, Math.max(200, screenW - side * 2));
+}
+
+/** 详情左右翻页：只在已拥有的人里转，到头绕回。不够两人不翻。 */
+export function rosterDetailNeighbor(
+  rosterIds: string[],
+  currentId: string,
+  dir: -1 | 1,
+): string | null {
+  if (rosterIds.length < 2) return null;
+  const i = rosterIds.indexOf(currentId);
+  if (i < 0) return null;
+  return rosterIds[(i + dir + rosterIds.length) % rosterIds.length] ?? null;
+}
+
+/** 详情弹窗高度和下移量：上沿让过顶栏魂晶，避免黄标题把数字挡住。 */
+export function rosterDetailPanelLayout(screenH: number): { panelH: number; offsetY: number } {
+  const topGap = hubSoulBarBottom() + 10;
+  const panelH = Math.min(Math.max(320, screenH - topGap - 16), 560);
+  const centered = Math.floor((screenH - panelH) / 2);
+  return {
+    panelH,
+    offsetY: Math.max(0, topGap - centered),
+  };
+}
+
 /** 纹章名的颜色，和三选一卡、信息面板是同一套稀有度语言 */
 const MOD_COLOR: Record<SkillModRarity, number> = {
   common: 0x5a6a7a,
@@ -124,7 +247,7 @@ export function createRosterView(
   state: MvpGameState,
   cb: RosterCallbacks,
   screen: { screenWidth: number; screenHeight: number },
-): PIXI.Container {
+): RosterViewHandle {
   const W = screen.screenWidth;
   const H = screen.screenHeight;
   const root = new PIXI.Container();
@@ -170,6 +293,7 @@ export function createRosterView(
   const pops: PIXI.Container[] = [];
   const gridY = heading.y + heading.height + 10;
   const cards: PIXI.Container[] = [];
+  const cardById = new Map<string, { card: PIXI.Container; w: number; h: number }>();
 
   owned.forEach((m) => cards.push(buildOwnedCard(m, cardW, cardH)));
   lockedDefs.forEach((def) => cards.push(buildLockedCard(def, cardW, cardH)));
@@ -244,6 +368,48 @@ export function createRosterView(
     card.addChild(subTx);
   }
 
+  function attachLevelUpHint(card: PIXI.Container, cardW: number): void {
+    const hint = new PIXI.Container();
+    const disc = new PIXI.Graphics();
+    disc.lineStyle(2, 0xf5c84a, 1);
+    disc.beginFill(0x1a1410, 0.92);
+    disc.drawCircle(0, 0, 11);
+    disc.endFill();
+    hint.addChild(disc);
+
+    const arrow = new PIXI.Graphics();
+    arrow.lineStyle(1.4, 0x145820, 1);
+    arrow.beginFill(0x48d45c, 1);
+    arrow.drawPolygon([
+      0, -7.5,
+      7, 1,
+      3, 1,
+      3, 7.2,
+      -3, 7.2,
+      -3, 1,
+      -7, 1,
+    ]);
+    arrow.endFill();
+    hint.addChild(arrow);
+
+    hint.x = cardW - 13;
+    hint.y = 13;
+    hint.eventMode = 'none';
+    card.addChild(hint);
+
+    const baseY = hint.y;
+    let acc = 0;
+    const bob = (): void => {
+      if (!isDisplayLive(hint)) {
+        PIXI.Ticker.shared.remove(bob);
+        return;
+      }
+      acc += PIXI.Ticker.shared.deltaMS;
+      hint.y = baseY + Math.sin(acc / 160) * 3.5;
+    };
+    PIXI.Ticker.shared.add(bob);
+  }
+
   function paintSkillBadge(card: PIXI.Container, skillId: string, accent: number): void {
     const icon = createUiIcon(`skill_${skillId}`, 18);
     const ring = new PIXI.Graphics();
@@ -271,6 +437,10 @@ export function createRosterView(
 
     paintSkillBadge(card, resolveBattleSkillIdForCharacter(state, m), PROFESSION_ACCENT[m.profession]);
     paintFooter(card, w, h, m.name, `Lv.${m.level}`);
+    if (canAffordCharacterLevelUp(state.meta, m)) {
+      attachLevelUpHint(card, w);
+    }
+    cardById.set(m.rosterId, { card, w, h });
 
     card.eventMode = 'static';
     card.cursor = 'pointer';
@@ -330,38 +500,117 @@ export function createRosterView(
   let stopPanel: (() => void) | null = null;
   /** 弹窗里改过东西：关掉时要重绘网格，不然卡上的等级还是旧的 */
   let dirty = false;
-  /** 详情分页。升级后原地刷新要记住，否则练纹章时会被弹回技能页 */
-  let detailTab: 'skill' | 'mods' = 'skill';
+  /** 底栏分页。升级后原地刷新要记住，否则会被弹回默认页 */
+  let detailTab: RosterDetailTab = 'upgrade';
+  let detailOpenId: string | null = null;
+  let levelUpBtn: PIXI.Container | null = null;
+  let levelUpBtnSize = { w: 0, h: 38 };
+  let soulHud: CurrencyPill | null = null;
+  let listScroll: ScrollListHandle | null = null;
+
+  function mountForegroundSoul(md: ModalHandle): void {
+    header.setSoulVisible(false);
+    soulHud = createCurrencyPill('icon_soul', `${state.meta.metaCurrency}`);
+    const origin = hubSoulPillOrigin();
+    soulHud.x = origin.x;
+    soulHud.y = origin.y;
+    md.overlay.addChild(soulHud);
+  }
 
   function closeDetail(): void {
     stopPanel?.();
     stopPanel = null;
     modal = null;
+    detailOpenId = null;
+    levelUpBtn = null;
+    soulHud = null;
+    listScroll = null;
+    header.setSoulVisible(true);
+    header.setSoul(state.meta.metaCurrency);
+    if (readHubUpgradeGuideStep(state.meta) === HubUpgradeGuideStep.TAP_LEVELUP) {
+      setHubUpgradeGuideStep(state.meta, HubUpgradeGuideStep.TAP_RAYEN);
+      cb.onPersist();
+    }
     if (dirty) {
       dirty = false;
       cb.onChanged();
+      return;
     }
+    cb.onGuideRefresh?.();
   }
 
   function openDetail(m: Character): void {
     modal?.close();
-    detailTab = 'skill';
-    const panelW = Math.min(340, W - 20);
-    const panelH = Math.min(H - 24, 560);
+    detailTab = 'upgrade';
+    detailOpenId = m.rosterId;
+    const panelW = rosterDetailPanelWidth(W);
+    const { panelH, offsetY } = rosterDetailPanelLayout(H);
     const md = createModal({
       screenWidth: W,
       screenHeight: H,
       panelWidth: panelW,
       panelHeight: panelH,
+      offsetY,
+      footerHeight: ROSTER_DETAIL_FOOTER_H,
+      titleHeight: ROSTER_DETAIL_TITLE_H,
       light: true,
-      title: `${m.name}  Lv.${m.level}`,
+      title: '',
       showClose: true,
-      scrollable: true,
+      closeCorner: true,
+      scrollable: false,
       onClose: closeDetail,
+      onOpened: () => cb.onGuideRefresh?.(),
     });
     modal = md;
     root.addChild(md.root);
+    mountForegroundSoul(md);
     fillDetail(md, m);
+    mountDetailNav(md, panelW, panelH, offsetY);
+    if (notifyHubUpgradeGuide(state, { type: 'openRayen', rosterId: m.rosterId })) {
+      cb.onPersist();
+    }
+    cb.onGuideRefresh?.();
+  }
+
+  function flipDetail(dir: -1 | 1): void {
+    const nextId = rosterDetailNeighbor(
+      state.meta.roster.map((c) => c.rosterId),
+      detailOpenId ?? '',
+      dir,
+    );
+    if (!nextId) return;
+    const next = state.meta.roster.find((c) => c.rosterId === nextId);
+    if (!next) return;
+    detailOpenId = next.rosterId;
+    refillDetail(next);
+    if (notifyHubUpgradeGuide(state, { type: 'openRayen', rosterId: next.rosterId })) {
+      cb.onPersist();
+    }
+    cb.onGuideRefresh?.();
+  }
+
+  function mountDetailNav(
+    md: ModalHandle,
+    panelW: number,
+    panelH: number,
+    offsetY: number,
+  ): void {
+    if (state.meta.roster.length < 2) return;
+    const restX = Math.floor((W - panelW) / 2);
+    const restY = modalPanelRestY(H, panelH, offsetY);
+    const btnW = ROSTER_NAV_BTN.width;
+    const btnH = ROSTER_NAV_BTN.height;
+    const bodyTop = restY + ROSTER_DETAIL_TITLE_H;
+    const bodyH = panelH - ROSTER_DETAIL_TITLE_H - ROSTER_DETAIL_FOOTER_H;
+    const y = bodyTop + Math.max(8, (bodyH - btnH) / 2);
+    const prev = makeChevronButton(-1, () => flipDetail(-1));
+    const next = makeChevronButton(1, () => flipDetail(1));
+    prev.x = restX - btnW - ROSTER_NAV_GAP;
+    next.x = restX + panelW + ROSTER_NAV_GAP;
+    prev.y = y;
+    next.y = y;
+    md.root.addChild(prev);
+    md.root.addChild(next);
   }
 
   /** 重新填一次弹窗内容（升级/学技能之后原地刷新，不关窗） */
@@ -369,26 +618,58 @@ export function createRosterView(
     if (!modal) return;
     stopPanel?.();
     stopPanel = null;
+    listScroll = null;
     modal.body.removeChildren();
+    modal.titleBar.removeChildren();
+    modal.footer.removeChildren();
     fillDetail(modal, m);
   }
 
   /**
-   * 弹窗上半固定、下半分页。
-   *
-   * 招牌技能是这一页存在的理由，却曾经被纹章解锁链挤到三屏之外——
-   * 打开详情先看到的是普攻射程，技能本身要滚过一整份通用纹章名单才露出来。
-   * 技能和纹章拆成两个 tab 之后，默认页就是「这一招怎么打」，
-   * 养成链留给真要规划升级的人去翻。
+   * 顶栏一行人物、属性钉住、词条可滚、消耗和升级钉在底栏上方。
+   * 整页跟着滚会把升级按钮藏到下面——那正是这页不能用弹窗自带滚动的原因。
    */
   function fillDetail(md: ModalHandle, m: Character): void {
+    levelUpBtn = null;
+    listScroll = null;
     const w = md.bodySize.width;
-    let y = 0;
-    y += addOverviewBlock(md, m, w, y);
-    y += addGrowthBlock(md, m, w, y);
-    y += addDetailTabs(md, m, w, y);
-    y += detailTab === 'skill' ? addSkillBlock(md, m, w, y) : addModChainBlock(md, m, w, y);
-    md.refresh();
+    const bodyH = md.bodySize.height;
+    fillTitleRow(md, m);
+    if (detailTab === 'upgrade') {
+      const statsH = addStatBlock(md.body, m, w, 0);
+      const maxed = m.level >= MAX_CHARACTER_LEVEL;
+      const actionH = rosterDetailActionH(!maxed);
+      const scrollH = Math.max(72, bodyH - statsH - actionH);
+      const scroll = createScrollList({
+        x: 0,
+        y: statsH,
+        width: w,
+        height: scrollH,
+        showBar: true,
+      });
+      md.body.addChild(scroll.root);
+      listScroll = scroll;
+      const listH = addUpgradeEmblemBlock(scroll.content, m, w, 0);
+      scroll.refresh(listH);
+      addLevelUpAction(md.body, m, w, bodyH - actionH);
+    } else {
+      const scroll = createScrollList({
+        x: 0,
+        y: 0,
+        width: w,
+        height: bodyH,
+        showBar: true,
+      });
+      md.body.addChild(scroll.root);
+      listScroll = scroll;
+      const listH = addSkillBlock(scroll.content, m, w, 0);
+      scroll.refresh(listH);
+    }
+    addFooterTabs(md, m);
+  }
+
+  function listDragging(): boolean {
+    return listScroll?.wasDragging() ?? false;
   }
 
   /** 这一局带的招牌技能（含本局纹章前的原始规格） */
@@ -396,100 +677,231 @@ export function createRosterView(
     return getSkillSpec(resolveBattleSkillIdForCharacter(state, m));
   }
 
-  /**
-   * 概览：头像 + 定位 + 四维。**全页唯一一处四维**。
-   *
-   * 四维原来在这一页出现三次（培养区一行、详细资料的基础属性、升级预览的左值），
-   * 三处还各有各的排版，玩家得先确认这三块说的是不是同一件事。
-   */
-  function addOverviewBlock(md: ModalHandle, m: Character, w: number, top: number): number {
+  /** 黄标题栏：全身立绘 + 名字等级 / 定位，右侧招牌技能，点了切到技能详情。 */
+  function fillTitleRow(md: ModalHandle, m: Character): void {
     const def = getCharacterDef(m.catalogId ?? m.rosterId);
-    const box = new PIXI.Container();
-    box.y = top;
-    md.body.addChild(box);
+    const w = md.titleBarSize.width;
+    const h = md.titleBarSize.height;
+    const tokenH = h + 8;
+    const token = createUnitToken(characterArtKey(m), 'player', tokenH);
+    token.x = 8 + tokenH / 2;
+    token.y = h / 2 + 2;
+    md.titleBar.addChild(token);
 
-    const token = createUnitToken(characterArtKey(m), 'player', 44);
-    token.x = 24;
-    token.y = 24;
-    box.addChild(token);
-
+    const ink = shade(C.primary, 0.28);
+    const name = makeText(`${m.name}  Lv.${m.level}`, 'heading', {
+      fill: ink,
+      fontSize: 17,
+    });
     const role = makeText(
       def
         ? `${UNIT_DEFS[m.profession].name} · ${describeSkillRole(def.skillRoute)}`
         : UNIT_DEFS[m.profession].name,
-      'uiStrong',
-      { fill: C.text, fontSize: 12 },
-    );
-    role.x = 56;
-    role.y = 2;
-    box.addChild(role);
-
-    const cur = characterEffectiveStats(m);
-    const stats = makeText(
-      `生命 ${cur.maxHp}　攻击 ${cur.atk}\n速度 ${cur.spd}　移动 ${cur.move}`,
       'caption',
-      { fill: C.muted, lineHeight: 16 },
+      { fill: ink, fontSize: 12 },
     );
-    stats.x = 56;
-    stats.y = role.height + 4;
-    box.addChild(stats);
+    const textX = 8 + tokenH + 4;
+    const block = name.height + 2 + role.height;
+    name.x = textX;
+    name.y = (h - block) / 2;
+    role.x = textX;
+    role.y = name.y + name.height + 2;
+    md.titleBar.addChild(name);
+    md.titleBar.addChild(role);
 
-    // 招式名贴在四维右侧：这一页最重要的信息不能只活在默认折叠的分页里。
     const spec = signatureSpec(m);
-    if (spec) {
-      const chip = new PIXI.Container();
-      const icon = createUiIcon(`skill_${spec.id}`, 22);
-      if (icon) chip.addChild(icon);
-      const nm = makeText(spec.name, 'uiStrong', { fill: 0xcc8833, fontSize: 12 });
-      nm.x = icon ? 26 : 0;
-      nm.y = 1;
-      chip.addChild(nm);
-      const cd = makeText(`CD ${spec.cooldown}回合`, 'caption', { fill: C.muted, fontSize: 10 });
-      cd.x = nm.x;
-      cd.y = nm.height + 2;
-      chip.addChild(cd);
-      chip.x = Math.max(stats.x + stats.width + 12, w - Math.max(nm.width + (icon ? 26 : 0), cd.width + (icon ? 26 : 0)));
-      chip.y = 4;
-      box.addChild(chip);
-    }
-
-    return Math.max(48, stats.y + stats.height) + 10;
+    if (!spec) return;
+    const iconSize = 40;
+    const bangR = 6.5;
+    const icon = createUiIcon(`skill_${spec.id}`, iconSize) ?? makeSkillIconFallback(iconSize);
+    const bang = makeInfoBang(bangR);
+    const skName = makeText(spec.name, 'uiStrong', { fill: 0xc46a14, fontSize: 11 });
+    const iconW = iconSize + bangR;
+    const chipW = Math.max(iconW, skName.width);
+    const chipH = iconSize + 2 + skName.height;
+    const chip = new PIXI.Container();
+    icon.x = (chipW - iconW) / 2;
+    icon.y = 0;
+    chip.addChild(icon);
+    bang.x = icon.x + iconSize - bangR + 2;
+    bang.y = -2;
+    chip.addChild(bang);
+    skName.x = (chipW - skName.width) / 2;
+    skName.y = iconSize + 2;
+    chip.addChild(skName);
+    const afterName = name.x + name.width + 22;
+    chip.x = afterName + chipW > w - 4 ? w - chipW - 4 : afterName;
+    chip.y = (h - chipH) / 2;
+    md.titleBar.eventMode = 'static';
+    md.titleBar.interactiveChildren = true;
+    chip.eventMode = 'static';
+    chip.cursor = 'pointer';
+    chip.hitArea = new PIXI.Rectangle(-4, -4, chipW + 8, chipH + 8);
+    attachPress(chip);
+    chip.on('pointertap', () => {
+      if (detailTab === 'skill') return;
+      detailTab = 'skill';
+      refillDetail(m);
+    });
+    md.titleBar.addChild(chip);
   }
 
-  /** 技能 / 纹章分页条。返回占用高度 */
-  function addDetailTabs(md: ModalHandle, m: Character, w: number, top: number): number {
+  function makeSkillIconFallback(size: number): PIXI.Container {
+    const c = new PIXI.Container();
+    const g = new PIXI.Graphics();
+    g.beginFill(0xc46a14, 0.16);
+    g.lineStyle(1.2, 0xc46a14, 0.75);
+    g.drawRoundedRect(0, 0, size, size, 6);
+    g.endFill();
+    c.addChild(g);
+    return c;
+  }
+
+  /** 信息感叹号：几何画，不靠字体子集里有没有 `!`。 */
+  function makeInfoBang(r: number): PIXI.Container {
+    const c = new PIXI.Container();
+    const g = new PIXI.Graphics();
+    g.beginFill(0xc46a14, 1);
+    g.lineStyle(1, 0xfff4d8, 0.95);
+    g.drawCircle(r, r, r);
+    g.endFill();
+    g.lineStyle(0);
+    g.beginFill(0xfff6e4, 1);
+    g.drawRoundedRect(r - 1.15, r * 0.32, 2.3, r * 0.78, 1);
+    g.endFill();
+    g.beginFill(0xfff6e4, 1);
+    g.drawCircle(r, r * 1.52, 1.35);
+    g.endFill();
+    c.addChild(g);
+    c.hitArea = new PIXI.Circle(r, r, r);
+    return c;
+  }
+
+  function addSectionTitle(box: PIXI.Container, text: string, w: number, top: number): number {
+    const accent = 0xc46a14;
+    const title = makeText(text, 'heading', {
+      fill: accent,
+      fontSize: 15,
+      letterSpacing: 1.2,
+    });
+    title.anchor.set(0.5, 0);
+    title.x = w / 2;
+    title.y = top;
+    box.addChild(title);
+    const lineY = top + title.height / 2;
+    const gap = 10;
+    const lineW = Math.max(24, (w - title.width) / 2 - gap);
+    const left = new PIXI.Graphics();
+    left.lineStyle(1.5, accent, 0.35);
+    left.moveTo(0, lineY);
+    left.lineTo(lineW, lineY);
+    box.addChild(left);
+    const right = new PIXI.Graphics();
+    right.lineStyle(1.5, accent, 0.35);
+    right.moveTo(w - lineW, lineY);
+    right.lineTo(w, lineY);
+    box.addChild(right);
+    return title.height + 8;
+  }
+
+  /**
+   * 两列矮行：当前值 + 同号绿字增量。行高低、数字大，才装得下又不抢词条。
+   */
+  function addStatBlock(parent: PIXI.Container, m: Character, w: number, top: number): number {
+    const def = getCharacterDef(m.catalogId ?? m.rosterId);
     const box = new PIXI.Container();
     box.y = top;
-    md.body.addChild(box);
+    parent.addChild(box);
 
-    const gap = 6;
-    const tw = Math.floor((w - gap) / 2);
-    const h = 32;
-    const tabs: { id: typeof detailTab; label: string }[] = [
-      { id: 'skill', label: '技能' },
-      { id: 'mods', label: '纹章' },
-    ];
-    for (const [i, t] of tabs.entries()) {
+    const maxed = m.level >= MAX_CHARACTER_LEVEL;
+    const cur = characterEffectiveStats(m);
+    const next = def && !maxed ? characterStatsAtLevel(def, m.level + 1) : null;
+    const rows = rosterStatTotals(cur, next);
+    const rowH = ROSTER_STAT_ROW_H;
+    const gap = 2;
+    const colW = Math.floor((w - 8) / 2);
+    const numSize = 17;
+    const rowsH = Math.ceil(rows.length / 2) * (rowH + gap);
+    const panel = new PIXI.Graphics();
+    panel.beginFill(0x1a1410, 0.045);
+    panel.drawRoundedRect(0, 0, w, rowsH + 4, 8);
+    panel.endFill();
+    box.addChild(panel);
+    rows.forEach((row, i) => {
+      const cell = new PIXI.Container();
+      cell.x = (i % 2) * (colW + 8);
+      cell.y = 2 + Math.floor(i / 2) * (rowH + gap);
+      const label = makeText(row.label, 'caption', { fill: C.muted, fontSize: 11 });
+      label.x = 8;
+      label.y = (rowH - label.height) / 2;
+      cell.addChild(label);
+      let right = colW - 4;
+      if (row.gain > 0) {
+        const plus = makeText(`+${row.gain}`, 'uiStrong', { fill: 0x2f9a58, fontSize: numSize });
+        plus.anchor.set(1, 0);
+        plus.x = right;
+        plus.y = (rowH - plus.height) / 2;
+        cell.addChild(plus);
+        right -= plus.width + 6;
+      }
+      const num = makeText(`${row.current}`, 'uiStrong', { fill: C.ink, fontSize: numSize });
+      num.anchor.set(1, 0);
+      num.x = right;
+      num.y = (rowH - num.height) / 2;
+      cell.addChild(num);
+      box.addChild(cell);
+    });
+    return rowsH + 10;
+  }
+
+  /**
+   * 贴在面板底的文件夹页签，不是两颗独立按钮。
+   * 选中格和正文同色：上沿直角贴着正文，下沿圆角往下挂。
+   */
+  function addFooterTabs(md: ModalHandle, m: Character): void {
+    const w = md.footerSize.width;
+    const h = md.footerSize.height;
+    const n = ROSTER_DETAIL_TABS.length;
+    const tw = w / n;
+    const radius = 14;
+
+    const back = new PIXI.Graphics();
+    back.beginFill(0x6a6560, 1);
+    back.drawRoundedRect(0, 0, w, h, radius);
+    back.drawRect(0, 0, w, radius);
+    back.endFill();
+    md.footer.addChild(back);
+
+    for (const [i, t] of ROSTER_DETAIL_TABS.entries()) {
       const on = t.id === detailTab;
-      const btn = makeButton(
-        t.label,
-        () => {
-          if (md.wasDragging() || t.id === detailTab) return;
-          detailTab = t.id;
-          refillDetail(m);
-        },
-        {
-          variant: on ? 'secondary' : 'ghost',
-          width: tw,
-          height: h,
-          fontSize: 13,
-          radius: 8,
-        },
-      );
-      btn.x = i * (tw + gap);
-      box.addChild(btn);
+      const tab = new PIXI.Container();
+      tab.x = i * tw;
+      if (on) {
+        const face = new PIXI.Graphics();
+        face.beginFill(C.paper, 1);
+        face.drawRoundedRect(0, 0, tw, h, radius);
+        face.drawRect(0, 0, tw, radius);
+        face.endFill();
+        tab.addChild(face);
+      }
+      const label = makeText(t.label, 'uiStrong', {
+        fill: on ? C.ink : 0xf7f1e6,
+        fontSize: 14,
+      });
+      label.anchor.set(0.5);
+      label.x = tw / 2;
+      label.y = h / 2;
+      tab.addChild(label);
+      tab.eventMode = 'static';
+      tab.cursor = 'pointer';
+      tab.hitArea = new PIXI.Rectangle(0, 0, tw, h);
+      tab.on('pointertap', () => {
+        if (t.id === detailTab) return;
+        detailTab = t.id;
+        refillDetail(m);
+      });
+      md.footer.addChild(tab);
     }
-    return h + 10;
   }
 
   /**
@@ -498,10 +910,10 @@ export function createRosterView(
    * 和布阵页、战斗页共用同一块渲染，数值和格子图不会各写一套。
    * 头像、姓名、四维关掉——概览已经写过一次。
    */
-  function addSkillBlock(md: ModalHandle, m: Character, w: number, top: number): number {
+  function addSkillBlock(parent: PIXI.Container, m: Character, w: number, top: number): number {
     const box = new PIXI.Container();
     box.y = top;
-    md.body.addChild(box);
+    parent.addChild(box);
 
     const model = characterInfoModel(state, m);
     if (model.skills[0]) model.skills[0].title = '招牌技能';
@@ -517,74 +929,151 @@ export function createRosterView(
     return info.height + 8;
   }
 
-  /** 升级区：花多少、升完加多少、下一档解锁什么。返回占用高度 */
-  function addGrowthBlock(md: ModalHandle, m: Character, w: number, top: number): number {
-    const def = getCharacterDef(m.catalogId ?? m.rosterId);
+  /**
+   * 升级效果 = 专属纹章解锁链。带等级徽、图标和效果，锁着的也摊开。
+   * 通用纹章不跟等级绑，不进这里。
+   */
+  function addUpgradeEmblemBlock(parent: PIXI.Container, m: Character, w: number, top: number): number {
+    const spec = signatureSpec(m);
     const box = new PIXI.Container();
     box.y = top;
-    md.body.addChild(box);
+    parent.addChild(box);
+
+    let y = addSectionTitle(box, '升级效果', w, 0);
+
+    if (!spec) {
+      const empty = makeText('这个角色还没有专属纹章。', 'caption', { fill: C.muted });
+      empty.y = y;
+      box.addChild(empty);
+      return y + empty.height + 8;
+    }
+
+    const chain = exclusiveChainForSkill(spec);
+    const nextUnlock = chain.find((mod) => m.level < mod.minLevel)?.minLevel;
+    for (const mod of chain) {
+      const unlocked = m.level >= mod.minLevel;
+      y += addEmblemCard(box, mod, w, y, {
+        unlocked,
+        next: !unlocked && mod.minLevel === nextUnlock,
+      });
+      y += 4;
+    }
+    return y + 2;
+  }
+
+  function addEmblemCard(
+    box: PIXI.Container,
+    mod: SkillModDef,
+    w: number,
+    top: number,
+    state: { unlocked: boolean; next: boolean },
+  ): number {
+    const card = new PIXI.Container();
+    card.y = top;
+    const iconSize = 20;
+    const pad = 6;
+    const textX = pad + iconSize + 8;
+    const textW = Math.max(60, w - textX - pad);
+
+    const nm = makeText(mod.name, 'uiStrong', {
+      fill: state.unlocked ? MOD_COLOR[mod.rarity] : C.muted,
+      fontSize: 12,
+    });
+    const tag = makeText(state.unlocked ? '已解锁' : `Lv.${mod.minLevel} 解锁`, 'caption', {
+      fill: state.unlocked ? 0x2f9a58 : state.next ? 0xa5561f : C.muted,
+      fontSize: 11,
+    });
+    const desc = makeText(mod.describe(1), 'caption', {
+      fill: C.muted,
+      fontSize: 10,
+      lineHeight: 13,
+      wordWrap: true,
+      wordWrapWidth: textW,
+      breakWords: true,
+    });
+    const headH = Math.max(nm.height, tag.height);
+    const h = pad + headH + 2 + desc.height + pad;
+
+    const bg = new PIXI.Graphics();
+    bg.beginFill(state.next ? 0xfff6e4 : 0x1a1410, state.next ? 1 : 0.035);
+    if (state.next) bg.lineStyle(1.2, C.primary, 0.9);
+    bg.drawRoundedRect(0, 0, w, h, 8);
+    bg.endFill();
+    card.addChild(bg);
+
+    const icon = createUiIcon(mod.icon, iconSize);
+    if (icon) {
+      icon.x = pad;
+      icon.y = pad;
+      icon.alpha = state.unlocked ? 1 : 0.5;
+      card.addChild(icon);
+    }
+
+    nm.x = textX;
+    nm.y = pad;
+    tag.anchor.set(1, 0);
+    tag.x = w - pad;
+    tag.y = pad + (headH - tag.height) / 2;
+    desc.x = textX;
+    desc.y = pad + headH + 2;
+    card.addChild(nm);
+    card.addChild(tag);
+    card.addChild(desc);
+    if (!state.unlocked && !state.next) card.alpha = 0.7;
+
+    box.addChild(card);
+    return h;
+  }
+
+  /** 消耗单独一行，按钮只写「升级」。以后加碎片/道具只往这一行塞。 */
+  function addLevelUpAction(parent: PIXI.Container, m: Character, w: number, top: number): number {
+    const box = new PIXI.Container();
+    box.y = top;
+    parent.addChild(box);
 
     let y = 0;
-    const title = makeText('培养', 'uiStrong', { fill: C.text, fontSize: 13 });
-    box.addChild(title);
-    y += title.height + 6;
-
     const maxed = m.level >= MAX_CHARACTER_LEVEL;
-    const cur = characterEffectiveStats(m);
-    const next = def && !maxed ? characterStatsAtLevel(def, m.level + 1) : null;
+    const items = rosterUpgradeCostItems(state.meta.metaCurrency, m.level);
+    const cost = items[0]?.need ?? 0;
+    const affordable = items.every((it) => it.have >= it.need);
 
-    if (next) {
-      // 只写增量，不再写 `40 → 44`：当前值就在上面那块概览里，
-      // 一屏之内把同一个数写两遍反而要玩家自己核对两处是不是一致。
-      const gains = STAT_ROWS
-        .map((r) => ({ label: r.label, d: next[r.key] - cur[r.key] }))
-        .filter((g) => g.d > 0)
-        .map((g) => `${g.label} +${g.d}`);
-      const gain = makeText(`升到 Lv.${m.level + 1}：${gains.join('　')}`, 'caption', {
-        fill: 0x3a8a5a,
-        wordWrap: true,
-        wordWrapWidth: w,
-      });
-      gain.y = y;
-      box.addChild(gain);
-      y += gain.height + 6;
+    if (!maxed) {
+      y += addCostChips(box, items, w, y);
+      y += 6;
     }
 
-    // 下一档纹章解锁：这是升级除了数值之外真正能给到的东西，
-    // 而数值那几点在战棋里基本感觉不到。放在按钮上方，玩家按下去之前就看得见。
-    const spec = signatureSpec(m);
-    if (spec && !maxed) {
-      const upcoming = exclusiveChainForSkill(spec).filter((d) => d.minLevel > m.level);
-      const nextLv = upcoming[0]?.minLevel;
-      if (nextLv !== undefined) {
-        const names = upcoming.filter((d) => d.minLevel === nextLv).map((d) => d.name);
-        const tx = makeText(`Lv.${nextLv} 解锁专属纹章：${names.join('、')}`, 'caption', {
-          fill: nextLv === m.level + 1 ? 0xa5561f : C.muted,
-          wordWrap: true,
-          wordWrapWidth: w,
-        });
-        tx.y = y;
-        box.addChild(tx);
-        y += tx.height + 8;
-      }
-    }
-
-    const cost = levelUpCost(m.level);
-    const affordable = state.meta.metaCurrency >= cost;
     const btn = makeButton(
-      maxed ? '已满级' : `升级  魂晶 ${cost}`,
+      maxed ? '已满级' : '升级',
       () => {
-        // 按钮在可滚内容里，滑到这儿松手也会派发 tap
-        if (md.wasDragging() || maxed) return;
+        if (listDragging() || maxed) return;
+        const from = m.level;
+        const fromSoul = state.meta.metaCurrency;
         if (levelUpCharacter(state, m.rosterId)) {
           dirty = true;
           cb.onPersist();
-          md.setTitle(`${m.name}  Lv.${m.level}`);
+          AudioManager.playSfx('sfx_soul_spend');
+          if (soulHud) void animateCurrencySpend(soulHud, fromSoul, state.meta.metaCurrency);
+          const spec = signatureSpec(m);
+          const unlocked = spec
+            ? exclusiveModsUnlockedBetween(spec.id, from, m.level)
+            : [];
+          if (m.rosterId === HUB_GUIDE_RAYEN_ID) {
+            notifyHubUpgradeGuide(state, { type: 'leveledRayen', rosterId: m.rosterId });
+          }
           refillDetail(m);
-          flashPop(md.body, md.bodySize.width, 48);
-          AudioManager.playSfx('sfx_levelup');
-        } else {
-          showToast(md.root, `魂晶不足（还差 ${cost - state.meta.metaCurrency}）`, {
+          if (unlocked.length) {
+            cb.onExclusiveAwaken?.({
+              rosterId: m.rosterId,
+              characterName: m.name,
+              mods: unlocked,
+            });
+          } else if (modal) {
+            flashPop(modal.body, modal.bodySize.width, 48);
+            AudioManager.playSfx('sfx_levelup');
+          }
+          cb.onGuideRefresh?.();
+        } else if (modal) {
+          showToast(modal.root, `魂晶不足（还差 ${cost - state.meta.metaCurrency}）`, {
             screenWidth: W,
             color: C.soulText,
             deny: true,
@@ -595,108 +1084,80 @@ export function createRosterView(
         variant: maxed || !affordable ? 'secondary' : 'primary',
         disabled: maxed,
         width: w,
-        height: 38,
+        height: ROSTER_ACTION_BTN_H,
         fontSize: 14,
         radius: 8,
       },
     );
     btn.y = y;
     box.addChild(btn);
-    y += 38 + 10;
-
-    return y;
+    levelUpBtn = btn;
+    levelUpBtnSize = { w, h: ROSTER_ACTION_BTN_H };
+    return y + ROSTER_ACTION_BTN_H + 10;
   }
 
-  /**
-   * 专属纹章解锁链。通用纹章不出现在这里——它们按技能类型进三选一，不跟等级绑。
-   */
-  function addModChainBlock(md: ModalHandle, m: Character, w: number, top: number): number {
-    const spec = signatureSpec(m);
-    if (!spec) return 0;
-
-    const box = new PIXI.Container();
-    box.y = top;
-    md.body.addChild(box);
-
-    let y = 0;
-    const title = makeText('专属纹章', 'uiStrong', { fill: C.text, fontSize: 13 });
-    box.addChild(title);
-    const hint = makeText('升级解锁，战斗中三选一出现', 'caption', { fill: C.muted });
-    hint.anchor.set(1, 0);
-    hint.x = w;
-    hint.y = 2;
-    box.addChild(hint);
-    y += title.height + 6;
-
-    const note = makeText('通用纹章按技能类型进池，不需要升级。', 'micro', {
-      fill: C.muted,
-      fontSize: 9,
-      wordWrap: true,
-      wordWrapWidth: w,
-    });
-    note.y = y;
-    box.addChild(note);
-    y += note.height + 8;
-
-    const chain = exclusiveChainForSkill(spec);
-    for (const mod of chain) {
-      const unlocked = m.level >= mod.minLevel;
-      const head = makeText(unlocked ? `Lv.${mod.minLevel}　已解锁` : `Lv.${mod.minLevel}　未解锁`, 'caption', {
-        fill: unlocked ? 0x3a8a5a : C.muted,
-        fontWeight: 'bold',
-      });
-      head.y = y;
-      box.addChild(head);
-      y += head.height + 4;
-      y += addModRow(box, mod, w, y, unlocked);
-      y += 4;
-    }
-
-    return y + 4;
-  }
-
-  /** 专属纹章一行：徽记 + 名字 + 完整效果。返回行高 */
-  function addModRow(
+  function addCostChips(
     box: PIXI.Container,
-    mod: SkillModDef,
+    items: RosterUpgradeCostItem[],
     w: number,
     top: number,
-    unlocked: boolean,
   ): number {
-    const row = new PIXI.Container();
-    row.y = top;
-    // 未解锁压暗而不是藏起来：这一栏存在的意义就是让玩家看见还没拿到的东西
-    row.alpha = unlocked ? 1 : 0.45;
-
-    const icon = createUiIcon(mod.icon, 16);
-    if (icon) {
-      icon.x = 8;
-      row.addChild(icon);
+    const gap = 16;
+    const chips = items.map((item) => makeCostChip(item));
+    const totalW = chips.reduce((sum, c) => sum + c.width, 0) + gap * Math.max(0, chips.length - 1);
+    let x = Math.max(0, (w - totalW) / 2);
+    let rowH = 0;
+    for (const chip of chips) {
+      chip.x = x;
+      chip.y = top;
+      box.addChild(chip);
+      x += chip.width + gap;
+      rowH = Math.max(rowH, chip.height);
     }
-    const textX = icon ? 30 : 8;
-
-    const nm = makeText(`${mod.name}　专属`, 'uiStrong', {
-      fill: MOD_COLOR[mod.rarity],
-      fontSize: 11,
-    });
-    nm.x = textX;
-    row.addChild(nm);
-
-    // 效果按 1 层写：专属纹章 `maxStacks` 恒为 1，所以这就是它的最终形态
-    const desc = makeText(mod.describe(1), 'micro', {
-      fill: C.muted,
-      fontSize: 9,
-      lineHeight: 13,
-      wordWrap: true,
-      wordWrapWidth: Math.max(60, w - textX),
-    });
-    desc.x = textX;
-    desc.y = nm.height + 1;
-    row.addChild(desc);
-
-    box.addChild(row);
-    return nm.height + 1 + desc.height + 6;
+    return rowH;
   }
 
-  return root;
+  /** 消耗胶囊：图标 + 现有/需要，不写中文名。以后加材料只往这一排塞。 */
+  function makeCostChip(item: RosterUpgradeCostItem): PIXI.Container {
+    const chip = new PIXI.Container();
+    const iconSize = 22;
+    const short = item.have < item.need;
+    const amount = makeText(`${item.have}/${item.need}`, 'uiStrong', {
+      fill: short ? C.hp : C.ink,
+      fontSize: 16,
+    });
+    const padR = 12;
+    const textX = iconSize + 6;
+    const w = textX + amount.width + padR;
+    const h = 28;
+    const bg = new PIXI.Graphics();
+    bg.beginFill(0x1a1410, 0.08);
+    bg.drawRoundedRect(iconSize / 2, 0, w - iconSize / 2, h, h / 2);
+    bg.endFill();
+    chip.addChild(bg);
+    const icon = createUiIcon(item.icon, iconSize);
+    if (icon) {
+      icon.x = 0;
+      icon.y = (h - iconSize) / 2;
+      chip.addChild(icon);
+    }
+    amount.x = textX;
+    amount.y = (h - amount.height) / 2;
+    chip.addChild(amount);
+    return chip;
+  }
+
+  return {
+    root,
+    cardRect(rosterId: string): SpotlightRect | null {
+      const hit = cardById.get(rosterId);
+      if (!hit?.card.parent) return null;
+      return spotlightRectOf(root, hit.card, { w: hit.w, h: hit.h }, ROSTER_CARD_RADIUS);
+    },
+    levelUpButtonRect(): SpotlightRect | null {
+      if (!levelUpBtn?.parent) return null;
+      return spotlightRectOf(root, levelUpBtn, levelUpBtnSize, 8);
+    },
+    detailRosterId: () => detailOpenId,
+  };
 }

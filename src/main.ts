@@ -59,7 +59,7 @@ function boot(): boolean {
     host.renderer.render(host.stage);
     if (typeof GameGlobal !== 'undefined') GameGlobal.__gameRendered = true;
   } catch (e) {
-    console.error('[main] 空舞台 render 失败:', e);
+    console.error('[main] empty stage render failed:', e);
   }
 
   new GameFlow(host);

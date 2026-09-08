@@ -63,6 +63,13 @@ describe('教程进度', () => {
     expect(meta.tutorialStep).toBe(TutorialStep.COMPLETED);
   });
 
+  it('卡在开场对白的老档直接进走格子', () => {
+    const meta = createInitialMeta();
+    meta.tutorialStep = TutorialStep.BATTLE1_INTRO;
+    hydrateTutorial(meta);
+    expect(meta.tutorialStep).toBe(TutorialStep.BATTLE1_MOVE);
+  });
+
   it('教程打到希尔入队、步骤还在进行中，不要误判毕业', () => {
     const meta = createInitialMeta();
     meta.tutorialStep = TutorialStep.DEPLOY2_INTRO;
@@ -77,15 +84,14 @@ describe('教程进度', () => {
     const state = createInitialState();
     expect(readTutorialStep(state.meta)).toBe(TutorialStep.NOT_STARTED);
     startTutorial(state);
-    expect(readTutorialStep(state.meta)).toBe(TutorialStep.BATTLE1_INTRO);
-    expect(advanceTutorial(state, TutorialStep.BATTLE1_MOVE)).toBe(true);
+    expect(readTutorialStep(state.meta)).toBe(TutorialStep.BATTLE1_MOVE);
+    expect(advanceTutorial(state, TutorialStep.BATTLE1_SKILL)).toBe(true);
     expect(advanceTutorial(state, TutorialStep.BATTLE1_INTRO)).toBe(false);
   });
 
   it('走到指定格才进入技能步', () => {
     const state = createInitialState();
     startTutorial(state);
-    advanceTutorial(state, TutorialStep.BATTLE1_MOVE);
     notifyTutorial(state, { type: 'moved', x: 0, y: 0 });
     expect(readTutorialStep(state.meta)).toBe(TutorialStep.BATTLE1_MOVE);
     notifyTutorial(state, { type: 'moved', x: 3, y: 4 });
@@ -116,6 +122,9 @@ describe('教程进度', () => {
     expect(TUTORIAL_COPY[TutorialStep.DEPLOY2_PLACE_BOW]?.body).toContain('[[希尔]]');
     expect(TUTORIAL_COPY[TutorialStep.BATTLE3_WATCH_GRON]?.body).toContain('[[格隆]]');
     expect(TUTORIAL_COPY[TutorialStep.BATTLE1_SKILL]?.body).toContain('点技能[[旋风斩]]');
+    expect(TUTORIAL_COPY[TutorialStep.BATTLE1_MOVE]?.body).toContain('[[雷恩]]');
+    expect(TUTORIAL_COPY[TutorialStep.BATTLE1_MOVE]?.body).toContain('黏泥怪');
+    expect(TUTORIAL_COPY[TutorialStep.BATTLE1_INTRO]).toBeUndefined();
     expect(advanceTutorial(state, TutorialStep.BATTLE3_WATCH_GRON)).toBe(true);
     notifyTutorial(state, { type: 'dialogNext' });
     expect(readTutorialStep(state.meta)).toBe(TutorialStep.BATTLE3_PLAY);

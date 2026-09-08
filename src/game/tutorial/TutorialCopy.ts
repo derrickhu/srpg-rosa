@@ -7,13 +7,8 @@ export interface TutorialLine {
 }
 
 export const TUTORIAL_COPY: Partial<Record<TutorialStep, TutorialLine>> = {
-  [TutorialStep.BATTLE1_INTRO]: {
-    title: '第一场',
-    body: '先学会两件事：走到敌人旁边，\n再放出自己的技能。',
-    button: '开始',
-  },
   [TutorialStep.BATTLE1_MOVE]: {
-    body: '点高亮的格子，走到黏泥怪旁边。',
+    body: '黏泥怪挡在路上了。点高亮的格子，[[雷恩]]先走到它旁边。',
   },
   [TutorialStep.BATTLE1_SKILL]: {
     body: '点技能[[旋风斩]]。\n贴身一圈的敌人都会挨刀。',

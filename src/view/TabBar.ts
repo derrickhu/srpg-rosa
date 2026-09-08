@@ -48,10 +48,33 @@ export function tabBarHeight(): number {
   return TAB_BAR_CONTENT_HEIGHT + getSafeAreaInsets().bottom;
 }
 
+/** 底栏某一格在全屏坐标里的矩形，给大厅指引挖洞用。 */
+export function tabSlotRect(
+  id: TabId,
+  screen: { screenWidth: number; screenHeight: number },
+): { x: number; y: number; w: number; h: number; r: number } {
+  const i = Math.max(0, TABS.findIndex((t) => t.id === id));
+  const slotW = screen.screenWidth / TABS.length;
+  const barH = tabBarHeight();
+  return {
+    x: i * slotW + 6,
+    y: screen.screenHeight - barH - 10,
+    w: slotW - 12,
+    h: TAB_BAR_CONTENT_HEIGHT + 4,
+    r: 12,
+  };
+}
+
+export interface TabBarOpts {
+  /** 哪一格右上角画红点。角色页：有人魂晶够升级 */
+  alerts?: Partial<Record<TabId, boolean>>;
+}
+
 export function createTabBar(
   active: TabId,
   onSelect: (t: TabId) => void,
   screen: { screenWidth: number; screenHeight: number },
+  opts?: TabBarOpts,
 ): PIXI.Container {
   const W = screen.screenWidth;
   const H = tabBarHeight();
@@ -86,10 +109,25 @@ export function createTabBar(
     // 「亮填充 + 近黑描边」，深底靠填充、金底靠描边，所以这里不需要按状态改色。
     const size = isActive ? ICON_SIZE_ACTIVE : ICON_SIZE;
     const icon = createUiIcon(t.icon, size);
+    const iconX = (slotW - size) / 2;
+    const iconY = (isActive ? 14 : 20) - size / 2;
     if (icon) {
-      icon.x = (slotW - size) / 2;
-      icon.y = (isActive ? 14 : 20) - size / 2;
+      icon.x = iconX;
+      icon.y = iconY;
       c.addChild(icon);
+    }
+    if (opts?.alerts?.[t.id]) {
+      const dot = new PIXI.Graphics();
+      dot.beginFill(0xfff8e8, 1);
+      dot.drawCircle(0, 0, 6);
+      dot.endFill();
+      dot.beginFill(0xe23c3c, 1);
+      dot.drawCircle(0, 0, 4.4);
+      dot.endFill();
+      dot.x = icon ? iconX + size - 1 : slotW - 16;
+      dot.y = icon ? iconY + 2 : 8;
+      dot.eventMode = 'none';
+      c.addChild(dot);
     }
 
     const label = makeText(t.label, isActive ? 'uiStrong' : 'ui', {

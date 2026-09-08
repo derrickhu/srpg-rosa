@@ -137,6 +137,11 @@ export interface UnitState {
    * 且模拟器可以直接构造带词条的单位跑数值。
    */
   skillMods?: string[];
+  /**
+   * 精英局里第二技能走加压规格（见 `applyEliteTempSkillBoost`）。
+   * 挂在单位上而不是让引擎去读 dungeonId：引擎不认识 run。
+   */
+  eliteTempBoost?: boolean;
   /** 精华等：仅加成「基础」atk/spd/move（部署累计） */
   bonusAtk?: number;
   bonusSpd?: number;

@@ -386,6 +386,38 @@ export function makeRosterCardFace(width: number, height: number, locked: boolea
   return c;
 }
 
+/**
+ * 角色详情底栏页签皮。选中用金板，未选中同一张压暗——
+ * 两套形状必须是同一块，否则切换时像换了另一种控件。
+ */
+export function makeDetailTabFace(width: number, height: number, on: boolean): PIXI.Container {
+  const c = new PIXI.Container();
+  const tex = uiTexture('detail_tab');
+  if (tex) {
+    const sp = new PIXI.Sprite(tex);
+    sp.width = width;
+    sp.height = height;
+    if (!on) {
+      sp.tint = 0x8a8074;
+      sp.alpha = 0.58;
+    }
+    c.addChild(sp);
+    return c;
+  }
+  const g = new PIXI.Graphics();
+  g.lineStyle(2, C.ink, 1, 0);
+  g.beginFill(on ? C.primary : 0xddd4c4, 1);
+  g.drawRoundedRect(0, 0, width, height, Math.min(12, height / 2));
+  g.endFill();
+  if (on) {
+    g.beginFill(0xfff3c0, 0.35);
+    g.drawRoundedRect(3, 3, width - 6, height * 0.38, 8);
+    g.endFill();
+  }
+  c.addChild(g);
+  return c;
+}
+
 /** 亮相金台。锚在中心；空洞是透明的，棋子站在环里 */
 export function makeGoldPlatform(width: number): PIXI.Container | null {
   const tex = uiTexture('platform_gold');

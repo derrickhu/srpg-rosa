@@ -110,7 +110,13 @@ export function createCharacterRevealOverlay(opts: CharacterRevealOpts): PIXI.Co
   staggerPop([stage, nameplate, tags], 70);
 
   const btnW = Math.min(220, W - 80);
-  const btn = makeButton('加入队伍', opts.onConfirm, {
+  let joined = false;
+  const btn = makeButton('加入队伍', () => {
+    if (joined) return;
+    joined = true;
+    btn.setDisabled(true);
+    opts.onConfirm();
+  }, {
     variant: 'primary', width: btnW, height: 48, fontSize: 17, radius: 14,
   });
   btn.x = cx - btnW / 2;

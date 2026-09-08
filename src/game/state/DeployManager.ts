@@ -4,6 +4,7 @@ import { gridSize, inBounds } from '@/battle/grid';
 import { enemyBaseStats } from '@/data/enemyCatalog';
 import type { StageEnemySpawn } from '@/data/stagesMvp';
 import { characterArtKey, getCharacterDef } from '@/data/characterCatalog';
+import { isEliteDungeon } from '@/data/eliteCatalog';
 import { isSandboxDungeon } from '@/data/sandboxLab';
 import { allPlayerSkillSpecs, allSkillSpecs } from '@/data/skillCatalog';
 import { canProfessionEquipSkill, defaultSkillId, skillDefForId } from '@/data/skillCatalog';
@@ -18,6 +19,7 @@ import {
   nextPid,
   requireRun,
   type MvpGameState,
+  type PlacementEntry,
   type RunState,
 } from './GameState';
 import {
@@ -58,7 +60,11 @@ export function getMaxDeploy(state: MvpGameState): number {
   return getBaseMaxDeploy(state) + (requireRun(state).adExtraSlot ?? 0);
 }
 
-function hasOpenDeployCell(state: MvpGameState): boolean {
+function snapshotPlacements(list: PlacementEntry[]): PlacementEntry[] {
+  return list.map((p) => ({ uid: p.uid, rosterId: p.rosterId, pos: { ...p.pos } }));
+}
+
+function findOpenDeployCell(state: MvpGameState): Vec2 | null {
   const run = requireRun(state);
   const stage = currentStage(state);
   const { w, h } = gridSize(stage.terrain);
@@ -69,10 +75,10 @@ function hasOpenDeployCell(state: MvpGameState): boolean {
       if (run.placements.some((p) => p.pos.x === x && p.pos.y === y)) continue;
       if (overlayAt(run, pos)) continue;
       if (enemyAt(state, pos)) continue;
-      return true;
+      return pos;
     }
   }
-  return false;
+  return null;
 }
 
 /** 看广告多上一人：满编、替补还有人、棋盘还空得下、本节点还没加过 */
@@ -84,7 +90,56 @@ export function canOfferAdExtraSlot(state: MvpGameState): boolean {
   if ((run.adExtraSlot ?? 0) > 0) return false;
   if (benchCharacters(state).length === 0) return false;
   if (run.placements.length < getBaseMaxDeploy(state)) return false;
-  return hasOpenDeployCell(state);
+  return findOpenDeployCell(state) != null;
+}
+
+/**
+ * 第 2 战教学要空手布阵：近战前排、远程后排各点一格。
+ * 带着上一场的人进来，手指会指到已经站着人的替补席。
+ */
+export function shouldSkipDeployCarry(state: MvpGameState): boolean {
+  return isTutorialRun(state) && requireRun(state).nodeIndex === 1;
+}
+
+/** 记住当前上阵，供同一章下一关沿用。 */
+export function rememberBattlePlacements(state: MvpGameState): void {
+  const run = requireRun(state);
+  if (run.placements.length === 0) return;
+  run.lastBattlePlacements = snapshotPlacements(run.placements);
+  run.lastBattleGridH = gridSize(currentStage(state).terrain).h;
+}
+
+function remapCarriedPos(state: MvpGameState, pos: Vec2): Vec2 {
+  const run = requireRun(state);
+  const { h } = gridSize(currentStage(state).terrain);
+  const [r0, r1] = playerDeployRowRange(h);
+  const [oldR0, oldR1] = playerDeployRowRange(run.lastBattleGridH ?? h);
+  let y = pos.y;
+  if (pos.y === oldR0) y = r0;
+  else if (pos.y === oldR1) y = r1;
+  return { x: pos.x, y };
+}
+
+/**
+ * 把上一场上阵铺到当前关。前后排对齐到新图；原格还能站就站，
+ * 被挡或超出地图就改空位。超员或人已经不在队里的丢掉。玩家仍可换人。
+ */
+export function applyCarriedPlacements(state: MvpGameState): void {
+  const run = requireRun(state);
+  const prev = run.lastBattlePlacements ?? [];
+  if (prev.length === 0) return;
+  const seen = new Set(run.placements.map((p) => p.rosterId));
+  for (const p of prev) {
+    if (run.placements.length >= getMaxDeploy(state)) break;
+    if (seen.has(p.rosterId)) continue;
+    if (!getCharacter(state, p.rosterId)) continue;
+    if (!run.partyRosterIds.includes(p.rosterId)) continue;
+    const mapped = remapCarriedPos(state, p.pos);
+    const pos = canPlaceAt(state, mapped) ? mapped : findOpenDeployCell(state);
+    if (!pos) continue;
+    run.placements.push({ uid: nextPid(), rosterId: p.rosterId, pos: { ...pos } });
+    seen.add(p.rosterId);
+  }
 }
 
 export function grantAdExtraSlot(state: MvpGameState): boolean {
@@ -95,11 +150,14 @@ export function grantAdExtraSlot(state: MvpGameState): boolean {
 
 export function canPlaceAt(state: MvpGameState, pos: Vec2): boolean {
   const run = requireRun(state);
-  const { h } = gridSize(currentStage(state).terrain);
+  const ter = currentStage(state).terrain;
+  const { h } = gridSize(ter);
   const [r0, r1] = playerDeployRowRange(h);
+  if (!inBounds(pos, ter)) return false;
   if (pos.y !== r0 && pos.y !== r1) return false;
   if (run.placements.some((p) => p.pos.x === pos.x && p.pos.y === pos.y)) return false;
   if (overlayAt(run, pos)) return false;
+  if (enemyAt(state, pos)) return false;
   if (run.placements.length >= getMaxDeploy(state)) return false;
   return true;
 }
@@ -369,6 +427,7 @@ export function buildBattleUnits(state: MvpGameState): UnitState[] {
       // 不是「这一招更强了」。临时技能大多是控制/治疗，`canApply` 会把
       // 「伤害 +25%」这类挂不上去的自动跳过，不会出现临时技能白嫖伤害词条。
       skillMods: run.skillMods[m.rosterId],
+      eliteTempBoost: isEliteDungeon(run.dungeonId),
       rosterId: m.rosterId,
       displayName: m.name,
       mercMaxHp: eff.maxHp,
@@ -383,13 +442,11 @@ export function buildBattleUnits(state: MvpGameState): UnitState[] {
   return units;
 }
 
-/** 战败/重打：撤回本节点部署、退回地形券（不影响 meta） */
+/** 战败重打：只收回地形券。上阵沿用，玩家要换人再自己改。 */
 export function undoDeployForRetry(state: MvpGameState): void {
   const run = requireRun(state);
-  run.placements = [];
   for (const o of run.terrainOverlay) {
     run.terrainCharges[o.terrain] = (run.terrainCharges[o.terrain] ?? 0) + 1;
   }
   run.terrainOverlay = [];
-  run.adExtraSlot = 0;
 }

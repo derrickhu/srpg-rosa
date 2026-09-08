@@ -74,6 +74,11 @@ export function hydrateTutorial(meta: MetaState): void {
     meta.tutorialStep = TutorialStep.COMPLETED;
     return;
   }
+  // 开场对白已并进走格子，卡在 INTRO 的老档直接指格子。
+  if (meta.tutorialStep === TutorialStep.BATTLE1_INTRO) {
+    meta.tutorialStep = TutorialStep.BATTLE1_MOVE;
+    return;
+  }
   if (meta.tutorialStep != null && meta.tutorialStep > TutorialStep.NOT_STARTED) return;
   if (isVeteranMeta(meta)) {
     meta.tutorialStep = TutorialStep.COMPLETED;
@@ -84,7 +89,7 @@ export function hydrateTutorial(meta: MetaState): void {
 
 export function startTutorial(state: MvpGameState): void {
   if (isTutorialCompleted(state.meta)) return;
-  state.meta.tutorialStep = TutorialStep.BATTLE1_INTRO;
+  state.meta.tutorialStep = TutorialStep.BATTLE1_MOVE;
   emitTutorial();
 }
 

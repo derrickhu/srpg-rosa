@@ -2,6 +2,7 @@ import * as PIXI from 'pixi.js';
 import { makeText } from '@/theme/typography';
 import { UNIT_DEFS } from '@/data/unitDefs';
 import { getSkillSpec } from '@/data/skillCatalog';
+import { isEliteDungeon } from '@/data/eliteCatalog';
 import { describeShopOfferLines } from '@/data/itemText';
 import {
   nodesUntilBoss,
@@ -437,7 +438,9 @@ export function createShopView(
     detail.addChild(typeTag);
 
     // 分行短句 + 数字高亮；文案与背包同源（itemText）
-    const desc = makeStatDescBlock(describeShopOfferLines(o), {
+    const desc = makeStatDescBlock(describeShopOfferLines(o, {
+      eliteTempBoost: isEliteDungeon(state.run?.dungeonId),
+    }), {
       maxWidth: panelW - 110,
       fontSize: 12,
       lineGap: 3,
