@@ -13,6 +13,7 @@ import {
   createTitleBanner,
   dropBanner,
   fadeScrim,
+  flySoulBurstTo,
   flyTokenTo,
   staggerPop,
 } from '@/view/fx/celebration';
@@ -50,6 +51,12 @@ export interface RewardOverlayOpts {
   entries: RewardEntry[];
   confirmLabel: string;
   onConfirm: () => void;
+  /** 缺省播胜利号。扫荡已经在点按钮时响过，再播会叠两声 */
+  fanfare?: boolean;
+  /** 点确定后魂晶飞向哪里。缺省战场左上；大厅扫荡要飞顶栏魂晶条 */
+  soulFlyTo?: { x: number; y: number };
+  /** true = 按入账枚数错帧飞（扫荡）；false = 飞一枚 */
+  soulFlyBurst?: boolean;
 }
 
 /**
@@ -351,7 +358,7 @@ function makeSummaryChip(iconKey: string, label: string, tint: number): PIXI.Con
 export function createRewardOverlay(opts: RewardOverlayOpts): PIXI.Container {
   const { screenW: W, screenH: H } = opts;
   const root = new PIXI.Container();
-  AudioManager.playSfx('sfx_victory');
+  if (opts.fanfare !== false) AudioManager.playSfx('sfx_victory');
   if (opts.entries.some((e) => e.iconKey === 'icon_soul' && e.amount > 0)) {
     AudioManager.playSfx('sfx_soul_gain');
   }
@@ -376,6 +383,7 @@ export function createRewardOverlay(opts: RewardOverlayOpts): PIXI.Container {
   const gridY = sub.y + 22;
   const cells: PIXI.Container[] = [];
   let soulFrom: { x: number; y: number } | null = null;
+  let soulAmount = 0;
 
   let detail: PIXI.Container | null = null;
   const closeDetail = (): void => {
@@ -427,6 +435,7 @@ export function createRewardOverlay(opts: RewardOverlayOpts): PIXI.Container {
     cells.push(cell);
     if (e.iconKey === 'icon_soul') {
       soulFrom = { x: cell.x, y: cell.y };
+      soulAmount = e.amount;
     }
   });
   staggerPop(cells, 80);
@@ -449,7 +458,12 @@ export function createRewardOverlay(opts: RewardOverlayOpts): PIXI.Container {
     btn.setDisabled(true);
     const go = (): void => opts.onConfirm();
     if (soulFrom) {
-      void flyTokenTo(root, 'icon_soul', soulFrom, { x: 28, y: 28 }).then(go);
+      const to = opts.soulFlyTo ?? { x: 28, y: 28 };
+      if (opts.soulFlyBurst) {
+        void flySoulBurstTo(root, soulFrom, to, soulAmount).then(go);
+      } else {
+        void flyTokenTo(root, 'icon_soul', soulFrom, to).then(go);
+      }
       return;
     }
     go();

@@ -327,28 +327,49 @@ function separator(panelW: number, y: number): PIXI.Graphics {
   return g;
 }
 
-/** 两列键值区，返回占用高度 */
-function addStatGrid(
+/**
+ * 标题 + 全部键值尽量排在一行。两列网格会把基础属性和普攻各占两行，
+ * 战斗里有了第二技能，下面的格子图就被裁掉。
+ */
+function addCompactStats(
   panel: PIXI.Container,
+  title: string,
   items: UnitInfoStat[],
   panelW: number,
   top: number,
 ): number {
-  const colW = Math.floor((panelW - 24) / 2);
-  for (let i = 0; i < items.length; i++) {
-    const s = items[i]!;
-    const sx = 16 + (i % 2) * colW;
-    const sy = top + Math.floor(i / 2) * LINE_H;
+  const titleTx = new PIXI.Text(title, SECTION_STYLE);
+  titleTx.x = 12;
+  titleTx.y = top;
+  panel.addChild(titleTx);
+
+  const pairs = items.map((s) => {
     const lb = new PIXI.Text(s.label, LABEL_STYLE);
-    lb.x = sx;
-    lb.y = sy;
-    panel.addChild(lb);
     const vl = new PIXI.Text(s.value, VALUE_STYLE);
-    vl.x = sx + 36;
-    vl.y = sy;
-    panel.addChild(vl);
+    return { lb, vl, w: lb.width + 3 + vl.width };
+  });
+  const gap = 8;
+  const pairsW = pairs.reduce((n, p) => n + p.w, 0) + gap * Math.max(0, pairs.length - 1);
+  const inlineX = 12 + titleTx.width + 8;
+  const inline = inlineX + pairsW <= panelW - 12;
+  const rowH = 16;
+
+  let x = inline ? inlineX : 16;
+  let y = inline ? top : top + rowH;
+  for (const p of pairs) {
+    if (!inline && x + p.w > panelW - 12 && x > 16) {
+      x = 16;
+      y += rowH;
+    }
+    p.lb.x = x;
+    p.lb.y = y + 1;
+    p.vl.x = x + p.lb.width + 3;
+    p.vl.y = y;
+    panel.addChild(p.lb);
+    panel.addChild(p.vl);
+    x = p.vl.x + p.vl.width + gap;
   }
-  return Math.ceil(items.length / 2) * LINE_H;
+  return y + rowH - top;
 }
 
 export interface UnitInfoPanel {
@@ -384,7 +405,7 @@ export interface UnitInfoPanelOptions {
    * 技能段画在普攻前面。
    *
    * 角色详情默认打开的是「升级」页；「技能详情」里招牌技能在前，
-   * 普攻那两行（射程 / 近战）垫底，避免把真正的内容顶出首屏。
+   * 普攻那一行（射程 / 近战 / 嘲讽）垫底，避免把真正的内容顶出首屏。
    */
   skillsBeforeStrike?: boolean;
 }
@@ -424,12 +445,7 @@ export function createUnitInfoPanel(
   }
 
   if (opts?.showStats ?? true) {
-    const secBase = new PIXI.Text('基础属性', SECTION_STYLE);
-    secBase.x = 12;
-    secBase.y = cy;
-    panel.addChild(secBase);
-    cy += LINE_H + 2;
-    cy += addStatGrid(panel, model.stats, panelW, cy) + 8;
+    cy += addCompactStats(panel, '基础属性', model.stats, panelW, cy) + 4;
   }
 
   // 限时状态。战斗中点开才有内容——「他为什么突然打这么疼」只能在这里回答。
@@ -458,12 +474,7 @@ export function createUnitInfoPanel(
   }
 
   const drawStrike = (): void => {
-    const secStrike = new PIXI.Text(model.strikeTitle, SECTION_STYLE);
-    secStrike.x = 12;
-    secStrike.y = cy;
-    panel.addChild(secStrike);
-    cy += LINE_H + 2;
-    cy += addStatGrid(panel, model.strike, panelW, cy) + 8;
+    cy += addCompactStats(panel, model.strikeTitle, model.strike, panelW, cy) + 4;
   };
 
   const drawSkills = (): void => {

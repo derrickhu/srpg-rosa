@@ -1,15 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { sweepFlyCount } from '@/view/fx/celebration';
 import { hubSoulIconCenter } from '@/view/hubHeader';
-import { sweepRewardCopy } from '@/view/sweepRewardOverlay';
+import { sweepRewardCopy, sweepRewardEntry } from '@/view/sweepRewardOverlay';
 
 describe('扫荡奖励展示', () => {
   it('文案写清章节和入账数量，不写空话', () => {
     const copy = sweepRewardCopy('草原战线 · 精英', 5);
     expect(copy.title).toBe('扫  荡');
     expect(copy.subtitle).toBe('草原战线 · 精英');
-    expect(copy.amountLabel).toBe('+5 魂晶');
-    expect(copy.hint).toContain('入账');
+    expect(copy.amountLabel).toBe('+5');
+    expect(sweepRewardEntry(5).iconKey).toBe('icon_soul');
+    expect(sweepRewardEntry(5).amount).toBe(5);
   });
 
   it('飞向顶栏的枚数跟魂晶走，不超过 5', () => {

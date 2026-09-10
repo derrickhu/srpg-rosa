@@ -52,7 +52,7 @@ export type AttackButtonState = 'ready' | 'noTarget' | 'spent';
 export interface ManualUiState {
   pending: PendingTurn;
   phase: ManualPhase;
-  /** 行动者脚下那格，画选中环 */
+  /** 行动者脚下那格；还没走时用来刷白格 */
   activeCell: Vec2;
   moveCells: Vec2[];
   /**
@@ -270,66 +270,21 @@ function cellRect(geo: BoardGeometry, p: Vec2): { x: number; y: number; s: numbe
 }
 
 /**
- * 当前行动者：只描格子边缘，并往外放光。
- * 不能填格子内部——人和血条都在框里，铺一层就把它们盖住了。
+ * 当前行动者：把脚下那一格刷成更亮的白，跟着呼吸亮暗。
+ * 画在棋子底下，所以能填心——人和血条不会被盖住。
+ * 不要再画十字放光：那是套在人身上的框，走完还挂着更难看。
  */
-function paintActiveActorFrame(
+function paintActiveActorCell(
   g: PIXI.Graphics,
   r: { x: number; y: number; s: number },
-  cell: number,
   k: number,
 ): void {
-  const pulse = 0.72 + 0.28 * k;
-  // 框略扩出格子缝，描边中心在缝上，少往角色身上吃
-  const bx = r.x - 1;
-  const by = r.y - 1;
-  const bs = r.s + 2;
-  const rad = 6;
-
-  // 外圈一圈圈淡出去，读成边缘在发光，不是罩一层雾
-  for (let i = 5; i >= 0; i--) {
-    const pad = 3 + i * 2.4;
-    const a = (0.08 + (5 - i) * 0.055) * pulse;
-    g.lineStyle(3.4, i < 2 ? 0xffffff : 0xffe08a, a);
-    g.drawRoundedRect(bx - pad, by - pad, bs + pad * 2, bs + pad * 2, rad + i);
-  }
-
-  g.lineStyle(3.2, 0xfff6d8, 0.55 + 0.25 * k);
-  g.drawRoundedRect(bx, by, bs, bs, rad);
-  g.lineStyle(1.8, 0xffffff, 0.88 + 0.12 * k);
-  g.drawRoundedRect(bx, by, bs, bs, rad);
-
-  const ray = Math.max(7, Math.round(cell * 0.2));
-  const tail = ray + Math.max(4, Math.round(cell * 0.1));
-  const corners: { x: number; y: number; dx: number; dy: number }[] = [
-    { x: bx, y: by, dx: -1, dy: -1 },
-    { x: bx + bs, y: by, dx: 1, dy: -1 },
-    { x: bx, y: by + bs, dx: -1, dy: 1 },
-    { x: bx + bs, y: by + bs, dx: 1, dy: 1 },
-  ];
-  for (const c of corners) {
-    g.lineStyle(2.2, 0xffffff, 0.7 + 0.25 * k);
-    g.moveTo(c.x + c.dx * 1.5, c.y + c.dy * 1.5);
-    g.lineTo(c.x + c.dx * ray, c.y + c.dy * ray);
-    g.lineStyle(1.2, 0xfff2b0, 0.28 + 0.18 * k);
-    g.moveTo(c.x + c.dx * ray, c.y + c.dy * ray);
-    g.lineTo(c.x + c.dx * tail, c.y + c.dy * tail);
-  }
-
-  const mid = Math.max(5, Math.round(cell * 0.14));
-  const cx = bx + bs / 2;
-  const cy = by + bs / 2;
-  const edges: { x: number; y: number; dx: number; dy: number }[] = [
-    { x: cx, y: by, dx: 0, dy: -1 },
-    { x: cx, y: by + bs, dx: 0, dy: 1 },
-    { x: bx, y: cy, dx: -1, dy: 0 },
-    { x: bx + bs, y: cy, dx: 1, dy: 0 },
-  ];
-  for (const e of edges) {
-    g.lineStyle(1.8, 0xffffff, 0.45 + 0.2 * k);
-    g.moveTo(e.x + e.dx * 2, e.y + e.dy * 2);
-    g.lineTo(e.x + e.dx * mid, e.y + e.dy * mid);
-  }
+  const fill = 0.34 + 0.28 * k;
+  const line = 0.72 + 0.28 * k;
+  g.lineStyle(2.4, 0xffffff, line);
+  g.beginFill(0xffffff, fill);
+  g.drawRoundedRect(r.x, r.y, r.s, r.s, 4);
+  g.endFill();
 }
 
 export interface ManualTurnUi {
@@ -365,12 +320,12 @@ export function createManualTurnUi(opts: ManualTurnUiOptions): ManualTurnUi {
   /** 当前要画的威胁连线；pulse 里按时间重绘做呼吸/流动 */
   let threatLinks: { from: Vec2; to: Vec2; bow: number }[] = [];
   /**
-   * 行动者选中框。挂在棋子之上（threatParent / fxLayer）：框画在格子层会被角色挡住，
-   * 陶土地上细白边几乎看不见。只描边缘、往外放光，不要填格子把人和血条盖住。
+   * 行动者脚下的白格。挂在格子高亮层、棋子之下：填心才读得出「这一格在呼吸」。
+   * 走完就收——落点已经是自己点的，再套一层框没有新信息。
    */
   const activeRing = new PIXI.Graphics();
   activeRing.eventMode = 'none';
-  threatParent.addChild(activeRing);
+  highlightLayer.addChild(activeRing);
 
   const bar = new PIXI.Container();
   hudLayer.addChild(bar);
@@ -548,8 +503,8 @@ export function createManualTurnUi(opts: ManualTurnUiOptions): ManualTurnUi {
 
     activeRing.clear();
     if (!active) return;
-    const r = cellRect(geo, active);
-    paintActiveActorFrame(activeRing, r, geo.cell, k);
+    const breathe = 0.5 + 0.5 * Math.sin(now / 220);
+    paintActiveActorCell(activeRing, cellRect(geo, active), breathe);
   };
   opts.app.ticker.add(pulse);
 
@@ -943,7 +898,8 @@ export function createManualTurnUi(opts: ManualTurnUiOptions): ManualTurnUi {
         drawCells(s.attackCells, ATTACK_COLOR, 0.22);
       }
       setThreatArrows(s.threatFrom, s.activeCell);
-      active = s.activeCell;
+      // 还没走时才亮脚下白格；走完人已经在目标格上，再留框就是图上那圈十字
+      active = s.pending.didMove ? null : s.activeCell;
       highlight.visible = true;
       threatArrows.visible = true;
       bar.visible = true;
