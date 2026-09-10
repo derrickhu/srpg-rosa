@@ -20,19 +20,23 @@ function briefShape(spec: SkillSpec): string {
   const shape = spec.shape;
   switch (shape.type) {
     case 'neighborAoE':
-      return shape.manhattan === 1 ? '邻格全体敌人' : `周围 ${shape.manhattan} 格全体敌人`;
+      return shape.manhattan === 1
+        ? '邻格全体敌人'
+        : `正好 ${shape.manhattan} 格一圈全体`;
     case 'discAoE':
       return shape.radius === 1 ? '邻格全体敌人' : `周围 ${shape.radius} 格全体敌人`;
     case 'squareAoE':
       return shape.radius === 1 ? '贴身八格·含斜角' : `${shape.radius} 格方形·含斜角`;
     case 'neighborPickFoe':
-      return `${describeReach(shape.manhattan, shape.reach)}·点一个敌人`;
+      return shape.axisOnly
+        ? `同行同列${describeReach(shape.manhattan, shape.reach)}·点一个敌人`
+        : `${describeReach(shape.manhattan, shape.reach)}·点一个敌人`;
     case 'neighborPickAlly':
       return `${describeReach(shape.manhattan, shape.reach)}·点一个友军`;
     case 'lineBestRayAllFoes':
       return shape.range === undefined ? '直线穿透（不限）' : `直线穿透 ${shape.range} 格`;
     case 'groundPickAoE':
-      return `${shape.castRange}格内选点·周围${shape.blastRadius}格`;
+      return `${shape.castRange}格内选点爆炸·周围${shape.blastRadius}格全体`;
     case 'selfCast':
       return '对自己释放';
   }

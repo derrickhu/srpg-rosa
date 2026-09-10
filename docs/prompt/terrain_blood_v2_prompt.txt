@@ -1,0 +1,27 @@
+第六章「血牙祭坛」血池地形贴图 v2
+产出 → images/terrain/blood.png（约 128px）
+生成器：Cursor 内置 GenerateImage，aspect_ratio 1:1
+后处理：品红抠色 + 缩到约 128，不要黑描边（地形不描边，角色才描）
+
+旧版是不规则暗红水洼，和沼泽贴纸同一套有机边缘，只换了颜色。
+这一格是加血的圣泉，要读成「象牙石圈里的清亮圣血」，不是泥潭。
+
+---
+
+A single TERRAIN TILE sprite for a cartoon tactics game, a flat decal pasted on a terracotta stone battlefield.
+
+CRITICAL BACKGROUND: the entire background must be 100% solid flat MAGENTA, hex #FF00FF. Not white, not grey, not a gradient. It is a chroma key and will be deleted.
+
+CRITICAL — NO BLACK OUTLINES. Terrain must NOT have thick black outlines. Soft darker-stone / darker-ruby rims only.
+
+PERSPECTIVE: straight top-down. NOT isometric.
+
+CONTENTS — a SACRED HEALING FONT, not a swamp puddle:
+- Outer ring: a simple circular / slightly rounded-square basin of ivory limestone #E8D8C0 with a slightly darker stone lip #C4B4A0. 2 flat tones, toy-like.
+- Inner water: clean jewel ruby #C43C4A (life-blood, inviting), a slightly deeper center #9A2834, and ONE small flat lighter highlight #E07070. Hard cel shapes, no gradient wash, no glow halo, no bloom.
+- Optional: a tiny 4-petal or diamond highlight in the very center, still flat, still 1 color. This reads holy, not swampy.
+- NO lily pad, NO reeds, NO mud, NO bubbles like a bog, NO skulls, NO bones, NO runes, NO green.
+
+LOW FREQUENCY: displayed about 40 pixels wide. Big soft shapes only. The whole font fills about 70% of the image with a clear magenta margin.
+
+NO text, no labels, no watermark.

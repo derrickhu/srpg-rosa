@@ -329,6 +329,19 @@ const SETS = [
     downscale: 1,
     runs: [{ dir: 'mobs-ch5/idle', preset: 'single', label }],
   })),
+  // 第六章杂兵：祭仪构装。骨白浮在陶土地上；血鸦/犄兽上一版铺满格子翼尖被切。
+  ...[
+    { id: 'bonepup', label: 'mob-1' },
+    { id: 'gorecrow', label: 'mob-2' },
+    { id: 'ritehorn', label: 'mob-3' },
+    { id: 'slabward', label: 'mob-4' },
+  ].map(({ id, label }) => ({
+    id,
+    source: `${RUNS_DIR}/mobs-ch6`,
+    blend: 'normal',
+    downscale: 1,
+    runs: [{ dir: 'mobs-ch6/idle', preset: 'single', label }],
+  })),
   // 第二至五章精英：血牙部族的人形兽人，四只一张 2x2（art/sprite-runs/elites/raw-2x2.png）。
   //
   // 精英和 Boss 是血牙部族、杂兵是当地野物——这条读图规矩第一章就立下了，剪影本身就是

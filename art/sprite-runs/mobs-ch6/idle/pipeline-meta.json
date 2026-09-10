@@ -1,0 +1,302 @@
+{
+  "target": "creature",
+  "mode": "grid",
+  "prompt": "",
+  "role": "",
+  "input": "/Users/rosa/rosa_games/srpg-rosa/art/sprite-runs/mobs-ch6/raw-2x2-spaced.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 200,
+  "rows": 2,
+  "cols": 2,
+  "cell_size": 256,
+  "fit_scale": 0.85,
+  "trim_border": 4,
+  "edge_clean_depth": 3,
+  "align": "feet",
+  "shared_scale": true,
+  "scale_strategy": "fit",
+  "component_mode": "largest",
+  "component_padding": 0,
+  "min_component_area": 1,
+  "edge_touch_margin": 0,
+  "frame_labels": [
+    "mob-1",
+    "mob-2",
+    "mob-3",
+    "mob-4"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "component_mode": "largest",
+      "component_count": 37,
+      "selected_component_area": 61608,
+      "selected_component_bbox": [
+        123,
+        113,
+        410,
+        417
+      ],
+      "crop_bbox": [
+        123,
+        113,
+        410,
+        417
+      ],
+      "source_frame_size": [
+        504,
+        504
+      ],
+      "is_empty": false,
+      "subject_area": 61608,
+      "body_core_area": 58309,
+      "body_area_fraction": 0.22954853237591333,
+      "anchor_source": [
+        263.0,
+        402.0
+      ],
+      "source_edge_touch": false,
+      "output_edge_touch": false,
+      "edge_touch": false,
+      "output_size": [
+        163,
+        172
+      ],
+      "paste_position": [
+        46,
+        65
+      ],
+      "paste_clamped": false,
+      "aligned_bbox": [
+        46,
+        65,
+        209,
+        237
+      ],
+      "source_to_output_scale": 0.5681462140992167,
+      "bbox_scale_applied": true,
+      "scale_strategy": "fit",
+      "scale_changed": true
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        512,
+        0,
+        1024,
+        512
+      ],
+      "component_mode": "largest",
+      "component_count": 42,
+      "selected_component_area": 68678,
+      "selected_component_bbox": [
+        49,
+        123,
+        404,
+        417
+      ],
+      "crop_bbox": [
+        49,
+        123,
+        404,
+        417
+      ],
+      "source_frame_size": [
+        504,
+        504
+      ],
+      "is_empty": false,
+      "subject_area": 68678,
+      "body_core_area": 58208,
+      "body_area_fraction": 0.2291509196271101,
+      "anchor_source": [
+        223.0,
+        403.0
+      ],
+      "source_edge_touch": false,
+      "output_edge_touch": false,
+      "edge_touch": false,
+      "output_size": [
+        201,
+        167
+      ],
+      "paste_position": [
+        27,
+        70
+      ],
+      "paste_clamped": false,
+      "aligned_bbox": [
+        27,
+        70,
+        228,
+        237
+      ],
+      "source_to_output_scale": 0.5681462140992167,
+      "bbox_scale_applied": true,
+      "scale_strategy": "fit",
+      "scale_changed": true
+    },
+    {
+      "grid": [
+        1,
+        0
+      ],
+      "source_box": [
+        0,
+        512,
+        512,
+        1024
+      ],
+      "component_mode": "largest",
+      "component_count": 90,
+      "selected_component_area": 72505,
+      "selected_component_bbox": [
+        77,
+        78,
+        460,
+        358
+      ],
+      "crop_bbox": [
+        77,
+        78,
+        460,
+        358
+      ],
+      "source_frame_size": [
+        504,
+        504
+      ],
+      "is_empty": false,
+      "subject_area": 72505,
+      "body_core_area": 59490,
+      "body_area_fraction": 0.23419784580498867,
+      "anchor_source": [
+        227.0,
+        343.0
+      ],
+      "source_edge_touch": false,
+      "output_edge_touch": false,
+      "edge_touch": false,
+      "output_size": [
+        217,
+        159
+      ],
+      "paste_position": [
+        19,
+        78
+      ],
+      "paste_clamped": false,
+      "aligned_bbox": [
+        19,
+        78,
+        236,
+        237
+      ],
+      "source_to_output_scale": 0.5681462140992167,
+      "bbox_scale_applied": true,
+      "scale_strategy": "fit",
+      "scale_changed": true
+    },
+    {
+      "grid": [
+        1,
+        1
+      ],
+      "source_box": [
+        512,
+        512,
+        1024,
+        1024
+      ],
+      "component_mode": "largest",
+      "component_count": 100,
+      "selected_component_area": 79827,
+      "selected_component_bbox": [
+        50,
+        60,
+        408,
+        367
+      ],
+      "crop_bbox": [
+        50,
+        60,
+        408,
+        367
+      ],
+      "source_frame_size": [
+        504,
+        504
+      ],
+      "is_empty": false,
+      "subject_area": 79827,
+      "body_core_area": 63530,
+      "body_area_fraction": 0.25010235575711764,
+      "anchor_source": [
+        248.0,
+        352.0
+      ],
+      "source_edge_touch": false,
+      "output_edge_touch": false,
+      "edge_touch": false,
+      "output_size": [
+        203,
+        174
+      ],
+      "paste_position": [
+        26,
+        63
+      ],
+      "paste_clamped": false,
+      "aligned_bbox": [
+        26,
+        63,
+        229,
+        237
+      ],
+      "source_to_output_scale": 0.5681462140992167,
+      "bbox_scale_applied": true,
+      "scale_strategy": "fit",
+      "scale_changed": true
+    }
+  ],
+  "edge_touch_frames": [],
+  "source_edge_touch_frames": [],
+  "output_edge_touch_frames": [],
+  "empty_frames": [],
+  "paste_clamped_frames": [],
+  "qc_summary": {
+    "frame_count": 4,
+    "valid_frame_count": 4,
+    "empty_count": 0,
+    "edge_touch_count": 0,
+    "paste_clamped_count": 0,
+    "body_scale_mean": 0.48546290121134617,
+    "output_subject_height_mean": 168.0,
+    "body_scale_cv": 0.017920440669551323,
+    "anchor_x_std": 0.03215801009668797,
+    "anchor_y_std": 0.05493201666629815,
+    "anchor_y_mean": 0.7440476190476191
+  },
+  "qc_config": {
+    "strict_qc": true,
+    "reject_edge_touch": false,
+    "allow_source_edge_touch": false,
+    "max_body_scale_cv": null,
+    "max_anchor_y_std": null,
+    "max_profile_scale_drift": null
+  },
+  "scale_profile_output": "/Users/rosa/rosa_games/srpg-rosa/art/sprite-runs/mobs-ch6/scale-profile.json"
+}

@@ -23,6 +23,8 @@ export {
   createInitialState,
   createInitialMeta,
   createRunState,
+  runWantsAutoPilot,
+  rememberBattlePilot,
   isChallengeLaneRun,
   adventureRunOf,
   challengeRunOf,

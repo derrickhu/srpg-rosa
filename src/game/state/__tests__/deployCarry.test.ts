@@ -4,7 +4,7 @@ import { gridSize } from '@/battle/grid';
 import { DUNGEON_DEFS } from '@/data/dungeonCatalog';
 import { instantiateCharacter } from '@/game/characterFactory';
 import { getCharacterDef } from '@/data/characterCatalog';
-import { createInitialState, currentStage } from '../GameState';
+import { createInitialState, currentStage, rememberBattlePilot, runWantsAutoPilot } from '../GameState';
 import { advanceNode, startRun } from '../ProgressManager';
 import { applyCarriedPlacements, undoDeployForRetry } from '../DeployManager';
 import { TutorialStep } from '@/game/tutorial/tutorialSteps';
@@ -110,6 +110,24 @@ describe('同一章上阵沿用', () => {
       { rosterId: TUTORIAL_RAYEN_ID, pos: { x: 1, y: 6 } },
       { rosterId: TUTORIAL_HILL_ID, pos: { x: 0, y: 8 } },
     ]);
+  });
+
+  it('上一战托管则下一战默认接着托管，接手后清掉', () => {
+    const s = partyOf([TUTORIAL_RAYEN_ID]);
+    expect(runWantsAutoPilot(s.run)).toBe(false);
+    rememberBattlePilot(s.run!, true);
+    expect(runWantsAutoPilot(s.run)).toBe(true);
+    rememberBattlePilot(s.run!, false);
+    expect(runWantsAutoPilot(s.run)).toBe(false);
+  });
+
+  it('教学局不记下也不沿用托管', () => {
+    const s = createInitialState();
+    startRun(s, TUTORIAL_DUNGEON_ID, [TUTORIAL_RAYEN_ID]);
+    rememberBattlePilot(s.run!, true, true);
+    expect(s.run!.carryAutoPilot).toBeUndefined();
+    s.run!.carryAutoPilot = true;
+    expect(runWantsAutoPilot(s.run, true)).toBe(false);
   });
 
   it('战败重打不拆上阵，只退地形券', () => {

@@ -1,4 +1,5 @@
 import type { SkillDef, SkillKind, TerrainId, UnitKind } from '@/battle/types';
+import { ignitableTerrainIds } from '@/data/terrainSpec';
 
 /** 技能触发时机 */
 export type SkillTiming = 'beforeMove' | 'afterMove' | 'passive';
@@ -694,6 +695,8 @@ const SPECS: Record<string, SkillSpec> = {
     damage: { kind: 'flat', amount: 6, applyCounter: false, applyTerrain: false },
     shopPrice: 18,
     onCastTerrainEffects: [{ kind: 'ignite' }],
+    // 滑动窗口不会把它带进没有林子的章：`skillNeedsExistingMapTerrain` +
+    // `chapterHasPlayableTerrain`。要塞边角两棵树不够格。
   },
   temp_fo_thorn: {
     id: 'temp_fo_thorn',
@@ -1383,6 +1386,20 @@ export function remapLegacySkillId(id: string): string {
 
 export function getSkillSpec(id: string): SkillSpec | undefined {
   return SPECS[remapLegacySkillId(id)];
+}
+
+/**
+ * 这招要地图上**已经有**哪种地形才成立。
+ *
+ * `ignite` 必须场上有可燃格，否则只剩贴身 6 点伤。`transmute` 自己造地，
+ * 不进这里——血渠术走到哪都能铺。
+ */
+export function skillNeedsExistingMapTerrain(spec: SkillSpec): TerrainId[] {
+  const needs: TerrainId[] = [];
+  for (const effect of spec.onCastTerrainEffects ?? []) {
+    if (effect.kind === 'ignite') needs.push(...ignitableTerrainIds());
+  }
+  return [...new Set(needs)];
 }
 
 /**

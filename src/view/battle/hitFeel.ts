@@ -27,6 +27,16 @@ export const HIT_KNOCK_PX = 12;
  */
 export const AOE_STAGGER_MS = 70;
 
+/**
+ * 无弹道爆炸（霜环、旋风）的闪光是 fire-and-forget。
+ * 立刻出飘字会压在最亮的起手帧上，读成「打到了没数字」。
+ * 等到环展开（约四成时长）再出字。
+ */
+export function aoeImpactFloatDelayMs(impactDurationMs: number): number {
+  if (impactDurationMs <= 0) return HIT_STOP_MS;
+  return Math.max(HIT_STOP_MS, Math.round(impactDurationMs * 0.42));
+}
+
 /** k∈[0,1] → 沿击退方向的位移。约 2.5 次来回，越来越小。 */
 export function hitKnockDisplacement(k: number, amp: number): number {
   const t = Math.max(0, Math.min(1, k));

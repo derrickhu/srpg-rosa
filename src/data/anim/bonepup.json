@@ -1,6 +1,6 @@
 {
   "id": "bonepup",
-  "source": "art/sprite-runs/ch6",
+  "source": "art/sprite-runs/mobs-ch6",
   "blend": "normal",
   "image": "images/anim/bonepup.png",
   "meta": {
@@ -13,25 +13,25 @@
   },
   "metrics": {
     "frameSize": 256,
-    "subjectHeight": 174,
-    "baselineY": 242,
-    "ref": "idle"
+    "subjectHeight": 158,
+    "baselineY": 236,
+    "ref": "mobs-ch6-idle/mob-1.png"
   },
   "frames": {
-    "idle": {
+    "mobs-ch6-idle/mob-1.png": {
       "frame": {
         "x": 2,
         "y": 2,
-        "w": 232,
-        "h": 193
+        "w": 163,
+        "h": 172
       },
       "rotated": false,
       "trimmed": true,
       "spriteSourceSize": {
-        "x": 12,
-        "y": 51,
-        "w": 232,
-        "h": 193
+        "x": 46,
+        "y": 65,
+        "w": 163,
+        "h": 172
       },
       "sourceSize": {
         "w": 256,
@@ -44,84 +44,42 @@
       "loop": true,
       "fps": 1,
       "frames": [
-        "idle"
+        "mobs-ch6-idle/mob-1.png"
       ]
     },
     "default": {
       "loop": true,
       "fps": 1,
       "frames": [
-        "idle"
+        "mobs-ch6-idle/mob-1.png"
       ]
     },
     "idle_up": {
       "loop": true,
       "fps": 1,
       "frames": [
-        "idle"
+        "mobs-ch6-idle/mob-1.png"
       ]
     },
     "idle_down": {
       "loop": true,
       "fps": 1,
       "frames": [
-        "idle"
+        "mobs-ch6-idle/mob-1.png"
       ]
     },
     "idle_left": {
       "loop": true,
       "fps": 1,
       "frames": [
-        "idle"
+        "mobs-ch6-idle/mob-1.png"
       ]
     },
     "idle_right": {
       "loop": true,
       "fps": 1,
       "frames": [
-        "idle"
-      ]
-    },
-    "walk_up": {
-      "loop": true,
-      "fps": 1,
-      "frames": [
-        "idle"
-      ]
-    },
-    "walk_down": {
-      "loop": true,
-      "fps": 1,
-      "frames": [
-        "idle"
-      ]
-    },
-    "walk_left": {
-      "loop": true,
-      "fps": 1,
-      "frames": [
-        "idle"
-      ]
-    },
-    "walk_right": {
-      "loop": true,
-      "fps": 1,
-      "frames": [
-        "idle"
-      ]
-    },
-    "attack_up": {
-      "loop": true,
-      "fps": 1,
-      "frames": [
-        "idle"
-      ]
-    },
-    "attack_down": {
-      "loop": true,
-      "fps": 1,
-      "frames": [
-        "idle"
+        "mobs-ch6-idle/mob-1.png"
       ]
     }
   }

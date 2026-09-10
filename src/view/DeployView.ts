@@ -11,7 +11,6 @@ import { isSandboxDungeon } from '@/data/sandboxLab';
 import { characterArtKey } from '@/data/characterCatalog';
 import type { Character } from '@/game/characterTypes';
 import { characterEffectiveStats } from '@/game/characterFactory';
-import type { BattleMode } from '@/battle/engine';
 import { enemySpawnToUnitState } from '@/game/state/DeployManager';
 import {
   activeSkillIdForRun,
@@ -53,6 +52,7 @@ import {
   runCenterBannerMaxWidth,
   runCenterBannerY,
   runGoldYAlign,
+  deployBoardTopY,
   runHudRowY,
 } from '@/view/renderHelpers';
 import { createRunTitleBanner } from '@/view/runTitleBanner';
@@ -128,7 +128,6 @@ function computeDeployLayout(screen: DeployLayoutScreen, gridW: number, gridH: n
   const gw = Math.max(1, gridW);
   const gh = Math.max(1, gridH);
 
-  const topBarH = 46;
   const toolbarBlockH = 76;
   const gapToolbarHand = 8;
   const handStripH = 90;
@@ -151,7 +150,7 @@ function computeDeployLayout(screen: DeployLayoutScreen, gridW: number, gridH: n
   const fightW = Math.min(usableW - 24, sw - 24);
   const fightX = Math.floor((sw - fightW) / 2);
 
-  const gridAreaTop = topBarH + 4;
+  const gridAreaTop = deployBoardTopY();
   const gridAreaBottom = toolbarY - gapGridDock;
   const usableH = Math.max(gh * 30, gridAreaBottom - gridAreaTop);
   const raw = Math.floor(Math.min(usableW / gw, usableH / gh));
@@ -176,7 +175,7 @@ function computeDeployLayout(screen: DeployLayoutScreen, gridW: number, gridH: n
 }
 
 export interface DeployCallbacks {
-  onStartBattle: (mode: BattleMode) => void;
+  onStartBattle: () => void;
   onReset: () => void;
   onHome: () => void;
   /** 刷新部署界面（不重置状态） */
@@ -281,6 +280,8 @@ export function createDeployView(
   goldValueTx.x = goldPadX + goldIconSize + 4;
   goldValueTx.y = (goldBgH - goldValueTx.height) / 2;
   goldContainer.addChild(goldValueTx);
+  goldContainer.eventMode = 'static';
+  goldContainer.hitArea = new PIXI.Rectangle(0, 0, goldBgW, goldBgH);
   root.addChild(goldContainer);
 
   // --- 关卡名（米白字墨描边，贴胶囊下沿）+ 节点进度链 ---
@@ -297,16 +298,19 @@ export function createDeployView(
   });
   banner.root.x = Math.floor((screen.screenWidth - banner.width) / 2);
   banner.root.y = runCenterBannerY();
+  banner.root.eventMode = 'static';
+  banner.root.hitArea = new PIXI.Rectangle(0, 0, banner.width, banner.height);
   root.addChild(banner.root);
 
   // 无尽波次写在牌子副行；有章节节点时，进度链跟在牌子下面
+  let nodeStrip: PIXI.Container | null = null;
   if (!endless) {
     const stripW = Math.min(screen.screenWidth - 32, 360);
-    const strip = createNodeStrip(dungeon0, { currentIndex: run.nodeIndex, width: stripW });
-    strip.x = Math.floor((screen.screenWidth - stripW) / 2);
+    nodeStrip = createNodeStrip(dungeon0, { currentIndex: run.nodeIndex, width: stripW });
+    nodeStrip.x = Math.floor((screen.screenWidth - stripW) / 2);
     // 当前节点上方要留出「你在这」标记的高度，否则它会压到关卡名
-    strip.y = banner.root.y + banner.height + 22;
-    root.addChild(strip);
+    nodeStrip.y = banner.root.y + banner.height + 22;
+    root.addChild(nodeStrip);
   }
 
   // --- 设置面板 ---
@@ -996,7 +1000,7 @@ export function createDeployView(
         callbacks.onWarn?.('Boss 战没带药剂，胜算极低。再点一次仍要开打');
         return;
       }
-      callbacks.onStartBattle('manual');
+      callbacks.onStartBattle();
     }, {
       variant: 'primary',
       width: startW,
@@ -1023,6 +1027,12 @@ export function createDeployView(
   relayoutFightBar = layoutFightBar;
   layoutFightBar();
 
+  // 再挂一次顶栏，保证压在棋盘之上。格子后加，平原又不画贴图，
+  // 设置钮看起来浮在草地上，点下去却弹出「平原」。战斗页同一条。
+  root.addChild(settingsBtn);
+  root.addChild(goldContainer);
+  root.addChild(banner.root);
+  if (nodeStrip) root.addChild(nodeStrip);
   root.addChild(settingsOverlay);
   root.addChild(detailOverlay);
 

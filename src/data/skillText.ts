@@ -31,33 +31,51 @@ export function describeReach(manhattan: number, reach: 'exact' | 'within' | und
   return manhattan === 1 ? '相邻格' : `正好 ${manhattan} 格`;
 }
 
-export function describeSkillShape(spec: SkillSpec): string {
+/** 选点爆炸：面板两行说明。必须写出「爆炸 / 全体」，否则会读成单体点名。 */
+export function describeGroundPickCaption(castRange: number, blastRadius: number): string {
+  return `${castRange}格内选一点爆炸\n炸开周围${blastRadius}格（含落点），命中所有敌人`;
+}
+
+/** 面板格子图旁的两行说明。环和整片、点名和爆炸必须在这里读得出来。 */
+export function describeSkillRangeCaption(spec: SkillSpec): string {
   const shape = spec.shape;
   switch (shape.type) {
     case 'neighborAoE':
-      return `周围 ${shape.manhattan} 格内所有敌人`;
+      // 这是环（正好 N 格），不是「N 格内」。写成「周围 N 格」会让人贴脸去放。
+      return shape.manhattan === 1
+        ? '相邻格范围\n命中所有敌人（不含斜角）'
+        : `正好${shape.manhattan}格的一圈\n贴脸打不到，命中所有敌人`;
     case 'discAoE':
-      return `周围 ${shape.radius} 格全覆盖所有敌人`;
+      return `周围${shape.radius}格全覆盖\n命中所有敌人`;
     case 'squareAoE':
-      // 「含斜角」是这个形状唯一区别于上面两个的地方，不写玩家就看不出区别
       return shape.radius === 1
-        ? '贴身一圈八格所有敌人（含斜角）'
-        : `周围 ${shape.radius} 格方形内所有敌人（含斜角）`;
+        ? '贴身一圈八格\n含斜角，命中所有敌人'
+        : `周围${shape.radius}格方形\n含斜角，命中所有敌人`;
     case 'neighborPickFoe':
       return shape.axisOnly
-        ? `同行或同列 ${describeReach(shape.manhattan, shape.reach)} 选一个敌人`
-        : `${describeReach(shape.manhattan, shape.reach)}选一个敌人`;
+        ? `同行或同列 ${describeReach(shape.manhattan, shape.reach)}\n点选一个敌人`
+        : `${describeReach(shape.manhattan, shape.reach)}\n点选一个敌人`;
     case 'neighborPickAlly':
-      return `${describeReach(shape.manhattan, shape.reach)}选一个友方`;
+      return `${describeReach(shape.manhattan, shape.reach)}\n点选一个友方`;
+    case 'selfCast':
+      return '对自己释放\n无需选择目标';
     case 'lineBestRayAllFoes':
       return shape.range === undefined
-        ? '四方向直线穿透所有敌人（不限射程）'
-        : `四方向直线 ${shape.range} 格内穿透所有敌人`;
+        ? '上下左右四方向\n射线穿透，不限射程'
+        : `上下左右四方向 ${shape.range} 格\n射线穿透所有敌人`;
     case 'groundPickAoE':
-      return `${shape.castRange} 格内选一点，对该点周围 ${shape.blastRadius} 格内所有敌人`;
-    case 'selfCast':
-      return '对自己释放';
+      return describeGroundPickCaption(shape.castRange, shape.blastRadius);
   }
+}
+
+export function describeSkillShape(spec: SkillSpec): string {
+  return describeSkillRangeCaption(spec).replace('\n', '，');
+}
+
+function isAreaDamage(spec: SkillSpec): boolean {
+  const t = spec.shape.type;
+  return t === 'neighborAoE' || t === 'discAoE' || t === 'squareAoE'
+    || t === 'groundPickAoE' || t === 'lineBestRayAllFoes';
 }
 
 /**
@@ -77,13 +95,13 @@ export function describeSkillSpec(spec: SkillSpec): string[] {
 
   switch (spec.damage.kind) {
     case 'scaledAtk':
-      out.push(`伤害: 攻击力×${Math.round(spec.damage.atkMul * 100)}%`);
+      out.push(`${isAreaDamage(spec) ? '范围伤害' : '伤害'}: 攻击力×${Math.round(spec.damage.atkMul * 100)}%`);
       break;
     case 'flat':
-      out.push(`伤害: 固定 ${spec.damage.amount}`);
+      out.push(`${isAreaDamage(spec) ? '范围伤害' : '伤害'}: 固定 ${spec.damage.amount}`);
       break;
     case 'percentTargetMaxHp':
-      out.push(`伤害: 目标最大生命×${Math.round(spec.damage.ratio * 100)}%`);
+      out.push(`${isAreaDamage(spec) ? '范围伤害' : '伤害'}: 目标最大生命×${Math.round(spec.damage.ratio * 100)}%`);
       break;
     case 'none':
     case 'custom':

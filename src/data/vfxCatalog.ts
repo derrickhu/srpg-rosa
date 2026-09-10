@@ -1923,7 +1923,8 @@ export const SKILL_VFX: Record<string, VfxRecipe> = {
     impact: {
       set: 'temp_ft_suppress',
       anchor: 'target',
-      cells: 2.2,
+      // 点名单怪。2.2 格会把整个人连邻格一起罩住，压下去的人字纹读成一片墙
+      cells: 1.85,
       mode: 'burst',
       playbackSpeed: 0.72,
       sparks: skillSparks(SIEGE),

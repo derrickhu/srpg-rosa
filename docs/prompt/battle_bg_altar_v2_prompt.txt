@@ -1,0 +1,33 @@
+第 6 章「血牙祭坛」战斗底图 v2（832×1248 / 2:3）
+生成器：Cursor 内置 GenerateImage，aspect_ratio 3:4
+唯一画法参考：images/bg/battle_bg.png（第一章草原）
+规范：美术风格圣经 §5.1。这是同一张画换道具，不是新风格。
+
+和第五章龙岭的差别（必须一眼分开，禁止再做成「换色六边形石地」）：
+- 第五章是浅桃岩 + 对角圆角石堆 + 六边形铺地。
+- 这一张禁止六边形蜂窝地、禁止圆角鹅卵石堆。
+- 地板改成中明度陶土 / 砂岩，好让骨白杂兵（血鸦、骨俑）从地上分开。
+
+---
+
+The visible grassland battle background is the SAME painting. Redress it. Do not invent a new style.
+
+KEEP EXACTLY:
+- Strict top-down camera. No 3/4 canyon, no vanishing point, no sky, no horizon.
+- The SAME painting language: flat cartoon, 2–3 clean colors per object, soft edges, no thick black outlines, no painterly rock texture.
+- Walkable center is CLEAN (1–2 flat colors), mid value — bright enough for tokens, NOT pale cream.
+
+CHANGE floor hue + edge props. Do NOT copy the peach hex-cobble plaza from the dragon chapter.
+
+CENTER ~50% is a clean flat CLAY / TERRACOTTA sandstone field, mid value:
+- Main fill #C88858, slightly lighter patches #D49868.
+- NO hexagon honeycomb tiles. NO cobblestone. At most two or three very large faint rectangular flagstone seams, almost invisible.
+- Mid value on purpose: bone-white creatures must read on top of this floor. Do not use pale cream #F0E4D4 or peach #E8C8B0.
+
+EDGE IDENTITY — different SHAPES from the dragon chapter rocks:
+- TOP-RIGHT only: a broken circular ritual ring made of a few RECTANGULAR cut-stone blocks (warm grey #C4B4A0), plus one short rectangular altar slab. Toy-like, 2–3 tones, no carvings, no runes, no skulls.
+- BOTTOM-LEFT only: a short 3-step stone stair seen from above (stacked rectangular slabs) and one short bone-ivory pillar. Same toy stone language.
+- At most two tiny dry-ruby inlay dots tucked INSIDE those corner props. No blood river. No pool filling the center (blood pools are separate terrain stickers).
+- Do not wrap props around all four sides. Do not put rounded pebble clusters.
+
+NO purple, NO pink, NO text, NO grid, NO UI, NO characters, NO buildings, NO sky.

@@ -242,6 +242,7 @@ describe('纯人工回合', () => {
     expect(sim.skillAiming('p1')?.candidates).toEqual([]);
     expect(sim.skillAiming('p1')?.aimCells.length).toBeGreaterThan(0);
     expect(sim.skillAiming('p1')?.autoTargets).toContain('e1');
+    expect(sim.skillAiming('p1')?.blastRadius).toBeUndefined();
   });
 
   it('单体技能的可选目标都在射程内，非法目标退回自动挑选', () => {

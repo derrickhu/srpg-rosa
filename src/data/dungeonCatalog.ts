@@ -3,6 +3,7 @@ import { CHAPTER_STAGE_INDICES, STAGES_MVP, type StageDefMvp } from '@/data/stag
 import { ENDLESS_DUNGEON, ENDLESS_DUNGEON_ID } from '@/data/endlessCatalog';
 import { assembleEliteDungeon, isEliteDungeon, officialDungeonIdOfElite } from '@/data/eliteCatalog';
 import { SANDBOX_DUNGEON, SANDBOX_DUNGEON_ID } from '@/data/sandboxLab';
+import { getSkillSpec, skillNeedsExistingMapTerrain } from '@/data/skillCatalog';
 import { getTerrainSpec } from '@/data/terrainSpec';
 import type { ChapterStars } from '@/data/chapterStars';
 
@@ -111,6 +112,8 @@ const r = (rows: ShopPoolRow[]): ShopPoolRow[] => rows;
  *    会有 14 招，而商店一次只 roll 3 件（还保底一件药剂）——想要的那招基本抽不到，
  *    「选一个流派」就退化成抽奖。滑动窗口让每章的池子由**本章的族**主导，
  *    上一章的留一轮作为过渡，玩家仍能把上一章顺手的招带过来。
+ *    **例外：改已有地形的招不跟窗走。** 火把的全部价值是点燃森林；要塞地图只有
+ *    边角两棵树，卖它等于卖 6 点贴身伤。自己造地的招（血渠）不在此列。
  *
  * 4. **标价按「两场战斗的金币买不齐三件」定。** 补给点插在每两场之后，首店手上
  *    就是刚打完的两笔 `goldReward`。三件最便宜的之和必须大于这笔钱，否则每次
@@ -156,9 +159,53 @@ const TEMP_NEW_BY_CHAPTER: ShopPoolRow[][] = [
   ]),
 ];
 
-/** 第 n 章（1 起）的临时技能池 = 本章新增 + 上一章新增 */
+/** 一场战斗里这种地形至少这么多格，才算「能玩」而不是边角装饰。 */
+const PLAYABLE_TERRAIN_CELLS = 4;
+/** 一章至少两场够格，才让依赖这种地形的招进店。 */
+const PLAYABLE_TERRAIN_STAGES = 2;
+
+function countStageTerrain(stage: StageDefMvp, terrainId: TerrainId): number {
+  let n = 0;
+  for (const row of stage.terrain) {
+    for (const cell of row) {
+      if (cell === terrainId) n += 1;
+    }
+  }
+  return n;
+}
+
+/**
+ * 这些战斗里，这种地形是不是题目的一部分。
+ * 要塞边角两棵树、毒沼点缀的灌木都不算——火把跟过去只会变成弱平 A。
+ */
+export function stagesHavePlayableTerrain(
+  stageIndices: readonly number[],
+  terrainId: TerrainId,
+): boolean {
+  let rich = 0;
+  for (const si of stageIndices) {
+    const stage = STAGES_MVP[si];
+    if (!stage) continue;
+    if (countStageTerrain(stage, terrainId) >= PLAYABLE_TERRAIN_CELLS) rich += 1;
+  }
+  return rich >= PLAYABLE_TERRAIN_STAGES;
+}
+
+export function chapterHasPlayableTerrain(chapter: number, terrainId: TerrainId): boolean {
+  return stagesHavePlayableTerrain(CHAPTER_STAGE_INDICES[chapter - 1] ?? [], terrainId);
+}
+
+/** 第 n 章（1 起）的临时技能池 = 本章新增 + 上一章新增，再剔掉没有用地的地形动词 */
 function tempSkillPool(chapter: number): ShopPoolRow[] {
-  return [...(TEMP_NEW_BY_CHAPTER[chapter - 2] ?? []), ...(TEMP_NEW_BY_CHAPTER[chapter - 1] ?? [])];
+  const raw = [...(TEMP_NEW_BY_CHAPTER[chapter - 2] ?? []), ...(TEMP_NEW_BY_CHAPTER[chapter - 1] ?? [])];
+  return raw.filter((row) => {
+    if (row.category !== 'tempSkill') return true;
+    const spec = getSkillSpec(row.skillId);
+    if (!spec) return true;
+    const needs = skillNeedsExistingMapTerrain(spec);
+    if (needs.length === 0) return true;
+    return needs.some((terrainId) => chapterHasPlayableTerrain(chapter, terrainId));
+  });
 }
 
 /**
@@ -196,6 +243,7 @@ const POOL_FOREST = r([
  * 城墙在这一章既挡路又挡视线，所以「买一堵墙放下去」是玩家手里唯一能主动
  * 制造掩体的手段——闸门开启之后门口那条走廊会变成对射场，
  * 一堵墙就能把它切断。和机关的关系是互补的：机关开路，墙封路。
+ * 森林券还卖，只当掩体；火把不跟滑动窗口过来（这一章没有可烧的林子）。
  */
 const POOL_FORTRESS = r([
   { category: 'terrain', terrainId: 'high', price: 14 },

@@ -3,7 +3,7 @@ import { UNIT_DEFS } from '@/data/unitDefs';
 import { skillDefForId } from '@/data/skillCatalog';
 import { emptyTerrain } from '../grid';
 import type { UnitState } from '../types';
-import { castSkillManual, skillAiming } from '../skills';
+import { castSkillManual, groundAimTap, groundBlastCells, skillAiming } from '../skills';
 
 function mage(pos: { x: number; y: number }): UnitState {
   const d = UNIT_DEFS.mage;
@@ -41,6 +41,23 @@ describe('霜环 groundPickAoE', () => {
     expect(aim).not.toBeNull();
     expect(aim!.candidates).toEqual([]);
     expect(aim!.aimCells.some((c) => c.x === 1 && c.y === 1)).toBe(true);
+    expect(aim!.blastRadius).toBe(1);
+  });
+
+  it('第一次点格只改预览，同一格再点才确认', () => {
+    expect(groundAimTap(null, { x: 1, y: 1 })).toBe('preview');
+    expect(groundAimTap({ x: 1, y: 1 }, { x: 2, y: 1 })).toBe('preview');
+    expect(groundAimTap({ x: 1, y: 1 }, { x: 1, y: 1 })).toBe('confirm');
+  });
+
+  it('释放预览是落点为心的曼哈顿圆盘，含落点自己', () => {
+    const cells = groundBlastCells({ x: 2, y: 2 }, 1, emptyTerrain(5, 5));
+    expect(cells).toEqual(expect.arrayContaining([
+      { x: 2, y: 2 },
+      { x: 1, y: 2 }, { x: 3, y: 2 },
+      { x: 2, y: 1 }, { x: 2, y: 3 },
+    ]));
+    expect(cells).toHaveLength(5);
   });
 
   it('点空地也能打到爆炸范围内的敌人', () => {

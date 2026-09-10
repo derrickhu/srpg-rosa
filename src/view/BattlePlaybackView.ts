@@ -10,7 +10,13 @@ import { computeBoardLayout } from '@/view/boardLayout';
 import { UNIT_DEFS } from '@/data/unitDefs';
 import { POTION_DEFS } from '@/data/potionCatalog';
 import { getSkillSpec } from '@/data/skillCatalog';
-import { specAppliesFrost, specAppliesPoison, unitSkillSpec } from '@/battle/skills';
+import {
+  groundAimTap,
+  groundBlastCells,
+  specAppliesFrost,
+  specAppliesPoison,
+  unitSkillSpec,
+} from '@/battle/skills';
 import {
   CHARGE_VFX,
   FROST_HIT_VFX,
@@ -63,7 +69,7 @@ import { attachPress } from '@/ui/press';
 import { AdManager } from '@/platform/AdManager';
 import { Platform } from '@/platform/wxPlatform';
 import { createBusyGate } from '@/view/battle/busyGate';
-import { createAdReviveOverlay } from '@/view/battle/resultOverlay';
+import { ABANDON_RUN_CONFIRM, attachAbandonConfirm, createAdReviveOverlay } from '@/view/battle/resultOverlay';
 import { AudioManager } from '@/core/AudioManager';
 import { sfxForAttack, sfxForAttackHit, sfxForSkillCast, sfxForSkillHit } from '@/data/audioCatalog';
 import { AssetManager } from '@/core/AssetManager';
@@ -76,6 +82,7 @@ import {
 import { isDisplayLive } from '@/view/pixiLive';
 import {
   AOE_STAGGER_MS,
+  aoeImpactFloatDelayMs,
   HIT_FLASH_MS,
   HIT_KNOCK_MS,
   HIT_KNOCK_PX,
@@ -157,6 +164,9 @@ export interface PlaybackCallbacks {
   onComplete: (winner: Faction) => void;
   onHome: () => void;
   onReturnDeploy: () => void;
+  onAbandon: () => void;
+  /** 玩家切托管 / 接手时记下，同一章下一战默认沿用 */
+  onPilotChange?: (auto: boolean) => void;
 }
 
 function cellCenter(originX: number, originY: number, cell: number, p: Vec2): { x: number; y: number } {
@@ -236,7 +246,11 @@ export function createBattlePlaybackView(
   const inset = getSafeAreaInsets();
 
   // --- 回放控制状态 ---
-  const speedMul = 1;
+  // 托管略快于手操，好让清杂不磨；2 倍会看不清走位，所以只到约 1.35。
+  const AUTO_PLAYBACK_SPEED = 1.35;
+  function speedMul(): number {
+    return sim.isAuto() ? AUTO_PLAYBACK_SPEED : 1;
+  }
   let skipping = false;
   let completed = false;
   const reviveGate = createBusyGate();
@@ -254,7 +268,7 @@ export function createBattlePlaybackView(
   let spentSkill = false;
 
   function dur(ms: number): number {
-    return ms / speedMul;
+    return ms / speedMul();
   }
 
   function awaitEase(ms: number, onProgress: (t: number) => void): Promise<void> {
@@ -649,6 +663,7 @@ export function createBattlePlaybackView(
     // 已经结算的动作不回滚：玩家从下一个该他动的单位开始接手。
     const step = sim.setAuto(toAuto);
     if (step.events.length > 0) takeOverStep = step;
+    callbacks.onPilotChange?.(toAuto);
     drawPilotBtn();
     if (toAuto) {
       manualUi?.hide();
@@ -777,7 +792,7 @@ export function createBattlePlaybackView(
     const allowDeploy = gameState.allowReturnDeploy !== false;
     const settingBtns = 1
       + (allowDeploy && !gameState.tutorialLock ? 1 : 0)
-      + (!gameState.tutorialLock ? 1 : 0);
+      + (!gameState.tutorialLock ? 2 : 0);
     const panelH = 50 + settingBtns * 42 + Math.max(0, settingBtns - 1) * 10 + 16;
     const panelX = Math.floor((sw - panelW) / 2);
     const panelY = Math.floor((sh - panelH) / 2) - 30;
@@ -812,6 +827,17 @@ export function createBattlePlaybackView(
     }
 
     if (!gameState.tutorialLock) {
+      const btnAbandon = makeButton('放弃副本', () => {
+        attachAbandonConfirm(settingsOverlay, sw, sh, ABANDON_RUN_CONFIRM, () => {
+          settingsOverlay.visible = false;
+          callbacks.onAbandon();
+        });
+      }, { variant: 'danger', width: btnW, height: 42, fontSize: 15 });
+      btnAbandon.x = 16;
+      btnAbandon.y = by;
+      panel.addChild(btnAbandon);
+      by += 52;
+
       const btnHome = makeButton('返回大厅', () => { settingsOverlay.visible = false; callbacks.onHome(); },
         { variant: 'ghost', width: btnW, height: 42, fontSize: 15 });
       btnHome.x = 16; btnHome.y = by; panel.addChild(btnHome);
@@ -1034,6 +1060,13 @@ export function createBattlePlaybackView(
     awaitEase,
   });
 
+  /** 飘字锚在头顶，不落在格子中心——霜环那种大爆炸会把中心数字吞掉。 */
+  function combatFloatPos(uid: string, tok: PIXI.Container): { x: number; y: number } {
+    const setId = animSetByUid.get(uid) ?? defIdByUid.get(uid);
+    const head = setId ? unitHeadLocalY(setId, cell) : -cell * 0.55;
+    return { x: tok.x, y: tok.y + head };
+  }
+
   /** 伤害 / 治疗 / 用药 —— 样式见 combatFloatText */
   function floatDamage(x: number, y: number, dmg: number, crit?: boolean): void {
     if (crit) {
@@ -1160,8 +1193,8 @@ export function createBattlePlaybackView(
     def: FlashDef,
     from: { x: number; y: number },
     to: { x: number; y: number } | undefined,
-  ): void {
-    if (skipping) return;
+  ): number {
+    if (skipping) return 0;
     const at = def.anchor === 'caster' ? from : (to ?? from);
     // 朝向永远是「攻击者 → 目标」，与锚点无关。素材一律画成朝右，所以这个角度就是 rotation。
     // 按「锚点 → 另一端」算过一版，锚在目标身上时方向正好翻转，表现是矛尖朝着自己人扎。
@@ -1204,7 +1237,11 @@ export function createBattlePlaybackView(
 
     // 图集还没下载完（首启进战、CDN 慢）时序列帧会返回 0，那就用老的静态贴图兜底，
     // 至少还有个东西在闪。火花是代码画的，这条路上照样有。
-    if (played <= 0) showFxSprite(at.x, at.y, 'slash', size);
+    if (played <= 0) {
+      showFxSprite(at.x, at.y, 'slash', size);
+      return 280;
+    }
+    return played;
   }
 
   /** 实体道具 / 光效放大淡出（号角头顶光、药草十字） */
@@ -1304,7 +1341,7 @@ export function createBattlePlaybackView(
           if (i > 0) await awaitEase(dur(40 * i), () => {});
           if (root.destroyed || skipping) return;
           await flyProjectile(fxLayer, from, p.at, recipe.travel!, size, {
-            speedScale: speedMul,
+            speedScale: speedMul(),
             onArrive: () => {
               if (recipe.impact) playFlash(recipe.impact, from, p.at);
               if (recipe.hitBurst) playHitBurst(fxLayer, p.at, recipe.hitBurst, cell);
@@ -1331,7 +1368,7 @@ export function createBattlePlaybackView(
         },
       }));
       await flyProjectile(fxLayer, from, to, recipe.travel, size, {
-        speedScale: speedMul,
+        speedScale: speedMul(),
         waypoints,
       }).done;
       // 普攻那种「只有一个落点」：抵达后播命中。贯穿的命中已经在途经时播过了
@@ -1346,8 +1383,14 @@ export function createBattlePlaybackView(
       return;
     }
 
-    if (recipe.impact) playFlash(recipe.impact, from, to);
-    else if (recipe.hitBurst) playHitBurst(fxLayer, to ?? from, recipe.hitBurst, cell);
+    if (recipe.impact) {
+      const impactMs = playFlash(recipe.impact, from, to);
+      // 无弹道的爆炸不能马上返回：霜环 cells=3 的形体层几乎不透明，
+      // 同一拍出的伤害数字会陷在最亮的那几帧里，看起来就像没飘字。
+      if (!recipe.travel && impactMs > 0) {
+        await awaitEase(dur(aoeImpactFloatDelayMs(impactMs)), () => {});
+      }
+    } else if (recipe.hitBurst) playHitBurst(fxLayer, to ?? from, recipe.hitBurst, cell);
     fireShake(recipe.shake, from, to);
   }
 
@@ -1794,6 +1837,8 @@ export function createBattlePlaybackView(
     let phase: ManualPhase = 'act';
     /** 正在瞄准的是哪个槽；`phase === 'aim'` 时必定非空 */
     let aimSlot: SkillSlot | null = null;
+    /** 选点爆炸：第一次点的落点，再点同一格才施放 */
+    let aimPreview: Vec2 | null = null;
     while (!root.destroyed && !skipping) {
       const pending = sim.pending();
       if (!pending || pending.uid !== uid) break;
@@ -1803,7 +1848,11 @@ export function createBattlePlaybackView(
       if (!self || self.hp <= 0) break;
 
       const aiming = phase === 'aim' && aimSlot ? sim.skillAiming(uid, aimSlot) : null;
-      if (phase === 'aim' && !aiming) phase = 'act';
+      if (phase === 'aim' && !aiming) {
+        phase = 'act';
+        aimPreview = null;
+      }
+      if (phase !== 'aim') aimPreview = null;
       // 普攻瞄准时目标没了（被别人打死等）就退回行动态
       const attackables = sim.legalAttackTargets(uid);
       if (phase === 'attackAim' && (pending.didAttack || attackables.length === 0)) {
@@ -1841,6 +1890,10 @@ export function createBattlePlaybackView(
         skillRangeCells: aiming?.rangeCells ?? [],
         skillCandidateCells: cellsOfUids(aiming?.candidates ?? []),
         skillAimCells: aiming?.aimCells ?? [],
+        skillBlastCells: aimPreview && aiming?.blastRadius != null
+          ? groundBlastCells(aimPreview, aiming.blastRadius, sim.getTerrain())
+          : [],
+        skillFocusCell: aiming?.blastRadius != null ? aimPreview : undefined,
         threatFrom,
         skillButtons: skillButtonSpecs(uid, pending),
         attackButton,
@@ -1865,10 +1918,12 @@ export function createBattlePlaybackView(
           await playEvents(sim.commandUndoMove(uid).events);
           phase = 'act';
           aimSlot = null;
+          aimPreview = null;
           break;
         case 'cancelAim':
           phase = 'act';
           aimSlot = null;
+          aimPreview = null;
           break;
         case 'skill': {
           if (!pending.castableSlots.includes(input.slot)) break;
@@ -1882,6 +1937,7 @@ export function createBattlePlaybackView(
           } else {
             phase = 'aim';
             aimSlot = input.slot;
+            aimPreview = null;
             aimingNow = true;
             gameState.onTutorialEvent?.({ type: 'refresh' });
           }
@@ -1912,17 +1968,23 @@ export function createBattlePlaybackView(
               aimSlot = null;
               break;
             }
-            // 直线/AoE：点高亮范围格确认方向（穿透打整条线，不是点哪个敌人打哪个）
+            // 直线/AoE：点高亮范围格。选点爆炸先预览释放范围，再点同一格才放。
             const onAimCell = aiming.aimCells.some(
               (c) => c.x === input.cell.x && c.y === input.cell.y,
             );
             if (onAimCell) {
+              if (aiming.blastRadius != null
+                && groundAimTap(aimPreview, input.cell) === 'preview') {
+                aimPreview = { ...input.cell };
+                break;
+              }
               await playEvents(
                 sim.commandSkill(uid, undefined, aimSlot, { ...input.cell }).events,
               );
               gameState.onTutorialEvent?.({ type: 'skill' });
               phase = 'act';
               aimSlot = null;
+              aimPreview = null;
             }
             break;
           }
@@ -2106,9 +2168,10 @@ export function createBattlePlaybackView(
                 AudioManager.playSfx(sfxForSkillHit(ev.skillId, ev.vfxId));
               }
               applyHitFeel(h.target, { x: cx, y: cy });
-              floatDamage(tt.x, tt.y, h.damage, h.crit);
-              floatTerrainNote(tt.x, tt.y, h.defTerrainNote, h.guardNote);
-              floatModNote(tt.x, tt.y, h.modNote);
+              const at = combatFloatPos(h.target, tt);
+              floatDamage(at.x, at.y, h.damage, h.crit);
+              floatTerrainNote(at.x, at.y, h.defTerrainNote, h.guardNote);
+              floatModNote(at.x, at.y, h.modNote);
               // 处决是逐目标的：一圈里只有残血的那个身上多一记斩杀闪光
               if (h.modNote === '处决' && recipe?.executeImpact) {
                 playFlash(recipe.executeImpact, { x: cx, y: cy }, { x: tt.x, y: tt.y });

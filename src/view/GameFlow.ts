@@ -54,7 +54,9 @@ import {
   recordRunBattleStats,
   recordRunPotionUse,
   snapshotEndlessCarry,
+  rememberBattlePilot,
   rollShop,
+  runWantsAutoPilot,
   skipLoot,
   startRun,
   undoDeployForRetry,
@@ -670,7 +672,7 @@ export class GameFlow {
         continueEndlessWave(this.state, this.lastBattleUnits);
         SaveManager.save(this.state);
       }
-      void this.resolveBattle('manual');
+      void this.resolveBattle();
       return;
     }
     const node = currentNode(this.state);
@@ -678,7 +680,7 @@ export class GameFlow {
       this.renderShop();
     } else if (shouldSkipTutorialDeploy(this.state)) {
       applyTutorialBattle1Placement(this.state);
-      void this.resolveBattle('manual');
+      void this.resolveBattle();
     } else {
       this.renderDeploy();
     }
@@ -700,23 +702,9 @@ export class GameFlow {
     const handle = createDeployView(
       this.state,
       {
-        onStartBattle: (mode) => void this.resolveBattle(mode),
+        onStartBattle: () => void this.resolveBattle(),
         onWarn: (msg) => this.showToast(msg),
-        onReset: () => {
-          if (isTutorialRun(this.state)) {
-            this.showToast('先打完这一章的教学', { deny: true });
-            return;
-          }
-          const endless = isEndlessRun(this.state);
-          const leftDungeonId = this.state.run?.dungeonId;
-          this.trackRunEnd('abandon');
-          if (endless) finishEndlessRun(this.state);
-          else abandonRun(this.state);
-          SaveManager.save(this.state);
-          this.showToast(endless ? '已离开试炼' : '已放弃副本');
-          if (!endless && leftDungeonId) this.pinAdventureToDungeon(leftDungeonId);
-          this.renderShell(endless ? 'challenge' : 'adventure');
-        },
+        onReset: () => this.abandonFromSettings(),
         onHome: () => {
           if (isTutorialRun(this.state)) {
             this.showToast('先打完这一章的教学', { deny: true });
@@ -802,7 +790,7 @@ export class GameFlow {
     );
   }
 
-  private async resolveBattle(mode: BattleMode = 'manual'): Promise<void> {
+  private async resolveBattle(): Promise<void> {
     const units = buildBattleUnits(this.state);
     if (units.filter((u) => u.faction === 'player').length === 0) {
       this.showToast('请至少部署 1 个单位', { deny: true });
@@ -824,10 +812,12 @@ export class GameFlow {
     // 上一版只把技能交给玩家，移动和目标仍归程序决策。结果是那一下点击既选不了位置也选不了对象，
     // 而且要等到该单位下次行动才生效——玩家能感到自己在操作，却影响不了任何结果。
     // 战棋的策略全部长在「谁站哪儿」上，不交出走位就等于没有策略。
-    // 自动模式（扫荡）走同一个引擎的程序决策分支，不存在两套结算规则。
+    // 自动模式走同一个引擎的程序决策分支，不存在两套结算规则。
+    // 同一章上一战若结束在托管，这一战默认接着托管；教学局永远手操开局。
     const endless = isEndlessRun(this.state);
     const sandbox = isSandboxDungeon(run.dungeonId);
     const tut = isTutorialRun(this.state);
+    const mode: BattleMode = runWantsAutoPilot(run, tut) ? 'auto' : 'manual';
     const sim = createBattleSim(units, map, UNIT_DEFS, {
       aiDifficulty: endless ? endlessAiDifficulty(run.endless?.wave ?? 1) : stage.aiDifficulty,
       mode,
@@ -851,6 +841,7 @@ export class GameFlow {
             timedBattleEffects: u.timedBattleEffects?.map((e) => ({ ...e })),
           }));
           this.lastBattleDrops = sim.getDrops();
+          rememberBattlePilot(run, sim.isAuto(), tut);
           run.lastReportWinner = winner;
           if (winner === 'player' && !sandbox && !endless) {
             recordRunBattleStats(run, {
@@ -864,6 +855,11 @@ export class GameFlow {
         onReturnDeploy: () => {
           undoDeployForRetry(this.state);
           this.renderDeploy();
+        },
+        onAbandon: () => this.abandonFromSettings(),
+        onPilotChange: (auto) => {
+          rememberBattlePilot(run, auto, tut);
+          SaveManager.save(this.state);
         },
       },
       {
@@ -1253,7 +1249,7 @@ export class GameFlow {
           undoDeployForRetry(this.state);
           if (shouldSkipTutorialDeploy(this.state)) {
             applyTutorialBattle1Placement(this.state);
-            void this.resolveBattle('manual');
+            void this.resolveBattle();
             return;
           }
           this.renderDeploy();
@@ -1363,6 +1359,22 @@ export class GameFlow {
       level_name: dungeonId,
       endless: isEndlessDungeon(dungeonId),
     });
+  }
+
+  private abandonFromSettings(): void {
+    if (isTutorialRun(this.state)) {
+      this.showToast('先打完这一章的教学', { deny: true });
+      return;
+    }
+    const endless = isEndlessRun(this.state);
+    const leftDungeonId = this.state.run?.dungeonId;
+    this.trackRunEnd('abandon');
+    if (endless) finishEndlessRun(this.state);
+    else abandonRun(this.state);
+    SaveManager.save(this.state);
+    this.showToast(endless ? '已离开试炼' : '已放弃副本');
+    if (!endless && leftDungeonId) this.pinAdventureToDungeon(leftDungeonId);
+    this.renderShell(endless ? 'challenge' : 'adventure');
   }
 
   private trackRunEnd(result: 'clear' | 'fail' | 'abandon'): void {

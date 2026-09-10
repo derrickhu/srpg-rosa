@@ -133,6 +133,11 @@ export interface RunState {
   lastBattleGridH?: number;
   lastBattleGridW?: number;
   lastBattleDeployZone?: DeployZone;
+  /**
+   * 上一场结束时是否在托管。同一章下一战 / 无尽下一波默认接着托管。
+   * 接手后清掉。教学局不写、也不读，避免跳过「点托管」那一步。
+   */
+  carryAutoPilot?: boolean;
   /** 地形券库存：terrainId → 剩余放置次数 */
   terrainCharges: Record<string, number>;
   terrainOverlay: TerrainOverlayCell[];
@@ -347,6 +352,17 @@ export function createRunState(dungeonId: string, partyRosterIds: string[]): Run
 export function requireRun(state: MvpGameState): RunState {
   if (!state.run) throw new Error('No active run');
   return state.run;
+}
+
+/** 同一章下一战是否默认托管。教学局永远手操开局。 */
+export function runWantsAutoPilot(run: RunState | null | undefined, tutorial = false): boolean {
+  return !tutorial && !!run?.carryAutoPilot;
+}
+
+/** 把当前托管开关记进本局。教学局不写。 */
+export function rememberBattlePilot(run: RunState, auto: boolean, tutorial = false): void {
+  if (tutorial) return;
+  run.carryAutoPilot = auto;
 }
 
 export function getCharacter(state: MvpGameState, rosterId: string): Character | undefined {

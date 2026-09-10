@@ -34,6 +34,17 @@ describe('itemText 共用说明', () => {
     expect(describeTempSkill('temp_gl_horn').split('。').length).toBeLessThan(4);
   });
 
+  it('选点爆炸在商店里也写明范围全体', () => {
+    const lines = describeTempSkillLines('frost_ring');
+    expect(lines.some((l) => l.includes('爆炸') && l.includes('全体'))).toBe(true);
+  });
+
+  it('外圈环技能不写成周围 N 格', () => {
+    const lines = describeTempSkillLines('temp_fo_thorn');
+    expect(lines.some((l) => /正好\s*2\s*格一圈/.test(l))).toBe(true);
+    expect(lines.some((l) => /周围\s*2\s*格/.test(l))).toBe(false);
+  });
+
   it('单行接口与分行内容一致', () => {
     expect(describeShopOffer({ type: 'potion', potionId: 'draught' })).toBe(describePotion('draught'));
     expect(describeShopOffer({ type: 'terrain', terrainId: 'wall' })).toBe(describeTerrainTicket('wall'));

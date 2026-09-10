@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { hitDirection, hitFlashLift, hitKnockDisplacement } from '@/view/battle/hitFeel';
+import {
+  aoeImpactFloatDelayMs,
+  HIT_STOP_MS,
+  hitDirection,
+  hitFlashLift,
+  hitKnockDisplacement,
+} from '@/view/battle/hitFeel';
 
 describe('hitFeel', () => {
   it('击退开头最猛、结束归零', () => {
@@ -13,6 +19,12 @@ describe('hitFeel', () => {
     expect(hitFlashLift(0.2)).toBe(hitFlashLift(0));
     expect(hitFlashLift(0.6)).toBeLessThan(hitFlashLift(0.2));
     expect(hitFlashLift(1)).toBeCloseTo(0, 5);
+  });
+
+  it('爆炸飘字要等环展开，不能和起手亮帧叠在一起', () => {
+    expect(aoeImpactFloatDelayMs(0)).toBe(HIT_STOP_MS);
+    expect(aoeImpactFloatDelayMs(643)).toBe(Math.round(643 * 0.42));
+    expect(aoeImpactFloatDelayMs(643)).toBeGreaterThan(HIT_STOP_MS);
   });
 
   it('击退方向从攻击者指向受击者', () => {

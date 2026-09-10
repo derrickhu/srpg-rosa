@@ -191,6 +191,10 @@ function foesWithinChebyshev(self: UnitState, units: UnitState[], radius: number
 }
 
 /** 含中心格的曼哈顿圆盘。选点爆炸打得到落点上站着的人，所以中心必须算进去 */
+export function groundBlastCells(center: Vec2, radius: number, terrain: TerrainGrid): Vec2[] {
+  return cellsDiscInclusive(center, radius, terrain);
+}
+
 function cellsDiscInclusive(center: Vec2, radius: number, terrain: TerrainGrid): Vec2[] {
   const { w, h } = gridSize(terrain);
   const out: Vec2[] = [];
@@ -1130,6 +1134,17 @@ export interface SkillAiming {
   aimCells: Vec2[];
   /** 无需点选时会打到谁，用来在按钮上预告「命中 2 个」 */
   autoTargets: string[];
+  /**
+   * 选点爆炸（`groundPickAoE`）的爆炸半径。有这个字段时，第一次点格只预览
+   * 以该格为心的释放范围，再点同一格才施放。
+   */
+  blastRadius?: number;
+}
+
+/** 选点爆炸：换格改预览，同一格点第二次才确认释放。 */
+export function groundAimTap(prev: Vec2 | null, tapped: Vec2): 'preview' | 'confirm' {
+  if (prev && prev.x === tapped.x && prev.y === tapped.y) return 'confirm';
+  return 'preview';
 }
 
 /**
@@ -1252,6 +1267,7 @@ export function skillAiming(
         candidates: [],
         aimCells: useful,
         autoTargets: [...hitUids],
+        blastRadius,
       };
     }
     case 'lineBestRayAllFoes': {

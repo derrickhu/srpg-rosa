@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { DUNGEON_DEFS } from '@/data/dungeonCatalog';
+import { DUNGEON_DEFS, stagesHavePlayableTerrain } from '@/data/dungeonCatalog';
 import { CHARACTER_DEFS } from '@/data/characterCatalog';
-import { allSkillSpecs, getSkillSpec } from '@/data/skillCatalog';
+import { allSkillSpecs, getSkillSpec, skillNeedsExistingMapTerrain } from '@/data/skillCatalog';
 import { STAGES_MVP } from '@/data/stagesMvp';
+import { ignitableTerrainIds } from '@/data/terrainSpec';
 
 /**
  * 临时技能不挑职业（`rosterEligibleForTempSkill` 不做职业校验），所以池里混进
@@ -74,6 +75,40 @@ describe('副本商店池', () => {
           spec.enemyOnly,
           `${d.id} 池里的 ${spec.name} 是敌方专属技能，不该卖给玩家`,
         ).toBeUndefined();
+      }
+    }
+  });
+
+  /**
+   * 火把跟滑动窗口走进要塞，就是 6 点贴身伤——那一章没有可烧的林子。
+   * 边角两棵树、先买森林券再烧，都不算「这一章的题目」。
+   */
+  it('改已有地形的招只在那种地形真能玩的章节出售', () => {
+    expect(ignitableTerrainIds().length, '没有可燃地形，这条断言就形同虚设').toBeGreaterThan(0);
+
+    const forest = DUNGEON_DEFS.find((d) => d.id === 'dungeon_forest');
+    const fortress = DUNGEON_DEFS.find((d) => d.id === 'dungeon_fortress');
+    expect(forest, '密林副本不存在').toBeDefined();
+    expect(fortress, '要塞副本不存在').toBeDefined();
+    const forestSkills = forest!.roguelikePool.filter((r) => r.category === 'tempSkill').map((r) => r.skillId);
+    const fortressSkills = fortress!.roguelikePool.filter((r) => r.category === 'tempSkill').map((r) => r.skillId);
+    expect(forestSkills, '密林是火把的主场').toContain('temp_fo_torch');
+    expect(fortressSkills, '要塞没有可燃林子，火把不该跟窗过来').not.toContain('temp_fo_torch');
+    expect(fortressSkills, '绞缠不绑地形，滑动窗口该留下').toContain('temp_fo_thorn');
+
+    for (const d of DUNGEON_DEFS) {
+      const stageIndices = d.nodes
+        .filter((n) => n.stageIndex !== undefined)
+        .map((n) => n.stageIndex!);
+      for (const row of d.roguelikePool) {
+        if (row.category !== 'tempSkill') continue;
+        const spec = getSkillSpec(row.skillId)!;
+        const needs = skillNeedsExistingMapTerrain(spec);
+        if (needs.length === 0) continue;
+        expect(
+          needs.some((t) => stagesHavePlayableTerrain(stageIndices, t)),
+          `${d.name} 在卖 ${spec.name}，但这一章没有够用的 ${needs.join('/')}`,
+        ).toBe(true);
       }
     }
   });

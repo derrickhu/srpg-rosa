@@ -59,6 +59,7 @@
 | `shop_bg` | 补给点复用俯视 `battle_bg` | 平视草地空地 832×1248，允许地平线/天空，给正视商人搭机位 |
 | `battle_bg_v9` | `battle_bg_v5` / `v6` | 第一章母版：正俯视、去掉天空、草地转暖黄绿避开弓手 |
 | `battle_bg_forest` / `_swamp` | 斜俯视土黄路 / 脏橄榄泥 | 按圣经 §5.1：同一套平涂，边角换道具，地板可换干净章色 |
+| `battle_bg_altar_v2` | `battle_bg_altar` 米色六边形地 | 陶土中明度 + 石环/石阶，和龙岭浅岩圆石堆分开；骨白怪才读得出 |
 | `terrain_v4_3x2` | `terrain_v3_3x2`（已删） | 去掉黑描边，键色改品红，明度序写进 prompt |
 | `ui_icons_v2` | `toolbar_icons_2x2` | 九个图标一次出齐，三种药剂共用瓶型 |
 | `ui_icons_v3_nav` | 底栏与节点条的 emoji | 五个 tab + 魂晶 + 锁 + 补给 + BOSS，要求同时压得住深底与金底 |

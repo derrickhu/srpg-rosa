@@ -1,0 +1,68 @@
+# 第六章杂兵 v2 —— 四只祭仪构装一张 2x2（generate2dsprite --mode grid --rows 2 --cols 2）
+#
+# 保留现役可爱剪影：骨俑水滴 / 血鸦猫头鹰 / 祭牲犄兽蜥蜴 / 石坛守石穹。
+# 上一版几乎铺满 256 格，血鸦和犄兽左右只剩 11px，翼尖/身侧被切，再叠米色地板就像没翅膀。
+# 这一张强制每只只占格子中央 60–68%，四周品红边，翼和角全部画完。
+#
+# 处理命令：
+#   python3 scripts/respace-sheet.py --input art/sprite-runs/mobs-ch6/raw-2x2.png \
+#     --output art/sprite-runs/mobs-ch6/raw-2x2-spaced.png --rows 2 --cols 2 --margin 0.10
+#   python3 ~/.cursor/skills/generate2dsprite/scripts/generate2dsprite.py process \
+#     --input art/sprite-runs/mobs-ch6/raw-2x2-spaced.png --target creature --mode grid \
+#     --rows 2 --cols 2 --label-prefix mob --cell-size 256 \
+#     --output-dir art/sprite-runs/mobs-ch6/idle \
+#     --align feet --shared-scale --component-mode largest --strict-qc \
+#     --write-scale-profile art/sprite-runs/mobs-ch6/scale-profile.json
+#   python3 scripts/despill-magenta.py art/sprite-runs/mobs-ch6/idle
+#   node scripts/sprite2anim.mjs --only bonepup --only gorecrow --only ritehorn --only slabward
+#
+# mob-1 骨俑(sword) / mob-2 血鸦(bow) / mob-3 祭牲犄兽(cavalry) / mob-4 石坛守(shield)
+
+A 2-column x 2-row grid of 4 CARTOON MONSTER CHARACTERS for a tactics game, drawn as game sprites.
+Keep the same cute identities as the reference portraits, but EVERY creature must sit in the
+CENTER 60–68% of its cell with a thick MAGENTA margin. Nothing may touch a cell edge.
+
+CRITICAL BACKGROUND: the entire background, including all space between and around the four
+creatures, must be 100% solid flat MAGENTA, hex #FF00FF. It is a chroma key and will be deleted.
+No white, no grey, no gradient, no ground shadow, no drop shadow.
+
+CAMERA: a 3/4 top-down view. Every creature faces the viewer. Same eye level, same angle.
+
+CRITICAL SIZE CONSTRAINT: displayed at only about 40 pixels tall. ONE bold chunky readable
+silhouette each. NO fine detail. Low-tier trash mobs, simpler than a hero.
+
+CRITICAL CONTAINMENT: each creature INCLUDING wings, horns, tails, and feet must stay inside
+the central 60–68% of its own cell. Leave a wide magenta gutter. Do NOT spread wings to the
+cell walls. If a wing or horn would reach the edge, fold it shorter and finish the tip.
+
+STYLE: chunky rounded toy-like cartoon. THICK near-black outline (#1A1410) all the way around
+every silhouette, including wing tips. FLAT saturated fills, at most 3 colours plus outline
+plus one highlight and one shadow. No gradients, no gore, no purple, no pink, no pixel art.
+Big simple eyes.
+
+Per-cell contents (match the attached reference portraits, but SMALLER in the cell):
+
+TOP-LEFT — BONE PUPPET (sword). A fat rounded teardrop of pale BONE-IVORY (#E8E0D4) sitting
+on the ground with no legs. A few dry dark-red spots (#7A2020). Two big round black eyes.
+Keep the cute blob. Do not fill the cell.
+
+TOP-RIGHT — GORE CROW (bow). The same cute white owl as the reference: round head, black
+beak, two stubby feet. Wings are SHORT rounded fans, clearly finished teardrop tips, NOT
+cut off, NOT touching the magenta. Wings wider than the body but still well inside the cell.
+Add a tiny dry-red (#7A2020) beak or chest mark so it is not pure white. Thick outline on
+every wing tip.
+
+BOTTOM-LEFT — RITE HORN BEAST (cavalry). The same cute white four-legged lizard as the
+reference, two short forward horns. Keep it low and wide, but shrink it so horns, nose, and
+tail all have magenta margin. Horns are dry-red or near-black, fully drawn, not clipped.
+
+BOTTOM-RIGHT — SLAB WARDEN (shield). The same heavy limestone dome walker as the reference.
+Cold limestone (#8A8578 / #C4C0B8). NO blood red. Four stubby feet fully visible. Dome does
+not touch the cell edges.
+
+LAYOUT RULES:
+1. EXACTLY 4 creatures in a clean 2x2.
+2. NO borders, NO frames, NO platforms.
+3. Each fills about 60–68% of its cell with magenta margin. Nothing crosses cells.
+4. Same outline thickness, same simplification, same camera.
+5. NO text, no labels, no watermark.

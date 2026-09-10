@@ -8,6 +8,7 @@ import {
   RUN_HUD_TOP_GAP,
   runCenterBannerMaxWidth,
   runCenterBannerY,
+  deployBoardTopY,
   runGoldYAlign,
   runHudRowY,
 } from '@/view/renderHelpers';
@@ -26,6 +27,11 @@ describe('局内顶栏：设置和金币同一行', () => {
 
   it('金币相对齿轮垂直居中', () => {
     expect(runGoldYAlign(54, 36, 30)).toBe(57);
+  });
+
+  it('布阵棋盘顶让过齿轮，避免点设置弹出地形', () => {
+    expect(deployBoardTopY(0)).toBeGreaterThan(RUN_GEAR_SIZE);
+    expect(deployBoardTopY()).toBeGreaterThan(runHudRowY() + RUN_GEAR_SIZE);
   });
 
   it('居中关卡名贴胶囊下沿，不钻进灵动岛', () => {

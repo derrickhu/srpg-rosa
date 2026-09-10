@@ -68,6 +68,15 @@ export interface ManualUiState {
   /** 需要点选的范围格（直线方向 / AoE 确认）；与候选单位互斥 */
   skillAimCells: Vec2[];
   /**
+   * 选点爆炸：第一次点落后，以该格为心的释放范围。
+   * 颜色必须和 `skillRangeCells` / `skillAimCells` 分开，否则看不出「选了哪、会打到哪」。
+   */
+  skillBlastCells?: Vec2[];
+  /**
+   * 选点爆炸的落点。`undefined` = 不是这类技能；`null` = 还没点；有值 = 正在预览。
+   */
+  skillFocusCell?: Vec2 | null;
+  /**
    * 能威胁到 `activeCell` 的敌人脚下格；画贴地虚线敌人 → 行动者。
    * 由回放层决定时机：仅「已移动、尚未出手」时非空。
    */
@@ -131,6 +140,8 @@ const DANGER_MOVE_COLOR = 0xe8564a;
 const ATTACK_COLOR = 0xe8564a;
 /** 技能范围 / 可选目标 */
 const SKILL_COLOR = 0xe8c866;
+/** 选点爆炸的释放预览：和可选落点的金格错开色相 */
+const BLAST_COLOR = 0x4ad4ff;
 /** 威胁贴地虚线：描边跟角色一样偏厚，暖珊瑚配草地 */
 const THREAT_OUTLINE = 0x3a1810;
 const THREAT_CORE = 0xff6a4a;
@@ -258,6 +269,69 @@ function cellRect(geo: BoardGeometry, p: Vec2): { x: number; y: number; s: numbe
   };
 }
 
+/**
+ * 当前行动者：只描格子边缘，并往外放光。
+ * 不能填格子内部——人和血条都在框里，铺一层就把它们盖住了。
+ */
+function paintActiveActorFrame(
+  g: PIXI.Graphics,
+  r: { x: number; y: number; s: number },
+  cell: number,
+  k: number,
+): void {
+  const pulse = 0.72 + 0.28 * k;
+  // 框略扩出格子缝，描边中心在缝上，少往角色身上吃
+  const bx = r.x - 1;
+  const by = r.y - 1;
+  const bs = r.s + 2;
+  const rad = 6;
+
+  // 外圈一圈圈淡出去，读成边缘在发光，不是罩一层雾
+  for (let i = 5; i >= 0; i--) {
+    const pad = 3 + i * 2.4;
+    const a = (0.08 + (5 - i) * 0.055) * pulse;
+    g.lineStyle(3.4, i < 2 ? 0xffffff : 0xffe08a, a);
+    g.drawRoundedRect(bx - pad, by - pad, bs + pad * 2, bs + pad * 2, rad + i);
+  }
+
+  g.lineStyle(3.2, 0xfff6d8, 0.55 + 0.25 * k);
+  g.drawRoundedRect(bx, by, bs, bs, rad);
+  g.lineStyle(1.8, 0xffffff, 0.88 + 0.12 * k);
+  g.drawRoundedRect(bx, by, bs, bs, rad);
+
+  const ray = Math.max(7, Math.round(cell * 0.2));
+  const tail = ray + Math.max(4, Math.round(cell * 0.1));
+  const corners: { x: number; y: number; dx: number; dy: number }[] = [
+    { x: bx, y: by, dx: -1, dy: -1 },
+    { x: bx + bs, y: by, dx: 1, dy: -1 },
+    { x: bx, y: by + bs, dx: -1, dy: 1 },
+    { x: bx + bs, y: by + bs, dx: 1, dy: 1 },
+  ];
+  for (const c of corners) {
+    g.lineStyle(2.2, 0xffffff, 0.7 + 0.25 * k);
+    g.moveTo(c.x + c.dx * 1.5, c.y + c.dy * 1.5);
+    g.lineTo(c.x + c.dx * ray, c.y + c.dy * ray);
+    g.lineStyle(1.2, 0xfff2b0, 0.28 + 0.18 * k);
+    g.moveTo(c.x + c.dx * ray, c.y + c.dy * ray);
+    g.lineTo(c.x + c.dx * tail, c.y + c.dy * tail);
+  }
+
+  const mid = Math.max(5, Math.round(cell * 0.14));
+  const cx = bx + bs / 2;
+  const cy = by + bs / 2;
+  const edges: { x: number; y: number; dx: number; dy: number }[] = [
+    { x: cx, y: by, dx: 0, dy: -1 },
+    { x: cx, y: by + bs, dx: 0, dy: 1 },
+    { x: bx, y: cy, dx: -1, dy: 0 },
+    { x: bx + bs, y: cy, dx: 1, dy: 0 },
+  ];
+  for (const e of edges) {
+    g.lineStyle(1.8, 0xffffff, 0.45 + 0.2 * k);
+    g.moveTo(e.x + e.dx * 2, e.y + e.dy * 2);
+    g.lineTo(e.x + e.dx * mid, e.y + e.dy * mid);
+  }
+}
+
 export interface ManualTurnUi {
   update(s: ManualUiState): void;
   next(): Promise<ManualInput>;
@@ -290,9 +364,13 @@ export function createManualTurnUi(opts: ManualTurnUiOptions): ManualTurnUi {
   threatParent.addChild(threatArrows);
   /** 当前要画的威胁连线；pulse 里按时间重绘做呼吸/流动 */
   let threatLinks: { from: Vec2; to: Vec2; bow: number }[] = [];
-  /** 行动者脚下的环，单独一层因为它要每帧呼吸 */
+  /**
+   * 行动者选中框。挂在棋子之上（threatParent / fxLayer）：框画在格子层会被角色挡住，
+   * 陶土地上细白边几乎看不见。只描边缘、往外放光，不要填格子把人和血条盖住。
+   */
   const activeRing = new PIXI.Graphics();
-  highlightLayer.addChild(activeRing);
+  activeRing.eventMode = 'none';
+  threatParent.addChild(activeRing);
 
   const bar = new PIXI.Container();
   hudLayer.addChild(bar);
@@ -471,8 +549,7 @@ export function createManualTurnUi(opts: ManualTurnUiOptions): ManualTurnUi {
     activeRing.clear();
     if (!active) return;
     const r = cellRect(geo, active);
-    activeRing.lineStyle(3, 0xffffff, 0.35 + 0.45 * k);
-    activeRing.drawRoundedRect(r.x + 1, r.y + 1, r.s - 2, r.s - 2, 4);
+    paintActiveActorFrame(activeRing, r, geo.cell, k);
   };
   opts.app.ticker.add(pulse);
 
@@ -647,6 +724,9 @@ export function createManualTurnUi(opts: ManualTurnUiOptions): ManualTurnUi {
   function hintText(s: ManualUiState): string {
     if (s.phase === 'aim') {
       if (s.skillCandidateCells.length > 0) return '点高亮目标释放';
+      if (s.skillFocusCell !== undefined) {
+        return s.skillFocusCell ? '再点一次确认释放' : '先点落点看范围，再点一次释放';
+      }
       if (s.skillAimCells.length > 0) return '点高亮格子确认释放';
       return '点任意处确认释放';
     }
@@ -846,6 +926,9 @@ export function createManualTurnUi(opts: ManualTurnUiOptions): ManualTurnUi {
         // 可点的范围格比底亮一档；单体目标格同亮度
         drawCells(s.skillAimCells, SKILL_COLOR, 0.4);
         drawCells(s.skillCandidateCells, SKILL_COLOR, 0.45);
+        // 释放预览盖在可选落点上，用另一色，避免和「能点哪」糊成一块
+        if (s.skillBlastCells?.length) drawCells(s.skillBlastCells, BLAST_COLOR, 0.4);
+        if (s.skillFocusCell) drawCells([s.skillFocusCell], BLAST_COLOR, 0.58);
       } else if (s.phase === 'attackAim') {
         drawCells(s.attackCells, ATTACK_COLOR, 0.45);
       } else if (s.pending.canMove) {

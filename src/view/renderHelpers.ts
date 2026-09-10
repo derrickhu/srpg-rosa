@@ -262,6 +262,14 @@ export function runHudRowY(safeTopY?: number): number {
   return top + RUN_HUD_TOP_GAP;
 }
 
+/**
+ * 布阵棋盘顶。必须让过齿轮和关卡名/节点条。
+ * 写死 46 会在刘海上把平原格铺到设置钮底下——平原不画贴图，看起来像点了背景，弹出的却是地形。
+ */
+export function deployBoardTopY(safeTopY?: number): number {
+  return runHudRowY(safeTopY) + RUN_GEAR_SIZE + 56;
+}
+
 /** 金币和齿轮垂直居中。 */
 export function runGoldYAlign(rowY: number, rowH: number, goldH: number): number {
   return rowY + Math.round((rowH - goldH) / 2);
@@ -383,6 +391,7 @@ const BG_FALLBACK: Record<string, number> = {
   battle_bg_fortress: 0xf0b478,
   battle_bg_swamp: C.bg,
   battle_bg_dragon: 0xe8c8b0,
+  battle_bg_altar: 0xc88858,
   shop_bg: C.bg,
   recruit_bg: 0x5eb4e8,
   roster_bg: 0xfcac95,

@@ -1,0 +1,24 @@
+第 6 章「血牙祭坛」章节卡插图 v2
+产出 → images/bg/chapter_altar.png（654x272）
+生成器：Cursor 内置 GenerateImage，aspect_ratio 16:9
+后处理：宽幅中间带裁成 654×272
+
+和旧版差别：旧版是浅骨白石台 + 干血圆坑，像第五章 paler 换色。
+这一张要读成「圣地圣泉」：暖陶土石阶、象牙色石圈、清亮宝石红圣水，不是沼泽换色。
+
+---
+
+A wide banner illustration for a chapter select card in a cartoon fantasy tactics mobile game. The chapter is called "Bloodfang Altar" — a stone sanctuary after the dragon peak. Sacred life-font, not a gore swamp.
+
+COMPOSITION — very wide letterbox, cropped top and bottom. EVERY important element sits in the CENTRAL HORIZONTAL BAND. Top strip: warm rust-terracotta dusk sky #8A4030. Bottom strip: empty clay stone. Nothing important near the top or bottom edge.
+
+SCENE, left to right across the central band:
+- LEFT: broken warm clay-stone steps #C88858 / #D4A078, chunky cartoon slabs, not pale cream.
+- MIDDLE: a sacred circular FONT — ivory / warm limestone rim #E8D8C0, filled with clean jewel-ruby water #C43C4A with one small flat highlight. Looks holy and inviting (heals), not muddy or swampy. No lily pad, no bubbles like a bog, no dripping gore.
+- RIGHT: a chunky rectangular stone altar block in warm grey-ivory, simple, one tiny ruby inlay, no skull pile, no runes, no glowing magic.
+
+COLOUR: terracotta stone, ivory rim, clean ruby water, rust dusk. NO purple, NO pink, NO neon, NO lava, NO pale cream plaza.
+
+ART STYLE: hand-drawn cartoon, flat saturated fills, simple cel shading. Soft rounded outlines in a darker shade of each colour — no heavy black outlines. No texture noise, no photographic detail.
+
+Displayed about 330 pixels wide. BIG simple shapes. No soldiers, no text, no UI, no frame, no watermark.

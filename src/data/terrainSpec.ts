@@ -261,7 +261,7 @@ const SPECS: Record<TerrainId, TerrainSpec> = {
     defMul: 1,
     dotPerRound: 0,
     healPerRound: 6,
-    color: 0x7a2020,
+    color: 0xc43c4a,
   },
 };
 
@@ -271,6 +271,11 @@ export function getTerrainSpec(id: TerrainId): TerrainSpec {
 
 /** 全部已登记的地形 id */
 export const TERRAIN_IDS = Object.keys(SPECS) as TerrainId[];
+
+/** 写了 `ignitesTo` 的地形。火把这类招的价值绑在这些格子上。 */
+export function ignitableTerrainIds(): TerrainId[] {
+  return TERRAIN_IDS.filter((id) => Boolean(SPECS[id].ignitesTo));
+}
 
 /**
  * 关卡数据校验用：`getTerrainSpec` 对未知 id 会兜底成平原，

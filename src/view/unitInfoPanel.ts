@@ -1,7 +1,8 @@
 import * as PIXI from 'pixi.js';
 import { makeText, textStyle } from '@/theme/typography';
 import type { SkillSpec } from '@/data/skillCatalog';
-import { describeReach, describeSkillSpec } from '@/data/skillText';
+import { buildSkillRangePreview } from '@/data/skillRangePreview';
+import { describeSkillRangeCaption, describeSkillSpec } from '@/data/skillText';
 import { formatModStars, getSkillMod, isExclusiveMod, type SkillModRarity } from '@/data/skillModCatalog';
 import { createUiIcon } from '@/view/renderHelpers';
 import { isDisplayLive } from '@/view/pixiLive';
@@ -140,8 +141,6 @@ function buildRunModList(
   return box.children.length > 1 ? box : (box.destroy({ children: true }), null);
 }
 
-type CellKind = 'empty' | 'center' | 'hit' | 'ray';
-
 /** 技能范围示意格 + 右侧的本局纹章 + 下方的范围说明与图例 */
 function buildRangeRow(
   spec: SkillSpec,
@@ -154,123 +153,11 @@ function buildRangeRow(
   const gap = 1;
   const st2 = cs + gap;
 
-  let gridR = 2;
-  let rangeDesc = '';
   const isLine = shape.type === 'lineBestRayAllFoes';
-  /**
-   * 射线的实际射程；`undefined` = 不限。
-   *
-   * 画到几格必须跟着它走，而不是恒定画三格再补四个箭头：箭头的意思是「还会继续延伸」，
-   * 而穿透箭现在是 5 格就到头了。老画法会让玩家以为整行整列都在范围里，
-   * 于是站到 5 格外按下技能——按不出来，还找不到原因。
-   */
-  const rayRange = shape.type === 'lineBestRayAllFoes' ? shape.range : undefined;
-  const rayUnbounded = isLine && rayRange === undefined;
-  if (shape.type === 'neighborAoE') {
-    gridR = shape.manhattan + 1;
-    rangeDesc = `周围${shape.manhattan}格范围\n命中所有敌人`;
-  } else if (shape.type === 'discAoE') {
-    // 「横扫」「势不可挡」把环摊成整片圆，格子图必须跟着变——
-    // 词条改了形状却画老图的话，玩家会照着错的范围走位。
-    gridR = shape.radius + 1;
-    rangeDesc = `周围${shape.radius}格全覆盖\n命中所有敌人`;
-  } else if (shape.type === 'squareAoE') {
-    gridR = shape.radius + 1;
-    rangeDesc = shape.radius === 1
-      ? '贴身一圈八格\n含斜角，命中所有敌人'
-      : `周围${shape.radius}格方形\n含斜角，命中所有敌人`;
-  } else if (shape.type === 'neighborPickFoe') {
-    gridR = shape.manhattan + 1;
-    rangeDesc = shape.axisOnly
-      ? `同行或同列 ${describeReach(shape.manhattan, shape.reach)}\n点选一个敌人`
-      : `${describeReach(shape.manhattan, shape.reach)}\n点选一个敌人`;
-  } else if (shape.type === 'neighborPickAlly') {
-    gridR = shape.manhattan + 1;
-    rangeDesc = `${describeReach(shape.manhattan, shape.reach)}\n点选一个友方`;
-  } else if (shape.type === 'selfCast') {
-    gridR = 1;
-    rangeDesc = '对自己释放\n无需选择目标';
-  } else if (isLine) {
-    // 不限射程时画 3 格再补箭头示意「一直延伸」；有上限就照着上限画满
-    gridR = rayRange ?? 3;
-    rangeDesc = rayUnbounded
-      ? '上下左右四方向\n射线穿透，不限射程'
-      : `上下左右四方向 ${rayRange} 格\n射线穿透所有敌人`;
-  } else if (shape.type === 'groundPickAoE') {
-    gridR = shape.castRange;
-    rangeDesc = `${shape.castRange}格内选一点\n对该点周围${shape.blastRadius}格敌人`;
-  }
+  const rayUnbounded = isLine && shape.range === undefined;
+  const rangeDesc = describeSkillRangeCaption(spec);
+  const { gridR, cells } = buildSkillRangePreview(shape);
   const gridD = gridR * 2 + 1;
-
-  const cells: CellKind[][] = [];
-  for (let gy = 0; gy < gridD; gy++) {
-    cells.push([]);
-    for (let gx = 0; gx < gridD; gx++) cells[gy]!.push('empty');
-  }
-  cells[gridR]![gridR] = 'center';
-
-  if (shape.type === 'squareAoE') {
-    // 方形不吃下面那套曼哈顿量法：切比雪夫 <= r 就是把方框内全填上
-    for (let dy = -shape.radius; dy <= shape.radius; dy++) {
-      for (let dx = -shape.radius; dx <= shape.radius; dx++) {
-        if (dx === 0 && dy === 0) continue;
-        cells[gridR + dy]![gridR + dx] = 'hit';
-      }
-    }
-  } else if (shape.type === 'neighborAoE'
-      || shape.type === 'neighborPickFoe' || shape.type === 'neighborPickAlly'
-      || shape.type === 'discAoE') {
-    const md = shape.type === 'discAoE' ? shape.radius : shape.manhattan;
-    /*
-     * 整片（曼哈顿 <= md）还是一圈环（正好 = md）。
-     *
-     * 这里原先无条件按整片画，而除 `discAoE` 和 `reach: 'within'` 以外的形状都是环：
-     * 「咒印」这类正好 2 格的环，图若多画 4 个贴脸格，玩家照图走到敌人旁边，
-     * 技能却点不出来。md 为 1 时环和整片恰好一样，所以这个错一直被邻格技能盖着，
-     * 只有 2 格以上的 exact 技能会露出来。
-     */
-    const solid = shape.type === 'discAoE'
-      || (shape.type === 'neighborPickFoe' && shape.reach === 'within');
-    // 轴向约束的技能（长驱突刺、震击）只打得到同行同列，斜角一律不画
-    const axisOnly = shape.type === 'neighborPickFoe' && shape.axisOnly === true;
-    for (let dy = -md; dy <= md; dy++) {
-      for (let dx = -md; dx <= md; dx++) {
-        if (dx === 0 && dy === 0) continue;
-        if (axisOnly && dx !== 0 && dy !== 0) continue;
-        const d = Math.abs(dx) + Math.abs(dy);
-        if (solid ? d <= md : d === md) cells[gridR + dy]![gridR + dx] = 'hit';
-      }
-    }
-  } else if (isLine) {
-    for (const [ddx, ddy] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) {
-      for (let s = 1; s <= gridR; s++) {
-        const gx = gridR + ddx! * s;
-        const gy = gridR + ddy! * s;
-        if (gx >= 0 && gx < gridD && gy >= 0 && gy < gridD) cells[gy]![gx] = 'ray';
-      }
-    }
-  } else if (shape.type === 'groundPickAoE') {
-    // 蓝点是自己；橙色是能点的落点；红色是「假如点在正上方那一格」的爆炸范围。
-    // 不画爆炸的话玩家会以为整片射程都是伤害区。
-    const sampleDy = -Math.min(2, shape.castRange);
-    for (let dy = -shape.castRange; dy <= shape.castRange; dy++) {
-      for (let dx = -shape.castRange; dx <= shape.castRange; dx++) {
-        if (dx === 0 && dy === 0) continue;
-        if (Math.abs(dx) + Math.abs(dy) > shape.castRange) continue;
-        const gx = gridR + dx;
-        const gy = gridR + dy;
-        if (gx >= 0 && gx < gridD && gy >= 0 && gy < gridD) cells[gy]![gx] = 'ray';
-      }
-    }
-    for (let dy = -shape.blastRadius; dy <= shape.blastRadius; dy++) {
-      for (let dx = -shape.blastRadius; dx <= shape.blastRadius; dx++) {
-        if (Math.abs(dx) + Math.abs(dy) > shape.blastRadius) continue;
-        const gx = gridR + dx;
-        const gy = gridR + sampleDy + dy;
-        if (gx >= 0 && gx < gridD && gy >= 0 && gy < gridD) cells[gy]![gx] = 'hit';
-      }
-    }
-  }
 
   const gridTotalW = gridD * st2 - gap;
   const row = new PIXI.Container();
@@ -287,6 +174,16 @@ function buildRangeRow(
         cell.beginFill(0x4488cc, 0.85);
         cell.drawRoundedRect(px, py, cs, cs, 2);
         cell.endFill();
+      } else if (kind === 'pick') {
+        // 淡、不呼吸：这是「能点哪」，不能和爆炸抢同一套视觉
+        cell.beginFill(0xe8d4a0, 0.32);
+        cell.drawRoundedRect(px, py, cs, cs, 2);
+        cell.endFill();
+      } else if (kind === 'focus') {
+        cell.beginFill(0xe8c866, 0.95);
+        cell.drawRoundedRect(px, py, cs, cs, 2);
+        cell.endFill();
+        hitCells.push(cell);
       } else if (kind === 'hit' || kind === 'ray') {
         cell.beginFill(kind === 'ray' ? 0xdd6633 : 0xcc3333, 0.7);
         cell.drawRoundedRect(px, py, cs, cs, 2);
@@ -337,10 +234,16 @@ function buildRangeRow(
   // 反过来把词条压到下面是不行的：右列只剩说明文字下面那几像素，
   // 一条「技能伤害提升 50%」就要折三行。
   const descBelow = modsBlock !== null;
-  const rangeDescTx = makeText(descBelow ? rangeDesc.replace(/\n/g, ' · ') : rangeDesc, 'caption', {
-    fill: 0x6a6a5a, fontSize: 10, lineHeight: 15,
-    wordWrap: true, wordWrapWidth: descBelow ? panelW - 32 : colW,
-  });
+  const pickBlast = shape.type === 'groundPickAoE';
+  // 选点爆炸的两行不能并成一句：并完「爆炸」会埋在后半截里。
+  const rangeDescTx = makeText(
+    descBelow && !pickBlast ? rangeDesc.replace(/\n/g, ' · ') : rangeDesc,
+    'caption',
+    {
+      fill: 0x6a6a5a, fontSize: 10, lineHeight: 15,
+      wordWrap: true, wordWrapWidth: descBelow ? panelW - 32 : colW,
+    },
+  );
   if (descBelow) {
     rangeDescTx.x = 16;
     // 让到词条那一列的下面，而不是只让过格子图：词条攒多了会比格子高，
@@ -357,37 +260,53 @@ function buildRangeRow(
     row.addChild(modsBlock);
   }
 
-  // 图例。跟着说明走：在右列时排在它下面，在下方时右对齐到同一行
-  const legendY = descBelow
-    ? rangeDescTx.y + Math.max(0, rangeDescTx.height - 12)
-    : rangeDescTx.y + rangeDescTx.height + 6;
-  const legendX = descBelow
-    ? Math.max(rangeDescTx.x + rangeDescTx.width + 12, panelW - 12 - 78)
-    : colX;
+  // 图例。跟着说明走：在右列时排在它下面，在下方时右对齐到同一行。
+  // 选点爆炸多一个「爆炸」色，同一行挤不下就另起一行。
+  const legendBelow = descBelow && pickBlast;
+  const legendY = legendBelow
+    ? rangeDescTx.y + rangeDescTx.height + 4
+    : descBelow
+      ? rangeDescTx.y + Math.max(0, rangeDescTx.height - 12)
+      : rangeDescTx.y + rangeDescTx.height + 6;
+  const legendX = legendBelow
+    ? 16
+    : descBelow
+      ? Math.max(rangeDescTx.x + rangeDescTx.width + 12, panelW - 12 - 78)
+      : colX;
 
-  const legCenterDot = new PIXI.Graphics();
-  legCenterDot.beginFill(0x4488cc, 0.85);
-  legCenterDot.drawRoundedRect(0, 0, 8, 8, 2);
-  legCenterDot.endFill();
-  legCenterDot.x = legendX;
-  legCenterDot.y = legendY;
-  row.addChild(legCenterDot);
-  const legCenterTx = makeText('自身', 'micro', { fill: 0x888877 });
-  legCenterTx.x = legendX + 12;
-  legCenterTx.y = legendY - 1;
-  row.addChild(legCenterTx);
-
-  const legHitDot = new PIXI.Graphics();
-  legHitDot.beginFill(isLine ? 0xdd6633 : 0xcc3333, 0.7);
-  legHitDot.drawRoundedRect(0, 0, 8, 8, 2);
-  legHitDot.endFill();
-  legHitDot.x = legCenterTx.x + legCenterTx.width + 10;
-  legHitDot.y = legendY;
-  row.addChild(legHitDot);
-  const legHitTx = makeText('范围', 'micro', { fill: 0x888877 });
-  legHitTx.x = legHitDot.x + 12;
-  legHitTx.y = legendY - 1;
-  row.addChild(legHitTx);
+  const legendItems = shape.type === 'groundPickAoE'
+    ? [
+      { color: 0x4488cc, alpha: 0.85, label: '自身' },
+      { color: 0xe8c866, alpha: 0.95, label: '落点' },
+      { color: 0xcc3333, alpha: 0.7, label: '爆炸' },
+    ]
+    : shape.type === 'selfCast'
+      ? [{ color: 0x4488cc, alpha: 0.85, label: '自身' }]
+      : [
+        { color: 0x4488cc, alpha: 0.85, label: '自身' },
+        {
+          color: isLine ? 0xdd6633 : 0xcc3333,
+          alpha: 0.7,
+          label: shape.type === 'neighborPickFoe' || shape.type === 'neighborPickAlly'
+            ? '目标'
+            : '范围',
+        },
+      ];
+  let legX = legendX;
+  for (const item of legendItems) {
+    const dot = new PIXI.Graphics();
+    dot.beginFill(item.color, item.alpha);
+    dot.drawRoundedRect(0, 0, 8, 8, 2);
+    dot.endFill();
+    dot.x = legX;
+    dot.y = legendY;
+    row.addChild(dot);
+    const tx = makeText(item.label, 'micro', { fill: 0x888877 });
+    tx.x = legX + 12;
+    tx.y = legendY - 1;
+    row.addChild(tx);
+    legX = tx.x + tx.width + 10;
+  }
 
   onTick(hitCells);
 
