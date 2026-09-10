@@ -19,6 +19,7 @@ export const TERRAIN_BUNDLE: AssetBundleDef = {
     forest: 'images/terrain/forest.png',
     river: 'images/terrain/river.png',
     swamp: 'images/terrain/swamp.png',
+    blood: 'images/terrain/blood.png',
     wall: 'images/terrain/wall.png',
     abyss: 'images/terrain/abyss.png',
     burning: 'images/terrain/burning.png',
@@ -66,17 +67,24 @@ export const UNIT_BUNDLE: AssetBundleDef = {
     emberbat: 'images/units/emberbat.png',
     scalewyrm: 'images/units/scalewyrm.png',
     ashshell: 'images/units/ashshell.png',
-    // 第二至五章精英（第一章精英沿用 bloodfang）。四五章精英关卡还没铺，图先留着。
+    // 第六章 · 血牙祭坛
+    bonepup: 'images/units/bonepup.png',
+    gorecrow: 'images/units/gorecrow.png',
+    ritehorn: 'images/units/ritehorn.png',
+    slabward: 'images/units/slabward.png',
+    // 第二至六章精英（第一章精英沿用 bloodfang）。
     torun: 'images/units/torun.png',
     castellan: 'images/units/castellan.png',
     mirespeaker: 'images/units/mirespeaker.png',
     drakekin: 'images/units/drakekin.png',
+    altarwarden: 'images/units/altarwarden.png',
     // Boss
     bloodfang: 'images/units/bloodfang.png',
     bloodshaman: 'images/units/bloodshaman.png',
     bloodcastellan: 'images/units/bloodcastellan.png',
     mirequeen: 'images/units/mirequeen.png',
     drakelord: 'images/units/drakelord.png',
+    ritespeaker: 'images/units/ritespeaker.png',
   },
 };
 
@@ -205,12 +213,16 @@ export const UI_BUNDLE: AssetBundleDef = {
     skill_temp_ft_suppress: 'images/ui/skill_temp_ft_suppress.png',
     skill_temp_ft_banner: 'images/ui/skill_temp_ft_banner.png',
     skill_temp_ft_grapple: 'images/ui/skill_temp_ft_grapple.png',
+    skill_temp_rt_channel: 'images/ui/skill_temp_rt_channel.png',
+    skill_temp_rt_siphon: 'images/ui/skill_temp_rt_siphon.png',
+    skill_temp_rt_oath: 'images/ui/skill_temp_rt_oath.png',
     // 敌方技能皮肤图标（键名见 enemySkillCatalog.iconKey，不进玩家商店池）
     skill_bloodfang_roar: 'images/ui/skill_bloodfang_roar.png',
     skill_bloodfang_wildfire: 'images/ui/skill_bloodfang_wildfire.png',
     skill_bloodfang_breach: 'images/ui/skill_bloodfang_breach.png',
     skill_mirequeen_miasma: 'images/ui/skill_mirequeen_miasma.png',
     skill_drake_cataclysm: 'images/ui/skill_drake_cataclysm.png',
+    skill_ritespeaker_drain: 'images/ui/skill_ritespeaker_drain.png',
     // 杂兵技能图标。这一批**没有皮肤**，直接按底层 SkillSpec id 挂在怪种上
     // （`stagesMvp` 的 `MookTemplate.skillId`），所以键名是 `skill_<specId>`
     // 而不是 `skill_<skinId>`。少登记一个的表现是面板上一个灰圆，不报错。
@@ -222,6 +234,8 @@ export const UI_BUNDLE: AssetBundleDef = {
     skill_cinder_breath: 'images/ui/skill_cinder_breath.png',
     skill_wyrm_dash: 'images/ui/skill_wyrm_dash.png',
     skill_ash_harden: 'images/ui/skill_ash_harden.png',
+    skill_rite_peck: 'images/ui/skill_rite_peck.png',
+    skill_rite_chant: 'images/ui/skill_rite_chant.png',
     // 战斗操作条的动作图标。压在深色圆按钮上，所以这批是**浅色填充**，
     // 和压在米白卡上的那两批（mod_* / skill_*）配色相反，不要互相借用。
     act_wait: 'images/ui/act_wait.png',
@@ -285,6 +299,7 @@ export const BG_BUNDLE: AssetBundleDef = {
     battle_bg_fortress: 'images/bg/battle_bg_fortress.png',
     battle_bg_swamp: 'images/bg/battle_bg_swamp.png',
     battle_bg_dragon: 'images/bg/battle_bg_dragon.png',
+    battle_bg_altar: 'images/bg/battle_bg_altar.png',
     recruit_bg: 'images/bg/recruit_bg.png',
     roster_bg: 'images/bg/roster_bg.png',
     adventure_bg: 'images/bg/adventure_bg.png',
@@ -299,6 +314,7 @@ export const BG_BUNDLE: AssetBundleDef = {
     chapter_fortress: 'images/bg/chapter_fortress.png',
     chapter_swamp: 'images/bg/chapter_swamp.png',
     chapter_dragon: 'images/bg/chapter_dragon.png',
+    chapter_altar: 'images/bg/chapter_altar.png',
   },
 };
 
@@ -317,3 +333,9 @@ export const ALL_BUNDLES: AssetBundleDef[] = [
   FX_BUNDLE,
   BG_BUNDLE,
 ];
+
+/** 大厅四页 + 章节卡。Loading 可以等这一组。 */
+export const HUB_SCENE_BUNDLES: AssetBundleDef[] = [BG_BUNDLE];
+
+/** 布阵/战斗才要。进大厅后后台补，不要算进「进大厅」门槛。 */
+export const BATTLE_SCENE_BUNDLES: AssetBundleDef[] = [TERRAIN_BUNDLE, UNIT_BUNDLE, FX_BUNDLE];

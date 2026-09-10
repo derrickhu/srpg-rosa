@@ -12,6 +12,11 @@ export interface TerrainSpec {
   /** 站在此格时每回合流失的血量（0 = 无） */
   dotPerRound: number;
   /**
+   * 站在此格时每回合回复的血量。和 `dotPerRound` 拆开，不要用负数冒充回血——
+   * AI 回避、角标、不可通行校验都会把符号写反。
+   */
+  healPerRound?: number;
+  /**
    * **贴图加载失败时**的兜底纯色（`createTerrainCell` 走不到纹理分支时用）。
    * 取值来自 `images/terrain/*.png` 的实测主色，见风格圣经 §2.2——改贴图时一并改这里，
    * 否则 CDN 抖动的那几秒棋盘会是另一套配色。深渊取洞口的黑而不是岩缘的灰，因为玩家
@@ -243,6 +248,20 @@ const SPECS: Record<TerrainId, TerrainSpec> = {
     defMul: 1,
     dotPerRound: 0,
     color: 0x3e3326,
+  },
+  /**
+   * 血池：沼泽的镜像。沼泽每回合 −5 且移动 2，教的是躲开；
+   * 血池每回合 +6 且移动 1，教的是去争。数字略高于沼泽，站几回合才感觉得到。
+   */
+  blood: {
+    id: 'blood',
+    name: '血池',
+    moveCost: 1,
+    atkMul: 1,
+    defMul: 1,
+    dotPerRound: 0,
+    healPerRound: 6,
+    color: 0x7a2020,
   },
 };
 

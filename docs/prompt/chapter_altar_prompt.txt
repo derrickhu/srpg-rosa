@@ -1,0 +1,21 @@
+第 6 章「血牙祭坛」章节卡插图
+产出 → images/bg/chapter_altar.png（654x272）
+生成器：Cursor 内置 GenerateImage，aspect_ratio 16:9
+后处理：宽幅中间带裁成 654×272
+
+---
+
+A wide banner illustration for a chapter select card in a cartoon fantasy tactics mobile game. The chapter is called "Bloodfang Altar" — after the dragon peak, the remnants retreat to a stone sanctuary. Dried blood, bone-white stone, no purple, no pink.
+
+COMPOSITION — very wide letterbox, cropped top and bottom. EVERY important element sits in the CENTRAL HORIZONTAL BAND. Top strip: dim rust-brown sky. Bottom strip: empty stone steps. Nothing important near the top or bottom edge.
+
+SCENE, left to right across the central band:
+- LEFT: broken pale bone-white stone steps and a fallen slab, warm grey #C8C0B4.
+- MIDDLE: a shallow dark dried-blood pool #7A2020 in a circular stone basin, simple, not gory.
+- RIGHT: a chunky cartoon stone altar / shrine block, bone-white with one dried-blood stain, no skull pile, no runes, no glowing magic.
+
+COLOUR: bone-white stone, dried dark red, rust-brown dusk. NO purple, NO pink, NO neon, NO lava.
+
+ART STYLE: hand-drawn cartoon, flat saturated fills, simple cel shading. Soft rounded outlines in a darker shade of each colour — no heavy black outlines. No texture noise, no photographic detail.
+
+Displayed about 330 pixels wide. BIG simple shapes. No soldiers, no text, no UI, no frame, no watermark.

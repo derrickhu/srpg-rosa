@@ -590,6 +590,16 @@ export function createBattleSim(
           events.push({ type: 'death', uid: u.uid });
         }
       }
+      // 掉血之后再回：同一格又烧又涌的组合不会出现，但顺序钉死避免以后加转移边时抢回合
+      const hot = tSpec.healPerRound ?? 0;
+      if (hot > 0 && u.hp > 0) {
+        const maxHp = effectiveUnitDef(u, defs).maxHp;
+        const healed = Math.min(hot, Math.max(0, maxHp - u.hp));
+        if (healed > 0) {
+          u.hp += healed;
+          events.push({ type: 'heal', target: u.uid, amount: healed, hpLeft: u.hp });
+        }
+      }
     }
     // 地形自己的状态推进要放在上面那轮掉血**之后**：燃烧标 2 回合，就该在 2 个轮首
     // 各烧一次人再熄。放前面的话最后一个轮首会先变成焦土，实际只烧到 1 回合。

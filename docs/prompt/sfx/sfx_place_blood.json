@@ -1,0 +1,12 @@
+{
+  "defaults": { "bitrate": "96k", "prompt_influence": 0.4 },
+  "sfx": [
+    {
+      "name": "sfx_place_blood",
+      "text": "short wet splat of thick liquid hitting stone, then a tiny hollow drip, dry, no reverb, no voice, no music, 0.35 seconds, muted dark and heavy not splashy",
+      "duration": 0.35,
+      "output": "../../../audio/sfx/sfx_place_blood.mp3",
+      "notes": "布阵放置血池券，要和落子 / 高地石块 / 森林叶 / 城墙砖听得出差别"
+    }
+  ]
+}

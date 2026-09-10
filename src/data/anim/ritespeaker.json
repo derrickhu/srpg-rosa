@@ -1,0 +1,202 @@
+{
+  "id": "ritespeaker",
+  "source": "art/sprite-runs/ch6",
+  "blend": "normal",
+  "image": "images/anim/ritespeaker.png",
+  "meta": {
+    "size": {
+      "w": 512,
+      "h": 512
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 202,
+    "baselineY": 238,
+    "ref": "idle_down"
+  },
+  "frames": {
+    "idle_down": {
+      "frame": {
+        "x": 2,
+        "y": 235,
+        "w": 219,
+        "h": 228
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 18,
+        "y": 15,
+        "w": 219,
+        "h": 228
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "idle_right": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 135,
+        "h": 231
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 60,
+        "y": 13,
+        "w": 135,
+        "h": 231
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "idle_left": {
+      "frame": {
+        "x": 139,
+        "y": 2,
+        "w": 136,
+        "h": 229
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 60,
+        "y": 14,
+        "w": 136,
+        "h": 229
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "idle_up": {
+      "frame": {
+        "x": 277,
+        "y": 2,
+        "w": 223,
+        "h": 229
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 17,
+        "y": 14,
+        "w": 223,
+        "h": 229
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "idle_down": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "idle_down"
+      ]
+    },
+    "walk_down": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "idle_down"
+      ]
+    },
+    "attack_down": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "idle_down"
+      ]
+    },
+    "idle_right": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "idle_right"
+      ]
+    },
+    "walk_right": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "idle_right"
+      ]
+    },
+    "idle_left": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "idle_left"
+      ]
+    },
+    "walk_left": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "idle_left"
+      ]
+    },
+    "idle_up": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "idle_up"
+      ]
+    },
+    "walk_up": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "idle_up"
+      ]
+    },
+    "attack_up": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "idle_up"
+      ]
+    },
+    "idle": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "idle_down"
+      ]
+    },
+    "default": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "idle_down"
+      ]
+    },
+    "attack_left": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "idle_left"
+      ]
+    },
+    "attack_right": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "idle_right"
+      ]
+    }
+  }
+}

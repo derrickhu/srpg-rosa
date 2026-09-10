@@ -30,6 +30,13 @@ import magmacoreManifest from '@/data/anim/magmacore.json';
 import emberbatManifest from '@/data/anim/emberbat.json';
 import scalewyrmManifest from '@/data/anim/scalewyrm.json';
 import ashshellManifest from '@/data/anim/ashshell.json';
+import bonepupManifest from '@/data/anim/bonepup.json';
+import gorecrowManifest from '@/data/anim/gorecrow.json';
+import ritehornManifest from '@/data/anim/ritehorn.json';
+import slabwardManifest from '@/data/anim/slabward.json';
+import altarwardenManifest from '@/data/anim/altarwarden.json';
+import ritespeakerManifest from '@/data/anim/ritespeaker.json';
+import ritespeakerDrainManifest from '@/data/anim/ritespeaker_drain.json';
 import bloodcastellanManifest from '@/data/anim/bloodcastellan.json';
 import bloodshamanManifest from '@/data/anim/bloodshaman.json';
 import drakelordManifest from '@/data/anim/drakelord.json';
@@ -191,25 +198,31 @@ const MANIFESTS: Record<string, AnimManifest> = {
   emberbat: emberbatManifest as AnimManifest,
   scalewyrm: scalewyrmManifest as AnimManifest,
   ashshell: ashshellManifest as AnimManifest,
-  // 第二至五章 Boss：和第一章酋长同档的完整图集（四向行走 + 两向攻击）。
-  // 五个 Boss 五张专属图集，不再共用 `bloodfang`。
+  // 第六章杂兵：祭仪构装。非人形，进 MOOK_ART_SETS
+  bonepup: bonepupManifest as AnimManifest,
+  gorecrow: gorecrowManifest as AnimManifest,
+  ritehorn: ritehornManifest as AnimManifest,
+  slabward: slabwardManifest as AnimManifest,
+  // 第二至六章 Boss：和第一章酋长同档的完整图集（四向行走 + 两向攻击）。
   bloodshaman: bloodshamanManifest as AnimManifest,
   bloodcastellan: bloodcastellanManifest as AnimManifest,
   mirequeen: mirequeenManifest as AnimManifest,
   drakelord: drakelordManifest as AnimManifest,
-  // 第二至五章精英：血牙部族人形兽人，同为单帧静止。**不算 MOOK**（按英雄身高，
-  // 理由见 MOOK_ART_SETS 的说明）。第一章精英沿用 bloodfang，不在这里。
-  // 四五章精英关还没铺（沼语者 / 龙裔），图集先登记，关卡接上就能用。
+  ritespeaker: ritespeakerManifest as AnimManifest,
+  // 第二至六章精英：单帧静止。**不算 MOOK**（按英雄身高）。
+  // 第一章精英沿用 bloodfang，不在这里。
   torun: torunManifest as AnimManifest,
   castellan: castellanManifest as AnimManifest,
   mirespeaker: mirespeakerManifest as AnimManifest,
   drakekin: drakekinManifest as AnimManifest,
+  altarwarden: altarwardenManifest as AnimManifest,
   roar: roarManifest as AnimManifest,
   bloodfang_roar: bloodfangRoarManifest as AnimManifest,
   bloodfang_wildfire: bloodfangWildfireManifest as AnimManifest,
   bloodfang_breach: bloodfangBreachManifest as AnimManifest,
   mirequeen_miasma: mirequeenMiasmaManifest as AnimManifest,
   drake_cataclysm: drakeCataclysmManifest as AnimManifest,
+  ritespeaker_drain: ritespeakerDrainManifest as AnimManifest,
   // 职业普攻 + 默认技能特效，全部黑底 additive。取用见 src/data/vfxCatalog.ts
   whirl: whirlManifest as AnimManifest,
   quake: quakeManifest as AnimManifest,
@@ -295,6 +308,8 @@ const MOOK_ART_SETS = new Set([
   'mirehand', 'dartbug', 'miregator', 'mudcarapace',
   // 第五章 · 龙岭火山属
   'magmacore', 'emberbat', 'scalewyrm', 'ashshell',
+  // 第六章 · 血牙祭坛祭仪构装
+  'bonepup', 'gorecrow', 'ritehorn', 'slabward',
   // 注意跳过了第三章：那一章是人形兽人守军，见上面的说明
 ]);
 

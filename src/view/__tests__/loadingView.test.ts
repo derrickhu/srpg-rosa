@@ -25,11 +25,21 @@ describe('启动加载与健康忠告', () => {
     expect(flowSrc).toContain('applySplash');
     expect(flowSrc).toContain('applyLogo');
     expect(flowSrc).toContain('LOADING_BUNDLE');
+    expect(flowSrc).toContain('HUB_SCENE_BUNDLES');
+    expect(flowSrc).toContain('BATTLE_SCENE_BUNDLES');
     expect(flowSrc).toContain('loadNamed');
     expect(flowSrc).toMatch(/private showLoading\(\)[\s\S]*?createLoadingView/);
     expect(flowSrc).toContain('this.renderShell()');
     expect(flowSrc).not.toContain('createHomeView');
     expect(flowSrc).not.toContain('renderHome');
+  });
+
+  it('进大厅只等背景，不等地形单位特效', () => {
+    const flowSrc = readFileSync('src/view/GameFlow.ts', 'utf8');
+    expect(flowSrc).toContain('HUB_BG_BUDGET_MS');
+    expect(flowSrc).not.toContain('REST_BUNDLE_BUDGET_MS');
+    expect(flowSrc).toMatch(/await Promise\.race\(\[\s*hubLoaded/);
+    expect(flowSrc).toMatch(/BATTLE_SCENE_BUNDLES[\s\S]*loadAnimSets/);
   });
 
   it('底图随包，不走 CDN', () => {

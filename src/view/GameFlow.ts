@@ -97,7 +97,7 @@ import { SaveManager } from '@/core/SaveManager';
 import { AdManager } from '@/platform/AdManager';
 import { CloudSyncManager } from '@/managers/CloudSyncManager';
 import { AssetManager } from '@/core/AssetManager';
-import { ALL_BUNDLES, LOADING_BUNDLE, UI_BUNDLE } from '@/core/assetBundles';
+import { BATTLE_SCENE_BUNDLES, HUB_SCENE_BUNDLES, LOADING_BUNDLE, UI_BUNDLE } from '@/core/assetBundles';
 import { animSetReady, ensureAnimSets, loadAnimSets } from '@/view/animSets';
 import { characterArtKey } from '@/data/characterCatalog';
 import { createBackground, createUnitToken } from '@/view/renderHelpers';
@@ -131,8 +131,10 @@ import {
   shouldSkipTutorialDeploy,
 } from '@/game/tutorial/tutorialRules';
 
-/** 地形/单位/特效/背景四个 bundle 的总预算，超了先进大厅，剩下的后台补 */
-const REST_BUNDLE_BUDGET_MS = 25000;
+/** 大厅底图预算。超了用场景主色进场，缺图后台补。 */
+const HUB_BG_BUDGET_MS = 12000;
+/** 云同步已经在等的那段时间，顺手再给战斗图一点。 */
+const BATTLE_PRELOAD_SLACK_MS = 4000;
 
 function containerScene(container: PIXI.Container): Scene {
   return { root: container, enter() {}, exit() {} };
@@ -277,37 +279,39 @@ export class GameFlow {
     loading?.refreshTitleFont();
     setP(0.42);
 
-    const rest = ALL_BUNDLES.filter((b) => b.name !== 'ui');
-    const restTotal = rest.reduce((sum, b) => sum + Object.keys(b?.assets || {}).length, 0);
-    let restDone = 0;
-    const restLoaded = Promise.all(
-      rest.map((b) => {
+    const hubTotal = HUB_SCENE_BUNDLES.reduce((sum, b) => sum + Object.keys(b?.assets || {}).length, 0);
+    let hubDone = 0;
+    const hubLoaded = Promise.all(
+      HUB_SCENE_BUNDLES.map((b) => {
         let last = 0;
         return AssetManager.loadBundle(b, (n) => {
-          restDone += n - last;
+          hubDone += n - last;
           last = n;
-          if (restTotal > 0) setP(0.42 + (restDone / restTotal) * 0.53);
-        }).then(() => {
-          console.log(`[GameFlow] bundle '${b.name}' 就绪 (${restDone}/${restTotal})`);
+          if (hubTotal > 0) setP(0.42 + (hubDone / hubTotal) * 0.40);
         });
       }),
     );
-    // 单张图已各自超时兜底，这里再兜整段：任何一环卡住也必须让玩家进大厅，
-    // 缺的图后续按需重取，绝不允许把人留在 Loading。
     await Promise.race([
-      restLoaded,
-      new Promise<void>((resolve) => setTimeout(resolve, REST_BUNDLE_BUDGET_MS)),
+      hubLoaded,
+      new Promise<void>((resolve) => setTimeout(resolve, HUB_BG_BUDGET_MS)),
     ]);
-    if (restDone < restTotal) {
-      console.warn(`[GameFlow] 资源未全部就绪就进大厅 (${restDone}/${restTotal})，缺图按需重取`);
+    if (hubDone < hubTotal) {
+      console.warn(`[GameFlow] 大厅底图未齐就进场 (${hubDone}/${hubTotal})，缺图走兜底色`);
     }
 
-    // 动画图集走 CDN、约 2MB，不能挡主页。resolveBattle 进战前会等本场要用的那几个。
+    // 地形/单位/特效不挡大厅。进战前 ensureAnimSets 会再等本场要用的。
+    const battleLoaded = Promise.all(
+      BATTLE_SCENE_BUNDLES.map((b) => AssetManager.loadBundle(b)),
+    );
     loadAnimSets();
-    setP(0.96);
-    // 等 CDN 首批发完再 init：经分 wx.request 和 downloadFile 抢同一条并发配额，会把 Loading 卡在 42%。
+    setP(0.88);
+    // 等大厅图发完再 init：经分 wx.request 和 downloadFile 抢同一条并发配额，会把 Loading 卡在 42%。
     initAnalytics();
     const sync = await CloudSyncManager.awaitStartupSync();
+    await Promise.race([
+      battleLoaded,
+      new Promise<void>((resolve) => setTimeout(resolve, BATTLE_PRELOAD_SLACK_MS)),
+    ]);
     console.log(`[GameFlow] 云同步启动: ${sync.status} (${sync.reason})`);
     const userId = CloudSyncManager.userId;
     if (userId) setAnalyticsUserId(userId);

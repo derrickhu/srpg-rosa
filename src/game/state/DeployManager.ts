@@ -1,6 +1,12 @@
 import type { TerrainId, UnitState, Vec2 } from '@/battle/types';
-import { playerDeployRowRange } from '@/battle/constants';
+import {
+  isPlayerDeployCell,
+  playerDeployCells,
+  remapDeployPos,
+  resolveDeployZone,
+} from '@/battle/deployZone';
 import { gridSize, inBounds } from '@/battle/grid';
+import { isPassable } from '@/data/terrainSpec';
 import { enemyBaseStats } from '@/data/enemyCatalog';
 import type { StageEnemySpawn } from '@/data/stagesMvp';
 import { characterArtKey, getCharacterDef } from '@/data/characterCatalog';
@@ -67,16 +73,13 @@ function snapshotPlacements(list: PlacementEntry[]): PlacementEntry[] {
 function findOpenDeployCell(state: MvpGameState): Vec2 | null {
   const run = requireRun(state);
   const stage = currentStage(state);
-  const { w, h } = gridSize(stage.terrain);
-  const [r0, r1] = playerDeployRowRange(h);
-  for (let y = r0; y <= r1; y += 1) {
-    for (let x = 0; x < w; x += 1) {
-      const pos = { x, y };
-      if (run.placements.some((p) => p.pos.x === x && p.pos.y === y)) continue;
-      if (overlayAt(run, pos)) continue;
-      if (enemyAt(state, pos)) continue;
-      return pos;
-    }
+  for (const pos of playerDeployCells(stage)) {
+    const t = stage.terrain[pos.y]?.[pos.x];
+    if (!t || !isPassable(t)) continue;
+    if (run.placements.some((p) => p.pos.x === pos.x && p.pos.y === pos.y)) continue;
+    if (overlayAt(run, pos)) continue;
+    if (enemyAt(state, pos)) continue;
+    return pos;
   }
   return null;
 }
@@ -106,18 +109,26 @@ export function rememberBattlePlacements(state: MvpGameState): void {
   const run = requireRun(state);
   if (run.placements.length === 0) return;
   run.lastBattlePlacements = snapshotPlacements(run.placements);
-  run.lastBattleGridH = gridSize(currentStage(state).terrain).h;
+  const stage = currentStage(state);
+  const { w, h } = gridSize(stage.terrain);
+  run.lastBattleGridH = h;
+  run.lastBattleGridW = w;
+  run.lastBattleDeployZone = resolveDeployZone(stage);
 }
 
 function remapCarriedPos(state: MvpGameState, pos: Vec2): Vec2 {
   const run = requireRun(state);
-  const { h } = gridSize(currentStage(state).terrain);
-  const [r0, r1] = playerDeployRowRange(h);
-  const [oldR0, oldR1] = playerDeployRowRange(run.lastBattleGridH ?? h);
-  let y = pos.y;
-  if (pos.y === oldR0) y = r0;
-  else if (pos.y === oldR1) y = r1;
-  return { x: pos.x, y };
+  const stage = currentStage(state);
+  const { w, h } = gridSize(stage.terrain);
+  return remapDeployPos(
+    {
+      zone: run.lastBattleDeployZone ?? { kind: 'south' },
+      w: run.lastBattleGridW ?? w,
+      h: run.lastBattleGridH ?? h,
+    },
+    { zone: resolveDeployZone(stage), w, h },
+    pos,
+  );
 }
 
 /**
@@ -150,11 +161,12 @@ export function grantAdExtraSlot(state: MvpGameState): boolean {
 
 export function canPlaceAt(state: MvpGameState, pos: Vec2): boolean {
   const run = requireRun(state);
-  const ter = currentStage(state).terrain;
-  const { h } = gridSize(ter);
-  const [r0, r1] = playerDeployRowRange(h);
+  const stage = currentStage(state);
+  const ter = stage.terrain;
   if (!inBounds(pos, ter)) return false;
-  if (pos.y !== r0 && pos.y !== r1) return false;
+  if (!isPlayerDeployCell(stage, pos)) return false;
+  const cell = ter[pos.y]?.[pos.x];
+  if (!cell || !isPassable(cell)) return false;
   if (run.placements.some((p) => p.pos.x === pos.x && p.pos.y === pos.y)) return false;
   if (overlayAt(run, pos)) return false;
   if (enemyAt(state, pos)) return false;

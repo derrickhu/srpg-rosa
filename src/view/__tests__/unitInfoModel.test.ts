@@ -15,11 +15,11 @@ describe('单位信息面板的数值来源', () => {
   const spawn = STAGES_MVP[0]!.enemies[0]!;
 
   /**
-   * 血牙酋长从章节表里找，不硬写 `STAGES_MVP[6]`。
-   * 这场已经从第一章挪到第六章，按 `isBoss` + 技能皮肤认，不按章内位置。
+   * 第六章祭主从章节表里找，不硬写下标。
+   * 按 `isBoss` + 技能皮肤认，不按章内位置。
    */
-  const chiefBoss = STAGES_MVP[CHAPTER_STAGE_INDICES.flat().find(
-    (i) => STAGES_MVP[i]!.enemies.some((e) => e.skillSkin === 'bloodfang_roar'),
+  const riteBoss = STAGES_MVP[CHAPTER_STAGE_INDICES.flat().find(
+    (i) => STAGES_MVP[i]!.enemies.some((e) => e.skillSkin === 'ritespeaker_drain'),
   )!]!;
 
   it('敌人预览与实战用同一份换算', () => {
@@ -62,7 +62,7 @@ describe('单位信息面板的数值来源', () => {
   });
 
   it('战斗中显示技能剩余冷却，布阵页预览不显示', () => {
-    const bossSpawn = chiefBoss.enemies.find((e) => e.boss)!;
+    const bossSpawn = riteBoss.enemies.find((e) => e.boss)!;
     const u: UnitState = { ...enemySpawnToUnitState(bossSpawn, 1), skillCd: 2 };
     const inBattle = battleUnitInfoModel(u, { showCooldown: true });
     const inDeploy = battleUnitInfoModel(u, { showCooldown: false });
@@ -76,12 +76,12 @@ describe('单位信息面板的数值来源', () => {
     expect(model.skills).toHaveLength(0);
   });
 
-  it('Boss 面板显示皮肤名与图标，不暴露底层 savage_roar 名', () => {
-    const bossSpawn = chiefBoss.enemies.find((e) => e.boss)!;
+  it('Boss 面板显示皮肤名与图标，不暴露底层 blood_rite 名', () => {
+    const bossSpawn = riteBoss.enemies.find((e) => e.boss)!;
     const u = enemySpawnToUnitState(bossSpawn, 1.1);
     const model = battleUnitInfoModel(u, { showCooldown: false });
     expect(model.skills).toHaveLength(1);
-    expect(model.skills[0]!.name).toBe('血牙咆哮');
-    expect(model.skills[0]!.iconKey).toBe('skill_bloodfang_roar');
+    expect(model.skills[0]!.name).toBe('血祭汲魂');
+    expect(model.skills[0]!.iconKey).toBe('skill_ritespeaker_drain');
   });
 });

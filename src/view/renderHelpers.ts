@@ -96,6 +96,7 @@ export function terrainBadge(terrainId: TerrainId): TerrainBadge | null {
   // 「血-5」而不是「每回合-5」：最小格 36px 放不下 5 个汉字宽的串，而且和上面两条
   // 「属性 + 增减量」的格式一致。持续性靠沼泽贴图本身的语境读，不靠字数解释。
   if (spec.dotPerRound > 0) return { text: `血-${spec.dotPerRound}`, color: C.warnText };
+  if ((spec.healPerRound ?? 0) > 0) return { text: `血+${spec.healPerRound}`, color: C.gold };
   return null;
 }
 
@@ -133,6 +134,9 @@ export function terrainInfoLines(terrainId: TerrainId): string[] {
   }
   if (spec.dotPerRound > 0) {
     out.push(`每回合流失 ${spec.dotPerRound} 点生命`);
+  }
+  if ((spec.healPerRound ?? 0) > 0) {
+    out.push(`每回合回复 ${spec.healPerRound} 点生命`);
   }
   if (spec.ignitesTo) {
     out.push(`会被火点燃，烧成${getTerrainSpec(spec.ignitesTo).name}`);

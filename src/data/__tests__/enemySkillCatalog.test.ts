@@ -28,15 +28,15 @@ describe('敌方技能皮肤', () => {
     }
   });
 
-  it('第六章 Boss 挂血牙咆哮皮肤，结算仍走 savage_roar', () => {
+  it('第六章 Boss 挂血祭汲魂皮肤，结算走 blood_rite', () => {
     const boss = STAGES_MVP[ch6Boss]!.enemies.find((e) => e.boss)!;
-    expect(boss.skillSkin).toBe('bloodfang_roar');
+    expect(boss.skillSkin).toBe('ritespeaker_drain');
     const u = enemySpawnToUnitState(boss, 1.1);
-    expect(u.battleSkill?.id).toBe('savage_roar');
-    expect(u.battleSkill?.name).toBe('血牙咆哮');
-    expect(u.battleSkill?.iconKey).toBe('skill_bloodfang_roar');
-    expect(u.battleSkill?.vfxId).toBe('bloodfang_roar');
-    expect(effectiveUnitDef(u, UNIT_DEFS).skill?.id).toBe('savage_roar');
+    expect(u.battleSkill?.id).toBe('blood_rite');
+    expect(u.battleSkill?.name).toBe('血祭汲魂');
+    expect(u.battleSkill?.iconKey).toBe('skill_ritespeaker_drain');
+    expect(u.battleSkill?.vfxId).toBe('ritespeaker_drain');
+    expect(effectiveUnitDef(u, UNIT_DEFS).skill?.id).toBe('blood_rite');
   });
 
   it('皮肤表每条都能 resolve，implementsId 真实存在', () => {

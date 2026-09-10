@@ -10,6 +10,13 @@ export type {
   Vec2,
 } from './types';
 export { MAX_BATTLE_ROUNDS, playerDeployRowRange, COUNTER_STRONG, COUNTER_WEAK } from './constants';
+export {
+  isPlayerDeployCell,
+  playerDeployCells,
+  remapDeployPos,
+  resolveDeployZone,
+} from './deployZone';
+export type { DeployZone, StageDeploySource } from './deployZone';
 export { runBattle } from './engine';
 export { effectiveUnitDef } from './effectiveUnit';
 export type { SkillDamageContext } from './skillDamage';

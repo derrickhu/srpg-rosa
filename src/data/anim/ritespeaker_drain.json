@@ -1,0 +1,219 @@
+{
+  "id": "ritespeaker_drain",
+  "source": "art/vfx-runs/ritespeaker_drain",
+  "blend": "add",
+  "image": "images/anim/ritespeaker_drain.png",
+  "meta": {
+    "size": {
+      "w": 768,
+      "h": 768
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 80,
+    "baselineY": 128,
+    "ref": "ritespeaker_drain/ritespeaker_drain-1.png"
+  },
+  "frames": {
+    "ritespeaker_drain/ritespeaker_drain-1.png": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 256,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 256,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "ritespeaker_drain/ritespeaker_drain-2.png": {
+      "frame": {
+        "x": 256,
+        "y": 0,
+        "w": 256,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 256,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "ritespeaker_drain/ritespeaker_drain-3.png": {
+      "frame": {
+        "x": 512,
+        "y": 0,
+        "w": 256,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 256,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "ritespeaker_drain/ritespeaker_drain-4.png": {
+      "frame": {
+        "x": 0,
+        "y": 256,
+        "w": 256,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 256,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "ritespeaker_drain/ritespeaker_drain-5.png": {
+      "frame": {
+        "x": 256,
+        "y": 256,
+        "w": 256,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 256,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "ritespeaker_drain/ritespeaker_drain-6.png": {
+      "frame": {
+        "x": 512,
+        "y": 256,
+        "w": 256,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 256,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "ritespeaker_drain/ritespeaker_drain-7.png": {
+      "frame": {
+        "x": 0,
+        "y": 512,
+        "w": 256,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 256,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "ritespeaker_drain/ritespeaker_drain-8.png": {
+      "frame": {
+        "x": 256,
+        "y": 512,
+        "w": 256,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 256,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "ritespeaker_drain/ritespeaker_drain-9.png": {
+      "frame": {
+        "x": 512,
+        "y": 512,
+        "w": 256,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 256,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "ritespeaker_drain": {
+      "loop": false,
+      "fps": 20,
+      "frames": [
+        "ritespeaker_drain/ritespeaker_drain-1.png",
+        "ritespeaker_drain/ritespeaker_drain-2.png",
+        "ritespeaker_drain/ritespeaker_drain-3.png",
+        "ritespeaker_drain/ritespeaker_drain-4.png",
+        "ritespeaker_drain/ritespeaker_drain-5.png",
+        "ritespeaker_drain/ritespeaker_drain-6.png",
+        "ritespeaker_drain/ritespeaker_drain-7.png",
+        "ritespeaker_drain/ritespeaker_drain-8.png",
+        "ritespeaker_drain/ritespeaker_drain-9.png"
+      ]
+    }
+  }
+}

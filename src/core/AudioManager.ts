@@ -19,6 +19,7 @@ export type SfxId =
   | 'sfx_place_high'
   | 'sfx_place_forest'
   | 'sfx_place_wall'
+  | 'sfx_place_blood'
   | 'sfx_sweep'
   | 'sfx_step'
   | 'sfx_undo'
@@ -91,6 +92,7 @@ const SFX_MAP: Record<SfxId, string> = {
   sfx_place_high: 'audio/sfx/sfx_place_high.mp3',
   sfx_place_forest: 'audio/sfx/sfx_place_forest.mp3',
   sfx_place_wall: 'audio/sfx/sfx_place_wall.mp3',
+  sfx_place_blood: 'audio/sfx/sfx_place_blood.mp3',
   sfx_sweep: 'audio/sfx/sfx_sweep.mp3',
   sfx_step: 'audio/sfx/sfx_step.mp3',
   sfx_undo: 'audio/sfx/sfx_undo.mp3',

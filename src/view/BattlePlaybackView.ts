@@ -2322,7 +2322,10 @@ export function createBattlePlaybackView(
         floatUtility(
           at.x,
           at.y - cell * 0.35,
-          ev.reason === 'ignite' ? '燃起' : ev.reason === 'gate' ? '闸门开启' : '烧尽',
+          ev.reason === 'ignite' ? '燃起'
+            : ev.reason === 'gate' ? '闸门开启'
+              : ev.reason === 'rite' ? '血涌'
+                : '烧尽',
         );
         await awaitEase(dur(180), () => {});
         break;

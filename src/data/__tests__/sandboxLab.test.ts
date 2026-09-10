@@ -14,6 +14,7 @@ import {
   CHAPTER3_GARRISON,
   CHAPTER4_MIRE,
   CHAPTER5_DRAKE,
+  CHAPTER6_RITE,
 } from '@/data/stagesMvp';
 import { getEnemySkillSkin } from '@/data/enemySkillCatalog';
 
@@ -43,13 +44,13 @@ describe('特效试炼不进正式章节表', () => {
     expect(gm).toHaveLength(DUNGEON_DEFS.length + 1);
   });
 
-  it('木桩场有各职业木桩和五章 Boss 皮', () => {
+  it('木桩场有各职业木桩和各章 Boss 皮', () => {
     const defs = new Set(SANDBOX_STAGE.enemies.map((e) => e.defId));
     expect(defs.has('sword')).toBe(true);
     expect(defs.has('bow')).toBe(true);
     expect(defs.has('mage')).toBe(true);
     expect(defs.has('healer')).toBe(true);
-    // 五章 Boss 皮全在场，少一个就没法在一屏里比形态有没有撞车
+    // 各章 Boss 皮全在场，少一个就没法在一屏里比形态有没有撞车
     const skins = SANDBOX_STAGE.enemies.map((e) => e.skillSkin).filter(Boolean);
     expect(skins).toEqual([
       'bloodfang_roar',
@@ -57,6 +58,7 @@ describe('特效试炼不进正式章节表', () => {
       'bloodfang_breach',
       'mirequeen_miasma',
       'drake_cataclysm',
+      'ritespeaker_drain',
     ]);
     for (const id of skins) {
       expect(getEnemySkillSkin(id!), `${id} 皮肤未登记`).toBeDefined();
@@ -79,12 +81,12 @@ describe('特效试炼不进正式章节表', () => {
    * 抄了就会走岔，而走岔的表现是「试炼场里试的招和实战里放的不是同一个」。
    */
   it('杂兵桩覆盖章节模板里所有会出手的怪', () => {
-    const expected = [CHAPTER2_FOREST, CHAPTER3_GARRISON, CHAPTER4_MIRE, CHAPTER5_DRAKE]
+    const expected = [CHAPTER2_FOREST, CHAPTER3_GARRISON, CHAPTER4_MIRE, CHAPTER5_DRAKE, CHAPTER6_RITE]
       .flatMap((c) => Object.values(c))
       .filter((t) => t.skillId);
     const onField = new Set(SANDBOX_STAGE.enemies.map((e) => e.skillId).filter(Boolean));
-    // 投放曲线：第二、三章各 1 条，第四章 2 条，终章 4 条
-    expect(expected).toHaveLength(8);
+    // 投放曲线：第二、三章各 1 条，第四章 2 条，终章 4 条，祭坛 2 条
+    expect(expected).toHaveLength(10);
     for (const t of expected) {
       expect(onField.has(t.skillId), `${t.name} 的「${t.skillId}」没上木桩场`).toBe(true);
     }

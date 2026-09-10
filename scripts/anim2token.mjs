@@ -40,6 +40,7 @@ const MOOK_SETS = new Set([
   'vinecocoon', 'sporesac', 'leafpanther', 'mosswarden',
   'mirehand', 'dartbug', 'miregator', 'mudcarapace',
   'magmacore', 'emberbat', 'scalewyrm', 'ashshell',
+  'bonepup', 'gorecrow', 'ritehorn', 'slabward',
 ]);
 
 /**
@@ -62,10 +63,12 @@ const TOKEN_SETS = [
   'mirehand', 'dartbug', 'miregator', 'mudcarapace',
   // 第五章杂兵
   'magmacore', 'emberbat', 'scalewyrm', 'ashshell',
-  // 第二至五章精英：血牙部族人形兽人，**不在 MOOK_SETS 里**（按英雄身高）
-  'torun', 'castellan', 'mirespeaker', 'drakekin',
+  // 第六章杂兵：祭仪构装，进 MOOK_SETS
+  'bonepup', 'gorecrow', 'ritehorn', 'slabward',
+  // 第二至六章精英：人形，**不在 MOOK_SETS 里**（按英雄身高）
+  'torun', 'castellan', 'mirespeaker', 'drakekin', 'altarwarden',
   // Boss：完整图集档位，token 从行走的第一帧派生
-  'bloodfang', 'bloodshaman', 'bloodcastellan', 'mirequeen', 'drakelord',
+  'bloodfang', 'bloodshaman', 'bloodcastellan', 'mirequeen', 'drakelord', 'ritespeaker',
 ];
 
 function loadSet(id) {
@@ -145,6 +148,10 @@ function resampleRegion(src, sx, sy, sw, sh, dw, dh) {
 }
 
 function main() {
+  const onlyArg = process.argv.includes('--only')
+    ? process.argv[process.argv.indexOf('--only') + 1]
+    : '';
+  const only = onlyArg ? new Set(onlyArg.split(',').filter(Boolean)) : null;
   const sets = TOKEN_SETS.map(loadSet);
   const placed = sets.map((set) => ({ set, box: placeUnit(set) }));
 
@@ -170,6 +177,7 @@ function main() {
 
   fs.mkdirSync(path.join(ROOT, OUT_DIR), { recursive: true });
   for (const { set, box } of placed) {
+    if (only && !only.has(set.id)) continue;
     const png = new PNG({ width: outW, height: TOKEN_HEIGHT });
     png.data.fill(0);
 

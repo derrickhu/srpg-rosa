@@ -27,8 +27,8 @@ export interface EnemySkillSkin {
 }
 
 export const ENEMY_SKILL_SKINS: Record<string, EnemySkillSkin> = {
-  // 第六章 Boss · 血牙酋长（原第一章末战）。底层仍是 savage_roar（自身 AoE + 攻 buff），
-  // 但名字/图标跟玩家池彻底分开——玩家不可学，也不该看起来像「旋风斩换皮」。
+  // 第一章 Boss · 血牙酋长（试炼场仍用）。底层 savage_roar。
+  // 战役第六章换成祭主，不再挂这张皮。
   bloodfang_roar: {
     id: 'bloodfang_roar',
     implementsId: 'savage_roar',
@@ -129,6 +129,13 @@ export const ENEMY_SKILL_SKINS: Record<string, EnemySkillSkin> = {
     name: '灭世龙息',
     iconKey: 'skill_drake_cataclysm',
     vfxId: 'drake_cataclysm',
+  },
+  ritespeaker_drain: {
+    id: 'ritespeaker_drain',
+    implementsId: 'blood_rite',
+    name: '血祭汲魂',
+    iconKey: 'skill_ritespeaker_drain',
+    vfxId: 'ritespeaker_drain',
   },
 };
 

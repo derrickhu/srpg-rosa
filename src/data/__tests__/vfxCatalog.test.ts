@@ -526,6 +526,8 @@ describe('特效登记表', () => {
       'cinder_breath',
       'wyrm_dash',
       'ash_harden',
+      'rite_peck',
+      'rite_chant',
     ];
     const leaked: string[] = [];
     for (const [k, r] of Object.entries(MOOK_ATTACK_VFX)) {

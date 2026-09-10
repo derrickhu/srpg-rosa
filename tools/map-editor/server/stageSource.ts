@@ -45,6 +45,8 @@ const ENEMY_TEMPLATES = [
   'mireYoung',
   'drake',
   'drakeYoung',
+  'rite',
+  'riteYoung',
 ] as const;
 
 export type EnemyTemplate = (typeof ENEMY_TEMPLATES)[number];

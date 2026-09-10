@@ -92,4 +92,22 @@ describe('技能伤害与地形', () => {
     const grid: TerrainGrid = [['plain', 'plain']];
     expect(computeSkillHitDamage(ctx({ x: 0, y: 0 }, { x: 1, y: 0 }, grid)).damage).toBe(base);
   });
+
+  it('目标站血池时，血祭汲魂吃地形加成', () => {
+    const rite = getSkillSpec('blood_rite')!;
+    expect(rite.damage.kind).toBe('scaledAtk');
+    expect(rite.terrainHitBonus?.terrainId).toBe('blood');
+    const atkMul = rite.damage.kind === 'scaledAtk' ? rite.damage.atkMul : 1;
+    const riteBase = Math.floor(40 * atkMul);
+    const onBlood = computeSkillHitDamage({
+      ...ctx({ x: 0, y: 0 }, { x: 1, y: 0 }, [['plain', 'blood']]),
+      spec: rite,
+    }).damage;
+    const onPlain = computeSkillHitDamage({
+      ...ctx({ x: 0, y: 0 }, { x: 1, y: 0 }, [['plain', 'plain']]),
+      spec: rite,
+    }).damage;
+    expect(onPlain).toBe(riteBase);
+    expect(onBlood).toBe(Math.floor(riteBase * (rite.terrainHitBonus?.mul ?? 1)));
+  });
 });

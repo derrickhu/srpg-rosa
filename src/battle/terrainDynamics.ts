@@ -26,6 +26,11 @@ export interface TerrainRuntime {
    * 传进来的通常是技能的 `rangeCells`，所以重复格要去重。
    */
   ignite(cells: Vec2[]): BattleEvent[];
+  /**
+   * 把可通行格变成 `to`（血渠术把平原铺成血池）。
+   * 不可通行格跳过：墙和深渊被改成血池会让「挡路」这条规则当场失踪。
+   */
+  transmute(cells: Vec2[], to: TerrainId, reason: TerrainChangeReason): BattleEvent[];
   /** 轮首推进定时转移（燃烧烧尽成焦土）。必须在地形掉血结算**之后**调，见 `startRound` */
   tick(): BattleEvent[];
   /**
@@ -70,6 +75,22 @@ export function createTerrainRuntime(base: TerrainGrid): TerrainRuntime {
     return out;
   }
 
+  function transmute(cells: Vec2[], to: TerrainId, reason: TerrainChangeReason): BattleEvent[] {
+    const out: BattleEvent[] = [];
+    const seen = new Set<string>();
+    for (const c of cells) {
+      if (!inBounds(c, grid)) continue;
+      const k = key(c);
+      if (seen.has(k)) continue;
+      seen.add(k);
+      const from = getTerrainAt(grid, c);
+      if (from === to) continue;
+      if (getTerrainSpec(from).moveCost === Infinity) continue;
+      out.push(change(c, to, reason));
+    }
+    return out;
+  }
+
   function openGates(): BattleEvent[] {
     const out: BattleEvent[] = [];
     for (let y = 0; y < grid.length; y += 1) {
@@ -94,5 +115,5 @@ export function createTerrainRuntime(base: TerrainGrid): TerrainRuntime {
     return out;
   }
 
-  return { grid, ignite, tick, openGates };
+  return { grid, ignite, transmute, tick, openGates };
 }

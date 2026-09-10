@@ -1,4 +1,4 @@
-import type { SkillDef, SkillKind, UnitKind } from '@/battle/types';
+import type { SkillDef, SkillKind, TerrainId, UnitKind } from '@/battle/types';
 
 /** 技能触发时机 */
 export type SkillTiming = 'beforeMove' | 'afterMove' | 'passive';
@@ -149,7 +149,9 @@ export type SkillCastAllyEffect =
  */
 export type SkillCastTerrainEffect =
   /** 点燃范围内所有可燃地形（`TerrainSpec.ignitesTo`） */
-  | { kind: 'ignite' };
+  | { kind: 'ignite' }
+  /** 范围内可通行格变成 `to`（血渠术铺血池） */
+  | { kind: 'transmute'; to: TerrainId };
 
 /**
  * 技能对「单个目标」的伤害规则（由 `computeSkillHitDamage` 解析）。
@@ -252,6 +254,11 @@ export interface SkillSpec {
    * AoE 打第二个目标时第一个已经掉血了，词条侧算不到这个。
    */
   executeBonus?: { belowHpRatio: number; mul: number };
+  /**
+   * 目标站在这种地形上时，本次伤害再乘 `mul`。
+   * 读结算那一刻的格子，和处决一样不能预判。
+   */
+  terrainHitBonus?: { terrainId: TerrainId; mul: number };
   /**
    * 暴击：在基础暴击率上叠加 `chance`，触发时伤害再乘 `mul`（与 `BASE_CRIT_MUL` 相乘）。
    */
@@ -1141,7 +1148,101 @@ const SPECS: Record<string, SkillSpec> = {
     onCastSelfEffects: [{ kind: 'guard', reduceRatio: 0.3, rounds: 2 }],
   },
   /**
-   * 法师默认：3 格内点杀。和弓手「速射」同形，差在职业和倍率；
+   * 第六章 · 血鸦（弓手位）。全游戏第一只吸血杂兵。
+   * 远程点杀 + 一半吸血，和血池同一动词族「续航」。
+   */
+  rite_peck: {
+    id: 'rite_peck',
+    name: '血喙',
+    cooldown: 2,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'damage',
+    enemyOnly: true,
+    displayKind: 'lineShot',
+    shape: { type: 'neighborPickFoe', manhattan: 3, reach: 'within' },
+    damage: { kind: 'scaledAtk', atkMul: 0.4 },
+    lifestealRatio: 0.5,
+  },
+  /**
+   * 第六章 · 石坛守（盾卫位）。全游戏第一只会奶队友的杂兵。
+   * 满血不放（见 `fallbackSkillTarget`），优先残血。
+   */
+  rite_chant: {
+    id: 'rite_chant',
+    name: '祭鼓',
+    cooldown: 3,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'support',
+    enemyOnly: true,
+    displayKind: 'whirlwind',
+    shape: { type: 'neighborPickAlly', manhattan: 2, reach: 'within' },
+    damage: { kind: 'none' },
+    onCastAllyEffects: [{ kind: 'heal', amount: 10 }],
+  },
+  /**
+   * 第六章 Boss · 祭主抽血。贴身圆盘 + 全额吸血 + 目标在血池上更疼。
+   * 形状接近第一章咆哮，机制完全不同：他越打越满，站池是陷阱。
+   */
+  blood_rite: {
+    id: 'blood_rite',
+    name: '血祭汲魂',
+    cooldown: 3,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'damage',
+    enemyOnly: true,
+    displayKind: 'whirlwind',
+    shape: { type: 'discAoE', radius: 1 },
+    damage: { kind: 'scaledAtk', atkMul: 0.52 },
+    lifestealRatio: 1,
+    terrainHitBonus: { terrainId: 'blood', mul: 1.5 },
+  },
+  /**
+   * 第六章临时技能。血渠术对标松脂火把：这一章的关键一招是铺血池。
+   */
+  temp_rt_channel: {
+    id: 'temp_rt_channel',
+    name: '血渠术',
+    cooldown: 3,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'control',
+    displayKind: 'whirlwind',
+    shape: { type: 'neighborAoE', manhattan: 1 },
+    damage: { kind: 'flat', amount: 6, applyCounter: false, applyTerrain: false },
+    shopPrice: 24,
+    onCastTerrainEffects: [{ kind: 'transmute', to: 'blood' }],
+  },
+  temp_rt_siphon: {
+    id: 'temp_rt_siphon',
+    name: '汲血刺',
+    cooldown: 2,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'damage',
+    displayKind: 'singleBash',
+    shape: { type: 'neighborPickFoe', manhattan: 1 },
+    damage: { kind: 'scaledAtk', atkMul: 0.45 },
+    shopPrice: 22,
+    lifestealRatio: 0.6,
+  },
+  temp_rt_oath: {
+    id: 'temp_rt_oath',
+    name: '血契',
+    cooldown: 3,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'support',
+    displayKind: 'whirlwind',
+    shape: { type: 'neighborPickAlly', manhattan: 1 },
+    damage: { kind: 'none' },
+    shopPrice: 22,
+    onCastAllyEffects: [{ kind: 'heal', amount: 16 }],
+  },
+  /**
+   * 法师默认：3 格内点杀。和弓手「速射」同形，差在两个职业和倍率；
    * 点谁由玩家或 AI 决定，不写进技能。
    *
    * 单体招牌必须压过普攻。奥莉攻击高、这一招又没有附带位移，1.4 是「就是一发火球」

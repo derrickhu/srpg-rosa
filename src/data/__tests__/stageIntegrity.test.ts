@@ -6,7 +6,7 @@ import { BG_BUNDLE } from '@/core/assetBundles';
 import { isKnownTerrainId, isPassable } from '@/data/terrainSpec';
 import { getSkillSpec } from '@/data/skillCatalog';
 import { getEnemySkillSkin } from '@/data/enemySkillCatalog';
-import { playerDeployRowRange } from '@/battle/constants';
+import { isPlayerDeployCell, playerDeployCells } from '@/battle/deployZone';
 import { gridSize } from '@/battle/grid';
 import { hasAnimSet } from '@/view/animSets';
 
@@ -82,15 +82,13 @@ describe('关卡数据完整性', () => {
     }
   });
 
-  it('敌人不占用玩家部署行', () => {
-    // 部署行被占会静默减少可上阵人数，玩家只会觉得「这关怎么少一个位置」
+  it('敌人不占用玩家部署区', () => {
+    // 部署格被占会静默减少可上阵人数，玩家只会觉得「这关怎么少一个位置」
     for (const stage of STAGES_MVP) {
-      const { h } = gridSize(stage.terrain);
-      const [top, bottom] = playerDeployRowRange(h);
       for (const e of stage.enemies) {
         expect(
-          e.y >= top && e.y <= bottom,
-          `「${stage.name}」的 ${e.name ?? e.defId} 生在玩家部署行 y=${e.y}`,
+          isPlayerDeployCell(stage, { x: e.x, y: e.y }),
+          `「${stage.name}」的 ${e.name ?? e.defId} 生在玩家部署区 (${e.x},${e.y})`,
         ).toBe(false);
       }
     }
@@ -152,8 +150,6 @@ describe('关卡数据完整性', () => {
    */
   it('不开闸门也能走到每个敌人（否则自动模式死锁）', () => {
     for (const stage of STAGES_MVP) {
-      const { w, h } = gridSize(stage.terrain);
-      const [top, bottom] = playerDeployRowRange(h);
       const passable = (x: number, y: number): boolean => {
         const t = stage.terrain[y]?.[x];
         return !!t && isPassable(t);
@@ -161,12 +157,12 @@ describe('关卡数据完整性', () => {
 
       const seen = new Set<string>();
       const queue: { x: number; y: number }[] = [];
-      for (let y = top; y <= bottom; y += 1) {
-        for (let x = 0; x < w; x += 1) {
-          if (!passable(x, y)) continue;
-          seen.add(`${x},${y}`);
-          queue.push({ x, y });
-        }
+      for (const cell of playerDeployCells(stage)) {
+        if (!passable(cell.x, cell.y)) continue;
+        const k = `${cell.x},${cell.y}`;
+        if (seen.has(k)) continue;
+        seen.add(k);
+        queue.push(cell);
       }
       while (queue.length > 0) {
         const c = queue.shift()!;
@@ -199,17 +195,13 @@ describe('关卡数据完整性', () => {
     }
   });
 
-  it('maxDeploy 不超过部署行的可站格数', () => {
+  it('maxDeploy 不超过部署区的可站格数', () => {
     for (const stage of STAGES_MVP) {
       if (stage.maxDeploy === undefined) continue;
-      const { w, h } = gridSize(stage.terrain);
-      const [top, bottom] = playerDeployRowRange(h);
       let room = 0;
-      for (let y = top; y <= bottom; y++) {
-        for (let x = 0; x < w; x++) {
-          const t = stage.terrain[y]?.[x];
-          if (t && isPassable(t)) room += 1;
-        }
+      for (const cell of playerDeployCells(stage)) {
+        const t = stage.terrain[cell.y]?.[cell.x];
+        if (t && isPassable(t)) room += 1;
       }
       expect(stage.maxDeploy, `「${stage.name}」maxDeploy 必须为正`).toBeGreaterThan(0);
       expect(stage.maxDeploy, `「${stage.name}」maxDeploy ${stage.maxDeploy} 超过部署区 ${room} 格`)
@@ -327,5 +319,18 @@ describe('副本节点与关卡的对应关系', () => {
       expect(battles[battles.length - 1]!.kind, `${d.id} 最后一战不是 boss`).toBe('boss');
       expect(bosses, `${d.id} 有多个 boss 节点`).toHaveLength(1);
     }
+  });
+
+  it('第六章布阵一律走侧翼，前五章不写 deployZone', () => {
+    CHAPTER_STAGE_INDICES.forEach((idxs, ci) => {
+      for (const i of idxs) {
+        const stage = STAGES_MVP[i]!;
+        if (ci === 5) {
+          expect(stage.deployZone, `「${stage.name}」应走侧翼`).toEqual({ kind: 'flanks', cols: 2 });
+        } else {
+          expect(stage.deployZone, `「${stage.name}」不该改布阵区`).toBeUndefined();
+        }
+      }
+    });
   });
 });

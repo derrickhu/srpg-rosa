@@ -1,0 +1,45 @@
+# 第六章杂兵 —— 四只祭仪构装一张 2x2（generate2dsprite --mode grid --rows 2 --cols 2）
+#
+# 骨俑 / 血鸦 / 祭牲犄兽 / 石坛守
+# 剪影语法：圆滚 / 宽伞 / 横长 / 穹顶。配色：干血暗红 + 骨白。禁紫禁粉。
+# 盾位石坛守必须是冷石灰、不带血色。
+
+A 2-column x 2-row grid of 4 CARTOON MONSTER CHARACTERS for a tactics game, drawn as game sprites.
+
+CRITICAL BACKGROUND: the entire background, including all space between and around the four
+creatures, must be 100% solid flat MAGENTA, hex #FF00FF. It is a chroma key and will be deleted.
+No white, no grey, no gradient, no ground shadow, no drop shadow.
+
+CAMERA: a 3/4 top-down view. Every creature faces the viewer. Same eye level, same angle.
+
+CRITICAL SIZE CONSTRAINT: displayed at only about 40 pixels tall. ONE bold chunky readable
+silhouette each. NO fine detail. Low-tier trash mobs, simpler than a hero.
+
+STYLE: chunky rounded toy-like cartoon. THICK near-black outline (#1A1410). FLAT saturated
+fills, at most 3 colours plus outline plus one highlight and one shadow. No gradients, no gore,
+no purple, no pink, no pixel art. Big simple eyes.
+
+Per-cell contents:
+
+TOP-LEFT — BONE PUPPET (sword slot). A fat rounded blob of pale BONE-WHITE (#E8E0D4) shaped
+like a wide teardrop sitting on the ground with no legs. Two or three dry dark-red blood spots
+(#7A2020) on the joints. Two big simple round black eyes. No arms, no ribcage detail, no teeth.
+
+TOP-RIGHT — GORE CROW (bow slot). A bird-creature whose WIDE WING-CAP takes the top two thirds,
+bone-white feathers (#E8E0D4) with a dry-blood red BEAK (#7A2020) as the only red. Short body
+peeking under the wings, two stubby feet, two simple eyes. The wing cap must be WIDER than the body.
+
+BOTTOM-LEFT — RITE HORN BEAST (cavalry slot). A four-legged beast standing low and long, front
+three-quarter so all four legs show. Bone-white body (#E8E0D4), TWO thick dry-red horns (#7A2020)
+pointing forward. Low, much WIDER than tall. No gore, no viscera.
+
+BOTTOM-RIGHT — SLAB WARDEN (shield slot). A heavy stone statue-guardian with an enormous COLD
+LIMESTONE dome (#8A8578 / #C4C0B8). NO blood red anywhere on this one. A small pale stone head
+with two eyes, four stubby stone feet. The dome dominates — a walking block of cold stone.
+
+LAYOUT RULES:
+1. EXACTLY 4 creatures in a clean 2x2.
+2. NO borders, NO frames, NO platforms.
+3. Each fills about 70% of its cell with magenta margin. Nothing crosses cells.
+4. Same outline thickness, same simplification, same camera.
+5. NO text, no labels, no watermark.

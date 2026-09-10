@@ -41,8 +41,8 @@ describe('stagesMvp 源码读写', () => {
 
   it('解析出全部主线关，且章节分组与 CHAPTERS 一致', () => {
     const keys = Object.keys(parsed.stages);
-    expect(keys.length).toBe(31);
-    expect(parsed.chapters.map((c) => c.length)).toEqual([3, 5, 6, 8, 8, 1]);
+    expect(keys.length).toBe(36);
+    expect(parsed.chapters.map((c) => c.length)).toEqual([3, 5, 6, 8, 8, 6]);
     // CHAPTERS 里引用的每个常量都必须真的存在，否则编辑器会开出一个空白关卡
     for (const row of parsed.chapters) {
       for (const key of row) expect(parsed.stages[key], `${key} 未解析到`).toBeDefined();
@@ -82,10 +82,11 @@ describe('stagesMvp 源码读写', () => {
     // 第四、五章各有专属魔物之后也走模板了（以前这两章是裸字面量）
     expect(parsed.stages.c4_1!.enemies.every((e) => e.template === 'mire')).toBe(true);
     expect(parsed.stages.c5_1!.enemies.every((e) => e.template === 'drake')).toBe(true);
+    expect(parsed.stages.c6_1!.enemies.every((e) => e.template === 'rite')).toBe(true);
     // 裸字面量分支仍要有覆盖：Boss / 精英是手写对象（要挂 name / boss / skillSkin），
     // 认成 null 才对。杂兵全走模板之后，这是唯一还会走「形式三」的写法。
-    expect(parsed.stages.c6_1!.enemies.map((e) => e.template))
-      .toEqual([null, 'rookie', 'rookie']);
+    expect(parsed.stages.c6_6!.enemies.map((e) => e.template))
+      .toEqual([null, 'rite', 'rite', 'riteYoung']);
   });
 
   it('什么都没改时，输出与原文件逐字节相同', () => {

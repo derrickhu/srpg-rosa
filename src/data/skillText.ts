@@ -96,6 +96,16 @@ export function describeSkillSpec(spec: SkillSpec): string[] {
   if (spec.lifestealRatio) {
     out.push(`吸血: 造成伤害的 ${Math.round(spec.lifestealRatio * 100)}%`);
   }
+  if (spec.terrainHitBonus) {
+    out.push(
+      `目标站在${spec.terrainHitBonus.terrainId === 'blood' ? '血池' : spec.terrainHitBonus.terrainId}上时伤害 ×${spec.terrainHitBonus.mul}`,
+    );
+  }
+  for (const te of spec.onCastTerrainEffects ?? []) {
+    if (te.kind === 'transmute') {
+      out.push(`范围内可通行格变为${te.to === 'blood' ? '血池' : te.to}`);
+    }
+  }
   if (spec.executeBonus) {
     const line = Math.round(spec.executeBonus.belowHpRatio * 100);
     const plus = Math.round((spec.executeBonus.mul - 1) * 100);

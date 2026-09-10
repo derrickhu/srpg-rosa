@@ -1,3 +1,4 @@
+import type { DeployZone } from '@/battle/deployZone';
 import type { TerrainId, TroopKind, UnitKind } from '@/battle/types';
 import { emptyTerrain, type TerrainGrid } from '@/battle/grid';
 import type { AiDifficulty } from '@/battle/ai';
@@ -55,6 +56,8 @@ export interface StageDefMvp {
   isBoss?: boolean;
   /** 本关最大可上阵人数（默认 3） */
   maxDeploy?: number;
+  /** 缺省南两行。第六章用左右翼 */
+  deployZone?: DeployZone;
 }
 
 /**
@@ -117,10 +120,10 @@ function euid(): string {
  * | 3 要塞攻防 | 6 |  8 | 城墙、机关/闸门 | 地形挡视线，而且可以被操作 |
  * | 4 毒沼泥潭 | 8 | 11 | 河流、沼泽 | 走得慢、打得软、还掉血 |
  * | 5 龙岭绝巅 | 8 | 11 | 深渊 | 绝壁切断路线但不挡箭 |
- * | 6 血牙祭坛 | 1 |  1 | — | 原第一章末战：血牙酋长 |
+ * | 6 血牙祭坛 | 6 |  8 | 血池 | 争池续航；战后篇，终章仍是龙岭 |
  *
  * 节点数由 `dungeonCatalog.buildNodes` 从关数推出（每两场战斗插一个补给点），
- * 3/5/6/8/8/1 关对应 4/7/8/11/11/1 个节点。教学章打完精英即通关，酋长单独成章。
+ * 3/5/6/8/8/6 关对应 4/7/8/11/11/8 个节点。教学章打完精英即通关。酋长不进第六章。
  *
  * 推论：一关只能用**它所在章节及更早**登场过的地形。想给第四章的图摆一堵墙可以
  * （城墙第三章就登场了），想给第二章的图摆一条河不行。地形券的售卖章节同理，
@@ -130,7 +133,7 @@ function euid(): string {
 // ─── Chapter 1: 草原战线 · 高地 ───
 //
 // 三关：接触战 → 远程威胁 → 精英围剿。打完百夫长即通关。**整章只有平原和高地。**
-// 原末战「血牙酋长」挪到第六章，教学章不再用 Boss 收尾。
+// 原末战「血牙酋长」退役到试炼场，教学章不再用 Boss 收尾，祭坛也不再用他。
 //
 // 玩家要学的就三件事：怎么移动、站高地为什么打得更疼、怎么集火。
 // 每张图都给一对可争夺的缓丘，三关反复问同一个问题——这个丘归谁。
@@ -257,7 +260,7 @@ const c1_3: StageBlueprint = {
  * 所以同一只怪在这一章的每一关都是同样的威胁。挂在关卡上迟早会出现
  * 「第 17 关的吹箭虫会下毒、第 18 关的不会」，而玩家只会觉得这游戏的怪不讲道理。
  *
- * 投放曲线（第一章 0 条 → 第二、三章各 1 条 → 第四章 2 条 → 终章 4 条）
+ * 投放曲线（第一章 0 条 → 第二、三章各 1 条 → 第四章 2 条 → 终章 4 条 → 祭坛 2 条）
  * 和技能本身的设计依据都在 `skillCatalog` 的杂兵技能段落。
  */
 export interface MookTemplate {
@@ -1237,49 +1240,148 @@ const c5_8: StageBlueprint = {
 
 // ─── Chapter 6: 血牙祭坛 ───
 //
-// 单关 Boss：原第一章末战整张挪过来。教学章打完精英就通关，酋长单独成章。
+// 战后篇。终章身份仍是第五章龙岭。酋长不进本章（机制与脸已占用，试炼场可留）。
+// 新动词：血池每回 +6。布阵走左右各 2 列南半区，中间过道留给池和敌人。
+
+const CH6_FLANKS: DeployZone = { kind: 'flanks', cols: 2 };
 
 /**
- * 血牙酋长踞守祭坛高台（血牙咆哮 = savage_roar AoE+自强化）。
- *
- * 原版这张图在高台两侧摆了城墙、在南侧铺了四片森林。城墙和森林都推到后面章节了，
- * 换成祭坛前的两块缓丘——玩家仍然有「先占位再压上去」的中继点，
- * 但这一关考的仍然是第一章教的那一件事，不夹带新规则。
+ * 第六章杂兵：祭仪构装。骨白浮在干血上。弓吸血、盾奶人，对标第四章两条毒。
  */
+export const CHAPTER6_RITE: Record<TroopKind, MookTemplate> = {
+  sword: { name: '骨俑', youngName: '残骨俑', animSet: 'bonepup' },
+  bow: { name: '血鸦', youngName: '幼血鸦', animSet: 'gorecrow', skillId: 'rite_peck' },
+  cavalry: { name: '祭牲犄兽', youngName: '幼犄兽', animSet: 'ritehorn' },
+  shield: { name: '石坛守', youngName: '残坛守', animSet: 'slabward', skillId: 'rite_chant' },
+};
+
+function rite(defId: TroopKind, x: number, y: number): StageEnemySpawn {
+  return mook(CHAPTER6_RITE[defId], defId, x, y);
+}
+
+function riteYoung(defId: TroopKind, x: number, y: number): StageEnemySpawn {
+  return mookYoung(CHAPTER6_RITE[defId], defId, x, y);
+}
+
 const c6_1: StageBlueprint = {
-  title: '血牙酋长',
-  goldReward: 24,
-  terrain: withHighCells(emptyTerrain(9, 11), [
-    { x: 4, y: 2 }, { x: 4, y: 3 },
-    { x: 3, y: 7 }, { x: 5, y: 7 },
+  title: '祭阶初登',
+  goldReward: 28,
+  deployZone: CH6_FLANKS,
+  terrain: withCells(emptyTerrain(10, 11), [
+    { x: 4, y: 5, t: 'blood' }, { x: 5, y: 5, t: 'blood' },
+  ]),
+  enemies: [
+    rite('sword', 4, 2),
+    rite('bow', 5, 1),
+  ],
+  aiDifficulty: 'normal',
+  maxDeploy: 5,
+};
+
+const c6_2: StageBlueprint = {
+  title: '血渠夹道',
+  goldReward: 30,
+  deployZone: CH6_FLANKS,
+  terrain: withCells(emptyTerrain(10, 11), [
+    { x: 4, y: 2, t: 'blood' }, { x: 4, y: 3, t: 'blood' },
+    { x: 4, y: 4, t: 'blood' }, { x: 4, y: 5, t: 'blood' },
+    { x: 4, y: 6, t: 'blood' }, { x: 4, y: 7, t: 'blood' },
+  ]),
+  enemies: [
+    rite('shield', 4, 3),
+    rite('sword', 5, 3),
+    rite('bow', 4, 1),
+  ],
+  aiDifficulty: 'normal',
+  maxDeploy: 5,
+};
+
+const c6_3: StageBlueprint = {
+  title: '双池对峙',
+  goldReward: 31,
+  deployZone: CH6_FLANKS,
+  terrain: withCells(emptyTerrain(10, 11), [
+    { x: 2, y: 5, t: 'blood' }, { x: 2, y: 6, t: 'blood' },
+    { x: 7, y: 5, t: 'blood' }, { x: 7, y: 6, t: 'blood' },
+  ]),
+  enemies: [
+    rite('sword', 3, 2),
+    rite('bow', 3, 1),
+    rite('sword', 6, 2),
+    rite('bow', 6, 1),
+  ],
+  aiDifficulty: 'normal',
+  maxDeploy: 5,
+};
+
+const c6_4: StageBlueprint = {
+  title: '枯骨回廊',
+  goldReward: 32,
+  deployZone: CH6_FLANKS,
+  terrain: withCells(emptyTerrain(10, 11), [
+    { x: 4, y: 2, t: 'high' }, { x: 5, y: 2, t: 'high' },
+    { x: 4, y: 3, t: 'blood' }, { x: 5, y: 3, t: 'blood' },
+    { x: 1, y: 6, t: 'high' }, { x: 8, y: 6, t: 'high' },
+  ]),
+  enemies: [
+    rite('bow', 4, 2),
+    rite('sword', 5, 3),
+    rite('shield', 5, 2),
+  ],
+  aiDifficulty: 'hard',
+  maxDeploy: 5,
+};
+
+const c6_5: StageBlueprint = {
+  title: '守坛祭司',
+  goldReward: 36,
+  deployZone: CH6_FLANKS,
+  terrain: withCells(emptyTerrain(10, 11), [
+    { x: 4, y: 3, t: 'blood' }, { x: 5, y: 3, t: 'blood' },
+    { x: 4, y: 4, t: 'blood' }, { x: 5, y: 4, t: 'blood' },
   ]),
   enemies: [
     {
-      defId: 'sword', x: 4, y: 2, uid: euid(),
-      name: '血牙酋长',
+      defId: 'sword', x: 5, y: 3, uid: euid(),
+      name: '守坛长·赫兹',
+      animSet: 'altarwarden',
+      // 6 级 5 人 + 1.35 缩放时 300 血接近白给（sim 98%）。总血量是台阶旋钮。
+      stats: { maxHp: 460, atk: 30, spd: 6 },
+    },
+    rite('shield', 4, 4),
+    rite('bow', 3, 2),
+    riteYoung('sword', 6, 2),
+  ],
+  aiDifficulty: 'hard',
+  maxDeploy: 5,
+};
+
+const c6_6: StageBlueprint = {
+  title: '血牙祭主',
+  goldReward: 42,
+  deployZone: CH6_FLANKS,
+  terrain: withCells(emptyTerrain(10, 11), [
+    { x: 4, y: 2, t: 'blood' }, { x: 5, y: 2, t: 'blood' },
+    { x: 4, y: 3, t: 'blood' }, { x: 5, y: 3, t: 'blood' },
+    { x: 2, y: 4, t: 'blood' }, { x: 7, y: 4, t: 'blood' },
+  ]),
+  enemies: [
+    {
+      defId: 'sword', x: 5, y: 2, uid: euid(),
+      name: '祭主·戈尔什',
       boss: true,
-      animSet: 'bloodfang',
-      // 这三只的血/攻是一起调出来的，别单独动其中一个。
-      //
-      // 原教学章末战：241 血 + 咆哮每次 +6 攻，首通三人无药会磨太久。
-      // 血降到 210、咆哮改为 +3，缩短消耗，咆哮叠攻也不再那么陡。
-      // 这场是消耗战且带取整断点，微调必须重跑 `chapter6Sim`。
-      stats: { maxHp: 210, atk: 20, spd: 6 },
-      skillSkin: 'bloodfang_roar',
+      animSet: 'ritespeaker',
+      // 裸打 260 血在 6 级 5 人下是 94%。血祭会吸血，但先要活过第一轮集火。
+      stats: { maxHp: 400, atk: 28, spd: 6 },
+      skillSkin: 'ritespeaker_drain',
     },
-    {
-      // 护卫是拖延来源，不是伤害来源：血一高就让弓手多输出几轮
-      ...rookie('shield', 4, 4),
-      stats: { maxHp: 104, atk: 10 },
-    },
-    {
-      // 弓手是这一关的主要掉血来源，攻击比血量敏感得多
-      ...rookie('bow', 2, 2),
-      stats: { maxHp: 52, atk: 15 },
-    },
+    rite('shield', 4, 3),
+    rite('bow', 3, 1),
+    riteYoung('sword', 6, 2),
   ],
   isBoss: true,
-  maxDeploy: 4,
+  aiDifficulty: 'hard',
+  maxDeploy: 5,
 };
 
 /**
@@ -1302,7 +1404,7 @@ const CHAPTERS: StageBlueprint[][] = [
   [c3_1, c3_2, c3_3, c3_4, c3_5, c3_6],
   [c4_1, c4_2, c4_3, c4_4, c4_5, c4_6, c4_7, c4_8],
   [c5_1, c5_2, c5_3, c5_4, c5_5, c5_6, c5_7, c5_8],
-  [c6_1],
+  [c6_1, c6_2, c6_3, c6_4, c6_5, c6_6],
 ];
 
 function toStages(blueprints: readonly StageBlueprint[], startId: number): StageDefMvp[] {

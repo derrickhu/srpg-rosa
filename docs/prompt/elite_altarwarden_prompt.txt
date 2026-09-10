@@ -1,0 +1,19 @@
+第六章精英「守坛长·赫兹」单帧
+产出 → images/units/altarwarden.png + images/anim/altarwarden.png
+生成器：Cursor 内置 GenerateImage，aspect_ratio 1:1
+风格块：docs/prompt/_style_block_v2.txt
+禁紫禁粉。冷石 + 骨白饰。人形祭司甲，按英雄身高，不是杂兵矮块。
+
+---
+
+A single CARTOON CHARACTER SPRITE for a tactics game, 3/4 top-down, facing the viewer.
+
+CRITICAL BACKGROUND: 100% solid flat MAGENTA #FF00FF. No shadow on the background.
+
+STYLE: extreme super-deformed mascot. Head including helmet is about HALF total height.
+Chunky toy-like. Thick near-black outline #1A1410. Flat fills, 4-6 colours, one cream highlight.
+NO belts, straps, rivets, text, watermark. No purple, no pink, no gore.
+
+CHARACTER: a stone-altar warden priest in cold limestone grey armour (#8A8578) with a bone-white
+collar (#E8E0D4). One big simple stone staff. Mitten hands. Two simple dark eyes. Friendly-menacing,
+not scary. Stands on invisible ground. Fills about 70% of the image with magenta margin.

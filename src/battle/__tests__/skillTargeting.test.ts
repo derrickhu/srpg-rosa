@@ -109,6 +109,23 @@ describe('技能目标类型（自/友/敌）', () => {
     });
     expect(events.some((e) => e.type === 'statusNote' && e.text === '嘲讽')).toBe(true);
   });
+
+  it('祭鼓只选残血友军，满血不放', () => {
+    const self = unit('e1', 'shield', 'enemy', { x: 1, y: 1 }, 'rite_chant');
+    const full = unit('e2', 'sword', 'enemy', { x: 1, y: 0 });
+    const hurt = unit('e3', 'bow', 'enemy', { x: 0, y: 1 });
+    hurt.hp = 10;
+    const terrain = emptyTerrain(3, 3);
+
+    const fullOnly = skillAiming(self, UNIT_DEFS, [self, full], terrain);
+    expect(fullOnly?.candidates ?? []).toEqual([]);
+
+    const mixed = skillAiming(self, UNIT_DEFS, [self, full, hurt], terrain);
+    expect(mixed?.candidates).toEqual(['e3']);
+
+    const events = castSkillManual(self, UNIT_DEFS, [self, full, hurt], terrain, 'e3');
+    expect(events.some((e) => e.type === 'heal' && e.target === 'e3')).toBe(true);
+  });
 });
 
 describe('技能表形状与效果口径一致', () => {

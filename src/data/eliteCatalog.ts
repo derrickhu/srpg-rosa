@@ -56,7 +56,7 @@ export const ELITE_CHAPTERS: readonly EliteChapterMeta[] = [
   {
     id: 'elite_bloodfang',
     officialId: 'dungeon_bloodfang',
-    desc: '同一座祭坛，酋长的部下更难打。通关血牙后可挑战。',
+    desc: '同一座祭坛，祭仪更狠。通关祭坛后可挑战。',
   },
 ];
 

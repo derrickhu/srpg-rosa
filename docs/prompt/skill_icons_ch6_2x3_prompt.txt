@@ -1,0 +1,32 @@
+第六章技能图标 2x3
+产出 → skill_rite_peck, skill_rite_chant, skill_temp_rt_channel,
+        skill_temp_rt_siphon, skill_temp_rt_oath, skill_ritespeaker_drain
+生成器：Cursor 内置 GenerateImage，aspect_ratio 1:1
+切图：python3 scripts/split-tile-sheet.py --grid 2x3 --size 72
+
+配色：干血暗红 #B42A22 / #7A2020 + 骨白 #E8E0D4 + 冷石灰 #8A8578。禁紫禁粉。
+压在米白卡上，必须有厚近黑描边。
+
+---
+
+A 2-column x 3-row grid of 6 GAME UI ICONS for a cartoon fantasy tactics mobile game.
+Theme: dried blood ritual, bone-white and cold stone. NOT fresh gore.
+
+CRITICAL BACKGROUND: 100% solid flat MAGENTA #FF00FF between and around icons.
+
+CRITICAL SIZE: displayed at 26-56 pixels. ONE bold chunky silhouette each. NO thin lines,
+NO small parts, NO text, NO numbers.
+
+CRITICAL: sit on cream-white card. THICK near-black outline #1A1410. Flat fills, at most
+3 colours plus outline. No glow, no bevel, no purple, no pink.
+
+Per-cell, left-to-right then top-to-bottom:
+
+Cell 1 (BLOOD BEAK) — a fat bird BEAK in dry blood red, chunky, pointing down-right.
+Cell 2 (RITUAL DRUM) — a round stone DRUM, cold limestone grey, bone-white skin on top.
+Cell 3 (BLOOD CHANNEL) — a chunky U-shaped stone gutter filled with a simple dry-red pool.
+Cell 4 (SIPHON THORN) — a short fat thorn / spike in dry blood red, pointing up-right.
+Cell 5 (BLOOD OATH) — two chunky bone-white tokens overlapping, a small dry-red mark.
+Cell 6 (SOUL DRAIN) — a simple inward spiral swirl, white-hot core to dry-red rim, chunky.
+
+LAYOUT: exactly 6 icons, no frames, 70% of each cell, magenta margin. NO text.

@@ -60,6 +60,9 @@ const SKILL_FAMILY: Record<string, SkillSfxFamily> = {
   wall_ram: 'physical',
   wyrm_dash: 'physical',
   ash_harden: 'physical',
+  rite_peck: 'physical',
+  temp_rt_channel: 'physical',
+  temp_rt_siphon: 'physical',
 
   ember: 'fire',
   flame_ring: 'fire',
@@ -81,12 +84,15 @@ const SKILL_FAMILY: Record<string, SkillSfxFamily> = {
   heal_touch: 'holy',
   ward_prayer: 'holy',
   field_bless: 'holy',
+  rite_chant: 'holy',
+  temp_rt_oath: 'holy',
 
   savage_roar: 'boss',
   wild_burn: 'boss',
   warlord_breach: 'boss',
   swamp_miasma: 'boss',
   dragon_breath: 'boss',
+  blood_rite: 'boss',
 };
 
 /** 词条改过的特效键、Boss 皮肤 vfxId。回放层优先读事件上的 vfxId。 */
@@ -97,6 +103,7 @@ const VFX_FAMILY: Record<string, SkillSfxFamily> = {
   bloodfang_breach: 'boss',
   mirequeen_miasma: 'boss',
   drake_cataclysm: 'boss',
+  ritespeaker_drain: 'boss',
 };
 
 const BOSS_SKILL_IDS = new Set([
@@ -105,6 +112,7 @@ const BOSS_SKILL_IDS = new Set([
   'warlord_breach',
   'swamp_miasma',
   'dragon_breath',
+  'blood_rite',
 ]);
 
 function inferSkillFamily(spec: SkillSpec): SkillSfxFamily {
@@ -152,9 +160,10 @@ const TERRAIN_PLACE_SFX: Partial<Record<TerrainId, SfxId>> = {
   high: 'sfx_place_high',
   forest: 'sfx_place_forest',
   wall: 'sfx_place_wall',
+  blood: 'sfx_place_blood',
 };
 
-/** 布阵放地形：高地 / 森林 / 城墙各一条，避免三种券听起来像同一声落子 */
+/** 布阵放地形：高地 / 森林 / 城墙 / 血池各一条，避免几种券听起来像同一声落子 */
 export function sfxForTerrainPlace(id: TerrainId): SfxId {
   return TERRAIN_PLACE_SFX[id] ?? 'sfx_deploy';
 }

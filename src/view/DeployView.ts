@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js';
 import { makeText } from '@/theme/typography';
-import { playerDeployRowRange } from '@/battle/constants';
+import { isPlayerDeployCell } from '@/battle/deployZone';
 import { gridSize } from '@/battle/grid';
 import type { TerrainId } from '@/battle/types';
 import { UNIT_DEFS } from '@/data/unitDefs';
@@ -207,7 +207,6 @@ export function createDeployView(
   const endless = isEndlessDungeon(run.dungeonId);
   const st0 = currentStage(state);
   const { w: GW, h: GH } = gridSize(st0.terrain);
-  const [depR0, depR1] = playerDeployRowRange(GH);
   const {
     cell: CELL,
     originX: ORIGIN_X,
@@ -220,7 +219,6 @@ export function createDeployView(
     marginX: layoutMarginX,
     labelFs,
   } = computeDeployLayout(screen, GW, GH);
-  const deployRowSet = new Set<number>([depR0, depR1]);
 
   const root = new PIXI.Container();
 
@@ -409,8 +407,8 @@ export function createDeployView(
   root.addChild(handLayer);
   const benchRects = new Map<string, { x: number; y: number; w: number; h: number }>();
 
-  function isDeployRow(y: number): boolean {
-    return deployRowSet.has(y);
+  function isDeployCell(x: number, y: number): boolean {
+    return isPlayerDeployCell(currentStage(state), { x, y });
   }
 
   function redrawGrid(): void {
@@ -425,7 +423,7 @@ export function createDeployView(
         const tc = createTerrainCell(ter, CELL);
         tc.x = px;
         tc.y = py;
-        if (!isDeployRow(y)) tc.alpha = 0.7;
+        if (!isDeployCell(x, y)) tc.alpha = 0.7;
         tc.eventMode = 'static';
         tc.cursor = 'pointer';
         tc.hitArea = new PIXI.Rectangle(0, 0, CELL - 2, CELL - 2);
@@ -438,11 +436,11 @@ export function createDeployView(
         if (badge) {
           badge.x += px;
           badge.y += py;
-          if (!isDeployRow(y)) badge.alpha = 0.7;
+          if (!isDeployCell(x, y)) badge.alpha = 0.7;
           gridLayer.addChild(badge);
         }
 
-        if (isDeployRow(y)) {
+        if (isDeployCell(x, y)) {
           const highlight = new PIXI.Graphics();
           highlight.lineStyle(1.5, 0x44bb44, 0.7);
           highlight.beginFill(0x44bb44, 0.12);

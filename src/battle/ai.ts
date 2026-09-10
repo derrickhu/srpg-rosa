@@ -136,6 +136,7 @@ function evaluateCell(
    * 只是不会没事站在里面。
    */
   score -= tSpec.dotPerRound * DOT_AVOID_WEIGHT;
+  score += (tSpec.healPerRound ?? 0) * HEAL_SEEK_WEIGHT;
 
   if (difficulty === 'hard') {
     score += tSpec.atkMul > 1 ? 5 : 0;
@@ -148,6 +149,8 @@ function evaluateCell(
 
 /** 每 1 点轮首掉血折算成多少「伤害分」，见 `evaluateCell` */
 const DOT_AVOID_WEIGHT = 1.5;
+/** 血池回血的镜像权重。低于一次普攻，残血击杀仍优先 */
+const HEAL_SEEK_WEIGHT = 1.0;
 
 export function chooseTurnAction(
   self: UnitState,

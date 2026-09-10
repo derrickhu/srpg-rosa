@@ -37,6 +37,7 @@ const PACKAGED_SFX = [
   'sfx_place_high',
   'sfx_place_forest',
   'sfx_place_wall',
+  'sfx_place_blood',
   'sfx_sweep',
   'sfx_step',
   'sfx_undo',
@@ -104,7 +105,7 @@ describe('技能音效族', () => {
     for (const skin of Object.values(ENEMY_SKILL_SKINS)) {
       const family = skillSfxFamily(skin.implementsId, skin.vfxId);
       expect(FAMILIES, `皮肤 ${skin.id}`).toContain(family);
-      if (skin.vfxId && /bloodfang|mirequeen|drake_cataclysm/.test(skin.vfxId)) {
+      if (skin.vfxId && /bloodfang|mirequeen|drake_cataclysm|ritespeaker_drain/.test(skin.vfxId)) {
         expect(family, `${skin.id} 该走 Boss 族`).toBe('boss');
       }
     }
@@ -141,10 +142,11 @@ describe('技能音效族', () => {
     expect('sfx_coin').not.toBe('sfx_soul_spend');
   });
 
-  it('布阵放地形三种券各一条', () => {
+  it('布阵放地形四种券各一条', () => {
     expect(sfxForTerrainPlace('high')).toBe('sfx_place_high');
     expect(sfxForTerrainPlace('forest')).toBe('sfx_place_forest');
     expect(sfxForTerrainPlace('wall')).toBe('sfx_place_wall');
+    expect(sfxForTerrainPlace('blood')).toBe('sfx_place_blood');
     expect(sfxForTerrainPlace('plain')).toBe('sfx_deploy');
   });
 });

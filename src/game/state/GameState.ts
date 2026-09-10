@@ -1,3 +1,4 @@
+import type { DeployZone } from '@/battle/deployZone';
 import type { GroundDrop, TerrainId, TimedBattleEffect, UnitKind, Vec2 } from '@/battle/types';
 import type { StageDefMvp } from '@/data/stagesMvp';
 import { STAGES_MVP } from '@/data/stagesMvp';
@@ -130,6 +131,8 @@ export interface RunState {
   lastBattlePlacements?: PlacementEntry[];
   /** 上一场地图高度。用来把前后排映射到下一张图，而不是死盯绝对 y。 */
   lastBattleGridH?: number;
+  lastBattleGridW?: number;
+  lastBattleDeployZone?: DeployZone;
   /** 地形券库存：terrainId → 剩余放置次数 */
   terrainCharges: Record<string, number>;
   terrainOverlay: TerrainOverlayCell[];

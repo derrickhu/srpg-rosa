@@ -42,7 +42,7 @@ export type ShopPoolRow =
   | { category: 'tempSkill'; skillId: string; price?: number };
 
 /** 玩家可通过地形券放置的地形类型 */
-export const PLACEABLE_TERRAIN_IDS: readonly TerrainId[] = ['high', 'forest', 'wall'];
+export const PLACEABLE_TERRAIN_IDS: readonly TerrainId[] = ['high', 'forest', 'wall', 'blood'];
 
 /** 地形券显示名（如「高地券」） */
 export function terrainTicketName(id: TerrainId): string {
@@ -102,9 +102,10 @@ const r = (rows: ShopPoolRow[]): ShopPoolRow[] => rows;
  *    花钱买一个他读不懂的东西。登场章节见 `stagesMvp` 的投放曲线总纲：
  *    高地（章 1）、森林（章 2）、城墙（章 3）。
  *
- * 2. **临时技能每章只新增 1/2/3/4/4 招。** 原先第一章一口气开四招——那是四段
+ * 2. **临时技能每章只新增 1/2/3/4/4/3 招。** 原先第一章一口气开四招——那是四段
  *    要读的说明文字，出现在玩家连高地都还没用熟的时候。现在第一章只有一招
- *    （野草缠足：最便宜、最好懂的控制），后面随着战斗变长再加。
+ *    （野草缠足：最便宜、最好懂的控制），后面随着战斗变长再加。第五章是终章
+ *    四招收口；第六章战后篇另开三招，不再从第五章拆。
  *
  * 3. **池子是「本章新增 + 上一章」的滑动窗口，不是全量累积。** 全量累积到第五章
  *    会有 14 招，而商店一次只 roll 3 件（还保底一件药剂）——想要的那招基本抽不到，
@@ -117,7 +118,7 @@ const r = (rows: ShopPoolRow[]): ShopPoolRow[] => rows;
  *    的第二层选择。教程店单独标价，不受这条约束。
  */
 
-/** 各章**新增**的临时技能。总计 14 招，恰好是现有全部临时技能 */
+/** 各章**新增**的临时技能。1–5 章 14 招 + 祭坛 3 招 */
 const TEMP_NEW_BY_CHAPTER: ShopPoolRow[][] = [
   // 章 1 草原：一招就够。控制类里最便宜、最好懂的那个
   r([{ category: 'tempSkill', skillId: 'temp_gl_snare', price: 12 }]),
@@ -140,12 +141,18 @@ const TEMP_NEW_BY_CHAPTER: ShopPoolRow[][] = [
     { category: 'tempSkill', skillId: 'temp_ft_banner', price: 22 },
     { category: 'tempSkill', skillId: 'field_bless', price: 22 },
   ]),
-  // 章 5 龙岭：剩下的四招一起开，终章不再留新东西
+  // 章 5 龙岭：终章四招收口。祭坛是战后篇，另开第 6 行
   r([
     { category: 'tempSkill', skillId: 'temp_gl_horn', price: 22 },
     { category: 'tempSkill', skillId: 'temp_gl_swarm', price: 24 },
     { category: 'tempSkill', skillId: 'temp_fo_warden', price: 22 },
     { category: 'tempSkill', skillId: 'war_shout', price: 24 },
+  ]),
+  // 章 6 血牙祭坛：血渠 / 汲血 / 血契
+  r([
+    { category: 'tempSkill', skillId: 'temp_rt_channel', price: 24 },
+    { category: 'tempSkill', skillId: 'temp_rt_siphon', price: 22 },
+    { category: 'tempSkill', skillId: 'temp_rt_oath', price: 22 },
   ]),
 ];
 
@@ -227,12 +234,19 @@ const POOL_DRAGON = r([
   ...tempSkillPool(5),
 ]);
 
-/** 章 6 血牙祭坛：单关 Boss，没有补给点。池子仍留药，避免完整性测试把「能买到药」漏掉。 */
+/**
+ * 章 6 血牙祭坛：血池券是这一章的关键一格。
+ * 治疗药略贵——池已经在给回血。
+ */
 const POOL_BLOODFANG = r([
-  { category: 'terrain', terrainId: 'high', price: 20 },
-  { category: 'potion', potionId: 'heal', price: 22 },
+  { category: 'terrain', terrainId: 'high', price: 22 },
+  { category: 'terrain', terrainId: 'forest', price: 22 },
+  { category: 'terrain', terrainId: 'wall', price: 22 },
+  { category: 'terrain', terrainId: 'blood', price: 22 },
+  { category: 'potion', potionId: 'heal', price: 24 },
   { category: 'potion', potionId: 'draught', price: 22 },
-  ...tempSkillPool(5),
+  { category: 'potion', potionId: 'slow', price: 22 },
+  ...tempSkillPool(6),
 ]);
 
 /**
@@ -389,21 +403,21 @@ export const DUNGEON_DEFS: DungeonDef[] = [
   {
     id: 'dungeon_bloodfang',
     name: '血牙祭坛',
-    desc: '草原尽头的祭坛。血牙酋长还在等你。',
+    desc: '龙岭之后，血牙残部退回圣地。血池给人续命，祭主却把续命变成抽血。',
     nodes: NODES_BLOODFANG,
     roguelikePool: POOL_BLOODFANG,
-    metaReward: 12,
+    metaReward: 24,
     stars: [
-      { cond: { kind: 'clear' }, soul: 4 },
-      { cond: { kind: 'maxRounds', max: roundCap(NODES_BLOODFANG) }, soul: 4 },
-      { cond: { kind: 'maxDeaths', max: 0 }, soul: 4 },
+      { cond: { kind: 'clear' }, soul: 8 },
+      { cond: { kind: 'maxDeaths', max: 1 }, soul: 8 },
+      { cond: { kind: 'maxRounds', max: roundCap(NODES_BLOODFANG) }, soul: 8 },
     ],
-    enemyScaleBase: 1.0,
-    maxParty: 4,
+    enemyScaleBase: 1.35,
+    maxParty: 5,
     unlock: { kind: 'clearDungeon', dungeonId: 'dungeon_dragon' },
-    themeColor: 0x8a4a2a,
-    art: 'chapter_grassland',
-    battleBg: 'battle_bg',
+    themeColor: 0x6a2424,
+    art: 'chapter_altar',
+    battleBg: 'battle_bg_altar',
   },
 ];
 

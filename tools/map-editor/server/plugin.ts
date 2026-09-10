@@ -43,6 +43,7 @@ interface RuntimeStage {
   id: number;
   name: string;
   enemies: RuntimeStageEnemy[];
+  deployZone?: { kind: 'south' } | { kind: 'flanks'; cols: 1 | 2 };
 }
 
 function json(res: ServerResponse, code: number, body: unknown): void {
@@ -94,6 +95,7 @@ export function mapEditorPlugin(): Plugin {
             atkMul: s.atkMul as number,
             defMul: s.defMul as number,
             dotPerRound: s.dotPerRound as number,
+            healPerRound: (s.healPerRound as number | undefined) ?? 0,
             passable: terrainMod.isPassable(id) as boolean,
             blocksSight: !!s.blocksSight,
             opensGates: !!s.opensGates,
@@ -152,6 +154,7 @@ export function mapEditorPlugin(): Plugin {
                 aiDifficulty: unquote(propText(s, 'aiDifficulty')),
                 maxDeploy: deploy === null ? null : Number(deploy),
                 isBoss: !!s.props.isBoss,
+                deployZone: rt?.deployZone ?? { kind: 'south' },
                 width: s.terrain.width,
                 height: s.terrain.height,
                 grid: s.terrain.grid,
@@ -194,7 +197,7 @@ export function mapEditorPlugin(): Plugin {
           terrains,
           characters,
           troopKinds: Object.keys(unitMod.UNIT_DEFS as Record<string, unknown>),
-          templates: ['rookie', 'forest', 'forestYoung', 'garrison', 'garrisonGreen'],
+          templates: ['rookie', 'forest', 'forestYoung', 'garrison', 'garrisonGreen', 'rite', 'riteYoung'],
         };
       };
 

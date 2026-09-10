@@ -1,0 +1,20 @@
+第六章「血牙祭坛」血池地形贴图
+产出 → images/terrain/blood.png（约 128px，有机边缘）
+生成器：Cursor 内置 GenerateImage，aspect_ratio 1:1
+后处理：品红抠色 + 缩到约 128，不要黑描边（地形不描边，角色才描）
+
+---
+
+A single TERRAIN TILE sprite for a cartoon tactics game, a flat decal that will be pasted on top of a separate stone-altar battle background.
+
+CRITICAL BACKGROUND: the entire background must be 100% solid flat MAGENTA, hex #FF00FF. Not white, not grey, not a gradient. It is a chroma key and will be deleted.
+
+CRITICAL — NO BLACK OUTLINES. Terrain must NOT have thick black outlines. Soft darker-red rim only.
+
+PERSPECTIVE: straight top-down. NOT isometric. Organic irregular edges like a puddle seen from above, never a perfect square.
+
+CONTENTS: a shallow pool of DRIED DARK BLOOD, not fresh neon gore. Deep dried-blood red #7A2020 with a slightly darker rim #4A1010 and one small dull highlight #A83830. A few soft bubbles. Flat like a sticker. No skulls, no bones, no runes, no glow, no purple, no pink, no green.
+
+LOW FREQUENCY: displayed about 40 pixels wide. Big soft shapes only.
+
+NO text, no labels, no watermark. The pool fills about 70% of the image with a clear magenta margin.

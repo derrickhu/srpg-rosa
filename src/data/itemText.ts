@@ -73,6 +73,7 @@ export function describeTerrainTicketLines(terrainId: TerrainId): string[] {
     lines.push(pct > 0 ? `站上承伤 -${pct}%` : `站上承伤 +${-pct}%`);
   }
   if (t.dotPerRound > 0) lines.push(`站上每回合 -${t.dotPerRound} HP`);
+  if ((t.healPerRound ?? 0) > 0) lines.push(`站上每回合 +${t.healPerRound} HP`);
   return lines;
 }
 

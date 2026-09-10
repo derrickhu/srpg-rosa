@@ -1,6 +1,7 @@
 import type { SkillDamageSpec, SkillSpec } from '@/data/skillCatalog';
 import { applyCritToDamage, type CritRollResult } from '../crit';
 import { computeDamage, counterMultiplier, terrainAttackMul, terrainDefenseMul } from '../damage';
+import { getTerrainAt } from '../grid';
 import type { UnitDef } from '../types';
 import type { SkillDamageContext } from './context';
 
@@ -87,6 +88,12 @@ function executeMul(ctx: SkillDamageContext): number {
   return isExecuting(ctx.spec, ctx.target.hp, ctx.targetDef.maxHp) ? ex.mul : 1;
 }
 
+function terrainHitMul(ctx: SkillDamageContext): number {
+  const bonus = ctx.spec.terrainHitBonus;
+  if (!bonus) return 1;
+  return getTerrainAt(ctx.terrain, ctx.target.pos) === bonus.terrainId ? bonus.mul : 1;
+}
+
 /**
  * 这一击有没有踩到处决线。结算和飘字问的是同一个函数，两边算法分家的话
  * 会出现「飘了处决但伤害没涨」这种查不出来的对不上。
@@ -114,6 +121,8 @@ export function computeSkillHitDamage(ctx: SkillDamageContext): CritRollResult {
   let dmg = base;
   const exMul = executeMul(ctx);
   if (exMul !== 1) dmg = clampDamage(dmg * exMul);
+  const thMul = terrainHitMul(ctx);
+  if (thMul !== 1) dmg = clampDamage(dmg * thMul);
   if (ctx.targetDef.damageTakenMul !== 1) dmg = clampDamage(dmg * ctx.targetDef.damageTakenMul);
   return applyCritToDamage(dmg, ctx.spec, ctx.rng ?? Math.random);
 }

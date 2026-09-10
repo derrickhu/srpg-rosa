@@ -181,12 +181,14 @@ export type TerrainId =
   | 'lever'
   | 'gate_closed'
   | 'gate_open'
+  /** 第六章：站上每回合回血。沼泽的镜像 */
+  | 'blood'
   // 以下是战斗中由地形转移产生的**中间态**，关卡底图一般不直接摆（见 terrainSpec 的转移边）
   | 'burning'
   | 'scorched';
 
 /** 地形发生转移的原因，只用于回放飘字选词 */
-export type TerrainChangeReason = 'ignite' | 'burnout' | 'gate';
+export type TerrainChangeReason = 'ignite' | 'burnout' | 'gate' | 'rite';
 
 export interface CellTerrain {
   terrain: TerrainId;

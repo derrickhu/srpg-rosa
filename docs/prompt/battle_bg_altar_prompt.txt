@@ -1,0 +1,21 @@
+第 6 章「血牙祭坛」战斗底图（832×1248 / 2:3）
+生成器：Cursor 内置 GenerateImage，aspect_ratio 3:4
+唯一画法参考：images/bg/battle_bg.png（第一章草原）
+规范：美术风格圣经 §5.1。这是同一张画换道具，不是新风格。
+
+---
+
+The visible grassland battle background is the SAME painting. Redress it. Do not invent a new style.
+
+KEEP EXACTLY:
+- Strict top-down camera. No 3/4 canyon, no vanishing point, no sky, no horizon.
+- The SAME painting language: flat cartoon, 2–3 clean colors per object, soft edges, no thick black outlines, no painterly rock texture.
+- Walkable center is CLEAN and bright (mid-high value), not a sea of blood.
+
+CHANGE floor hue + edge props:
+- CENTER ~50% is a clean flat pale bone-stone #E8D8C8 / #F0E4D4. One or two big shapes only.
+- Two clusters of chunky rounded stone slabs on a DIAGONAL: TOP-RIGHT and BOTTOM-LEFT only. Bone-white / warm grey tops, toy-like.
+- At most three tiny dried-blood specks tucked INSIDE those corner stones. No blood river across the center. No skulls.
+- Do not wrap a ring of rocks around all four sides.
+
+NO purple, NO pink, NO text, NO grid, NO UI, NO characters, NO buildings.

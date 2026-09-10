@@ -1,0 +1,26 @@
+第六章 Boss「祭主·戈尔什」四向 idle 2x2
+产出 → images/anim/ritespeaker.png（四向复用到 walk/attack）+ token
+生成器：Cursor 内置 GenerateImage，aspect_ratio 1:1
+风格块：docs/prompt/_style_block_v2.txt
+干血暗红袍 + 骨白面具。禁紫禁粉。
+
+---
+
+A 2-column x 2-row grid of the SAME cartoon boss character in FOUR FACING DIRECTIONS.
+
+CRITICAL BACKGROUND: 100% solid flat MAGENTA #FF00FF everywhere, including between cells.
+
+STYLE: extreme super-deformed mascot. Head including mask is about HALF height. Thick near-black
+outline. Flat fills. No gore, no purple, no pink, no text.
+
+CHARACTER: a ritual speaker priest. Dried-blood dark red robe (#7A2020 / #B42A22), bone-white
+ceremonial mask (#E8E0D4), one chunky dark staff. Toy-like, not scary.
+
+CELLS left-to-right then top-to-bottom:
+1. facing DOWN (toward camera)
+2. facing RIGHT
+3. facing LEFT
+4. facing UP (away, back of mask/robe)
+
+Same size, same pose language, only facing changes. Each fills ~70% of its cell. No platforms.
+NO text, no labels, no watermark.

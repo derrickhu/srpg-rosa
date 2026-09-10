@@ -390,6 +390,7 @@ const SIEGE = [0xffeccc, 0xd98a34, 0x8a4a12] as const;
  * 终章 Boss 的招式不该看成奥莉在放火，但也不该为了区分而变成另一个颜色的火。
  */
 const DRAKEFIRE = [0xfff6e0, 0xff7a18, 0xb3200c] as const;
+const RITE = [0xffe8dc, 0xb42a22, 0x5a1410] as const;
 /**
  * 毒沼章瘟疫脓黄绿。
  *
@@ -1279,6 +1280,33 @@ export const SKILL_VFX: Record<string, VfxRecipe> = {
     },
     impactPerHit: true,
   },
+  /**
+   * 第六章 Boss「血祭汲魂」：向心血漩。前五章用过环/柱/线/沉雾/锥，这一招往里收。
+   */
+  ritespeaker_drain: {
+    windup: windupImplode(RITE, 1.8, 340),
+    shake: SHAKE_BLAST,
+    impact: {
+      set: 'ritespeaker_drain',
+      anchor: 'caster',
+      cells: 3.2,
+      mode: 'burst',
+      playbackSpeed: 0.7,
+      sparks: skillSparks(RITE),
+    },
+  },
+  blood_rite: {
+    windup: windupImplode(RITE, 1.8, 340),
+    shake: SHAKE_BLAST,
+    impact: {
+      set: 'ritespeaker_drain',
+      anchor: 'caster',
+      cells: 3.2,
+      mode: 'burst',
+      playbackSpeed: 0.7,
+      sparks: skillSparks(RITE),
+    },
+  },
   // ══════════════ 杂兵技能：四件通用零件 + 章节色 ══════════════
   //
   // 和 Boss 那五招是两个档位：杂兵不需要被单独记住，所以四张图够用——
@@ -1412,6 +1440,42 @@ export const SKILL_VFX: Record<string, VfxRecipe> = {
       mode: 'burst',
       playbackSpeed: 0.8,
       sparks: skillSparks(SILVER),
+    },
+  },
+  /** 第六章 · 血鸦「血喙」：一团干血飞过去。 */
+  rite_peck: {
+    windup: windupGather(RITE, 0.9, 170),
+    travel: {
+      glowSet: 'mook_spit',
+      cells: 0.55,
+      speedPxPerSec: 320,
+      minMs: 200,
+      lingerMs: 40,
+      noRotate: true,
+      trail: trailSparks(RITE),
+      ribbon: ribbonGlow(RITE, 5),
+    },
+    impact: {
+      set: 'mook_puff',
+      anchor: 'target',
+      cells: 1.4,
+      mode: 'burst',
+      playbackSpeed: 0.95,
+      sparks: skillSparks(RITE),
+    },
+    shake: SHAKE_LIGHT,
+  },
+  /** 第六章 · 石坛守「祭鼓」：给残血队友一记闷响。 */
+  rite_chant: {
+    windup: windupGather(RITE, 1.1, 220),
+    pathBeam: pathGlow(RITE, 'smooth', 8),
+    impact: {
+      set: 'mook_thud',
+      anchor: 'target',
+      cells: 1.8,
+      mode: 'burst',
+      playbackSpeed: 0.8,
+      sparks: skillSparks(RITE),
     },
   },
 
@@ -1913,6 +1977,45 @@ export const SKILL_VFX: Record<string, VfxRecipe> = {
       mode: 'burst',
       playbackSpeed: 0.85,
       sparks: skillSparks(SIEGE),
+    },
+  },
+  temp_rt_channel: {
+    windup: windupImplode(RITE, 1.3, 260),
+    pathBeam: pathGlow(RITE, 'smooth', 10),
+    impact: {
+      set: 'temp_fo_torch',
+      anchor: 'caster',
+      cells: 3,
+      mode: 'burst',
+      playbackSpeed: 0.62,
+      sparks: skillSparks(RITE),
+    },
+    shake: SHAKE_LIGHT,
+  },
+  temp_rt_siphon: {
+    windup: windupGather(RITE, 1.0, 200),
+    pathBeam: pathGlow(RITE, 'jagged', 8),
+    impact: {
+      set: 'temp_ft_grapple',
+      anchor: 'target',
+      cells: 2.2,
+      mode: 'aimed',
+      playbackSpeed: 0.85,
+      sparks: skillSparks(RITE),
+    },
+    shake: SHAKE_HEAVY,
+  },
+  temp_rt_oath: {
+    windup: windupGather(RITE, 1.0, 220),
+    pathBeam: pathGlow(RITE, 'smooth', 8),
+    propBurst: {
+      sprite: 'prop_salve',
+      anchor: 'target',
+      cells: 1.45,
+      scaleFrom: 0.65,
+      scaleTo: 1.6,
+      durationMs: 560,
+      sparks: hitSparks(RITE),
     },
   },
 

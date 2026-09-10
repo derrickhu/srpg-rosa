@@ -29,6 +29,7 @@ describe('地形表自洽性', () => {
       expect(spec.atkMul, `${spec.name} 不可通行却带 atkMul`).toBe(1);
       expect(spec.defMul, `${spec.name} 不可通行却带 defMul`).toBe(1);
       expect(spec.dotPerRound, `${spec.name} 不可通行却带持续伤害`).toBe(0);
+      expect(spec.healPerRound ?? 0, `${spec.name} 不可通行却带回血`).toBe(0);
     }
   });
 
@@ -78,7 +79,8 @@ describe('地形文案', () => {
     for (const id of TERRAIN_IDS) {
       const spec = getTerrainSpec(id);
       if (!isPassable(id)) continue;
-      const hasVerb = spec.atkMul !== 1 || spec.defMul !== 1 || spec.dotPerRound > 0;
+      const hasVerb = spec.atkMul !== 1 || spec.defMul !== 1
+        || spec.dotPerRound > 0 || (spec.healPerRound ?? 0) > 0;
       if (!hasVerb) continue;
       expect(terrainBadge(id), `${spec.name} 有效果却不出角标`).not.toBeNull();
     }

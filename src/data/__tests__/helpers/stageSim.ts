@@ -1,6 +1,6 @@
 import { createBattleSim } from '@/battle/engine';
 import { effectiveUnitDef } from '@/battle/effectiveUnit';
-import { playerDeployRowRange } from '@/battle/constants';
+import { classifyDeploySlot, playerDeployCells, resolveDeployZone } from '@/battle/deployZone';
 import { gridSize } from '@/battle/grid';
 import type { UnitState } from '@/battle/types';
 import { UNIT_DEFS } from '@/data/unitDefs';
@@ -45,27 +45,26 @@ export interface SimResult {
   skillCasts: Record<string, number>;
 }
 
+function shuffleInPlace<T>(arr: T[]): T[] {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j]!, arr[i]!];
+  }
+  return arr;
+}
+
 function buildPlayers(stage: StageDefMvp, cfg: SimCfg): UnitState[] {
   const { w, h } = gridSize(stage.terrain);
-  const [r0, r1] = playerDeployRowRange(h);
-  const cx = Math.floor(w / 2);
-  // 从中间往两边排，跳过不可通行格；近战放前排 r0，远程放后排 r1（模拟玩家常识布阵）。
-  // 每次随机扰动横向次序：normal AI 是确定性的，靠布阵采样引入方差
-  const orderX: number[] = [];
-  for (let d = 0; d < w; d++) {
-    if (cx - d >= 0) orderX.push(cx - d);
-    if (d > 0 && cx + d < w) orderX.push(cx + d);
-  }
-  for (let i = orderX.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [orderX[i], orderX[j]] = [orderX[j]!, orderX[i]!];
-  }
-  const rowCells = (y: number): { x: number; y: number }[] =>
-    orderX
-      .filter((x) => getTerrainSpec(stage.terrain[y]![x]!).moveCost !== Infinity)
-      .map((x) => ({ x, y }));
-  const front = rowCells(r0);
-  const back = rowCells(r1);
+  const zone = resolveDeployZone(stage);
+  const open = playerDeployCells(stage).filter(
+    (c) => getTerrainSpec(stage.terrain[c.y]![c.x]!).moveCost !== Infinity,
+  );
+  const front = shuffleInPlace(
+    open.filter((c) => classifyDeploySlot(zone, w, h, c).rank === 'front'),
+  );
+  const back = shuffleInPlace(
+    open.filter((c) => classifyDeploySlot(zone, w, h, c).rank === 'back'),
+  );
   let fi = 0;
   let bi = 0;
   return cfg.deployIds.map((id, i) => {

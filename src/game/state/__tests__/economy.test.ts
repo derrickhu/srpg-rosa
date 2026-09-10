@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { DUNGEON_DEFS } from '@/data/dungeonCatalog';
+import { DUNGEON_DEFS, getDungeonDef } from '@/data/dungeonCatalog';
 import {
   abandonRun,
   advanceNode,
@@ -69,8 +69,11 @@ describe('魂晶只按首通发放', () => {
 
   it('Boss 节点首通给得更多', () => {
     const s = newGame();
-    // 教学章没有 Boss；用单关的血牙祭坛验这笔加给
+    // 教学章没有 Boss；跳到祭坛最后一战验这笔加给
     startRun(s, 'dungeon_bloodfang', party(s));
+    const bossIndex = getDungeonDef('dungeon_bloodfang')!.nodes.findIndex((n) => n.kind === 'boss');
+    expect(bossIndex).toBeGreaterThanOrEqual(0);
+    s.run!.nodeIndex = bossIndex;
     expect(currentNode(s).kind).toBe('boss');
     applyVictory(s);
     expect(s.run!.lastVictory?.soul).toBe(BOSS_FIRST_CLEAR_SOUL);

@@ -1,0 +1,128 @@
+{
+  "id": "altarwarden",
+  "source": "art/sprite-runs/ch6",
+  "blend": "normal",
+  "image": "images/anim/altarwarden.png",
+  "meta": {
+    "size": {
+      "w": 256,
+      "h": 256
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 208,
+    "baselineY": 241,
+    "ref": "idle"
+  },
+  "frames": {
+    "idle": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 216,
+        "h": 235
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 20,
+        "y": 11,
+        "w": 216,
+        "h": 235
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "idle": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "idle"
+      ]
+    },
+    "default": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "idle"
+      ]
+    },
+    "idle_up": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "idle"
+      ]
+    },
+    "idle_down": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "idle"
+      ]
+    },
+    "idle_left": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "idle"
+      ]
+    },
+    "idle_right": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "idle"
+      ]
+    },
+    "walk_up": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "idle"
+      ]
+    },
+    "walk_down": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "idle"
+      ]
+    },
+    "walk_left": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "idle"
+      ]
+    },
+    "walk_right": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "idle"
+      ]
+    },
+    "attack_up": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "idle"
+      ]
+    },
+    "attack_down": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "idle"
+      ]
+    }
+  }
+}

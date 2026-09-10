@@ -94,6 +94,28 @@ describe('地形运行时：燃尽', () => {
   });
 });
 
+describe('地形运行时：血渠转化', () => {
+  it('可通行格变成血池，不可通行格跳过，重复格只改一次', () => {
+    const base = withCell(withCell(emptyTerrain(4, 4), 1, 1, 'high'), 2, 2, 'wall');
+    const rt = createTerrainRuntime(base);
+    const evs = terrainEvents(rt.transmute(
+      [{ x: 1, y: 1 }, { x: 2, y: 2 }, { x: 1, y: 1 }],
+      'blood',
+      'rite',
+    ));
+
+    expect(evs).toHaveLength(1);
+    expect(evs[0]).toMatchObject({ x: 1, y: 1, from: 'high', to: 'blood', reason: 'rite' });
+    expect(getTerrainAt(rt.grid, { x: 1, y: 1 })).toBe('blood');
+    expect(getTerrainAt(rt.grid, { x: 2, y: 2 })).toBe('wall');
+  });
+
+  it('已经是血池的格子不再发事件', () => {
+    const rt = createTerrainRuntime(withCell(emptyTerrain(3, 3), 0, 0, 'blood'));
+    expect(rt.transmute([{ x: 0, y: 0 }], 'blood', 'rite')).toHaveLength(0);
+  });
+});
+
 describe('地形运行时：与传入底图隔离', () => {
   it('运行时改地形不会写回传入的底图', () => {
     const base = withCell(emptyTerrain(4, 4), 1, 1, 'forest');

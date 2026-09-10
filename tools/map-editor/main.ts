@@ -22,6 +22,7 @@ interface TerrainInfo {
   atkMul: number;
   defMul: number;
   dotPerRound: number;
+  healPerRound: number;
   passable: boolean;
   blocksSight: boolean;
   opensGates: boolean;
@@ -55,6 +56,7 @@ interface StageInfo {
   aiDifficulty: string | null;
   maxDeploy: number | null;
   isBoss: boolean;
+  deployZone: { kind: 'south' } | { kind: 'flanks'; cols: 1 | 2 };
   width: number;
   height: number;
   grid: string[][];
@@ -126,6 +128,17 @@ function deployRows(height: number): [number, number] {
   return [h - 2, h - 1];
 }
 
+/** 与 `battle/deployZone.playerDeployCells` 同口径，含第六章侧翼 */
+function isDeployCell(m: StageInfo, x: number, y: number): boolean {
+  const zone = m.deployZone ?? { kind: 'south' as const };
+  if (zone.kind !== 'flanks') {
+    const [top, bottom] = deployRows(m.height);
+    return y >= top && y <= bottom;
+  }
+  const cols = zone.cols;
+  return y >= Math.floor(m.height / 2) && (x < cols || x >= m.width - cols);
+}
+
 function loadImage(src: string): HTMLImageElement | null {
   const hit = images.get(src);
   if (hit !== undefined) return hit;
@@ -166,7 +179,6 @@ function draw(): void {
   if (!model) return;
   const m = model;
   const { cell, ox, oy } = layout();
-  const [top, bottom] = deployRows(m.height);
 
   for (let y = 0; y < m.height; y += 1) {
     for (let x = 0; x < m.width; x += 1) {
@@ -191,7 +203,7 @@ function draw(): void {
         ctx.fillText(info?.name.slice(0, 2) ?? id.slice(0, 2), px + cell / 2, py + cell / 2);
       }
 
-      if (y >= top && y <= bottom) {
+      if (isDeployCell(m, x, y)) {
         ctx.fillStyle = 'rgba(90,143,208,0.22)';
         ctx.fillRect(px, py, cell, cell);
       }
@@ -260,7 +272,6 @@ interface Issue {
 function validate(m: StageInfo): Issue[] {
   const out: Issue[] = [];
   const push = (bad: boolean, text: string) => out.push({ bad, text });
-  const [top, bottom] = deployRows(m.height);
   const passable = (x: number, y: number): boolean => {
     const t = m.grid[y]?.[x];
     return !!t && !!terrainInfo(t)?.passable;
@@ -275,15 +286,17 @@ function validate(m: StageInfo): Issue[] {
     const who = `${e.name ?? e.defId}(${e.x},${e.y})`;
     if (e.x < 0 || e.x >= m.width || e.y < 0 || e.y >= m.height) push(true, `${who} 越界`);
     else if (!passable(e.x, e.y)) push(true, `${who} 站在不可通行的 ${m.grid[e.y]![e.x]}`);
-    if (e.y >= top && e.y <= bottom) push(true, `${who} 占用玩家部署行 y=${e.y}`);
+    if (isDeployCell(m, e.x, e.y)) push(true, `${who} 占用玩家部署区 (${e.x},${e.y})`);
     const k = `${e.x},${e.y}`;
     if (cells.has(k)) push(true, `两个敌人叠在 (${k})`);
     cells.add(k);
   }
 
   let room = 0;
-  for (let y = top; y <= bottom; y += 1) {
-    for (let x = 0; x < m.width; x += 1) if (passable(x, y)) room += 1;
+  for (let y = 0; y < m.height; y += 1) {
+    for (let x = 0; x < m.width; x += 1) {
+      if (isDeployCell(m, x, y) && passable(x, y)) room += 1;
+    }
   }
   if (m.maxDeploy !== null) {
     if (m.maxDeploy <= 0) push(true, 'maxDeploy 必须为正');
@@ -414,6 +427,7 @@ function renderTerrainPalette(): void {
     if (t.atkMul !== 1) fx.push(`攻${Math.round((t.atkMul - 1) * 100)}%`);
     if (t.defMul !== 1) fx.push(`承伤${Math.round((t.defMul - 1) * 100)}%`);
     if (t.dotPerRound > 0) fx.push(`每回合-${t.dotPerRound}`);
+    if (t.healPerRound > 0) fx.push(`每回合+${t.healPerRound}`);
     if (t.blocksSight) fx.push('挡视线');
     if (t.opensGates) fx.push('开闸');
     if (t.opensTo) fx.push('可开启');

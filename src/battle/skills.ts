@@ -265,7 +265,13 @@ function fallbackSkillTarget(
 ): UnitState | undefined {
   if (pool.length === 0) return undefined;
   if (spec.shape.type === 'neighborPickAlly') {
-    const protect = spec.onCastAllyEffects?.some((e) => e.kind === 'heal' || e.kind === 'guard');
+    const heals = spec.onCastAllyEffects?.some((e) => e.kind === 'heal');
+    if (heals) {
+      const wounded = pool.filter((u) => u.hp < effectiveUnitDef(u, defs).maxHp);
+      if (wounded.length === 0) return undefined;
+      return wounded.reduce((a, b) => (a.hp <= b.hp ? a : b));
+    }
+    const protect = spec.onCastAllyEffects?.some((e) => e.kind === 'guard');
     if (protect) return pool.reduce((a, b) => (a.hp <= b.hp ? a : b));
     return pool.reduce((a, b) =>
       (effectiveUnitDef(a, defs).atk >= effectiveUnitDef(b, defs).atk ? a : b),
@@ -1048,6 +1054,7 @@ function applyCastTerrainEffects(
   const out: BattleEvent[] = [];
   for (const eff of effects) {
     if (eff.kind === 'ignite') out.push(...tr.ignite(cast.rangeCells));
+    if (eff.kind === 'transmute') out.push(...tr.transmute(cast.rangeCells, eff.to, 'rite'));
   }
   return out;
 }
@@ -1210,9 +1217,13 @@ export function skillAiming(
     case 'neighborPickAlly': {
       const within = spec.shape.reach === 'within';
       const d = spec.shape.manhattan;
-      const allies = within
+      const raw = within
         ? alliesWithinManhattanExcludingSelf(self, units, d)
         : alliesAtManhattanExcludingSelf(self, units, d);
+      const heals = spec.onCastAllyEffects?.some((e) => e.kind === 'heal');
+      const allies = heals
+        ? raw.filter((a) => a.hp < effectiveUnitDef(a, defs).maxHp)
+        : raw;
       if (allies.length === 0) return null;
       return {
         ...base,

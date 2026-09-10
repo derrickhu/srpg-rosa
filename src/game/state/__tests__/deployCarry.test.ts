@@ -91,6 +91,27 @@ describe('同一章上阵沿用', () => {
     expect(s.run!.placements).toEqual([]);
   });
 
+  it('祭坛侧翼沿用：左内侧前排还站左内侧', () => {
+    const s = createInitialState();
+    s.meta.tutorialStep = TutorialStep.COMPLETED;
+    s.meta.roster = [TUTORIAL_RAYEN_ID, TUTORIAL_HILL_ID].map(
+      (id) => instantiateCharacter(getCharacterDef(id)!),
+    );
+    startRun(s, 'dungeon_bloodfang', [TUTORIAL_RAYEN_ID, TUTORIAL_HILL_ID]);
+    expect(currentStage(s).deployZone).toEqual({ kind: 'flanks', cols: 2 });
+    s.run!.placements = [
+      { uid: 'p0', rosterId: TUTORIAL_RAYEN_ID, pos: { x: 1, y: 6 } },
+      { uid: 'p1', rosterId: TUTORIAL_HILL_ID, pos: { x: 0, y: 8 } },
+    ];
+    advanceNode(s);
+    expect(s.phase).toBe('deploy');
+    expect(currentStage(s).deployZone).toEqual({ kind: 'flanks', cols: 2 });
+    expect(s.run!.placements.map((p) => ({ rosterId: p.rosterId, pos: p.pos }))).toEqual([
+      { rosterId: TUTORIAL_RAYEN_ID, pos: { x: 1, y: 6 } },
+      { rosterId: TUTORIAL_HILL_ID, pos: { x: 0, y: 8 } },
+    ]);
+  });
+
   it('战败重打不拆上阵，只退地形券', () => {
     const s = partyOf([TUTORIAL_RAYEN_ID]);
     placeOnFront(s, [TUTORIAL_RAYEN_ID]);
