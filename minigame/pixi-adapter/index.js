@@ -108,58 +108,63 @@ if (typeof GameGlobal !== 'undefined') {
   _realGlobal.OffscreenCanvas = undefined;
 }
 
-// 花花同款：鸿蒙必须 webgl1 + stencil，contextAttributes 的 0/1 要收成布尔。
+// 鸿蒙 contextAttributes 常回 0/1，假 VAO 扩展会把 Filter 弄死。
+// 这两件事必须打在**正式** WebGL 上，不要为了拿 constructor 再 createCanvas+getContext：
+// 微信第一次 createCanvas 才是主屏，后面每次再开一块；低端 Android 多开一块
+// 带 antialias 的 WebGL，正式上下文经常建失败，表现就是打开失败 / 卡在微信开屏。
 let _WebGLRenderingContext = Object;
-try {
-  const _tmpCanvas = platform.createCanvas();
-  if (_tmpCanvas && typeof _tmpCanvas.getContext === 'function') {
-    const _tmpGl = _tmpCanvas.getContext('webgl', {
-      stencil: true,
-      antialias: true,
-      alpha: true,
-      depth: true,
-      preserveDrawingBuffer: true,
-    });
-    if (_tmpGl) {
-      _WebGLRenderingContext = _tmpGl.constructor || Object;
-      try {
-        const _origGetCtxAttr = _tmpGl.getContextAttributes;
-        if (_origGetCtxAttr) {
-          const _patchProto = Object.getPrototypeOf(_tmpGl);
-          if (_patchProto) {
-            _patchProto.getContextAttributes = function () {
-              const attr = _origGetCtxAttr.call(this);
-              if (attr) {
-                attr.stencil = !!attr.stencil;
-                attr.antialias = !!attr.antialias;
-                attr.alpha = !!attr.alpha;
-                attr.depth = !!attr.depth;
-                attr.preserveDrawingBuffer = !!attr.preserveDrawingBuffer;
-              }
-              return attr;
-            };
-          }
+function _patchGlContext(gl) {
+  if (!gl || gl.__srpgGlPatched) return;
+  gl.__srpgGlPatched = true;
+  if (!_WebGLRenderingContext || _WebGLRenderingContext === Object) {
+    _WebGLRenderingContext = gl.constructor || Object;
+    try { _realGlobal.WebGLRenderingContext = _WebGLRenderingContext; } catch (_) {}
+    try { if (typeof GameGlobal !== 'undefined') GameGlobal.WebGLRenderingContext = _WebGLRenderingContext; } catch (_) {}
+  }
+  try {
+    const origGetCtxAttr = gl.getContextAttributes && gl.getContextAttributes.bind(gl);
+    if (origGetCtxAttr) {
+      gl.getContextAttributes = function () {
+        const attr = origGetCtxAttr();
+        if (attr) {
+          attr.stencil = !!attr.stencil;
+          attr.antialias = !!attr.antialias;
+          attr.alpha = !!attr.alpha;
+          attr.depth = !!attr.depth;
+          attr.preserveDrawingBuffer = !!attr.preserveDrawingBuffer;
         }
-      } catch (e3) {
-        console.warn('[pixi-adapter] patch getContextAttributes 失败:', e3);
-      }
-      try {
-        const _vaoExt = _tmpGl.getExtension('OES_vertex_array_object');
-        if (_vaoExt && typeof _vaoExt.createVertexArrayOES !== 'function') {
-          const _origGetExt = _tmpGl.__proto__.getExtension;
-          _tmpGl.__proto__.getExtension = function (name) {
-            if (name === 'OES_vertex_array_object') return null;
-            return _origGetExt.call(this, name);
-          };
-          console.warn('[pixi-adapter] OES_vertex_array_object 为假扩展，已禁用');
-        }
-      } catch (e4) { /* 忽略 */ }
-    } else {
-      console.warn('[pixi-adapter] WebGL context 获取失败');
+        return attr;
+      };
     }
+  } catch (e3) {
+    console.warn('[pixi-adapter] patch getContextAttributes 失败:', e3);
+  }
+  try {
+    const vaoExt = gl.getExtension('OES_vertex_array_object');
+    if (vaoExt && typeof vaoExt.createVertexArrayOES !== 'function') {
+      const origGetExt = gl.getExtension.bind(gl);
+      gl.getExtension = function (name) {
+        if (name === 'OES_vertex_array_object') return null;
+        return origGetExt(name);
+      };
+      console.warn('[pixi-adapter] OES_vertex_array_object 为假扩展，已禁用');
+    }
+  } catch (_) { /* 忽略 */ }
+}
+
+try {
+  if (canvas && typeof canvas.getContext === 'function') {
+    const origGetContext = canvas.getContext.bind(canvas);
+    canvas.getContext = function (type, attrs) {
+      const ctx = origGetContext(type, attrs);
+      if (ctx && (type === 'webgl' || type === 'experimental-webgl' || type === 'webgl2')) {
+        _patchGlContext(ctx);
+      }
+      return ctx;
+    };
   }
 } catch (e) {
-  console.warn('[pixi-adapter] WebGL 初始化异常:', e);
+  console.warn('[pixi-adapter] wrap canvas.getContext 失败:', e);
 }
 
 let _CanvasRenderingContext2D = Object;

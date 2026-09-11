@@ -13,4 +13,9 @@ describe('isAndroidLikeSystem', () => {
     expect(isAndroidLikeSystem({ platform: 'ios', brand: 'iPhone' })).toBe(false);
     expect(isAndroidLikeSystem({ platform: 'devtools', brand: 'devtools' })).toBe(false);
   });
+
+  it('小米 / OPPO 也按安卓封顶，不只有华为', () => {
+    expect(isAndroidLikeSystem({ platform: 'android', brand: 'xiaomi' })).toBe(true);
+    expect(isAndroidLikeSystem({ platform: 'android', brand: 'OPPO' })).toBe(true);
+  });
 });

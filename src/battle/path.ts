@@ -41,6 +41,46 @@ export function reachableCells(
   return dist;
 }
 
+/**
+ * 到最近一个 `targets` 的**实际路程**（多源 Dijkstra，只认地形不认单位）。
+ *
+ * 给 AI 的接近步用。值的口径是「从这一格走到最近的目标要付多少移动消耗」，
+ * 所以每一步算的是**踏入下一格**的消耗，目标格自己不计（没人会站到目标身上）。
+ *
+ * 多源一次算完而不是对每个目标各跑一遍：AI 要的就是「离我最近的那个」，
+ * 多源场天然给的就是这个答案，而每回合只跑一次 Dijkstra。
+ *
+ * 不把单位当障碍是故意的：把队友算成墙会让排队通过窄口的人原地打转，
+ * 而「这一格站得下吗」在调用方已经用 `blocked` 滤过了。
+ */
+export function approachCostField(targets: Vec2[], terrain: TerrainGrid): Map<string, number> {
+  const dist = new Map<string, number>();
+  const q: Vec2[] = [];
+  for (const t of targets) {
+    const k = key(t);
+    if (dist.has(k)) continue;
+    dist.set(k, 0);
+    q.push(t);
+  }
+  let qi = 0;
+  while (qi < q.length) {
+    const p = q[qi++]!;
+    const d = dist.get(key(p))!;
+    // 从邻格走过来要踏进 p，付的是 p 的消耗
+    const stepIn = getTerrainSpec(getTerrainAt(terrain, p)).moveCost;
+    if (stepIn >= Infinity) continue;
+    for (const n of neighbors4(p, terrain)) {
+      if (getTerrainSpec(getTerrainAt(terrain, n)).moveCost >= Infinity) continue;
+      const nk = key(n);
+      const nd = d + stepIn;
+      if (dist.has(nk) && dist.get(nk)! <= nd) continue;
+      dist.set(nk, nd);
+      q.push(n);
+    }
+  }
+  return dist;
+}
+
 /** All reachable cells (from BFS dist map) as Vec2[]. */
 export function cellsFromDist(_unusedStart: Vec2, dist: Map<string, number>): Vec2[] {
   const out: Vec2[] = [];

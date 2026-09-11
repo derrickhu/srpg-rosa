@@ -1,6 +1,6 @@
 import type { UnitArchetypeDef, UnitDef, UnitKind, UnitState, Vec2 } from './types';
 import { effectiveUnitDef } from './effectiveUnit';
-import { cellsFromDist, reachableCells } from './path';
+import { approachCostField, cellsFromDist, reachableCells } from './path';
 import { manhattan } from './grid';
 import { computeDamage, counterMultiplier } from './damage';
 import type { TerrainGrid } from './grid';
@@ -195,16 +195,32 @@ export function chooseTurnAction(
 
   const enemies = living(allUnits).filter((u) => u.faction !== self.faction);
   if (enemies.length === 0) return { moveTo: null, attackTarget: null };
-  // 打不到任何人时朝最近的敌人走
+
+  /**
+   * 打不到任何人时朝敌人走——按**实际路程**，不是曼哈顿直线。
+   *
+   * 直线贪心在任何凹形地形前面都会把单位钉死在墙面上：绕行的第一步总是让直线
+   * 距离变大，贪心永远不肯迈那一步。表现出来就是两边隔着一堵墙互相干瞪眼，
+   * 一路磨到 `MAX_BATTLE_ROUNDS` 判负——托管、扫荡、难度模拟全中招。
+   *
+   * 所以只要城墙 / 深渊 / 闸门不是排成一条直线，这条就是「这仗能不能打完」的前提，
+   * 而不是「AI 聪不聪明」的优化。关卡地形能摆成什么样，上限就卡在这里。
+   *
+   * 场里够不着（地形把两边彻底切开）时按曼哈顿兜底，行为与改动前一致。
+   */
+  const field = approachCostField(enemies.map((e) => e.pos), terrain);
   const nearest = enemies.reduce((a, b) =>
     (manhattan(self.pos, a.pos) <= manhattan(self.pos, b.pos) ? a : b));
   let bestDist = Infinity;
+  let bestStraight = Infinity;
   let walk: Vec2 | null = null;
   for (const cell of candidates) {
     if (manhattan(cell, self.pos) === 0) continue;
-    const d = manhattan(cell, nearest.pos);
-    if (d < bestDist) {
+    const d = field.get(key(cell)) ?? Infinity;
+    const straight = manhattan(cell, nearest.pos);
+    if (d < bestDist || (d === bestDist && straight < bestStraight)) {
       bestDist = d;
+      bestStraight = straight;
       walk = cell;
     }
   }

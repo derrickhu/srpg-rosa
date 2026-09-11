@@ -4,16 +4,17 @@ import { isDisplayLive } from '@/view/pixiLive';
 /**
  * 受击手感（业内 2D 战棋 / 动作游戏的最小有效组合）：
  *
- * 1. **闪白** — 叠一张同姿态的白色 ADD 精灵，2～4 帧。
+ * 1. **闪白** — 把受击精灵自己改成 ADD + 白 tint，2～4 帧。
  *    不用 ColorMatrixFilter：微信小游戏的 Filter / FBO 经常是 null，一开就会
  *    `Cannot read properties of null (reading 'off')`。
- *    也不改 tint：我方单位底色已是白，改了等于没改。
+ *    也不叠一张同贴图：白 tint 不改颜色，ADD 叠在自己身上又几乎到顶，
+ *    看起来就是「抖了但没闪」。必须改本体混合，让它叠到草地上才会爆亮。
  * 2. **短震 / 击退** — 沿攻击方向弹开再弹回，衰减正弦，约 140ms。
  *    只动身体，血条不动。
  * 3. **命中停顿** — 伤害数字出来前冻 1 帧多。
  */
 
-export const HIT_FLASH_MS = 180;
+export const HIT_FLASH_MS = 200;
 export const HIT_KNOCK_MS = 180;
 export const HIT_STOP_MS = 48;
 /** 击退振幅（像素）。格子约 72 时 ≈ 0.16 格 */
@@ -43,12 +44,12 @@ export function hitKnockDisplacement(k: number, amp: number): number {
   return Math.sin(t * Math.PI * 5) * amp * (1 - t);
 }
 
-/** k∈[0,1] → 闪白叠加层透明度。前 1/4 钉在最白，然后二次衰减。 */
+/** k∈[0,1] → 闪白强度。前 40% 钉在最白，然后二次衰减。 */
 export function hitFlashLift(k: number): number {
   const t = Math.max(0, Math.min(1, k));
-  if (t < 0.25) return 0.92;
-  const u = (t - 0.25) / 0.75;
-  return 0.92 * (1 - u) * (1 - u);
+  if (t < 0.4) return 1;
+  const u = (t - 0.4) / 0.6;
+  return (1 - u) * (1 - u);
 }
 
 export function hitDirection(
@@ -74,39 +75,36 @@ export function firstSprite(node: PIXI.DisplayObject): PIXI.Sprite | null {
   return null;
 }
 
-export function createHitFlashOverlay(source: PIXI.Sprite): PIXI.Sprite {
-  const overlay = new PIXI.Sprite(source.texture);
-  overlay.anchor.copyFrom(source.anchor);
-  // NORMAL 白罩：微信上 ADD 叠角色贴图几乎看不见。盖一层同姿态白精灵才是「闪白」。
-  overlay.blendMode = PIXI.BLEND_MODES.NORMAL;
-  overlay.tint = 0xffffff;
-  overlay.visible = false;
-  overlay.eventMode = 'none';
-  source.parent?.addChild(overlay);
-  return overlay;
-}
+type FlashSaved = { tint: number; blendMode: PIXI.BLEND_MODES };
 
-/** 同步闪白层到当前姿态。alpha≤0 时只隐藏，不改 texture，避免微信里对空贴图调 off。 */
-export function syncHitFlashOverlay(overlay: PIXI.Sprite, source: PIXI.Sprite, alpha: number): void {
-  if (!isDisplayLive(overlay) || !isDisplayLive(source)) return;
-  if (alpha <= 0.02) {
-    overlay.visible = false;
-    overlay.alpha = 0;
+const flashSaved = new WeakMap<PIXI.Sprite, FlashSaved>();
+
+/**
+ * 受击闪白：改精灵自己的混合，而不是再盖一张同贴图。
+ * `alpha` 过低时还原 tint / blendMode。
+ */
+export function applyHitFlash(source: PIXI.Sprite, alpha: number): void {
+  if (!isDisplayLive(source)) return;
+  if (!flashSaved.has(source)) {
+    flashSaved.set(source, { tint: source.tint, blendMode: source.blendMode });
+  }
+  const orig = flashSaved.get(source)!;
+  if (alpha <= 0.08) {
+    source.tint = orig.tint;
+    source.blendMode = orig.blendMode;
+    flashSaved.delete(source);
     return;
   }
-  const tex = source.texture;
-  if (tex && overlay.texture !== tex) overlay.texture = tex;
-  overlay.anchor.copyFrom(source.anchor);
-  overlay.position.copyFrom(source.position);
-  overlay.scale.copyFrom(source.scale);
-  overlay.alpha = alpha;
-  overlay.visible = true;
+  source.tint = 0xffffff;
+  source.blendMode = PIXI.BLEND_MODES.ADD;
 }
 
-/** 摘掉闪白层。贴图跟角色共用，只销毁显示对象，不销毁 texture。 */
-export function detachHitFlashOverlay(overlay: PIXI.Sprite | null | undefined): void {
-  if (!overlay || overlay.destroyed) return;
-  overlay.visible = false;
-  overlay.parent?.removeChild(overlay);
-  overlay.destroy({ children: false, texture: false, baseTexture: false });
+/** 立刻还原受击闪白，切场景 / 动画结束时用。 */
+export function clearHitFlash(source: PIXI.Sprite | null | undefined): void {
+  if (!source || source.destroyed) return;
+  const orig = flashSaved.get(source);
+  if (!orig) return;
+  source.tint = orig.tint;
+  source.blendMode = orig.blendMode;
+  flashSaved.delete(source);
 }

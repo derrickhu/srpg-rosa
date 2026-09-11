@@ -49,11 +49,11 @@ describe('整章扫荡资格', () => {
     expect(canSweepChapter(s, DUNGEON.id)).toBe(true);
   });
 
-  it('进行中的冒险不能同时扫荡', () => {
+  it('进行中的另一章不挡已通关章的扫荡', () => {
     const s = fresh();
     markChapterCleared(s);
     startRun(s, DUNGEON.id, s.meta.roster.slice(0, 3).map((m) => m.rosterId));
-    expect(canSweepChapter(s, DUNGEON.id)).toBe(false);
+    expect(canSweepChapter(s, DUNGEON.id)).toBe(true);
   });
 
   it('无尽和试炼场没有整章扫荡', () => {

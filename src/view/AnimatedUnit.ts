@@ -13,10 +13,10 @@ import {
   HIT_FLASH_MS,
   HIT_KNOCK_MS,
   HIT_KNOCK_PX,
-  createHitFlashOverlay,
+  applyHitFlash,
+  clearHitFlash,
   hitFlashLift,
   hitKnockDisplacement,
-  syncHitFlashOverlay,
 } from '@/view/battle/hitFeel';
 import { isDisplayLive, safeDestroy } from '@/view/pixiLive';
 import { attachCorePass } from '@/view/vfxBlend';
@@ -95,7 +95,7 @@ export interface AnimatedUnitHandle {
   playAttack(dx: number, dy: number): number;
   /**
    * 受击闪白。打击感里最便宜也最有效的一项：告诉玩家「就是这一下打到了他」。
-   * 叠一张白色 ADD 层，不用 tint、也不用 Filter——微信小游戏的 FBO 经常是空的。
+   * 改本体混合为 ADD，不用 Filter——微信小游戏的 FBO 经常是空的。
    */
   flashHit(ms: number): void;
   /**
@@ -201,7 +201,6 @@ export function createAnimatedUnit(
   let hitNy = 0;
   let flashT = -1;
   let flashDur = HIT_FLASH_MS;
-  let flashOverlay: PIXI.Sprite | null = null;
 
   // 呼吸、突刺、受击短震都在写 sprite 的 scale/position，必须由同一个回调统一算完再写一次，
   // 否则两者会互相覆盖（突刺期间呼吸把 y 拉回去）。
@@ -240,18 +239,17 @@ export function createAnimatedUnit(
         oy += hitNy * d;
       }
     }
+    sprite.position.set(ox, standY - feetOffset * sy + oy);
     if (flashT >= 0) {
       flashT += dt;
       const k = Math.min(1, flashT / flashDur);
-      if (!flashOverlay) flashOverlay = createHitFlashOverlay(sprite);
       if (k >= 1) {
-        syncHitFlashOverlay(flashOverlay, sprite, 0);
+        applyHitFlash(sprite, 0);
         flashT = -1;
       } else {
-        syncHitFlashOverlay(flashOverlay, sprite, hitFlashLift(k));
+        applyHitFlash(sprite, hitFlashLift(k));
       }
     }
-    sprite.position.set(ox, standY - feetOffset * sy + oy);
   }
 
   ticker.add(tick);
@@ -292,6 +290,7 @@ export function createAnimatedUnit(
       return startLunge(dx, dy);
     }
     play(name, { onComplete: () => playIdle() });
+    sprite.loop = false;
     return (textures.length / (clip.fps || 12)) * 1000;
   }
 
@@ -299,8 +298,7 @@ export function createAnimatedUnit(
     if (ms <= 0 || !isDisplayLive(sprite)) return;
     flashDur = ms;
     flashT = 0;
-    if (!flashOverlay) flashOverlay = createHitFlashOverlay(sprite);
-    syncHitFlashOverlay(flashOverlay, sprite, hitFlashLift(0));
+    applyHitFlash(sprite, hitFlashLift(0));
   }
 
   function playHit(nx: number, ny: number): void {
@@ -322,10 +320,8 @@ export function createAnimatedUnit(
     flashHit,
     playHit,
     destroy(): void {
-      if (flashOverlay && !flashOverlay.destroyed) flashOverlay.visible = false;
+      clearHitFlash(sprite);
       // 仅停止动画；view 作为 token 的子节点，由 token.destroy 统一回收。
-      // 闪白层也是 view 的子节点，交给这一次 destroy，不要自己再 destroy 一次
-      // （微信上对已摘掉的贴图调 off 会炸）。
       // ticker 挂在全局共享实例上，不摘会一直跑在已销毁的 sprite 上。
       ticker.remove(tick);
       sprite.stop();
@@ -356,6 +352,16 @@ export interface FxPlayOptions {
   alpha?: number;
   /** 播放倍率。1 = 图集原速，小于 1 更慢、更能看清 */
   playbackSpeed?: number;
+  /**
+   * 纵向倍率。贴地环压成椭圆，让正俯视的圆读成铺在棋盘上，
+   * 而不是立在角色胸口的光环。
+   */
+  scaleY?: number;
+  /**
+   * 从 `riseFrom`（相对最终 scaleY）长到 1。底部跟着当前锚点，
+   * 看起来像冰棱从地里戳出来，而不是整张贴纸突然出现。
+   */
+  riseFrom?: number;
 }
 
 
@@ -378,6 +384,8 @@ export function playFxAnimation(
   const isAdd = getAnimBlend(setId) === 'add';
   const opacity = opts.alpha ?? 1;
   const native = textures[0]!.width || sizePx;
+  const squash = opts.scaleY ?? 1;
+  const riseFrom = opts.lengthPx === undefined ? opts.riseFrom : undefined;
   const place = (sp: PIXI.AnimatedSprite): void => {
     if (opts.lengthPx !== undefined) {
       // 左端对齐施法者，横向拉到射程；纵向仍按 sizePx，否则细长射线会被一起拉粗
@@ -385,7 +393,9 @@ export function playFxAnimation(
       sp.scale.set(opts.lengthPx / native, sizePx / native);
     } else {
       sp.anchor.set(0.5);
-      sp.scale.set(sizePx / native);
+      const sx = sizePx / native;
+      const sy = sx * squash * (riseFrom ?? 1);
+      sp.scale.set(sx, sy);
     }
     sp.position.set(x, y);
     sp.rotation = opts.rotation ?? 0;
@@ -400,7 +410,29 @@ export function playFxAnimation(
 
   const speed = opts.playbackSpeed ?? 1;
   sprite.animationSpeed = ((clip.fps || 16) / 60) * speed;
+  const durationMs = (textures.length / ((clip.fps || 16) * speed)) * 1000;
+  let riseTick: (() => void) | null = null;
+  if (riseFrom !== undefined && riseFrom < 1) {
+    const sx = sizePx / native;
+    const syTo = sx * squash;
+    const syFrom = syTo * riseFrom;
+    const riseMs = Math.max(90, durationMs * 0.38);
+    let acc = 0;
+    riseTick = () => {
+      if (!isDisplayLive(sprite)) {
+        if (riseTick) PIXI.Ticker.shared.remove(riseTick);
+        return;
+      }
+      acc += PIXI.Ticker.shared.deltaMS;
+      const k = Math.min(1, acc / riseMs);
+      const e = 1 - (1 - k) * (1 - k);
+      sprite.scale.set(sx, syFrom + (syTo - syFrom) * e);
+      if (k >= 1 && riseTick) PIXI.Ticker.shared.remove(riseTick);
+    };
+    PIXI.Ticker.shared.add(riseTick);
+  }
   sprite.onComplete = () => {
+    if (riseTick) PIXI.Ticker.shared.remove(riseTick);
     if (!isDisplayLive(sprite)) return;
     sprite.parent?.removeChild(sprite);
     // 核心层是子节点，跟着一起回收。父层若已整棵拆掉，safeDestroy 会直接跳过。
@@ -408,5 +440,5 @@ export function playFxAnimation(
   };
   layer.addChild(sprite);
   sprite.gotoAndPlay(0);
-  return (textures.length / ((clip.fps || 16) * speed)) * 1000;
+  return durationMs;
 }

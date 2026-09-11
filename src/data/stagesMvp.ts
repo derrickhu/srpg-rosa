@@ -128,6 +128,39 @@ function euid(): string {
  * 推论：一关只能用**它所在章节及更早**登场过的地形。想给第四章的图摆一堵墙可以
  * （城墙第三章就登场了），想给第二章的图摆一条河不行。地形券的售卖章节同理，
  * 见 `dungeonCatalog` 的商店池。
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * 章内怎么排：同一种地形，摆法要接着往上走
+ * ─────────────────────────────────────────────────────────────────────────────
+ *
+ * 上面那张表管的是「一章给几种地形」，管不住「同一种地形在章内怎么摆」——
+ * 而那才是玩家最先感觉到的：一章里第一关和最后一关差不多，几堵墙很容易绕过，
+ * 闸门没啥用。逐格量过一遍，这句话是能算出来的：六章的地形密度峰值全部落在
+ * 各章前 40% 的关卡里，所有阻挡地形都只铺一行厚，四关闸门开门只省 2~3 点移动消耗。
+ *
+ * 四条规则，前两条由 `stageIntegrity` 的「关卡布局曲线」直接守着：
+ *
+ * 1. **章内递增**：每章末两关的地形密度不低于本章中位数（教学章豁免）。
+ * 2. **闸门必须真的省路**：门当平地 / 当墙各跑一次最短移动消耗，差值 >= 6。
+ *    要满足它，光收窄侧翼没用——绕行只是横向平移几格；必须给阻挡地形**纵深**：
+ *    贴壁夹道往里压两三格，或者内外两道墙把敞口错开。
+ * 3. **一种地形三种摆法**：同一章里别复用同一个形状。第三章三堵墙分别是
+ *    「横墙 + 两条贴壁夹道」「内外错位双墙」「瓮城内院」；第五章的深渊分别是
+ *    竖切、斜切、夹脊、双道上山路。换形状比换地形便宜。
+ * 4. **增益格稀缺、代价地形留窄口**：高地/血池连片超过四格，「抢制高点」就没了；
+ *    河流/沼泽铺满整行就不是隘口，是「全员一起慢一轮」，谁都没得选。
+ *
+ * **改地形前必须知道的引擎前提**：敌人 AI 的接近步走的是多源 Dijkstra 场
+ * （`battle/path.ts` 的 `approachCostField`），不是曼哈顿直线。原先是直线贪心，
+ * 而直线贪心在任何凹形地形前面都会把单位钉死在墙面上——绕行的第一步总是让直线
+ * 距离变大。第一次把第三章后三关改成夹道时平均回合数从 8~11 跳到 29~30、胜率塌到 5%，
+ * 就是两边隔着墙干瞪眼磨到回合上限。**关卡地形能摆成什么样，上限卡在那个函数上。**
+ *
+ * 调难度时的两条账（细节写在各关注释里）：
+ *   - **横贯战场的掉血地带主要在削守方**——AI 永远朝玩家推进，趟泥的是它们。
+ *     铺掉血地形不等于加难度，代价还是要在总血量上收。
+ *   - **走廊会把 Boss 战变简单**（敌人排队出窄口，守住口一个一个点），
+ *     但切过头会把队伍拆散，那时候药也救不回来。
  */
 
 // ─── Chapter 1: 草原战线 · 高地 ───
@@ -201,14 +234,19 @@ const c1_2: StageBlueprint = {
   aiDifficulty: 'easy',
 };
 
-/** 关 3：精英百夫长坐镇中央缓丘，弓手两翼 + 骑兵侧袭（本章收尾） */
+/**
+ * 关 3：精英百夫长坐镇中央高台，弓手两翼 + 骑兵侧袭（本章收尾）。
+ *
+ * 三格高地连成**一条中央高台**，而不是像前两关那样散着摆。
+ * 这一章只有高地一种地形，三关的进阶就写在它的形状里：
+ * 一关两座各自为战的小丘 → 二关敌我各一座对射 → 这一关只有一处制高点，
+ * 而它归对面。「抢不抢」第一次变成一个非此即彼的决定。
+ */
 const c1_3: StageBlueprint = {
   title: '前哨围剿',
   goldReward: 18,
   terrain: withHighCells(emptyTerrain(9, 10), [
-    { x: 4, y: 3 },
-    // 两翼缓丘换掉了原来的两片森林：玩家要么抢丘对射，要么绕侧翼贴上去
-    { x: 2, y: 5 }, { x: 6, y: 5 },
+    { x: 3, y: 3 }, { x: 4, y: 3 }, { x: 5, y: 3 },
   ]),
   enemies: [
     {
@@ -354,7 +392,10 @@ const c2_1: StageBlueprint = {
   ]),
   enemies: [
     forest('bow', 3, 2),
-    forest('sword', 5, 3),
+    // 100 → 86。AI 的接近步换成按实际路程走之后（见 `battle/ai.ts`），
+    // 这一关的四只怪不再各自撞进林子，包夹成形得更早，实测掉到 70.8%。
+    // 一章的开场关不该是全章最难的推进关，所以把这一只的血退回去。
+    { ...forest('sword', 5, 3), stats: { maxHp: 86 } },
     forest('cavalry', 1, 1),
     // 第四只用幼体且放在最北排：加一点场面压力，但不加一整份输出
     forestYoung('sword', 7, 0),
@@ -414,7 +455,10 @@ const c2_3: StageBlueprint = {
     // 第二个弓手退到最北排：林带本身已经让穿越慢一轮，两个弓手同时进射程时
     // 齐射会在玩家还陷在林子里时就打崩后排（实测 78%）。
     forest('bow', 2, 0),
-    forest('sword', 6, 3),
+    // 100 → 72，同 `c2_1` 那一只。AI 改成按实际路程接近之后，这只剑士不再对着
+    // 林带原地磨，而是绕到林带尽头堵人，等于给两个弓手多买了两轮，实测掉到 67.9%。
+    // 82 只买回 6pp（74.2%），还差一步，所以一路压到 72。
+    { ...forest('sword', 6, 3), stats: { maxHp: 72 } },
     forestYoung('sword', 1, 1),
   ],
   aiDifficulty: 'normal',
@@ -429,10 +473,16 @@ const c2_3: StageBlueprint = {
 const c2_4: StageBlueprint = {
   title: '血牙猎长',
   goldReward: 20,
+  // 原版四片林子各占一个角，摆得很匀，但没有一处逼玩家做决定。
+  // 现在收成**两条平行林道夹住一条明路**：走中间快，全程挨图伦和弓手的正面；
+  // 钻林道慢一轮（移动消耗 2）但一路吃 -25% 承伤。
+  // 这一关的题目从此写在地形上——你愿意用一轮时间换一层护甲吗。
   terrain: withCells(emptyTerrain(9, 10), [
     { x: 4, y: 3, t: 'high' },
-    { x: 2, y: 2, t: 'forest' }, { x: 6, y: 2, t: 'forest' },
-    { x: 2, y: 6, t: 'forest' }, { x: 6, y: 6, t: 'forest' },
+    { x: 2, y: 2, t: 'forest' }, { x: 2, y: 3, t: 'forest' }, { x: 2, y: 4, t: 'forest' },
+    { x: 2, y: 5, t: 'forest' }, { x: 2, y: 6, t: 'forest' },
+    { x: 6, y: 2, t: 'forest' }, { x: 6, y: 3, t: 'forest' }, { x: 6, y: 4, t: 'forest' },
+    { x: 6, y: 5, t: 'forest' }, { x: 6, y: 6, t: 'forest' },
   ]),
   enemies: [
     {
@@ -468,12 +518,21 @@ const c2_4: StageBlueprint = {
  *
  * 原版高台两侧有两堵城墙。城墙第三章才登场，去掉之后高台变得更好包夹，
  * 但这一关真正的压力从来不是「够不够得着他」，而是脚下的林子会不会烧起来。
+ *
+ * 林子从五格散点扩成**环着高台的一整圈**（原版只在南面铺了三格，从两侧绕上去
+ * 一棵树都不用碰，燎原咒火经常烧了个空）。现在不管从哪个方向贴近祭坛都要进林子，
+ * 而那一整圈就是他的燃料——烧起来是每轮 8 点的火环，整章教的「林子对谁更有利」
+ * 在这里被反问了最后一次。
  */
 const c2_5: StageBlueprint = {
   title: '血牙萨满',
   goldReward: 26,
   terrain: withCells(withHighCells(emptyTerrain(9, 11), [{ x: 4, y: 2 }, { x: 4, y: 3 }]), [
-    // 通往高台的两条林道，也是萨满的燃料
+    // 环着高台的松林，也是萨满的燃料。刻意隔开一格：紧贴高台铺会把整圈掩体
+    // 白送给包夹上来的玩家（实测裸打从 52% 松到 75%），而这一章的林子是**路上的**，
+    // 不是终点的。现在它围的是进场的三条路，祭坛脚下反而是开阔地。
+    { x: 2, y: 2, t: 'forest' }, { x: 2, y: 3, t: 'forest' }, { x: 2, y: 4, t: 'forest' },
+    { x: 6, y: 2, t: 'forest' }, { x: 6, y: 3, t: 'forest' }, { x: 6, y: 4, t: 'forest' },
     { x: 3, y: 5, t: 'forest' }, { x: 4, y: 5, t: 'forest' }, { x: 5, y: 5, t: 'forest' },
     { x: 1, y: 6, t: 'forest' }, { x: 7, y: 6, t: 'forest' },
   ]),
@@ -622,15 +681,19 @@ const c3_2: StageBlueprint = {
 /**
  * 关 12：机关初见。
  *
- * 闸门只夹住一条中路窄道，两侧完全敞开——玩家不按机关也能绕过去打完，
- * 按了则少走四格。第一关要让「机关是干什么的」这件事零成本学会，
- * 所以代价压到最低：机关就在部署区抬脚可达的地方。
+ * 墙的形状**照抄上一关**：同样是一道横墙留三个豁口。区别只有一处——
+ * 中路那个豁口这次是关着的门。玩家上一关刚学会贴墙走到豁口边，
+ * 这一关一眼就能看出少了哪个口，机关是干什么的于是不用教。
+ *
+ * 捷径刻意压到最低（开门省 4 点移动消耗，两侧豁口一直开着），
+ * 机关就在部署区抬脚可达的地方。第一关要让这件事零成本学会。
  */
 const c3_3: StageBlueprint = {
   title: '闸门机关',
   goldReward: 20,
   terrain: withCells(emptyTerrain(9, 10), [
-    { x: 3, y: 4, t: 'wall' }, { x: 5, y: 4, t: 'wall' },
+    { x: 1, y: 4, t: 'wall' }, { x: 2, y: 4, t: 'wall' }, { x: 3, y: 4, t: 'wall' },
+    { x: 5, y: 4, t: 'wall' }, { x: 6, y: 4, t: 'wall' }, { x: 7, y: 4, t: 'wall' },
     { x: 4, y: 4, t: 'gate_closed' },
     { x: 4, y: 7, t: 'lever' },
   ]),
@@ -646,6 +709,10 @@ const c3_3: StageBlueprint = {
 /**
  * 关 13：开了门他们也出来。
  *
+ * 上一关的三个豁口这次收成一个门 + 两条贴着墙根的一格夹道，而夹道还往北
+ * 压了三格——绕行要一直摸到墙根尽头才能转进来，比开门多花 7 点移动消耗。
+ * 这是这一章第一次让「不开门」有价格。
+ *
  * 门后压着两个狼骑——机动最高的兵种。玩家如果一进场就去按机关，
  * 门开的那一轮狼骑直接冲进部署区；先清掉外面的再开门才是对的顺序。
  * 这是这一章「什么时候开门」这道题的正式提问。
@@ -654,14 +721,20 @@ const c3_4: StageBlueprint = {
   title: '放闸',
   goldReward: 22,
   terrain: withCells(emptyTerrain(10, 11), [
-    { x: 3, y: 5, t: 'wall' }, { x: 4, y: 5, t: 'wall' },
-    { x: 6, y: 5, t: 'wall' }, { x: 7, y: 5, t: 'wall' },
+    // 横贯的城墙，中路一道闸门
+    { x: 1, y: 5, t: 'wall' }, { x: 2, y: 5, t: 'wall' }, { x: 3, y: 5, t: 'wall' },
+    { x: 4, y: 5, t: 'wall' }, { x: 6, y: 5, t: 'wall' }, { x: 7, y: 5, t: 'wall' },
+    { x: 8, y: 5, t: 'wall' },
     { x: 5, y: 5, t: 'gate_closed' },
+    // 两条一格宽的贴壁夹道。往北再压三格是关键：不压的话绕行只是横向平移几步，
+    // 门就白摆了（`stageIntegrity` 的「开门必须真的省路」守着这条）。
+    { x: 1, y: 4, t: 'wall' }, { x: 1, y: 3, t: 'wall' }, { x: 1, y: 2, t: 'wall' },
+    { x: 8, y: 4, t: 'wall' }, { x: 8, y: 3, t: 'wall' }, { x: 8, y: 2, t: 'wall' },
     { x: 1, y: 7, t: 'lever' },
-    { x: 2, y: 3, t: 'forest' }, { x: 8, y: 3, t: 'forest' },
+    { x: 2, y: 3, t: 'forest' }, { x: 7, y: 3, t: 'forest' },
   ]),
   enemies: [
-    // 门后的两个狼骑：不开门它们过不来，开门的那一轮它们就到脸上。
+    // 门后的两个狼骑：不开门它们得绕整条夹道，开门的那一轮它们就到脸上。
     //
     // 两个都保留「撞阵」，第二个只掉一点血量。这里试过两个更粗的改法，都**过头**了：
     // 把它降到新募档（七折、且不继承技能）或者把门外弓手降到新募档，
@@ -670,12 +743,16 @@ const c3_4: StageBlueprint = {
     //
     // 这一关和 `c2_4`、`c6_1` 一样卡在取整断点上，一个整兵的存在感就是 20pp，
     // 所以只能用显式面板做细旋钮。90 → 78 血（不动攻击）刚好买回那 2pp。
+    // 夹道改造后又掉到 74.7%（绕行多花的回合让弓手多射两轮），再降到 70 买回 3pp。
     // **动完必须重跑 `chapter3Sim`**，别线性外推。
     garrison('cavalry', 4, 3),
-    { ...garrison('cavalry', 6, 3), stats: { maxHp: 78 } },
-    // 门外的守军，绕行路线上必须先处理掉
-    garrison('sword', 1, 4),
-    garrison('bow', 8, 4),
+    { ...garrison('cavalry', 6, 3), stats: { maxHp: 70 } },
+    // 左夹道出口顶着一个剑士，出巷第一步就得打。血压到 82（标准 100）买 3pp 余量：
+    // 76.4% 距离 75% 的下界不够这套测试的抽样波动。
+    { ...garrison('sword', 2, 4), stats: { maxHp: 82 } },
+    // 弓手退到中路而不是蹲在右夹道口：贴着巷口射会让「刚钻出来的人立刻挨一箭」，
+    // 实测把这一关压到 74%。退两格后玩家出巷有一轮整队时间，回到 79%。
+    garrison('bow', 6, 2),
     // 盾卫降到新募档（七折面板）。五只标准守军实测 69%、9.8 回合——
     // 卡关的原因不是这一关难，是它**长**：盾卫 173 点血只换来 41 点输出，
     // 拖出来的每一轮都让弓手和门后的狼骑多打一次。
@@ -687,17 +764,27 @@ const c3_4: StageBlueprint = {
 /**
  * 关 14：精英 · 城卫长。
  *
- * 精英本体站在高地上，门后是弓手。这一关不给机关捷径的甜头——
- * 机关远在侧翼，去按的人这一轮完全脱离战线，所以多数打法是**不开门**硬啃。
- * 闸门在这里的作用是「一个你可以选择不用的选项」，精英关就该考清楚这个。
+ * 形状换了一种：**内外两道墙，敞口错开**。外墙的口在最左，内墙的口在右侧，
+ * 两道门叠在中路一条线上。不开门就得从左边进夹层、横穿整个战场再从右边拐上去，
+ * 比撞门多花 8 点移动消耗；夹层里还杵着一个盾卫专门拖时间。
+ *
+ * 而机关远在左下角，去按的人这一轮完全脱离战线。所以这一关问的不是
+ * 「开不开门」，是「派谁去、什么时候派」——精英关就该考清楚这个。
  */
 const c3_5: StageBlueprint = {
   title: '城卫长',
   goldReward: 24,
   terrain: withCells(withHighCells(emptyTerrain(10, 11), [{ x: 4, y: 3 }, { x: 5, y: 3 }]), [
-    { x: 3, y: 6, t: 'wall' }, { x: 4, y: 6, t: 'wall' },
-    { x: 6, y: 6, t: 'wall' }, { x: 7, y: 6, t: 'wall' },
-    { x: 5, y: 6, t: 'gate_closed' },
+    // 外墙：敞口只剩最左一格
+    { x: 1, y: 6, t: 'wall' }, { x: 2, y: 6, t: 'wall' }, { x: 3, y: 6, t: 'wall' },
+    { x: 5, y: 6, t: 'wall' }, { x: 6, y: 6, t: 'wall' }, { x: 7, y: 6, t: 'wall' },
+    { x: 8, y: 6, t: 'wall' }, { x: 9, y: 6, t: 'wall' },
+    { x: 4, y: 6, t: 'gate_closed' },
+    // 内墙：敞口挪到右边。两个口错开，夹层就成了一条必须横穿的走廊
+    { x: 0, y: 4, t: 'wall' }, { x: 1, y: 4, t: 'wall' }, { x: 2, y: 4, t: 'wall' },
+    { x: 3, y: 4, t: 'wall' }, { x: 5, y: 4, t: 'wall' },
+    { x: 8, y: 4, t: 'wall' }, { x: 9, y: 4, t: 'wall' },
+    { x: 4, y: 4, t: 'gate_closed' },
     { x: 0, y: 8, t: 'lever' },
   ]),
   enemies: [
@@ -707,11 +794,14 @@ const c3_5: StageBlueprint = {
       // 覆盖掉 garrison 给的守卒外观：这一章杂兵也是人形兽人，精英必须自己有脸，
       // 否则「该集火了」这个信号只能靠血条读出来。金肩甲 + 独眼是他的识别点。
       animSet: 'castellan',
-      stats: { maxHp: 250, atk: 26 },
+      // 250 → 290：错位双墙让守军排队从右侧口出来，玩家守住口就能一个一个点，
+      // 实测松到 90.9%（上界就是 90%）。走廊换来的便宜在总血量上还回去。
+      stats: { maxHp: 290, atk: 26 },
     },
     garrison('bow', 6, 2),
+    // 夹层里的盾卫：绕行路线正好从他身上碾过去，他的活就是把那趟横穿拖长
     garrison('shield', 5, 5),
-    garrisonGreen('sword', 2, 4),
+    garrisonGreen('sword', 2, 2),
   ],
   aiDifficulty: 'normal',
   maxDeploy: 4,
@@ -723,6 +813,11 @@ const c3_5: StageBlueprint = {
  * 城主会放「破阵冲撞」——和玩家在这一章商店里买的「撞城槌」同一个形状。
  * 这是整章最后一课：玩家学了一路「直线穿透吃走廊的对齐」，
  * 而闸门通道会把自己也排成一列。**走廊对双方都成立。**
+ *
+ * 地形是本章的毕业考，形状第三次换：一座**瓮城**。城主坐在方形内院里，
+ * 南面两道并排的闸门撞开就是直通王座的走廊；不开门则要沿东西两条一格宽的
+ * 贴壁夹道摸到最北边，再从内院背后那两格后门挤进来——多花 8 点移动消耗，
+ * 而且全程排成一列，正好喂给破阵冲撞。这一关每一条路都是走廊。
  *
  * 数值沿用前两章 Boss 那条实测结论——有效旋钮是敌方总血量而不是 Boss 的攻击，
  * 所以盾卫的血在这里显式压到 95（同前两章的做法），免得它把战线拖到弓手打够本。
@@ -742,9 +837,16 @@ const c3_6: StageBlueprint = {
   title: '血牙城主',
   goldReward: 28,
   terrain: withCells(withHighCells(emptyTerrain(10, 11), [{ x: 4, y: 2 }, { x: 5, y: 2 }]), [
-    { x: 2, y: 6, t: 'wall' }, { x: 3, y: 6, t: 'wall' },
-    { x: 6, y: 6, t: 'wall' }, { x: 7, y: 6, t: 'wall' },
-    { x: 4, y: 6, t: 'gate_closed' }, { x: 5, y: 6, t: 'gate_closed' },
+    // 内城南墙：两道并排闸门，撞开就是直通王座的走廊
+    { x: 1, y: 5, t: 'wall' }, { x: 2, y: 5, t: 'wall' }, { x: 3, y: 5, t: 'wall' },
+    { x: 6, y: 5, t: 'wall' }, { x: 7, y: 5, t: 'wall' }, { x: 8, y: 5, t: 'wall' },
+    { x: 4, y: 5, t: 'gate_closed' }, { x: 5, y: 5, t: 'gate_closed' },
+    // 东西两壁，外面各留一条一格宽的贴壁夹道
+    { x: 1, y: 4, t: 'wall' }, { x: 1, y: 3, t: 'wall' }, { x: 1, y: 2, t: 'wall' },
+    { x: 8, y: 4, t: 'wall' }, { x: 8, y: 3, t: 'wall' }, { x: 8, y: 2, t: 'wall' },
+    // 北墙只留中间两格的后门。不开闸的那条路要绕满一整圈才走得到这里
+    { x: 2, y: 1, t: 'wall' }, { x: 3, y: 1, t: 'wall' },
+    { x: 6, y: 1, t: 'wall' }, { x: 7, y: 1, t: 'wall' },
     { x: 9, y: 8, t: 'lever' },
   ]),
   enemies: [
@@ -754,7 +856,14 @@ const c3_6: StageBlueprint = {
       boss: true,
       // 方形攻城盔 + 方肩甲 + 塔盾，全表最重的剪影，和这一章的钢青守军同色系。
       animSet: 'bloodcastellan',
-      stats: { maxHp: 210, atk: 24, spd: 6 },
+      // 210 → 265：瓮城让守军排着队从后门出来，玩家守住巷口就能一个一个点，
+      // 裸打实测从 ~73% 松到 88.4%。走廊换来的便宜必须在总血量上还回去。
+      //
+      // 攻击 24 → 20 是配套的。上面那条「攻击是把药废掉的旋钮」在这里正着用一次：
+      // 265/24 时带药只有 84~86%，压着 85% 的下界；试过靠加血补（285/22）反而把
+      // 裸打压到 53.2%，两头都只剩 1~3pp。**血量同向压两条，只有攻击能把两条拉开**，
+      // 所以血退回 265、单独降攻。
+      stats: { maxHp: 265, atk: 20, spd: 6 },
       skillSkin: 'bloodfang_breach',
     },
     {
@@ -891,14 +1000,22 @@ const c4_4: StageBlueprint = {
   aiDifficulty: 'normal',
 };
 
+/**
+ * 关 20：河再宽一次，但这次有两处能挤。
+ *
+ * 原版把整行铺满、一个浅滩都不留——那就不是隘口了，是「全员一起慢一轮」，
+ * 谁都没得选。现在留 x=3 和 x=7 两处浅滩，滩口踩的是烂泥：
+ * 挤浅滩快但要掉血，趟河慢一轮还打不动人（河流攻击 ×0.8）。这才有取舍。
+ */
 const c4_5: StageBlueprint = {
   title: '沼泽渡河',
   goldReward: 25,
   terrain: withCells(emptyTerrain(10, 11), [
     { x: 0, y: 5, t: 'river' }, { x: 1, y: 5, t: 'river' }, { x: 2, y: 5, t: 'river' },
-    { x: 3, y: 5, t: 'river' }, { x: 4, y: 5, t: 'river' }, { x: 5, y: 5, t: 'river' },
-    { x: 6, y: 5, t: 'river' }, { x: 7, y: 5, t: 'river' }, { x: 8, y: 5, t: 'river' },
-    { x: 9, y: 5, t: 'river' },
+    { x: 4, y: 5, t: 'river' }, { x: 5, y: 5, t: 'river' }, { x: 6, y: 5, t: 'river' },
+    { x: 8, y: 5, t: 'river' }, { x: 9, y: 5, t: 'river' },
+    // 两处浅滩的滩口是烂泥：走近路要付掉血，绕开就得趟河
+    { x: 3, y: 4, t: 'swamp' }, { x: 7, y: 4, t: 'swamp' },
   ]),
   enemies: [
     mire('bow', 3, 2),
@@ -908,12 +1025,22 @@ const c4_5: StageBlueprint = {
   ],
 };
 
+/**
+ * 关 21：泥不是散在图上的四个点，是两条斜着切过来的带子。
+ *
+ * 原版四格烂泥各站一个角落，绕开的成本是零——「每回合掉 5 血」这个动词
+ * 从头到尾没机会触发。现在两条斜泥带从两侧压向中路，把干地挤成一个 Z 形通道：
+ * 想走直线就得吃泥，不吃泥就得绕成 Z。地形第一次真的在收费。
+ */
 const c4_6: StageBlueprint = {
   title: '迷雾沼泽',
   goldReward: 26,
   terrain: withCells(emptyTerrain(10, 11), [
-    { x: 1, y: 3, t: 'swamp' }, { x: 3, y: 4, t: 'swamp' }, { x: 5, y: 3, t: 'swamp' },
-    { x: 7, y: 4, t: 'swamp' }, { x: 2, y: 5, t: 'forest' }, { x: 6, y: 5, t: 'forest' },
+    { x: 1, y: 2, t: 'swamp' }, { x: 2, y: 3, t: 'swamp' },
+    { x: 3, y: 4, t: 'swamp' }, { x: 4, y: 5, t: 'swamp' },
+    { x: 8, y: 2, t: 'swamp' }, { x: 7, y: 3, t: 'swamp' },
+    { x: 6, y: 4, t: 'swamp' }, { x: 5, y: 5, t: 'swamp' },
+    { x: 2, y: 6, t: 'forest' }, { x: 7, y: 6, t: 'forest' },
   ]),
   enemies: [
     mire('cavalry', 2, 1),
@@ -929,14 +1056,23 @@ const c4_6: StageBlueprint = {
  *
  * 塔玛只普攻、靠面板压人。毒和沼泽掉血已经由吹箭虫、沼行鳄和地形提供，
  * 再给精英一招会让失败原因变成「没看懂那一招」，而不是「该集火了」。
+ *
+ * 地形是这一关真正的题：**他站的那座高台四面全是烂泥**。原版四格泥散在两侧，
+ * 从正北直着走上去一格泥都不用踩，高地的 +25% 白送给了他。
+ * 现在想贴上去打，就得先站进泥里挨一轮 5 点——「该不该现在冲」这道题
+ * 有了一个用血算出来的答案。
  */
 const c4_7: StageBlueprint = {
   title: '沼语者',
   goldReward: 28,
   terrain: withCells(emptyTerrain(10, 11), [
     { x: 4, y: 3, t: 'high' }, { x: 5, y: 3, t: 'high' },
-    { x: 2, y: 3, t: 'swamp' }, { x: 3, y: 4, t: 'swamp' },
-    { x: 6, y: 4, t: 'swamp' }, { x: 7, y: 3, t: 'swamp' },
+    // 围着高台的一圈烂泥，没有干路可以走上去
+    { x: 3, y: 2, t: 'swamp' }, { x: 4, y: 2, t: 'swamp' },
+    { x: 5, y: 2, t: 'swamp' }, { x: 6, y: 2, t: 'swamp' },
+    { x: 3, y: 3, t: 'swamp' }, { x: 6, y: 3, t: 'swamp' },
+    { x: 3, y: 4, t: 'swamp' }, { x: 4, y: 4, t: 'swamp' },
+    { x: 5, y: 4, t: 'swamp' }, { x: 6, y: 4, t: 'swamp' },
     { x: 1, y: 5, t: 'forest' }, { x: 8, y: 5, t: 'forest' },
   ]),
   enemies: [
@@ -946,7 +1082,12 @@ const c4_7: StageBlueprint = {
       animSet: 'mirespeaker',
       // 城卫长是 250/26。这一章 5 人 4 级 + 1.2 缩放，240 血会被秒成 100%。
       // 有效旋钮是总血量；毒和沼泽已经在扣，攻击只微调。
-      stats: { maxHp: 400, atk: 25, spd: 6 },
+      //
+      // 400 → 460 是高台围泥之后补的。这里有一条反直觉的账要记住：**横贯战场的
+      // 掉血地带主要在削守方**——AI 永远朝玩家推进（见 `battle/ai.ts`），
+      // 所以趟泥的是它们，实测这一关因此从 75.7% 松到 90.2%。
+      // 铺掉血地形不等于加难度，代价还是要在总血量上收。
+      stats: { maxHp: 460, atk: 25, spd: 6 },
     },
     mire('bow', 2, 2),
     mire('cavalry', 7, 2),
@@ -957,17 +1098,30 @@ const c4_7: StageBlueprint = {
   maxDeploy: 5,
 };
 
+/**
+ * 关 22：Boss · 沼母。这一章的动词在最后一关走到头。
+ *
+ * 原版那圈泥是个开口的 U 形，缺口正对着玩家——绕开就行，Boss 关反而是全章
+ * 最不用管地形的一张图。现在把它闭合成一条**护城泥沟**，蛭后连同贴身护卫
+ * 坐在沟中央的干土台上：不趟泥就够不着她，而趟进去每轮 5 点，
+ * 叠上腐沼瘟息的每人 4 点 ×3 回合，就是这一章一直在教的那件事的期末考。
+ */
 const c4_8: StageBlueprint = {
   title: '沼母',
   goldReward: 32,
   terrain: withCells(emptyTerrain(10, 11), [
-    { x: 3, y: 3, t: 'swamp' }, { x: 4, y: 3, t: 'swamp' }, { x: 5, y: 3, t: 'swamp' }, { x: 6, y: 3, t: 'swamp' },
+    // 闭合的护城泥沟
+    { x: 3, y: 3, t: 'swamp' }, { x: 4, y: 3, t: 'swamp' },
+    { x: 5, y: 3, t: 'swamp' }, { x: 6, y: 3, t: 'swamp' },
     { x: 3, y: 4, t: 'swamp' }, { x: 6, y: 4, t: 'swamp' },
-    { x: 4, y: 2, t: 'high' }, { x: 5, y: 2, t: 'high' },
+    { x: 3, y: 5, t: 'swamp' }, { x: 4, y: 5, t: 'swamp' },
+    { x: 5, y: 5, t: 'swamp' }, { x: 6, y: 5, t: 'swamp' },
+    // 沟中央的干土台
+    { x: 4, y: 4, t: 'high' }, { x: 5, y: 4, t: 'high' },
   ]),
   enemies: [
     {
-      defId: 'sword', x: 5, y: 2, uid: euid(),
+      defId: 'sword', x: 5, y: 4, uid: euid(),
       name: '沼母·蛭后',
       boss: true,
       animSet: 'mirequeen',
@@ -976,17 +1130,23 @@ const c4_8: StageBlueprint = {
       // 不是来自单体挨一下有多疼。攻击再高会变成「一发 AoE 秒掉整个后排」。
       //
       // 调这一组必须重跑 `chapter4Sim`。有效旋钮是总血量，别只加攻击。
-      stats: { maxHp: 232, atk: 21, spd: 6 },
+      //
+      // 232 → 208：护城泥沟和上一关的高台围泥方向相反——这里趟泥的是**玩家**
+      // （蛭后和护卫坐在沟中央的干土台上不动），裸打实测掉到 46%，低于 50% 的下界。
+      // 泥沟收的那几十点血要在 Boss 血量上退回去。
+      stats: { maxHp: 208, atk: 21, spd: 6 },
       skillSkin: 'mirequeen_miasma',
     },
-    mire('cavalry', 5, 3),
+    // 台上另一格给贴身护卫，玩家没法只靠射程隔着泥沟点 Boss
+    mire('cavalry', 4, 4),
+    // 沟外的四只：先把它们清掉才谈得上下泥
     {
-      ...mire('shield', 4, 1),
+      ...mire('shield', 2, 5),
       stats: { maxHp: 130 },
     },
-    mire('bow', 2, 0),
-    mire('bow', 7, 0),
-    mire('sword', 3, 2),
+    mire('bow', 2, 3),
+    mire('bow', 7, 3),
+    mire('sword', 7, 5),
   ],
   isBoss: true,
   aiDifficulty: 'hard',
@@ -1043,13 +1203,23 @@ function drakeYoung(defId: TroopKind, x: number, y: number): StageEnemySpawn {
   return mookYoung(CHAPTER5_DRAKE[defId], defId, x, y);
 }
 
+/**
+ * 关 22：深渊初见——而它必须一上来就**切在路中间**。
+ *
+ * 原版把四格深渊贴在左右两条边上，那只是把边缘封住，玩家从中路六列直着走过去，
+ * 一次也不用绕。深渊和城墙的区别（挡路但不挡箭）也就没机会演示。
+ * 现在裂谷竖在正中，两侧各一条上山道，各带一座缓丘：
+ * 双方隔着裂谷能对射、却谁也过不去，想贴身就得选一边绕。这才是这一章的第一课。
+ */
 const c5_1: StageBlueprint = {
   title: '悬崖之战',
   goldReward: 26,
   terrain: withCells(emptyTerrain(10, 11), [
-    { x: 0, y: 4, t: 'abyss' }, { x: 1, y: 4, t: 'abyss' },
-    { x: 8, y: 4, t: 'abyss' }, { x: 9, y: 4, t: 'abyss' },
-    { x: 4, y: 3, t: 'high' }, { x: 5, y: 3, t: 'high' },
+    { x: 4, y: 4, t: 'abyss' }, { x: 5, y: 4, t: 'abyss' },
+    { x: 4, y: 5, t: 'abyss' }, { x: 5, y: 5, t: 'abyss' },
+    { x: 4, y: 6, t: 'abyss' }, { x: 5, y: 6, t: 'abyss' },
+    // 两条道各一座缓丘：选哪边都有制高点，选的是「先打哪一对」
+    { x: 2, y: 3, t: 'high' }, { x: 7, y: 3, t: 'high' },
   ]),
   enemies: [
     drake('bow', 4, 1),
@@ -1081,7 +1251,8 @@ const c5_2: StageBlueprint = {
 /**
  * 关 24：闸门是捷径。
  *
- * 中路闸门后面就是弓手，绕行要多花两轮——而那两轮里弓手一直在射。
+ * 中路闸门后面就是弓手，绕行要沿左边那条一格宽的窄道一路摸到最北再折回来，
+ * 比撞门多花 6 点移动消耗——而那几轮里弓手一直在射。
  * 这一关教的是「开门省下的不是路，是挨打的回合数」。
  * 原本排在第三章第二关，挪到终章重考一遍：那时是三人阵容，这里是满编。
  */
@@ -1089,9 +1260,12 @@ const c5_3: StageBlueprint = {
   title: '瓮城窄道',
   goldReward: 29,
   terrain: withCells(emptyTerrain(9, 10), [
-    { x: 2, y: 4, t: 'wall' }, { x: 3, y: 4, t: 'wall' },
-    { x: 5, y: 4, t: 'wall' }, { x: 6, y: 4, t: 'wall' },
+    { x: 1, y: 4, t: 'wall' }, { x: 2, y: 4, t: 'wall' }, { x: 3, y: 4, t: 'wall' },
+    { x: 5, y: 4, t: 'wall' }, { x: 6, y: 4, t: 'wall' }, { x: 7, y: 4, t: 'wall' },
+    { x: 8, y: 4, t: 'wall' },
     { x: 4, y: 4, t: 'gate_closed' },
+    // 窄道往北压两格，不然绕行只是横着挪几步，门就白摆了
+    { x: 1, y: 3, t: 'wall' }, { x: 1, y: 2, t: 'wall' },
     { x: 7, y: 6, t: 'lever' },
     { x: 4, y: 2, t: 'high' },
   ]),
@@ -1100,7 +1274,7 @@ const c5_3: StageBlueprint = {
     drake('sword', 3, 1),
     drake('cavalry', 7, 2),
     drake('shield', 4, 3),
-    drakeYoung('sword', 1, 2),
+    drakeYoung('sword', 2, 2),
   ],
   aiDifficulty: 'hard',
 };
@@ -1109,17 +1283,24 @@ const c5_3: StageBlueprint = {
  * 关 25：两道闸门，一个机关。
  *
  * 机关是全开全关（`openGates` 一次开全场），所以这一关没法只开一边——
- * 开门就等于同时放开左右两条通道。取舍从「开不开」变成
- * 「我的阵型撑不撑得住两边同时来人」。
+ * 开门就等于同时放开中路那两格。取舍从「开不开」变成
+ * 「我的阵型撑不撑得住正面一次涌进来两列」。
+ *
+ * 原版两道门摆在 x=2 和 x=7，而中路 x=4/x=5 整段敞着——门从数据上就是装饰
+ * （实测开门只省 2 点移动消耗）。现在门收回正中，绕行改走两侧贴壁道，
+ * 而夹着那两条道的是**深渊不是城墙**：走绕行路线全程暴露在弓手视野里，
+ * 因为深渊挡路不挡箭。这一章的动词在这里和闸门叠在一起用。
  */
 const c5_4: StageBlueprint = {
   title: '双门齐落',
   goldReward: 30,
   terrain: withCells(emptyTerrain(10, 11), [
-    { x: 1, y: 5, t: 'wall' }, { x: 3, y: 5, t: 'wall' },
-    { x: 6, y: 5, t: 'wall' }, { x: 8, y: 5, t: 'wall' },
-    { x: 2, y: 5, t: 'gate_closed' },
-    { x: 7, y: 5, t: 'gate_closed' },
+    { x: 1, y: 5, t: 'wall' }, { x: 2, y: 5, t: 'wall' }, { x: 3, y: 5, t: 'wall' },
+    { x: 6, y: 5, t: 'wall' }, { x: 7, y: 5, t: 'wall' }, { x: 8, y: 5, t: 'wall' },
+    { x: 4, y: 5, t: 'gate_closed' }, { x: 5, y: 5, t: 'gate_closed' },
+    // 夹住两条贴壁道的是深渊：挡得住脚，挡不住箭
+    { x: 1, y: 4, t: 'abyss' }, { x: 1, y: 3, t: 'abyss' }, { x: 1, y: 2, t: 'abyss' },
+    { x: 8, y: 4, t: 'abyss' }, { x: 8, y: 3, t: 'abyss' }, { x: 8, y: 2, t: 'abyss' },
     { x: 5, y: 8, t: 'lever' },
     { x: 4, y: 4, t: 'high' }, { x: 5, y: 4, t: 'high' },
   ]),
@@ -1128,16 +1309,24 @@ const c5_4: StageBlueprint = {
     drake('bow', 2, 2),
     drake('sword', 7, 3),
     drakeYoung('cavalry', 5, 1),
-    drakeYoung('bow', 8, 2),
+    drakeYoung('bow', 7, 1),
   ],
   aiDifficulty: 'hard',
 };
 
+/**
+ * 关 26：裂谷是**斜**的。
+ *
+ * 前面几关的深渊都横平竖直，绕法只有「往左」或「往右」两种。这里两段裂谷错开半张图，
+ * 左半场的口在最左两列、右半场的口在最右两列，中间那段要先横穿到另一侧才上得去。
+ * 同一种地形，只是换了个摆法。
+ */
 const c5_5: StageBlueprint = {
   title: '火山裂谷',
   goldReward: 31,
   terrain: withCells(emptyTerrain(10, 11), [
-    { x: 4, y: 4, t: 'abyss' }, { x: 5, y: 4, t: 'abyss' },
+    { x: 2, y: 4, t: 'abyss' }, { x: 3, y: 4, t: 'abyss' }, { x: 4, y: 4, t: 'abyss' },
+    { x: 5, y: 5, t: 'abyss' }, { x: 6, y: 5, t: 'abyss' }, { x: 7, y: 5, t: 'abyss' },
     { x: 2, y: 3, t: 'swamp' }, { x: 7, y: 3, t: 'swamp' },
     { x: 3, y: 2, t: 'high' }, { x: 6, y: 2, t: 'high' },
   ]),
@@ -1151,19 +1340,33 @@ const c5_5: StageBlueprint = {
   aiDifficulty: 'hard',
 };
 
+/**
+ * 关 27：峰顶只剩两格，而上峰只有一条脊。
+ *
+ * 原版把四格高地连成一片摆在中路，谁走过去都能站上去——「抢制高点」这道题
+ * 在铺到第四格的时候就没了。现在峰顶收成两格，两侧用深渊夹出一条一格宽的窄脊，
+ * 山脚的两块林子是上脊之前唯一的掩体。高地重新变成一个要抢的位置。
+ */
 const c5_6: StageBlueprint = {
   title: '龙脊峰',
   goldReward: 32,
   terrain: withCells(emptyTerrain(10, 11), [
-    { x: 3, y: 3, t: 'high' }, { x: 4, y: 3, t: 'high' }, { x: 5, y: 3, t: 'high' }, { x: 6, y: 3, t: 'high' },
-    { x: 0, y: 5, t: 'abyss' }, { x: 9, y: 5, t: 'abyss' },
-    { x: 2, y: 5, t: 'forest' }, { x: 7, y: 5, t: 'forest' },
+    { x: 4, y: 2, t: 'high' }, { x: 5, y: 2, t: 'high' },
+    // 夹出中路窄脊
+    { x: 3, y: 3, t: 'abyss' }, { x: 3, y: 4, t: 'abyss' },
+    { x: 6, y: 3, t: 'abyss' }, { x: 6, y: 4, t: 'abyss' },
+    // 两翼的口也收窄，绕上去要从 x=2 / x=7 挤
+    { x: 0, y: 5, t: 'abyss' }, { x: 1, y: 5, t: 'abyss' },
+    { x: 8, y: 5, t: 'abyss' }, { x: 9, y: 5, t: 'abyss' },
+    { x: 2, y: 6, t: 'forest' }, { x: 7, y: 6, t: 'forest' },
   ]),
   enemies: [
-    drake('bow', 4, 3),
-    drake('bow', 5, 3),
-    drake('shield', 3, 2),
-    drake('shield', 6, 2),
+    // 峰顶归他们：两个弓手吃着 +25% 往下射，玩家得先决定抢不抢这两格
+    drake('bow', 4, 2),
+    drake('bow', 5, 2),
+    // 窄脊上一对盾墙，把中路那条捷径堵死
+    drake('shield', 4, 3),
+    drake('shield', 5, 3),
     drake('cavalry', 5, 1),
   ],
   aiDifficulty: 'hard',
@@ -1172,20 +1375,26 @@ const c5_6: StageBlueprint = {
 /**
  * 关：精英 · 龙裔。终章 Boss 前的集火考试。
  *
- * 中路深渊切断对冲，卡尔萨站一侧高地。只普攻；火翼蝠和灰烬甲虫复习
- * 「先打会出手的，别硬啃硬化」。
+ * 中路那条深渊拉成整整三格深的竖带，把战场真的劈成左右两半——原版只有两格，
+ * 从上下任何一头都能一步绕过去，等于没切。现在选了哪一边就得打完那一边，
+ * 卡尔萨站在右侧高地上，隔着裂谷只能对射不能贴脸。
+ * 只普攻；火翼蝠和灰烬甲虫复习「先打会出手的，别硬啃硬化」。
  */
 const c5_7: StageBlueprint = {
   title: '龙裔',
   goldReward: 34,
   terrain: withCells(emptyTerrain(10, 11), [
+    { x: 4, y: 3, t: 'abyss' }, { x: 5, y: 3, t: 'abyss' },
     { x: 4, y: 4, t: 'abyss' }, { x: 5, y: 4, t: 'abyss' },
-    { x: 3, y: 3, t: 'high' }, { x: 6, y: 3, t: 'high' },
-    { x: 2, y: 5, t: 'forest' }, { x: 7, y: 5, t: 'forest' },
+    { x: 4, y: 5, t: 'abyss' }, { x: 5, y: 5, t: 'abyss' },
+    { x: 2, y: 3, t: 'high' }, { x: 7, y: 3, t: 'high' },
+    { x: 1, y: 5, t: 'forest' }, { x: 8, y: 5, t: 'forest' },
+    { x: 2, y: 6, t: 'forest' }, { x: 7, y: 6, t: 'forest' },
+    { x: 3, y: 6, t: 'forest' }, { x: 6, y: 6, t: 'forest' },
   ]),
   enemies: [
     {
-      defId: 'sword', x: 6, y: 3, uid: euid(),
+      defId: 'sword', x: 7, y: 3, uid: euid(),
       name: '龙裔·卡尔萨',
       animSet: 'drakekin',
       // 5 人 5 级 + 1.3 缩放时 250 血接近白给。压力留给切路，攻击不往上堆。
@@ -1200,15 +1409,35 @@ const c5_7: StageBlueprint = {
   maxDeploy: 5,
 };
 
+/**
+ * 关 29：Boss · 龙王。
+ *
+ * 原版这张图是四种地形各摆两格的拼盘——深渊、沼泽、森林、高地各一对散在角落，
+ * 哪一种都构不成一道题，读起来只是「装饰得比较满」。终章最后一关不该是这样。
+ *
+ * 现在整张图只讲一件事：**上王座的正路只有中间那条**。两道竖裂谷把战场切成
+ * 左中右三条，中路三格宽、最后一段要穿过龙座前的两片林子——那是全程唯一的掩体，
+ * 也正好是灭世龙息想要你挤在一起的地方。两翼绕得开，但要趟烂泥。
+ *
+ * 中路刻意留三格宽而不是切成两条一格道：试过在龙座正下方补一格深渊把中路也劈开，
+ * 结果队伍被拆成两拨各个击破，带药胜率从 94% 掉到 83%——**药救得了掉血，
+ * 救不了阵型被地形拆散**。切路可以，切到队伍站不到一起就过头了。
+ */
 const c5_8: StageBlueprint = {
   title: '龙王',
   goldReward: 40,
   terrain: withCells(withHighCells(emptyTerrain(11, 12), [
-    { x: 5, y: 3 }, { x: 5, y: 4 },
+    { x: 5, y: 2 }, { x: 5, y: 3 },
   ]), [
-    { x: 0, y: 5, t: 'abyss' }, { x: 10, y: 5, t: 'abyss' },
-    { x: 1, y: 4, t: 'swamp' }, { x: 9, y: 4, t: 'swamp' },
-    { x: 3, y: 3, t: 'forest' }, { x: 7, y: 3, t: 'forest' },
+    // 两道竖裂谷，中间夹出三格宽的正路
+    { x: 3, y: 4, t: 'abyss' }, { x: 3, y: 5, t: 'abyss' }, { x: 3, y: 6, t: 'abyss' },
+    { x: 7, y: 4, t: 'abyss' }, { x: 7, y: 5, t: 'abyss' }, { x: 7, y: 6, t: 'abyss' },
+    // 王座前的两片林：正路的最后一段得从这里过
+    { x: 4, y: 3, t: 'forest' }, { x: 6, y: 3, t: 'forest' },
+    { x: 4, y: 4, t: 'forest' }, { x: 6, y: 4, t: 'forest' },
+    // 绕外圈的账单
+    { x: 1, y: 5, t: 'swamp' }, { x: 9, y: 5, t: 'swamp' },
+    { x: 1, y: 6, t: 'swamp' }, { x: 9, y: 6, t: 'swamp' },
   ]),
   enemies: [
     {
@@ -1296,13 +1525,22 @@ const c6_2: StageBlueprint = {
   maxDeploy: 5,
 };
 
+/**
+ * 关：两个池子，一边一个，各自贴着一侧的布阵区。
+ *
+ * 原版两个池子都只有一格宽一格深——站得下一个人，于是「抢池」退化成
+ * 「谁先动谁站上去」。扩成 2x2 之后一个池子能容下半支队伍，
+ * 「要不要把整条侧翼压过去」才成为一个问题。
+ */
 const c6_3: StageBlueprint = {
   title: '双池对峙',
   goldReward: 31,
   deployZone: CH6_FLANKS,
   terrain: withCells(emptyTerrain(10, 11), [
-    { x: 2, y: 5, t: 'blood' }, { x: 2, y: 6, t: 'blood' },
-    { x: 7, y: 5, t: 'blood' }, { x: 7, y: 6, t: 'blood' },
+    { x: 2, y: 5, t: 'blood' }, { x: 3, y: 5, t: 'blood' },
+    { x: 2, y: 6, t: 'blood' }, { x: 3, y: 6, t: 'blood' },
+    { x: 6, y: 5, t: 'blood' }, { x: 7, y: 5, t: 'blood' },
+    { x: 6, y: 6, t: 'blood' }, { x: 7, y: 6, t: 'blood' },
   ]),
   enemies: [
     rite('sword', 3, 2),
@@ -1332,13 +1570,26 @@ const c6_4: StageBlueprint = {
   maxDeploy: 5,
 };
 
+/**
+ * 关：精英 · 守坛长。这一章的动词第一次调转枪口。
+ *
+ * 前四关的池子都是玩家的补给。这一关它是**赫兹的**：他泡在血渠正中，
+ * 站着不动每轮回 6 点，护法也在池子里。玩家要么打得比他回得快，
+ * 要么把自己也塞进这条两格宽的渠——但那意味着贴着他打，还得排成一列。
+ * 从上一关的「抢池」到这一关的「他先占了池」。
+ */
 const c6_5: StageBlueprint = {
   title: '守坛祭司',
   goldReward: 36,
   deployZone: CH6_FLANKS,
   terrain: withCells(emptyTerrain(10, 11), [
+    // 贯穿祭坛的血渠
+    { x: 4, y: 2, t: 'blood' }, { x: 5, y: 2, t: 'blood' },
     { x: 4, y: 3, t: 'blood' }, { x: 5, y: 3, t: 'blood' },
     { x: 4, y: 4, t: 'blood' }, { x: 5, y: 4, t: 'blood' },
+    { x: 4, y: 5, t: 'blood' }, { x: 5, y: 5, t: 'blood' },
+    // 两侧的丘：不下渠的那条打法要靠这两格换增伤
+    { x: 2, y: 6, t: 'high' }, { x: 7, y: 6, t: 'high' },
   ]),
   enemies: [
     {
@@ -1346,7 +1597,9 @@ const c6_5: StageBlueprint = {
       name: '守坛长·赫兹',
       animSet: 'altarwarden',
       // 6 级 5 人 + 1.35 缩放时 300 血接近白给（sim 98%）。总血量是台阶旋钮。
-      stats: { maxHp: 460, atk: 30, spd: 6 },
+      // 460 → 530：血渠铺开后玩家能在池子里跟他对耗，实测 87.6% 顶着 90% 的上界，
+      // 只剩 2.4pp——比这套测试自己的抽样标准差大不了多少，等于没有断言。
+      stats: { maxHp: 530, atk: 30, spd: 6 },
     },
     rite('shield', 4, 4),
     rite('bow', 3, 2),
@@ -1356,6 +1609,14 @@ const c6_5: StageBlueprint = {
   maxDeploy: 5,
 };
 
+/**
+ * 关：Boss · 祭主。整章的池子在这里连成一个十字。
+ *
+ * 竖的一笔是祭主脚下的血渠，横的一笔正对着左右两条布阵侧翼——玩家从哪一边压上来，
+ * 都会先踩进池子。这是故意的：血池对双方一视同仁，而祭主的血祭还要从人身上吸。
+ * 所以这一关的算术是三方的——他回、你回、他从你身上抽，
+ * 「谁站在池子里」这一个决定同时决定了三项。
+ */
 const c6_6: StageBlueprint = {
   title: '血牙祭主',
   goldReward: 42,
@@ -1363,7 +1624,10 @@ const c6_6: StageBlueprint = {
   terrain: withCells(emptyTerrain(10, 11), [
     { x: 4, y: 2, t: 'blood' }, { x: 5, y: 2, t: 'blood' },
     { x: 4, y: 3, t: 'blood' }, { x: 5, y: 3, t: 'blood' },
-    { x: 2, y: 4, t: 'blood' }, { x: 7, y: 4, t: 'blood' },
+    { x: 4, y: 4, t: 'blood' }, { x: 5, y: 4, t: 'blood' },
+    { x: 4, y: 5, t: 'blood' }, { x: 5, y: 5, t: 'blood' },
+    { x: 2, y: 4, t: 'blood' }, { x: 3, y: 4, t: 'blood' },
+    { x: 6, y: 4, t: 'blood' }, { x: 7, y: 4, t: 'blood' },
   ]),
   enemies: [
     {
@@ -1372,7 +1636,13 @@ const c6_6: StageBlueprint = {
       boss: true,
       animSet: 'ritespeaker',
       // 裸打 260 血在 6 级 5 人下是 94%。血祭会吸血，但先要活过第一轮集火。
-      stats: { maxHp: 400, atk: 28, spd: 6 },
+      //
+      // 攻击 28 → 26：血池十字铺开后带药那条实测 72.5%，只比 70% 的下界高 2.5pp。
+      // 攻击是「把药废掉」的旋钮（同第三章城主的注释），降它抬的主要是带药那条；
+      // 但它把裸打也一起抬到了 51.3%（上界 50%），所以再用血量压回来。
+      // 两个旋钮方向不同：**攻击拉开裸打与带药的差，血量同向压两条**。
+      // 最后落在 24/500：裸打 ~40%（区间中段）、带药 ~78%（下界 70% 上方留够余量）。
+      stats: { maxHp: 500, atk: 24, spd: 6 },
       skillSkin: 'ritespeaker_drain',
     },
     rite('shield', 4, 3),

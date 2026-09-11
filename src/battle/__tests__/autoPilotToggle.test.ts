@@ -114,4 +114,25 @@ describe('战斗中切托管', () => {
     sim.stepTurn();
     expect(sim.pending()).toBeNull();
   });
+
+  it('托管后同一回合里同一个人不会再出手', () => {
+    const sim = setup('manual');
+    stepUntilPending(sim);
+    sim.setAuto(true);
+    const seen = new Map<number, string[]>();
+    for (let i = 0; i < 80 && !sim.isDone(); i += 1) {
+      const round = sim.getRound();
+      const step = sim.stepTurn();
+      for (const ev of step.events) {
+        if (ev.type !== 'turnStart') continue;
+        const list = seen.get(round) ?? [];
+        list.push(ev.uid);
+        seen.set(round, list);
+      }
+    }
+    expect(seen.size).toBeGreaterThan(0);
+    for (const [round, uids] of seen) {
+      expect(new Set(uids).size, `第 ${round} 回合有人连动：${uids.join(',')}`).toBe(uids.length);
+    }
+  });
 });

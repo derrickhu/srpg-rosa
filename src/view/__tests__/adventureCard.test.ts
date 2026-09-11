@@ -10,6 +10,7 @@ import {
   adventureActiveDef,
   adventureCardTitle,
   adventureChapterIndexOf,
+  adventureFooterModel,
   chapterRewardModel,
   defaultAdventureChapterIndex,
   eliteModeUnlocked,
@@ -136,5 +137,33 @@ describe('冒险页默认章节', () => {
     const withLab = adventureChapterList(DUNGEON_DEFS, true);
     expect(defaultAdventureChapterIndex(s, withLab)).toBe(DUNGEON_DEFS.length - 1);
     expect(withLab[DUNGEON_DEFS.length]!.id).toBe(SANDBOX_DUNGEON_ID);
+  });
+});
+
+describe('冒险页底栏', () => {
+  const party = (s: ReturnType<typeof createInitialState>) =>
+    s.meta.roster.slice(0, 2).map((m) => m.rosterId);
+
+  it('已通关章在另一章战斗中仍出开始和扫荡', () => {
+    const s = createInitialState();
+    s.meta.clearedDungeonIds.push(DUNGEON.id);
+    s.meta.unlockedDungeonIds.push(DUNGEON_DEFS[5]?.id ?? DUNGEON_DEFS[1]!.id);
+    startRun(s, DUNGEON_DEFS[5]?.id ?? DUNGEON_DEFS[1]!.id, party(s));
+    const footer = adventureFooterModel(s, DUNGEON, false);
+    expect(footer.kind).toBe('play');
+    if (footer.kind !== 'play') return;
+    expect(footer.cleared).toBe(true);
+    expect(footer.canSweep).toBe(true);
+    expect(footer.startLabel).toContain('开');
+  });
+
+  it('正在打的那一章仍出继续，不改成开始', () => {
+    const s = createInitialState();
+    s.meta.unlockedDungeonIds.push(DUNGEON_DEFS[1]!.id);
+    startRun(s, DUNGEON_DEFS[1]!.id, party(s));
+    const footer = adventureFooterModel(s, DUNGEON_DEFS[1]!, false);
+    expect(footer.kind).toBe('continue');
+    if (footer.kind !== 'continue') return;
+    expect(footer.canSweep).toBe(false);
   });
 });

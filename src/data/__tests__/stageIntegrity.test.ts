@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { CHAPTER_STAGE_INDICES, STAGES_MVP } from '@/data/stagesMvp';
+import { CHAPTER_STAGE_INDICES, STAGES_MVP, type StageDefMvp } from '@/data/stagesMvp';
 import { DUNGEON_DEFS, dungeonBattleBgKey } from '@/data/dungeonCatalog';
 import { ELITE_ENEMY_SCALE, listEliteDungeons } from '@/data/eliteCatalog';
 import { BG_BUNDLE } from '@/core/assetBundles';
-import { isKnownTerrainId, isPassable } from '@/data/terrainSpec';
+import { getTerrainSpec, isKnownTerrainId, isPassable } from '@/data/terrainSpec';
 import { getSkillSpec } from '@/data/skillCatalog';
 import { getEnemySkillSkin } from '@/data/enemySkillCatalog';
 import { isPlayerDeployCell, playerDeployCells } from '@/battle/deployZone';
@@ -207,6 +207,138 @@ describe('关卡数据完整性', () => {
       expect(stage.maxDeploy, `「${stage.name}」maxDeploy ${stage.maxDeploy} 超过部署区 ${room} 格`)
         .toBeLessThanOrEqual(room);
     }
+  });
+});
+
+/** 非平原格数 / 棋盘面积。地形「有多少」的唯一口径。 */
+function terrainDensity(stage: StageDefMvp): number {
+  const { w, h } = gridSize(stage.terrain);
+  const shaped = stage.terrain.flat().filter((t) => t !== 'plain').length;
+  return shaped / (w * h);
+}
+
+/**
+ * 从部署区出发到每一格的最短**移动消耗**（不是步数——森林 2、河流 3，
+ * 玩家真正付的是回合，不是格子）。
+ *
+ * `gateOpen` 决定闸门算平地还是算墙，两次的差就是这道门省下来的东西。
+ * 用静态连通性而不是真跑寻路：单位互相挡路是动态的，这里问的是地形本身。
+ */
+function moveCostFromDeploy(stage: StageDefMvp, gateOpen: boolean): Map<string, number> {
+  const { w, h } = gridSize(stage.terrain);
+  const costOf = (x: number, y: number): number => {
+    const t = stage.terrain[y]?.[x];
+    if (!t) return Infinity;
+    if (t === 'gate_closed') return gateOpen ? 1 : Infinity;
+    return getTerrainSpec(t).moveCost;
+  };
+
+  const dist = new Map<string, number>();
+  const queue: { x: number; y: number }[] = [];
+  for (const c of playerDeployCells(stage)) {
+    if (costOf(c.x, c.y) === Infinity) continue;
+    const k = `${c.x},${c.y}`;
+    if (dist.has(k)) continue;
+    dist.set(k, 0);
+    queue.push(c);
+  }
+  while (queue.length > 0) {
+    const c = queue.shift()!;
+    const base = dist.get(`${c.x},${c.y}`)!;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+      const nx = c.x + dx;
+      const ny = c.y + dy;
+      if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+      const step = costOf(nx, ny);
+      if (step === Infinity) continue;
+      const next = base + step;
+      const k = `${nx},${ny}`;
+      if ((dist.get(k) ?? Infinity) <= next) continue;
+      dist.set(k, next);
+      queue.push({ x: nx, y: ny });
+    }
+  }
+  return dist;
+}
+
+/**
+ * 关卡布局的两条设计约束。
+ *
+ * 和上面那些「写错了会静默坏掉」的完整性断言不同，这两条守的是**手感**：
+ * 40 关量下来，六章的地形密度峰值全部落在各章前 40% 的关卡里，精英和 Boss
+ * 反而退回接近开场关的稀疏度；而四关闸门里有三关绕行几乎不花代价。
+ * 这两件事都不会报错，只会让玩家觉得「一章里第一关和最后一关差不多」
+ * 「闸门没啥用」。所以钉在这里。
+ */
+describe('关卡布局曲线', () => {
+  /**
+   * 末两关（精英 + Boss）不能比本章中位数还空。
+   *
+   * 密度不是好设计的充分条件——散在图上的六格泥和连成一条的六格泥完全不是一回事。
+   * 但它是必要条件：一张只有四五格地形的图，怎么摆都摆不出「要选一条路进」。
+   *
+   * 教学章豁免：第一章整章只有高地一种地形，稀疏是刻意的（见 `stagesMvp`
+   * 的章节投放曲线），复杂度曲线从第二章才开始爬。
+   */
+  it('每章末两关的地形密度不低于本章中位数', () => {
+    CHAPTER_STAGE_INDICES.forEach((idxs, ci) => {
+      if (ci === 0) return;
+      const rows = idxs.map((i) => ({
+        name: STAGES_MVP[i]!.name,
+        d: terrainDensity(STAGES_MVP[i]!),
+      }));
+      const sorted = rows.map((r) => r.d).sort((a, b) => a - b);
+      const half = sorted.length / 2;
+      const median = sorted.length % 2 === 0
+        ? (sorted[half - 1]! + sorted[half]!) / 2
+        : sorted[Math.floor(half)]!;
+      // 一次报全章：只抛第一个不达标的关会让「改完一关又红一关」重复六七轮
+      const bad = rows.slice(-2)
+        .filter((r) => r.d < median)
+        .map((r) => `${r.name} ${(r.d * 100).toFixed(1)}%`);
+      expect(
+        bad,
+        `第 ${ci + 1} 章中位数 ${(median * 100).toFixed(1)}%，末关不该比中段还空`
+        + `（全章：${rows.map((r) => `${(r.d * 100).toFixed(1)}%`).join(' ')}）`,
+      ).toEqual([]);
+    });
+  });
+
+  /**
+   * 闸门是捷径，那它就必须真的省路。
+   *
+   * 上面那条可达性约束保证了「不开门也能打完」，代价是门很容易退化成纯装饰：
+   * 侧翼留得太宽，绕行只是横向平移几格。而敌人 AI 打不到人时会主动朝玩家走
+   * （见 `battle/ai.ts`），玩家本来就不必走过去；再加上回合星预算宽松
+   * （`roundCap` = 场数 × 12，实测单场 8~12 回合），省下的两三步等于没有。
+   *
+   * 所以摆门的关卡必须自证：把门当平地和当墙各算一次最短移动消耗，
+   * 取所有敌人里差值最大的那个——那就是这道门在最好情况下值多少。
+   */
+  const GATE_SHORTCUT_MIN = 6;
+  /** 「闸门机关」是机关初见那一关，捷径刻意压到最低，让玩家零成本学会这是干什么的 */
+  const GATE_TUTORIAL_MIN = 4;
+
+  it('摆了闸门的关卡，开门必须真的省路', () => {
+    const saved: string[] = [];
+    const bad: string[] = [];
+    for (const stage of STAGES_MVP) {
+      if (!stage.terrain.flat().includes('gate_closed')) continue;
+      const opened = moveCostFromDeploy(stage, true);
+      const shut = moveCostFromDeploy(stage, false);
+      let best = 0;
+      for (const e of stage.enemies) {
+        const k = `${e.x},${e.y}`;
+        const a = opened.get(k);
+        const b = shut.get(k);
+        if (a === undefined || b === undefined) continue;
+        best = Math.max(best, b - a);
+      }
+      const min = stage.name.includes('闸门机关') ? GATE_TUTORIAL_MIN : GATE_SHORTCUT_MIN;
+      saved.push(`${stage.name} 省 ${best}/${min}`);
+      if (best < min) bad.push(`${stage.name} 只省了 ${best}，要求 ${min}`);
+    }
+    expect(bad, `绕行太便宜的门就是装饰（全部：${saved.join('；')}）`).toEqual([]);
   });
 });
 

@@ -151,6 +151,18 @@ export const ABANDON_RUN_CONFIRM: AbandonConfirmCopy = {
   cancelLabel: '再想想',
 };
 
+/** 冒险页另开一章：先放弃正在打的那章。比战败页那份短，只说后果。 */
+export function switchAdventureConfirm(runName: string): AbandonConfirmCopy {
+  const name = runName.trim() || '当前章节';
+  return {
+    title: `放弃进行中的${name}？`,
+    keep: '已拿的小关奖励保留。',
+    lose: '局内金币和纹章会清空。',
+    confirmLabel: '放弃并开始',
+    cancelLabel: '取消',
+  };
+}
+
 export function formatAbandonConfirmBody(copy: AbandonConfirmCopy): string {
   return `${copy.keep}\n\n${copy.lose}`;
 }

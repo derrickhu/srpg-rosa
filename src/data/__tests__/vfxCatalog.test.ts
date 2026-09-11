@@ -216,6 +216,10 @@ describe('特效登记表', () => {
     expect(FLOE_ATTACK_VFX.travel?.glowSet, '芙洛普攻没有冰弹发光图').toBe('frost_orb');
     expect(FLOE_ATTACK_VFX.impact?.set, '芙洛普攻命中不能拿弹体图充当').toBe('frost_splat');
     expect(SKILL_VFX.frost_ring!.impact?.set, '霜环命中应是冰棱环').toBe('frost_ring');
+    expect(SKILL_VFX.frost_ring!.impact?.ground, '霜环应铺在格子地面上，不要套在怪身上').toBe(true);
+    expect(SKILL_VFX.flame_ring!.impact?.ground, '炎环应铺在格子地面上').toBe(true);
+    expect(SKILL_VFX.ember_bloom!.impact?.ground, '爆炎落地的炎环也应贴地').toBe(true);
+    expect(SKILL_VFX.temp_fo_thorn!.impact?.ground, '荆棘绞缠应贴地收网').toBe(true);
     expect(SKILL_VFX.ember!.impact?.set, '炎弹技能命中应是爆炸').toBe('ember_burst');
     expect(SKILL_VFX.ember_bloom!.travel?.glowSet, '爆炎还是那颗火球飞过去').toBe('ember_orb');
     expect(SKILL_VFX.ember_bloom!.impact?.set, '爆炎命中应复用炎环').toBe('flame_ring');

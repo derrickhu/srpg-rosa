@@ -3,6 +3,7 @@ import {
   ABANDON_RUN_CONFIRM,
   defeatHintsFor,
   formatAbandonConfirmBody,
+  switchAdventureConfirm,
 } from '../resultOverlay';
 
 describe('战败提示', () => {
@@ -28,5 +29,13 @@ describe('放弃副本确认', () => {
     expect(body).toContain('已经发放');
     expect(body).toMatch(/章节通关奖励/);
     expect(body).toMatch(/从头打完/);
+  });
+
+  it('另开一章的确认只点名进行中的那章和清空局内物资', () => {
+    const copy = switchAdventureConfirm('血牙祭坛');
+    expect(copy.title).toBe('放弃进行中的血牙祭坛？');
+    expect(formatAbandonConfirmBody(copy)).toContain('局内金币和纹章会清空');
+    expect(formatAbandonConfirmBody(copy)).toContain('已拿的小关奖励保留');
+    expect(copy.confirmLabel).toBe('放弃并开始');
   });
 });

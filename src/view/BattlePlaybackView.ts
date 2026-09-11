@@ -75,6 +75,7 @@ import { sfxForAttack, sfxForAttackHit, sfxForSkillCast, sfxForSkillHit } from '
 import { AssetManager } from '@/core/AssetManager';
 import {
   createAnimatedUnit,
+  FEET_BELOW_CENTER,
   playFxAnimation,
   unitHeadLocalY,
   type AnimatedUnitHandle,
@@ -87,13 +88,12 @@ import {
   HIT_KNOCK_MS,
   HIT_KNOCK_PX,
   HIT_STOP_MS,
-  createHitFlashOverlay,
-  detachHitFlashOverlay,
+  applyHitFlash,
+  clearHitFlash,
   firstSprite,
   hitDirection,
   hitFlashLift,
   hitKnockDisplacement,
-  syncHitFlashOverlay,
 } from '@/view/battle/hitFeel';
 import { hasAnimSet } from '@/view/animSets';
 import {
@@ -312,6 +312,11 @@ export function createBattlePlaybackView(
   const gridLayer = new PIXI.Container();
   const dropLayer = new PIXI.Container();
   const rangeLayer = new PIXI.Container();
+  /**
+   * 贴地特效（霜环等）。必须在棋子底下：环铺在格子上，人站在冰里，
+   * 受击闪白才不会被近乎不透明的形体层盖掉。
+   */
+  const groundFxLayer = new PIXI.Container();
   const tokenLayer = new PIXI.Container();
   /** 棋盘点击接收层，夹在棋子和特效之间（见 manualTurnUi 的 inputLayer 说明） */
   const inputLayer = new PIXI.Container();
@@ -327,6 +332,7 @@ export function createBattlePlaybackView(
   root.addChild(gridLayer);
   root.addChild(dropLayer);
   root.addChild(rangeLayer);
+  root.addChild(groundFxLayer);
   root.addChild(tokenLayer);
   root.addChild(inputLayer);
   root.addChild(fxLayer);
@@ -336,7 +342,15 @@ export function createBattlePlaybackView(
    * 震动只带棋盘相关的层。背景不带（整屏晃很晕）、HUD 不带（读起来像界面坏了）、
    * 点击层不带（命中区跟着位移，手感会漂）。
    */
-  const shaker = createBoardShaker([gridLayer, dropLayer, rangeLayer, tokenLayer, fxLayer, floatLayer]);
+  const shaker = createBoardShaker([
+    gridLayer,
+    dropLayer,
+    rangeLayer,
+    groundFxLayer,
+    tokenLayer,
+    fxLayer,
+    floatLayer,
+  ]);
 
   // --- 设置按钮（左上角齿轮） ---
   const settingsBtnSize = RUN_GEAR_SIZE;
@@ -1203,42 +1217,50 @@ export function createBattlePlaybackView(
     const aimRad = dx === 0 && dy === 0 ? 0 : Math.atan2(dy, dx);
     const size = Math.max(cell * def.cells, 72);
     const playbackSpeed = def.playbackSpeed ?? 0.72;
+    const onGround = def.ground === true;
+    // 贴地：落到单位脚线（格心下方 0.2 格），画在棋子底下。
+    const fxX = at.x;
+    const fxY = onGround ? at.y + cell * FEET_BELOW_CENTER : at.y;
+    const layer = onGround ? groundFxLayer : fxLayer;
 
     let played = 0;
     if (def.mode === 'beam') {
       // 射线至少拉一格，否则贴脸的单体命中会缩成一个点
       const len = Math.max(cell, Math.hypot(dx, dy) + cell * 0.5);
-      played = playFxAnimation(fxLayer, at.x, at.y, def.set, def.set, size, {
+      played = playFxAnimation(layer, fxX, fxY, def.set, def.set, size, {
         rotation: aimRad,
         lengthPx: len,
         alpha: def.alpha,
         playbackSpeed,
       });
     } else {
-      played = playFxAnimation(fxLayer, at.x, at.y, def.set, def.set, size, {
+      played = playFxAnimation(layer, fxX, fxY, def.set, def.set, size, {
         rotation: def.mode === 'aimed' ? aimRad : 0,
         alpha: def.alpha,
         playbackSpeed,
+        // 正圆压成椭圆，才像铺在俯视棋盘上，而不是立在角色身上的光环
+        scaleY: onGround ? 0.58 : undefined,
+        riseFrom: onGround ? 0.16 : undefined,
       });
     }
 
     if (def.sparks) {
       // 火花从「挨打的那一端」冒出来，哪怕特效本体锚在施法者身上（自身 AoE 除外）
       const sp = def.anchor === 'caster' && def.mode === 'burst' ? at : (to ?? at);
-      emitSparks(fxLayer, sp.x, sp.y, def.sparks, aimRad);
+      emitSparks(layer, onGround ? fxX : sp.x, onGround ? fxY : sp.y, def.sparks, aimRad);
     }
 
     // 命中星爆不再叠在生图上——几何放射会把 ember_burst / slash 盖成同一张「程序星」。
     // 没播出序列帧时才用代码爆裂兜底。
     if (played <= 0 && def.hitBurst) {
       const burstAt = def.anchor === 'caster' && def.mode === 'burst' ? at : (to ?? at);
-      playHitBurst(fxLayer, burstAt, def.hitBurst, cell);
+      playHitBurst(layer, onGround ? { x: fxX, y: fxY } : burstAt, def.hitBurst, cell);
     }
 
     // 图集还没下载完（首启进战、CDN 慢）时序列帧会返回 0，那就用老的静态贴图兜底，
     // 至少还有个东西在闪。火花是代码画的，这条路上照样有。
     if (played <= 0) {
-      showFxSprite(at.x, at.y, 'slash', size);
+      showFxSprite(fxX, fxY, 'slash', size);
       return 280;
     }
     return played;
@@ -1430,13 +1452,12 @@ export function createBattlePlaybackView(
     const origX = body.x;
     const origY = body.y;
     const src = firstSprite(body);
-    const overlay = src ? createHitFlashOverlay(src) : null;
     void (async () => {
       await awaitEase(dur(Math.max(HIT_FLASH_MS, HIT_KNOCK_MS)), (k) => {
         if (!isDisplayLive(body)) return;
         const elapsed = k * Math.max(HIT_FLASH_MS, HIT_KNOCK_MS);
-        if (overlay && src && isDisplayLive(src)) {
-          syncHitFlashOverlay(overlay, src, hitFlashLift(Math.min(1, elapsed / HIT_FLASH_MS)));
+        if (src && isDisplayLive(src)) {
+          applyHitFlash(src, hitFlashLift(Math.min(1, elapsed / HIT_FLASH_MS)));
         }
         const d = hitKnockDisplacement(Math.min(1, elapsed / HIT_KNOCK_MS), HIT_KNOCK_PX);
         body.x = origX + dir.x * d;
@@ -1446,7 +1467,7 @@ export function createBattlePlaybackView(
         body.x = origX;
         body.y = origY;
       }
-      detachHitFlashOverlay(overlay);
+      clearHitFlash(src);
     })();
   }
 
@@ -2480,6 +2501,13 @@ export function createBattlePlaybackView(
       updateReviveHud();
       // 轮到玩家单位：交互直到它的回合结束。托管时 pending 由 AI 接管
       const pending = sim.pending();
+      if (pending && sim.isAuto()) {
+        // 引擎偶发「已经托管、却还停着等指令」。空转会把上一个人的攻击一直留在屏幕上。
+        const handoff = sim.setAuto(true);
+        if (handoff.events.length > 0) await playEvents(handoff.events);
+        else await awaitEase(dur(16), () => {});
+        continue;
+      }
       if (pending && !sim.isAuto()) {
         await runPlayerTurn(pending.uid);
         if (root.destroyed) return;

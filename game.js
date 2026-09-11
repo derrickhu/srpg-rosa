@@ -104,9 +104,11 @@ setTimeout(function () {
   }
 }, 400);
 
+// 只在 boot 根本没跑起来时弹。首帧已经画过、只是 Loading 慢，弹窗会被玩家当成闪退。
+// 低端 Android 解析 1MB bundle + 建 WebGL 经常超过 5 秒，旧门槛会误伤打开成功率。
 setTimeout(function () {
-  if (typeof GameGlobal !== 'undefined' && !GameGlobal.__gameRendered) {
-    _diag('5秒仍未渲染');
+  if (typeof GameGlobal !== 'undefined' && !GameGlobal.__srpgBooted && !GameGlobal.__gameRendered) {
+    _diag('8秒仍未启动');
     _showDiag();
   }
-}, 5000);
+}, 8000);

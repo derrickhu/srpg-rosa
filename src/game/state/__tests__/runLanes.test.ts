@@ -42,17 +42,17 @@ describe('冒险 / 副本两条线互不覆盖', () => {
     expect(s.parkedRun).toBeNull();
   });
 
-  it('进行中的无尽不挡章节扫荡；进行中的冒险仍挡', () => {
+  it('进行中的无尽和冒险都不挡已通关章的扫荡', () => {
     const s = createInitialState();
     s.meta.clearedDungeonIds.push(CHAPTER.id);
     startRun(s, ENDLESS_DUNGEON_ID, party(s));
     expect(canSweepChapter(s, CHAPTER.id)).toBe(true);
 
     startRun(s, CHAPTER.id, party(s));
-    expect(canSweepChapter(s, CHAPTER.id)).toBe(false);
+    expect(canSweepChapter(s, CHAPTER.id)).toBe(true);
 
     startRun(s, ENDLESS_DUNGEON_ID, party(s));
-    expect(canSweepChapter(s, CHAPTER.id), '冒险停在另一条线时也不能扫').toBe(false);
+    expect(canSweepChapter(s, CHAPTER.id), '冒险停在另一条线时也能扫').toBe(true);
   });
 
   it('放弃冒险只丢掉冒险，挂起的无尽还在', () => {

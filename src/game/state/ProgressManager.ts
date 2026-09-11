@@ -306,15 +306,14 @@ export function sweepLeftToday(meta: MetaState, dungeonId: string): number {
 }
 
 /**
- * 这一章能不能扫荡：整章通关过 + 今天还有配额 + 当前没有进行中的冒险。
+ * 这一章能不能扫荡：整章通关过 + 今天还有配额。
  *
- * 没通关不能扫，否则等于白送通关。进行中的冒险先结束——扫荡不再进副本，
- * 和「继续冒险」抢入口会让玩家搞不清自己还在哪一节。
- * 无尽 / 活动那条线不挡扫荡，两条线互不影响。
+ * 没通关不能扫，否则等于白送通关。扫荡不建 run、不进战斗，
+ * 进行中的另一章不必先放弃——两条线互不影响。
+ * 无尽 / 试炼场没有整章扫荡。
  */
 export function canSweepChapter(state: MvpGameState, dungeonId: string): boolean {
   if (isEndlessDungeon(dungeonId) || isSandboxDungeon(dungeonId)) return false;
-  if (adventureRunOf(state)) return false;
   if (!state.meta.clearedDungeonIds.includes(dungeonId)) return false;
   return sweepLeftToday(state.meta, dungeonId) > 0;
 }

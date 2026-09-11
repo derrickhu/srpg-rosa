@@ -52,6 +52,7 @@ export {
   placeTerrainCell,
   placedTerrainAt,
   placeCharacter,
+  placeOrReplaceCharacter,
   removePlacement,
   removeTerrainCell,
   cycleSkillForRoster,

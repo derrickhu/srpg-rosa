@@ -42,6 +42,12 @@ describe('启动加载与健康忠告', () => {
     expect(flowSrc).toMatch(/BATTLE_SCENE_BUNDLES[\s\S]*loadAnimSets/);
   });
 
+  it('大厅门槛不含战斗底图（images/bg 走 CDN）', async () => {
+    const { BATTLE_BG_BUNDLE, HUB_SCENE_BUNDLES, BATTLE_SCENE_BUNDLES } = await import('@/core/assetBundles');
+    expect(HUB_SCENE_BUNDLES.some((b) => Object.keys(b.assets).some((k) => k.startsWith('battle_bg')))).toBe(false);
+    expect(BATTLE_SCENE_BUNDLES).toContain(BATTLE_BG_BUNDLE);
+  });
+
   it('底图随包，不走 CDN', () => {
     const bundles = readFileSync('src/core/assetBundles.ts', 'utf8');
     expect(bundles).toContain("splash: 'images/ui/loading/loading_splash.jpg'");

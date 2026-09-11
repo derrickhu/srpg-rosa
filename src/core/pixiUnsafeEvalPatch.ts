@@ -29,21 +29,9 @@ if (_api) {
       createCanvas: _create2DCanvas,
       getCanvasRenderingContext2D: (): any => Object,
       // 花花同款：必须带 stencil，否则鸿蒙 Filter/Mask/Graphics 全灭。
-      getWebGLRenderingContext: (): any => {
-        try {
-          const c = _api.createCanvas();
-          const gl = c.getContext('webgl', {
-            stencil: true,
-            antialias: true,
-            alpha: true,
-            depth: true,
-            preserveDrawingBuffer: true,
-          });
-          return gl ? gl.constructor : Object;
-        } catch {
-          return Object;
-        }
-      },
+      // 只交 constructor。这里再 createCanvas+getContext('webgl') 会在正式舞台之前
+      // 多占一个 WebGL 上下文，低端 Android 上正式 Application 经常建失败。
+      getWebGLRenderingContext: (): any => Object,
       getNavigator: (): any => ({
         userAgent: 'wxgame',
         gpu: null,
@@ -176,14 +164,15 @@ if (_isRealDevice) {
   let _uploadLog = 0;
   let _inUpload = false;
 
-  // 预检测 getImageData。华为上启动期再 createCanvas 容易挂死，直接跳过。
+  // 预检测 getImageData 会再 createCanvas。华为会挂，低端 Android 同样会拖垮开屏，
+  // 整类机器都跳过——真机 Text 走后面的 upload 补救，不依赖这次探测。
   let _canReadPixels = false;
   const _skipProbe = (() => {
     try {
       const info = (typeof wx !== 'undefined' && (wx.getDeviceInfo?.() || wx.getSystemInfoSync?.())) || {};
       const p = String(info.platform || '').toLowerCase();
       const b = String(info.brand || '').toLowerCase();
-      return p === 'ohos' || p === 'harmony' || p === 'harmonyos'
+      return p === 'android' || p === 'ohos' || p === 'harmony' || p === 'harmonyos'
         || b.includes('huawei') || b.includes('honor');
     } catch { return false; }
   })();

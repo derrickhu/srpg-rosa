@@ -291,31 +291,49 @@ export const FX_BUNDLE: AssetBundleDef = {
   },
 };
 
+/** 大厅四页 + 章节卡。进大厅才要看见这些。 */
+const HUB_BG_ASSETS: Record<string, string> = {
+  recruit_bg: 'images/bg/recruit_bg.png',
+  roster_bg: 'images/bg/roster_bg.png',
+  adventure_bg: 'images/bg/adventure_bg.png',
+  challenge_bg: 'images/bg/challenge_bg.png',
+  // 角色获得亮相厅
+  reveal_hall: 'images/bg/reveal_hall.png',
+  // 补给点场景底：平视草地空地（商人正视，不能用俯视 battle_bg）
+  shop_bg: 'images/bg/shop_bg.png',
+  // 章节卡插图，key 对应 DungeonDef.art
+  chapter_grassland: 'images/bg/chapter_grassland.png',
+  chapter_forest: 'images/bg/chapter_forest.png',
+  chapter_fortress: 'images/bg/chapter_fortress.png',
+  chapter_swamp: 'images/bg/chapter_swamp.png',
+  chapter_dragon: 'images/bg/chapter_dragon.png',
+  chapter_altar: 'images/bg/chapter_altar.png',
+};
+
+/** 战斗底图。`images/bg` 走 CDN，绝不能算进「进大厅」门槛。 */
+const BATTLE_BG_ASSETS: Record<string, string> = {
+  battle_bg: 'images/bg/battle_bg.png',
+  battle_bg_forest: 'images/bg/battle_bg_forest.png',
+  battle_bg_fortress: 'images/bg/battle_bg_fortress.png',
+  battle_bg_swamp: 'images/bg/battle_bg_swamp.png',
+  battle_bg_dragon: 'images/bg/battle_bg_dragon.png',
+  battle_bg_altar: 'images/bg/battle_bg_altar.png',
+};
+
+export const HUB_BG_BUNDLE: AssetBundleDef = {
+  name: 'bg',
+  assets: HUB_BG_ASSETS,
+};
+
+export const BATTLE_BG_BUNDLE: AssetBundleDef = {
+  name: 'bg',
+  assets: BATTLE_BG_ASSETS,
+};
+
+/** 登记全集。完整性测试认这一份；启动不要整包等。 */
 export const BG_BUNDLE: AssetBundleDef = {
   name: 'bg',
-  assets: {
-    battle_bg: 'images/bg/battle_bg.png',
-    battle_bg_forest: 'images/bg/battle_bg_forest.png',
-    battle_bg_fortress: 'images/bg/battle_bg_fortress.png',
-    battle_bg_swamp: 'images/bg/battle_bg_swamp.png',
-    battle_bg_dragon: 'images/bg/battle_bg_dragon.png',
-    battle_bg_altar: 'images/bg/battle_bg_altar.png',
-    recruit_bg: 'images/bg/recruit_bg.png',
-    roster_bg: 'images/bg/roster_bg.png',
-    adventure_bg: 'images/bg/adventure_bg.png',
-    challenge_bg: 'images/bg/challenge_bg.png',
-    // 角色获得亮相厅
-    reveal_hall: 'images/bg/reveal_hall.png',
-    // 补给点场景底：平视草地空地（商人正视，不能用俯视 battle_bg）
-    shop_bg: 'images/bg/shop_bg.png',
-    // 章节卡插图，key 对应 DungeonDef.art
-    chapter_grassland: 'images/bg/chapter_grassland.png',
-    chapter_forest: 'images/bg/chapter_forest.png',
-    chapter_fortress: 'images/bg/chapter_fortress.png',
-    chapter_swamp: 'images/bg/chapter_swamp.png',
-    chapter_dragon: 'images/bg/chapter_dragon.png',
-    chapter_altar: 'images/bg/chapter_altar.png',
-  },
+  assets: { ...HUB_BG_ASSETS, ...BATTLE_BG_ASSETS },
 };
 
 /** 启动页专用：随包底图，必须先于其它 bundle 加载，避免 Logo 闪入 */
@@ -334,8 +352,13 @@ export const ALL_BUNDLES: AssetBundleDef[] = [
   BG_BUNDLE,
 ];
 
-/** 大厅四页 + 章节卡。Loading 可以等这一组。 */
-export const HUB_SCENE_BUNDLES: AssetBundleDef[] = [BG_BUNDLE];
+/** 大厅四页 + 章节卡。Loading 可以等这一组。战斗底图不在这里。 */
+export const HUB_SCENE_BUNDLES: AssetBundleDef[] = [HUB_BG_BUNDLE];
 
 /** 布阵/战斗才要。进大厅后后台补，不要算进「进大厅」门槛。 */
-export const BATTLE_SCENE_BUNDLES: AssetBundleDef[] = [TERRAIN_BUNDLE, UNIT_BUNDLE, FX_BUNDLE];
+export const BATTLE_SCENE_BUNDLES: AssetBundleDef[] = [
+  TERRAIN_BUNDLE,
+  UNIT_BUNDLE,
+  FX_BUNDLE,
+  BATTLE_BG_BUNDLE,
+];

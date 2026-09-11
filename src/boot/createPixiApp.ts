@@ -101,16 +101,18 @@ function patchEventSystemCoords(renderer: PIXI.IRenderer, screenW: number, scree
   console.log('[createPixiHost] mapPositionToPoint 已覆盖, screenW:', screenW, 'screenH:', screenH);
 }
 
-function pixiRendererOptions(canvas: PIXI.ICanvas, w: number, h: number, dpr: number) {
+function pixiRendererOptions(canvas: PIXI.ICanvas, w: number, h: number, dpr: number, androidLike: boolean) {
   return {
     view: canvas,
     width: w,
     height: h,
     backgroundColor: 0x2a3548,
-    antialias: true,
+    // 低端 Android / 鸿蒙：MSAA 和保留缓冲都会让建上下文变慢甚至失败。
+    // 截屏分享不走 toDataURL，不需要 preserveDrawingBuffer。
+    antialias: !androidLike,
     resolution: dpr,
     autoDensity: true,
-    preserveDrawingBuffer: true,
+    preserveDrawingBuffer: !androidLike,
     // 花花同款：鸿蒙假 WebGL2 会建上下文成功但画不出来；必须 WebGL1 + stencil。
     preferWebGLVersion: 1,
     stencil: true,
@@ -122,13 +124,13 @@ function pixiRendererOptions(canvas: PIXI.ICanvas, w: number, h: number, dpr: nu
  * 创建可渲染的 Pixi 宿主；若 Application 缺 ticker/renderer 则降级。
  */
 export function createPixiHost(canvas: PIXI.ICanvas): PixiHost {
-  const { w, h, dpr } = getWxInfo();
+  const { w, h, dpr, androidLike } = getWxInfo();
   applyCanvasSize(canvas, w * dpr, h * dpr);
-  console.log(`[createPixiHost] logical=${w}x${h} dpr=${dpr} canvas=${w * dpr}x${h * dpr} webgl1+stencil`);
+  console.log(`[createPixiHost] logical=${w}x${h} dpr=${dpr} canvas=${w * dpr}x${h * dpr} webgl1+stencil androidLike=${androidLike}`);
 
   let app: PIXI.Application | null = null;
   try {
-    app = new PIXI.Application(pixiRendererOptions(canvas, w, h, dpr));
+    app = new PIXI.Application(pixiRendererOptions(canvas, w, h, dpr, androidLike));
   } catch (e) {
     console.error('[createPixiHost] new PIXI.Application 失败:', e);
   }
@@ -146,7 +148,7 @@ export function createPixiHost(canvas: PIXI.ICanvas): PixiHost {
   }
 
   console.warn('[createPixiHost] Application 不完整或失败，降级 autoDetectRenderer + Ticker');
-  const renderer = PIXI.autoDetectRenderer(pixiRendererOptions(canvas, w, h, dpr));
+  const renderer = PIXI.autoDetectRenderer(pixiRendererOptions(canvas, w, h, dpr, androidLike));
   const stage = new PIXI.Container();
   const ticker = new PIXI.Ticker();
   ticker.add(() => {

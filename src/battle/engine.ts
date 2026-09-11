@@ -338,6 +338,11 @@ export function createBattleSim(
   const autoUids = new Set<string>();
   /** 人工模式下当前停下来等指令的单位 */
   let pendingTurn: MutablePending | null = null;
+  /**
+   * 本回合已经拿过行动权的人。出手队列偶发把当前人插回去时，
+   * 托管会让同一个人连砍、别人永远排不上。轮首清空。
+   */
+  const actedThisRound = new Set<string>();
   let rounds = 0;
   let order: string[] = [];
   let done = false;
@@ -512,6 +517,7 @@ export function createBattleSim(
   }
 
   function insertIntoOrder(uid: string): void {
+    if (actedThisRound.has(uid)) return;
     if (order.includes(uid)) return;
     if (order.length === 0) {
       order.push(uid);
@@ -550,6 +556,7 @@ export function createBattleSim(
       winner = null;
     }
     pendingTurn = null;
+    actedThisRound.delete(u.uid);
     insertIntoOrder(u.uid);
     return [{ type: 'spawn', unit: { ...u, pos: { ...u.pos } } }];
   }
@@ -608,6 +615,7 @@ export function createBattleSim(
     for (const s of opts.scriptedSpawns ?? []) {
       if (s.round === rounds) events.push(...spawnUnit(s.unit, s.auto));
     }
+    actedThisRound.clear();
     order = bySpeedOrder(units, defs).map((u) => u.uid);
     const evs = withDropSideEffects(events);
     const w = checkWinner(units);
@@ -778,8 +786,19 @@ export function createBattleSim(
     return events;
   }
 
+  function takeOverPending(): BattleStep {
+    const resume = pendingTurn;
+    pendingTurn = null;
+    if (!resume) return { events: [], done: false, winner: null };
+    const u = liveUnit(resume.uid);
+    return u ? actTurn(u, resume) : { events: [], done: false, winner: null };
+  }
+
   function stepTurn(): BattleStep {
     if (done) return { events: [], done: true, winner };
+    // 托管了却还停着等指令：立刻接手打完。空转的话主循环会反复拿到空步，
+    // 上一个人的攻击动画还在播，看起来就像他在连砍、别人永远排不上。
+    if (pendingTurn && forceAuto) return takeOverPending();
     // 还有人在等指令时不许推进，否则玩家那个单位会被跳过
     if (pendingTurn) return { events: [], done: false, winner: null };
     // 回合边界
@@ -792,8 +811,10 @@ export function createBattleSim(
     // 弹出下一个存活行动者
     while (order.length > 0) {
       const uid = order.shift()!;
+      if (actedThisRound.has(uid)) continue;
       const self = units.find((u) => u.uid === uid);
       if (!self || self.hp <= 0) continue;
+      actedThisRound.add(self.uid);
       const turnStart: BattleEvent = { type: 'turnStart', uid: self.uid, faction: self.faction };
       if (self.faction === 'player' && !forceAuto && !autoUids.has(self.uid)) {
         pendingTurn = {
@@ -1043,10 +1064,7 @@ export function createBattleSim(
     // 切回手动不需要动当前状态：下一次 stepTurn 自然会停下来等指令。
     if (!on || done || !pendingTurn) return idle;
     // 当前单位如果已经走了一半，把剩下的动作接着打完（见 actTurn 的 resume）
-    const resume = pendingTurn;
-    pendingTurn = null;
-    const u = liveUnit(resume.uid);
-    return u ? actTurn(u, resume) : idle;
+    return takeOverPending();
   }
 
   function runToEnd(): BattleReport {

@@ -159,7 +159,8 @@ export function grantAdExtraSlot(state: MvpGameState): boolean {
   return true;
 }
 
-export function canPlaceAt(state: MvpGameState, pos: Vec2): boolean {
+/** 这一格能不能站人：部署区、可通行、没地形券、没敌人。不管有没有人、是否满编。 */
+function canStandOnDeployCell(state: MvpGameState, pos: Vec2): boolean {
   const run = requireRun(state);
   const stage = currentStage(state);
   const ter = stage.terrain;
@@ -167,9 +168,15 @@ export function canPlaceAt(state: MvpGameState, pos: Vec2): boolean {
   if (!isPlayerDeployCell(stage, pos)) return false;
   const cell = ter[pos.y]?.[pos.x];
   if (!cell || !isPassable(cell)) return false;
-  if (run.placements.some((p) => p.pos.x === pos.x && p.pos.y === pos.y)) return false;
   if (overlayAt(run, pos)) return false;
   if (enemyAt(state, pos)) return false;
+  return true;
+}
+
+export function canPlaceAt(state: MvpGameState, pos: Vec2): boolean {
+  const run = requireRun(state);
+  if (!canStandOnDeployCell(state, pos)) return false;
+  if (run.placements.some((p) => p.pos.x === pos.x && p.pos.y === pos.y)) return false;
   if (run.placements.length >= getMaxDeploy(state)) return false;
   return true;
 }
@@ -228,6 +235,39 @@ export function placeCharacter(state: MvpGameState, rosterId: string, pos: Vec2)
   if (!run.partyRosterIds.includes(rosterId)) return false;
   if (run.placements.some((p) => p.rosterId === rosterId)) return false;
   if (!canPlaceAt(state, pos)) return false;
+  run.placements.push({ uid: nextPid(), rosterId, pos: { ...pos } });
+  return true;
+}
+
+/**
+ * 把这个人放到这一格。格子上已有别人就换下来（替补 ↔ 阵上替换）。
+ * 他自己已经在别的格，则挪过来。
+ *
+ * 布阵点选的手感是「先点人再点位置」：点到已上阵的人应该换上去，
+ * 而不是先把阵上的人卸掉、再空放一次——那一步空窗会让 UI 和开战名单对不上。
+ */
+export function placeOrReplaceCharacter(state: MvpGameState, rosterId: string, pos: Vec2): boolean {
+  const run = requireRun(state);
+  if (!getCharacter(state, rosterId)) return false;
+  if (!run.partyRosterIds.includes(rosterId)) return false;
+  if (!canStandOnDeployCell(state, pos)) return false;
+
+  const occupantIdx = run.placements.findIndex((p) => p.pos.x === pos.x && p.pos.y === pos.y);
+  const self = run.placements.find((p) => p.rosterId === rosterId);
+  if (self && occupantIdx >= 0 && run.placements[occupantIdx]!.rosterId === rosterId) {
+    return false;
+  }
+
+  if (occupantIdx >= 0 && run.placements[occupantIdx]!.rosterId !== rosterId) {
+    run.placements.splice(occupantIdx, 1);
+  }
+
+  if (self) {
+    self.pos = { ...pos };
+    return true;
+  }
+
+  if (run.placements.length >= getMaxDeploy(state)) return false;
   run.placements.push({ uid: nextPid(), rosterId, pos: { ...pos } });
   return true;
 }

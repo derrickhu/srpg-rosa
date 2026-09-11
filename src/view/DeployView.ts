@@ -26,7 +26,7 @@ import {
   getMaxDeploy,
   canOfferAdExtraSlot,
   getCharacter,
-  placeCharacter,
+  placeOrReplaceCharacter,
   placeTerrainCell,
   placedTerrainAt,
   removePlacement,
@@ -182,7 +182,7 @@ export interface DeployCallbacks {
   onRefresh?: () => void;
   /** 提示（走 GameFlow 的 toast，DeployView 不自己造弹窗） */
   onWarn?: (msg: string) => void;
-  onPlacementChange?: (rosterId: string) => void;
+  onPlacementChange?: (rosterId: string, action?: 'place' | 'remove') => void;
   /** 替补席点选，教程用来把手指从人转到格子上 */
   onSelectRoster?: (rosterId: string) => void;
   /** 看广告多上阵一人 */
@@ -560,17 +560,31 @@ export function createDeployView(
       return;
     }
     const placed = run.placements.find((p) => p.pos.x === x && p.pos.y === y);
+    if (placed && selectedRosterId && selectedRosterId !== placed.rosterId) {
+      if (placeOrReplaceCharacter(state, selectedRosterId, pos)) {
+        AudioManager.playSfx('sfx_deploy');
+        const placedId = selectedRosterId;
+        selectedRosterId = null;
+        redrawGrid();
+        redrawHand();
+        redrawToolbar();
+        callbacks.onPlacementChange?.(placedId);
+        return;
+      }
+    }
     if (placed) {
       removePlacement(state, pos);
       AudioManager.playSfx('sfx_undo');
       redrawGrid();
       redrawHand();
       redrawToolbar();
+      callbacks.onPlacementChange?.(placed.rosterId, 'remove');
       return;
     }
-    if (selectedRosterId && placeCharacter(state, selectedRosterId, pos)) {
+    if (selectedRosterId && placeOrReplaceCharacter(state, selectedRosterId, pos)) {
       AudioManager.playSfx('sfx_deploy');
       const placedId = selectedRosterId;
+      selectedRosterId = null;
       redrawGrid();
       redrawHand();
       redrawToolbar();

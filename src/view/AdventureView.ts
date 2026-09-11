@@ -127,6 +127,43 @@ export function adventureCardTitle(chapterIndex: number, officialName: string, e
     : `第 ${chapterIndex + 1} 章 · ${officialName}`;
 }
 
+export type AdventureFooterModel =
+  | { kind: 'locked' }
+  | { kind: 'sandbox' }
+  | { kind: 'continue'; canSweep: boolean; sweepLeft: number }
+  | { kind: 'play'; canSweep: boolean; sweepLeft: number; startLabel: string; cleared: boolean };
+
+/**
+ * 底栏该出什么钮。已通关章节即使另一章正在打，也出开始 + 扫荡；
+ * 正在打的那一章仍出继续（通关过的顺便带扫荡）。
+ */
+export function adventureFooterModel(
+  state: MvpGameState,
+  official: DungeonDef,
+  viewingElite: boolean,
+): AdventureFooterModel {
+  const action = adventureActiveDef(official, viewingElite);
+  const adventure = adventureRunOf(state);
+  const sameLane = !!adventure && (
+    adventure.dungeonId === official.id
+    || officialDungeonIdOfElite(adventure.dungeonId) === official.id
+  );
+  const cleared = chapterClearedForSweep(state.meta, action.id);
+  const sweepLeft = sweepLeftToday(state.meta, action.id);
+  const canSweep = canSweepChapter(state, action.id);
+
+  if (sameLane) return { kind: 'continue', canSweep, sweepLeft };
+  if (!isDungeonUnlocked(state.meta, official.id)) return { kind: 'locked' };
+  if (isSandboxDungeon(official.id)) return { kind: 'sandbox' };
+  return {
+    kind: 'play',
+    canSweep,
+    sweepLeft,
+    startLabel: viewingElite ? '挑战精英' : '开  始',
+    cleared,
+  };
+}
+
 /**
  * 冒险页默认停在「正在打 / 下一张没打过」的章。
  * 失败离开关卡仍看当前章；通关回大厅则翻到下一章播解锁。
@@ -836,26 +873,15 @@ export function createAdventureView(
     actionLayer.removeChildren();
     if (revealingUnlock) return;
     const d = currentDef();
-    const unlocked = isDungeonUnlocked(state.meta, d.id);
+    const viewingElite = viewingEliteOf(d);
+    const action = activeDefOf(d);
+    const footer = adventureFooterModel(state, d, viewingElite);
     const btnY = H - 70;
+    const party = (): string[] => state.meta.roster.map((m) => m.rosterId);
 
-    const adventure = adventureRunOf(state);
-    if (adventure) {
-      const runD = getDungeonDef(adventure.dungeonId);
-      const sameLane = adventure.dungeonId === d.id
-        || officialDungeonIdOfElite(adventure.dungeonId) === d.id;
-      const label = sameLane ? '继续冒险' : `继续冒险（${runD?.name ?? ''}）`;
-      const btn = makeButton(label, () => cb.onContinueRun(), {
-        variant: 'primary', width: W - 96, height: 48, fontSize: 17, radius: 14,
-      });
-      btn.x = 48; btn.y = btnY;
-      actionLayer.addChild(btn);
-      return;
-    }
+    if (footer.kind === 'locked') return;
 
-    if (!unlocked) return;
-
-    if (isSandboxDungeon(d.id)) {
+    if (footer.kind === 'sandbox') {
       // 「学满技能」这个按钮没了：一人一招之后技能不入档，试炼场的技能池由
       // `effectiveOwnedSkillIds` 按职业现算，进去就是全的
       const gmW = Math.floor((W - 96 - 8) / 2);
@@ -874,7 +900,7 @@ export function createAdventureView(
         b.y = gmY;
         actionLayer.addChild(b);
       });
-      const btn = makeButton('进入试炼', () => cb.onStartRun(d.id, state.meta.roster.map((m) => m.rosterId)), {
+      const btn = makeButton('进入试炼', () => cb.onStartRun(d.id, party()), {
         variant: 'primary', width: W - 96, height: 48, fontSize: 18, radius: 14,
       });
       btn.x = 48; btn.y = btnY;
@@ -882,14 +908,11 @@ export function createAdventureView(
       return;
     }
 
-    const action = activeDefOf(d);
-    const viewingElite = viewingEliteOf(d);
-    const cleared = chapterClearedForSweep(state.meta, action.id);
-    const left = sweepLeftToday(state.meta, action.id);
-    const note = cleared
-      ? (left > 0 ? `今日还可扫荡 ${left} 次` : '今日扫荡已用完')
-      : '';
-    if (note) {
+    const showSweepNote = (footer.kind === 'play' && footer.cleared)
+      || (footer.kind === 'continue' && chapterClearedForSweep(state.meta, action.id));
+    if (showSweepNote) {
+      const left = footer.sweepLeft;
+      const note = left > 0 ? `今日还可扫荡 ${left} 次` : '今日扫荡已用完';
       const noteTx = makeText(note, 'caption', {
         fill: C.paper,
         stroke: C.ink,
@@ -901,9 +924,44 @@ export function createAdventureView(
       actionLayer.addChild(noteTx);
     }
 
-    const start = (): void => cb.onStartRun(action.id, state.meta.roster.map((m) => m.rosterId));
-    if (!cleared) {
-      const btn = makeButton(viewingElite ? '挑战精英' : '开  始', start, {
+    const addSweep = (x: number, width: number): void => {
+      const sweepBtn = makeButton(footer.canSweep ? `扫荡 (${footer.sweepLeft})` : '扫荡 (0)', () => {
+        cb.onSweepChapter(action.id);
+      }, {
+        variant: footer.canSweep ? 'primary' : 'secondary',
+        disabled: !footer.canSweep,
+        width, height: 48, fontSize: 16, radius: 14,
+      });
+      sweepBtn.x = x;
+      sweepBtn.y = btnY;
+      actionLayer.addChild(sweepBtn);
+    };
+
+    if (footer.kind === 'continue') {
+      const clearedHere = chapterClearedForSweep(state.meta, action.id);
+      if (!clearedHere) {
+        const btn = makeButton('继续冒险', () => cb.onContinueRun(), {
+          variant: 'primary', width: W - 96, height: 48, fontSize: 17, radius: 14,
+        });
+        btn.x = 48; btn.y = btnY;
+        actionLayer.addChild(btn);
+        return;
+      }
+      const gap = 8;
+      const btnW = Math.floor((W - 96 - gap) / 2);
+      const cont = makeButton('继续冒险', () => cb.onContinueRun(), {
+        variant: footer.canSweep ? 'secondary' : 'primary',
+        width: btnW, height: 48, fontSize: 16, radius: 14,
+      });
+      cont.x = 48; cont.y = btnY;
+      actionLayer.addChild(cont);
+      addSweep(48 + btnW + gap, btnW);
+      return;
+    }
+
+    const start = (): void => cb.onStartRun(action.id, party());
+    if (!footer.cleared) {
+      const btn = makeButton(footer.startLabel, start, {
         variant: 'primary', width: W - 96, height: 48, fontSize: 18, radius: 14,
       });
       btn.x = 48; btn.y = btnY;
@@ -913,24 +971,13 @@ export function createAdventureView(
 
     const gap = 8;
     const btnW = Math.floor((W - 96 - gap) / 2);
-    const canSweepNow = canSweepChapter(state, action.id);
-    const startBtn = makeButton('开  始', start, {
-      variant: canSweepNow ? 'secondary' : 'primary',
+    const startBtn = makeButton(footer.startLabel, start, {
+      variant: footer.canSweep ? 'secondary' : 'primary',
       width: btnW, height: 48, fontSize: 16, radius: 14,
     });
     startBtn.x = 48; startBtn.y = btnY;
     actionLayer.addChild(startBtn);
-
-    const sweepBtn = makeButton(canSweepNow ? `扫荡 (${left})` : '扫荡 (0)', () => {
-      cb.onSweepChapter(action.id);
-    }, {
-      variant: canSweepNow ? 'primary' : 'secondary',
-      disabled: !canSweepNow,
-      width: btnW, height: 48, fontSize: 16, radius: 14,
-    });
-    sweepBtn.x = 48 + btnW + gap;
-    sweepBtn.y = btnY;
-    actionLayer.addChild(sweepBtn);
+    addSweep(48 + btnW + gap, btnW);
   }
 
   function refreshCard(): void {

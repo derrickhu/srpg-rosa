@@ -18,10 +18,12 @@ import {
 import { formatModStars, getSkillMod, isExclusiveMod, modStacks } from '@/data/skillModCatalog';
 import {
   ABANDON_RUN_CONFIRM,
+  attachAbandonConfirm,
   createDefeatOverlay,
   createLootOverlay,
   createRewardOverlay,
   defeatHintsFor,
+  switchAdventureConfirm,
   type LootCard,
   type RewardEntry,
 } from '@/view/battle/resultOverlay';
@@ -602,6 +604,30 @@ export class GameFlow {
       gmPrepareSandboxRoster(this.state);
       party = this.state.meta.roster.map((m) => m.rosterId);
     }
+    const current = adventureRunOf(this.state);
+    if (current && current.dungeonId !== dungeonId) {
+      if (isTutorialRun(this.state)) {
+        this.showToast('先打完这一章的教学', { deny: true });
+        return;
+      }
+      const runName = getDungeonDef(current.dungeonId)?.name ?? '当前章节';
+      const layer = new PIXI.Container();
+      let close = (): void => undefined;
+      attachAbandonConfirm(
+        layer,
+        this.app.screen.width,
+        this.app.screen.height,
+        switchAdventureConfirm(runName),
+        () => {
+          close();
+          this.trackRunEnd('abandon');
+          abandonRun(this.state);
+          this.startRunAndEnter(dungeonId, party);
+        },
+      );
+      close = this.pushOverlay(layer);
+      return;
+    }
     startRun(this.state, dungeonId, party);
     if (!isEndlessDungeon(dungeonId)) this.adventureChapter = null;
     if (isEliteDungeon(dungeonId)) this.adventureEliteMode = true;
@@ -713,8 +739,8 @@ export class GameFlow {
           this.renderShell();
         },
         onRefresh: () => this.renderDeploy(),
-        onPlacementChange: (rosterId) => {
-          notifyTutorial(this.state, { type: 'placed', rosterId });
+        onPlacementChange: (rosterId, action) => {
+          if (action !== 'remove') notifyTutorial(this.state, { type: 'placed', rosterId });
           SaveManager.save(this.state);
         },
         onSelectRoster: () => notifyTutorial(this.state, { type: 'refresh' }),
@@ -758,10 +784,6 @@ export class GameFlow {
    * 整章扫荡：不建 run、不进战斗。已通关章节在冒险页点一次，拿重复通关魂晶。
    */
   private sweepChapter(dungeonId: string): void {
-    if (adventureRunOf(this.state)) {
-      this.showToast('先结束当前的冒险', { deny: true });
-      return;
-    }
     if (!canSweepChapter(this.state, dungeonId)) {
       this.showToast('这一章还不能扫荡', { deny: true });
       return;

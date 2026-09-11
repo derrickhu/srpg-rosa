@@ -903,6 +903,7 @@ export function createManualTurnUi(opts: ManualTurnUiOptions): ManualTurnUi {
       highlight.visible = true;
       threatArrows.visible = true;
       bar.visible = true;
+      bar.eventMode = 'static';
       budget.visible = true;
       glow.visible = true;
       hint.text = hintText(s);
@@ -928,6 +929,7 @@ export function createManualTurnUi(opts: ManualTurnUiOptions): ManualTurnUi {
       active = null;
       activeRing.clear();
       bar.visible = false;
+      bar.eventMode = 'none';
       budget.visible = false;
       hint.visible = false;
       toast.visible = false;

@@ -201,6 +201,13 @@ export interface FlashDef {
   playbackSpeed?: number;
   /** 叠在闪光上的代码打击爆裂 */
   hitBurst?: HitBurstSpec;
+  /**
+   * 铺在格子地面上，而不是单位胸口。
+   *
+   * 霜环这类场地爆炸如果锚在棋子中心、再画在棋子上层，正圆环会读成套在身上的光环。
+   * 打开之后回放层会：落到脚线、纵向压扁贴地、从一条缝长起来、画在棋子底下。
+   */
+  ground?: boolean;
 }
 
 /**
@@ -1592,6 +1599,7 @@ export const SKILL_VFX: Record<string, VfxRecipe> = {
    * 炎环：选点爆炸，impact 锚在落点而不是自己脚下。
    * `cells: 3` 盖住 blastRadius 1（直径 3 格）；横扫把它摊到半径 2 时会略小，
    * 但比锚在施法者身上、火圈开在后排空地要诚实。
+   * `ground: true`：火圈铺在格子上，不要套在胸口。
    */
   flame_ring: {
     windup: windupImplode(FIRE, 1.4, 280),
@@ -1602,6 +1610,7 @@ export const SKILL_VFX: Record<string, VfxRecipe> = {
       mode: 'burst',
       playbackSpeed: 0.7,
       sparks: skillSparks(FIRE),
+      ground: true,
     },
     shake: SHAKE_BLAST,
   },
@@ -1629,6 +1638,7 @@ export const SKILL_VFX: Record<string, VfxRecipe> = {
       mode: 'burst',
       playbackSpeed: 0.7,
       sparks: skillSparks(FIRE),
+      ground: true,
     },
     shake: SHAKE_BLAST,
   },
@@ -1636,6 +1646,7 @@ export const SKILL_VFX: Record<string, VfxRecipe> = {
    * 霜环：选点爆炸，impact 锚在落点。`cells: 3` 盖住 blastRadius 1。
    *
    * 图集是向外戳的三角冰棱环，不穿 `flame_ring` 火舌——那张已经给奥莉的爆炎了。
+   * `ground: true`：落到格子脚线，从地里长出来，不要套在怪胸口。
    */
   frost_ring: {
     windup: windupImplode(FROST, 1.4, 280),
@@ -1646,6 +1657,7 @@ export const SKILL_VFX: Record<string, VfxRecipe> = {
       mode: 'burst',
       playbackSpeed: 0.7,
       sparks: skillSparks(FROST),
+      ground: true,
     },
     shake: SHAKE_BLAST,
   },
@@ -1799,6 +1811,7 @@ export const SKILL_VFX: Record<string, VfxRecipe> = {
    *
    * 和缠足一样走抠图：荆棘是木头，而深色木头在 additive 下显示不出来（暗部被烘成透明），
    * 只能画成亮绿，而亮绿在亮草地上看不见（实测 53% → 改抠图后 3.2%）。
+   * `ground: true`：藤蔓从格子里往里收，不要飘在腰上。
    */
   temp_fo_thorn: {
     windup: windupImplode(BARK, 2.0, 300),
@@ -1809,6 +1822,7 @@ export const SKILL_VFX: Record<string, VfxRecipe> = {
       mode: 'burst',
       playbackSpeed: 0.68,
       sparks: skillSparks(BARK),
+      ground: true,
     },
     shake: SHAKE_LIGHT,
   },
