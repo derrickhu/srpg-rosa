@@ -41,6 +41,8 @@ describe('整章按星发奖', () => {
       advanceNode(s);
     }
     applyVictory(s);
+    const preview = previewChapterClear(s, DUNGEON.id);
+    expect(preview.starBeats.map((b) => b.state)).toEqual(['fresh', 'miss', 'miss']);
     const r = finishRunVictory(s);
     expect(r.newStars).toEqual([1]);
     expect(r.soul).toBe(DUNGEON.stars![0]!.soul);

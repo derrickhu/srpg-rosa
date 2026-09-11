@@ -110,3 +110,10 @@ export function computeDamage(
   const raw = attackerDef.atk * cm * tm * dm * targetDef.damageTakenMul;
   return Math.max(1, Math.floor(raw));
 }
+
+/** 普攻路径专用。技能走 `computeSkillHitDamage`，不能塞进 `computeDamage`。 */
+export function applyBasicDealtMul(dmg: number, attackerDef: UnitDef): number {
+  const mul = attackerDef.basicDealtMul ?? 1;
+  if (mul === 1) return dmg;
+  return Math.max(1, Math.floor(dmg * mul));
+}

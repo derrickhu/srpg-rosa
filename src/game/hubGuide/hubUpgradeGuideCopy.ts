@@ -16,4 +16,8 @@ export const HUB_UPGRADE_GUIDE_COPY: Partial<Record<HubUpgradeGuideStep, {
     title: '升到 2 级',
     body: '点[[升级]]。升一级就会解锁专属纹章，之后战斗里能抽到。',
   },
+  [HubUpgradeGuideStep.OPEN_EMBLEM]: {
+    title: '看看永久纹章',
+    body: '点[[永久纹章]]。打通草原首领后，雷恩身上刻了一枚。',
+  },
 };

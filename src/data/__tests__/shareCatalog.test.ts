@@ -30,6 +30,8 @@ describe('微信转发卡片', () => {
     const share = readFileSync('src/platform/wxShare.ts', 'utf8');
     expect(share).toContain('showShareMenu');
     expect(share).toContain('onShareAppMessage');
+    expect(share).toContain('export function shareAppMessage');
+    expect(share).toContain('wx.onShow');
     expect(share).toContain("menus: ['shareAppMessage', 'shareTimeline']");
   });
 });

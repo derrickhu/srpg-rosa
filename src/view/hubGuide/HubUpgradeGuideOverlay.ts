@@ -21,6 +21,8 @@ export interface HubUpgradeGuideHost {
   tabRect: (id: TabId) => SpotlightRect;
   cardRect: (rosterId: string) => SpotlightRect | null;
   levelUpButtonRect: () => SpotlightRect | null;
+  detailTabRect: (id: 'upgrade' | 'skill' | 'emblem') => SpotlightRect | null;
+  awakenConfirmRect: () => SpotlightRect | null;
   detailRosterId: () => string | null;
 }
 
@@ -258,6 +260,8 @@ function stepHole(step: HubUpgradeGuideStep, host: HubUpgradeGuideHost): Spotlig
   if (step === HubUpgradeGuideStep.OPEN_ROSTER) return host.tabRect('roster');
   if (step === HubUpgradeGuideStep.TAP_RAYEN) return host.cardRect(HUB_GUIDE_RAYEN_ID);
   if (step === HubUpgradeGuideStep.TAP_LEVELUP) return host.levelUpButtonRect();
+  if (step === HubUpgradeGuideStep.TAP_AWAKEN) return host.awakenConfirmRect();
+  if (step === HubUpgradeGuideStep.OPEN_EMBLEM) return host.detailTabRect('emblem');
   return null;
 }
 
@@ -283,6 +287,11 @@ export function attachHubUpgradeGuideOverlay(
 
     const hole = stepHole(step, host);
     const copy = HUB_UPGRADE_GUIDE_COPY[step];
+    const handOnly = step === HubUpgradeGuideStep.TAP_AWAKEN;
+    if (handOnly) {
+      if (hole) placeHand(layer, hole);
+      return;
+    }
     const dim = new PIXI.Graphics();
     drawDim(dim, host.screenW, host.screenH, hole ? [hole] : []);
     const detailOpen = host.detailRosterId() != null;

@@ -5,7 +5,7 @@ import { applyEliteTempSkillBoost, isEliteDungeon } from '@/data/eliteCatalog';
 import { getSkillSpec } from '@/data/skillCatalog';
 import { effectiveSkillSpec } from '@/data/skillModCatalog';
 import { UNIT_DEFS } from '@/data/unitDefs';
-import { characterEffectiveStats } from '@/game/characterFactory';
+import { characterSheetStats } from '@/game/characterFactory';
 import type { Character } from '@/game/characterTypes';
 import { resolveBattleSkillIdForCharacter } from '@/game/state/DeployManager';
 import { tempSkillIdForRoster, type MvpGameState } from '@/game/MvpState';
@@ -68,7 +68,7 @@ function tempSection(
 
 /** 布阵页点开角色卡：数值取局外面板，技能取这一局实际会带上场的两个槽 */
 export function characterInfoModel(state: MvpGameState, m: Character): UnitInfoModel {
-  const eff = characterEffectiveStats(m);
+  const eff = characterSheetStats(m, state.meta);
   const modIds = state.run?.skillMods[m.rosterId] ?? [];
   const skills: UnitInfoSkillSection[] = [];
 

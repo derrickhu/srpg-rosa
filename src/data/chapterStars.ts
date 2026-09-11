@@ -78,6 +78,25 @@ export function isStarBit(mask: number, index: number): boolean {
   return ((mask >> index) & 1) === 1;
 }
 
+/** 通关结算横幅下的一颗星：已经领过 / 这趟新点亮 / 没达成 */
+export type ClearStarState = 'held' | 'fresh' | 'miss';
+
+export interface ClearStarBeat {
+  label: string;
+  state: ClearStarState;
+}
+
+export function chapterStarBeats(
+  stars: readonly ChapterStarDef[],
+  achieved: readonly boolean[],
+  claimedMask: number,
+): ClearStarBeat[] {
+  return stars.map((s, i) => ({
+    label: starCondLabel(s.cond),
+    state: !achieved[i] ? 'miss' : isStarBit(claimedMask, i) ? 'held' : 'fresh',
+  }));
+}
+
 export function countStarBits(mask: number): number {
   let n = 0;
   let m = mask;

@@ -3,6 +3,7 @@ import { DUNGEON_DEFS } from '@/data/dungeonCatalog';
 import {
   CHAPTER_STAR_COUNT,
   evaluateChapterStars,
+  chapterStarBeats,
   starCondLabel,
   starBitMask,
   countStarBits,
@@ -47,5 +48,16 @@ describe('评星判定', () => {
       allyDeaths: 1,
     });
     expect(slow).toEqual([true, false, false]);
+  });
+
+  it('结算三星：没领过的达成是新亮，领过的保持，没达成是暗的', () => {
+    const stars = DUNGEON_DEFS[0]!.stars!;
+    const fresh = chapterStarBeats(stars, [true, true, true], 0);
+    expect(fresh.map((b) => b.state)).toEqual(['fresh', 'fresh', 'fresh']);
+    expect(fresh[0]!.label).toBe('成功通关');
+    const held = chapterStarBeats(stars, [true, true, true], 0b001);
+    expect(held.map((b) => b.state)).toEqual(['held', 'fresh', 'fresh']);
+    const miss = chapterStarBeats(stars, [true, false, false], 0);
+    expect(miss.map((b) => b.state)).toEqual(['fresh', 'miss', 'miss']);
   });
 });

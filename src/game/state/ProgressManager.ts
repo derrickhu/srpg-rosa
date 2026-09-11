@@ -15,6 +15,8 @@ import {
   isStarBit,
   starBitMask,
   starCondLabel,
+  chapterStarBeats,
+  type ClearStarBeat,
   type ChapterStarDef,
   type RunStarStats,
 } from '@/data/chapterStars';
@@ -34,6 +36,10 @@ import {
   rememberBattlePlacements,
   shouldSkipDeployCarry,
 } from './DeployManager';
+import {
+  claimPersonalEmblemsForDungeon,
+  previewPersonalEmblemsForDungeon,
+} from '@/data/personalEmblemCatalog';
 import { instantiateCharacter } from '@/game/characterFactory';
 import type { Character } from '@/game/characterTypes';
 import {
@@ -154,7 +160,21 @@ export interface ChapterClearPreview {
   newStars: number[];
   labels: string[];
   starMask: number;
+  /** 横幅下三星：已领 / 这趟新亮 / 没达成 */
+  starBeats: ClearStarBeat[];
+  unlockedRosterIds: string[];
+  grantedEmblemIds: string[];
+  /** 这次发到的等级（主线 1 / 精英 2） */
+  grantedEmblemLevelById: Record<string, number>;
+  unlockedDungeonIds: string[];
 }
+
+const EMPTY_UNLOCKS = {
+  unlockedRosterIds: [] as string[],
+  grantedEmblemIds: [] as string[],
+  grantedEmblemLevelById: {} as Record<string, number>,
+  unlockedDungeonIds: [] as string[],
+};
 
 function previewFrom(
   stars: readonly ChapterStarDef[] | undefined,
@@ -170,6 +190,8 @@ function previewFrom(
       newStars: [],
       labels: [],
       starMask: claimedMask,
+      starBeats: [],
+      ...EMPTY_UNLOCKS,
     };
   }
   const achieved = evaluateChapterStars(stars, stats);
@@ -186,7 +208,70 @@ function previewFrom(
     }
   });
   if (!firstClear) soul += repeatSoul;
-  return { soul, firstClear, newStars, labels, starMask: next };
+  return {
+    soul,
+    firstClear,
+    newStars,
+    labels,
+    starMask: next,
+    starBeats: chapterStarBeats(stars, achieved, claimedMask),
+    ...EMPTY_UNLOCKS,
+  };
+}
+
+function previewRosterUnlocks(meta: MetaState, dungeonId: string): string[] {
+  return CHARACTER_DEFS
+    .filter((cd) =>
+      cd.unlock.kind === 'clearDungeon'
+      && cd.unlock.dungeonId === dungeonId
+      && !meta.roster.some((m) => m.rosterId === cd.id),
+    )
+    .map((cd) => cd.id);
+}
+
+function previewDungeonUnlocks(meta: MetaState, dungeonId: string): string[] {
+  const ids: string[] = [];
+  for (const dd of DUNGEON_DEFS) {
+    if (
+      dd.unlock.kind === 'clearDungeon'
+      && dd.unlock.dungeonId === dungeonId
+      && !meta.unlockedDungeonIds.includes(dd.id)
+    ) {
+      ids.push(dd.id);
+    }
+  }
+  for (const e of ELITE_CHAPTERS) {
+    if (e.officialId === dungeonId && !meta.unlockedDungeonIds.includes(e.id)) {
+      ids.push(e.id);
+    }
+  }
+  return ids;
+}
+
+function attachClearUnlocks(
+  preview: ChapterClearPreview,
+  meta: MetaState,
+  dungeonId: string,
+): ChapterClearPreview {
+  if (!preview.firstClear) return { ...preview, ...EMPTY_UNLOCKS };
+  return {
+    ...preview,
+    unlockedRosterIds: previewRosterUnlocks(meta, dungeonId),
+    ...emblemGrantFields(previewPersonalEmblemsForDungeon(meta, dungeonId)),
+    unlockedDungeonIds: previewDungeonUnlocks(meta, dungeonId),
+  };
+}
+
+function emblemGrantFields(grants: { def: { id: string }; level: number }[]): {
+  grantedEmblemIds: string[];
+  grantedEmblemLevelById: Record<string, number>;
+} {
+  const grantedEmblemLevelById: Record<string, number> = {};
+  for (const g of grants) grantedEmblemLevelById[g.def.id] = g.level;
+  return {
+    grantedEmblemIds: grants.map((g) => g.def.id),
+    grantedEmblemLevelById,
+  };
 }
 
 export function previewChapterClear(state: MvpGameState, dungeonId: string): ChapterClearPreview {
@@ -195,10 +280,10 @@ export function previewChapterClear(state: MvpGameState, dungeonId: string): Cha
   const claimed = chapterStarMask(state.meta, dungeonId);
   const stats = state.run?.starStats ?? emptyRunStarStats();
   const repeat = isEliteDungeon(dungeonId) ? ELITE_REPEAT_SOUL : DUNGEON_REPEAT_SOUL;
-  if (!d?.stars) {
-    return previewFrom(undefined, stats, claimed, firstClear, repeat);
-  }
-  return previewFrom(d.stars, stats, claimed, firstClear, repeat);
+  const base = !d?.stars
+    ? previewFrom(undefined, stats, claimed, firstClear, repeat)
+    : previewFrom(d.stars, stats, claimed, firstClear, repeat);
+  return attachClearUnlocks(base, state.meta, dungeonId);
 }
 
 /** 进入副本：建立 run，定位首节点 */
@@ -643,24 +728,39 @@ export interface FinishRunResult {
   unlockedRosterIds: string[];
   newStars: number[];
   starMask: number;
+  grantedEmblemIds: string[];
+  grantedEmblemLevelById: Record<string, number>;
+  unlockedDungeonIds: string[];
 }
+
+const EMPTY_FINISH: FinishRunResult = {
+  soul: 0,
+  unlockedRosterIds: [],
+  newStars: [],
+  starMask: 0,
+  grantedEmblemIds: [],
+  grantedEmblemLevelById: {},
+  unlockedDungeonIds: [],
+};
 
 /**
  * 整章通关：新点亮的星发魂晶；已经通关过再打，另加本关重复奖。
+ * 首通还发跟人的永久专属纹章、入队角色、下一章 / 精英本。
  */
 export function finishRunVictory(state: MvpGameState): FinishRunResult {
   if (!state.run) {
-    return { soul: 0, unlockedRosterIds: [], newStars: [], starMask: 0 };
+    return { ...EMPTY_FINISH };
   }
   if (isSandboxDungeon(state.run.dungeonId)) {
     state.run = null;
     state.phase = 'hub';
-    return { soul: 0, unlockedRosterIds: [], newStars: [], starMask: 0 };
+    return { ...EMPTY_FINISH };
   }
   const d = currentDungeon(state);
   hydrateChapterStars(state.meta);
   const preview = previewChapterClear(state, d.id);
   const unlockedRosterIds = applyDungeonClearUnlocks(state.meta, d.id);
+  const granted = claimPersonalEmblemsForDungeon(state.meta, d.id);
   const map = state.meta.chapterStarsByDungeonId ?? {};
   map[d.id] = preview.starMask;
   state.meta.chapterStarsByDungeonId = map;
@@ -672,6 +772,8 @@ export function finishRunVictory(state: MvpGameState): FinishRunResult {
     unlockedRosterIds,
     newStars: preview.newStars,
     starMask: preview.starMask,
+    ...emblemGrantFields(granted),
+    unlockedDungeonIds: preview.unlockedDungeonIds,
   };
 }
 

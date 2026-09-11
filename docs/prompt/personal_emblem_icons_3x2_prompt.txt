@@ -1,0 +1,60 @@
+跟人永久专属纹章图标 3x2
+产出 → images/ui/emblem_pe_{grassland,forest,fortress,swamp,dragon,altar}.png
+生成器：Cursor 内置 GenerateImage，aspect_ratio 1:1
+参考图：images/ui/mod_signature.png、images/ui/mod_guard.png、images/ui/emblem_awaken_crest.png
+只学画法，不要抄题材。
+
+切图：
+    # 生图模型常把品红画成玫红 (229,0,103)，默认 key-threshold 170 抠不掉。
+    /usr/bin/python3 scripts/split-tile-sheet.py --input <sheet>.png --out-dir <tmp> --size 64 \
+        --grid 3x2 --key-threshold 90 \
+        --names grassland forest fortress swamp dragon altar
+    /usr/bin/python3 scripts/despill-magenta.py <tmp>
+
+用在哪：角色详情「专属纹章」页、通关结算奖励格。只压在米白卡面 #FCFCF6 上。
+每枚跟人、每枚一张，不复用词条 mod_* 图。
+
+六枚语义（改 prompt 前对 src/data/personalEmblemCatalog.ts）：
+    grassland 草原开辟  剑 / 开路
+    forest    穿叶      箭 / 林
+    fortress  城垣铁卫  盾 / 墙
+    swamp     沼火      火 / 沼
+    dragon    霜脊      霜晶 / 山脊
+    altar     血契      一滴血 / 圣约
+
+---
+
+A 3-column x 2-row grid of 6 GAME UI ICONS for character-bound permanent emblems in a cartoon fantasy tactics mobile game.
+
+CRITICAL BACKGROUND: the entire background, including all space between and around the icons, must be 100% solid flat MAGENTA, hex #FF00FF. It is a chroma key and will be deleted. No white, no grey, no gradient, no drop shadows onto the background.
+
+CRITICAL SIZE CONSTRAINT — displayed at only 16 to 34 pixels. Every icon must be ONE bold, chunky, instantly readable silhouette. Think of a chess piece, not an illustration. NO thin lines, NO small parts, NO fine detail, NO tiny sparkles, NO text, NO numbers.
+
+CRITICAL — THESE SIT ON A CREAM WHITE CARD (#FCFCF6). Every icon needs a THICK near-black outline (#1A1410) all the way around it and a saturated fill inside.
+
+STYLE — match the attached reference icons only in DRAWING METHOD (chunky filled silhouette, thick near-black outline, flat colours). Do NOT copy their subjects.
+- SOLID FILLED SILHOUETTES with a thick near-black outline. Not line icons.
+- Flat saturated colour fills, at most 3 colours per icon plus the outline, plus one simple lighter shade.
+- Chunky, rounded, toy-like. No gradients, no glow, no bevel, no gloss, no photorealism, no pixel art.
+- Straight-on, upright, centred. ONE connected silhouette per cell — no floating extra bits.
+
+Per-cell contents, left-to-right then top-to-bottom:
+
+Cell 1 (GRASSLAND / path-breaker sword) — a short broad silver sword pointing straight up, with two fat golden wheat / grass blades crossing behind the blade like an X. Warm gold (#FCB40C) grass, steel grey blade, dark brown grip. Must read as "sword opening the grass".
+
+Cell 2 (FOREST / piercing leaf) — one fat green leaf (#549C0C) stabbed through its centre by a short thick arrow, shaft brown, head steel grey, fletching cream. The leaf is the dominant shape. Must read as "arrow through foliage".
+
+Cell 3 (FORTRESS / iron ward) — a chunky heater shield, steel grey (#A8A8A8) with a single cream battlement / castle-wall notch cut along the top edge and a dark charcoal cross. Must read as "wall-shield", not a circle.
+
+Cell 4 (SWAMP / marsh fire) — a squat round flame, orange-red (#F08C2A) sitting on a fat dark teal puddle (#0E7A7A). Two thick flame tongues only. Must read as "fire on water".
+
+Cell 5 (DRAGON / frost ridge) — a single bold ice crystal / mountain-ridge shard, bright cyan (#3CC8E4) with a cream highlight on the left facet, standing like a peak. No extra flakes. Must read as "frozen ridge".
+
+Cell 6 (ALTAR / blood pact) — a rounded cream chalice / cup (#F5E6C8) with one fat crimson drop (#E05446) hanging into it from above. The drop is large. Must read as "a vow of blood".
+
+LAYOUT RULES:
+1. EXACTLY 6 icons in a clean 3x2 arrangement.
+2. NO borders, NO dividing lines, NO frames, NO circles or badges behind the icons — they are separated only by magenta.
+3. Each icon fills about 70% of its cell, leaving a clear magenta margin on all four sides.
+4. All six must feel like ONE set: same outline thickness, same simplification, same chunky proportions.
+5. NO text, no labels, no captions, no letters, no numbers, no watermark anywhere in the image.

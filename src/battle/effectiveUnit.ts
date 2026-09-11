@@ -54,6 +54,9 @@ export function effectiveUnitDef(
     range: baseRange,
     isRanged: baseRanged,
     taunt,
-    damageTakenMul: timedGuardMul(u),
+    damageTakenMul: timedGuardMul(u) * (u.personalTakenMul ?? 1),
+    skillDealtMul: u.personalSkillDealtMul ?? 1,
+    basicDealtMul: u.personalBasicDealtMul ?? 1,
+    healGivenMul: u.personalHealGivenMul ?? 1,
   };
 }

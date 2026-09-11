@@ -16,6 +16,10 @@ export const HubUpgradeGuideStep = {
   OPEN_ROSTER: 1,
   TAP_RAYEN: 2,
   TAP_LEVELUP: 3,
+  /** 升完级再看通关拿到的跟人永久纹章 */
+  OPEN_EMBLEM: 4,
+  /** 专属纹章庆祝上的「准备应战」，只出手、不遮罩 */
+  TAP_AWAKEN: 5,
   DONE: 99,
 } as const;
 
@@ -41,6 +45,8 @@ export function readHubUpgradeGuideStep(meta: MetaState): HubUpgradeGuideStep {
   if (raw === HubUpgradeGuideStep.OPEN_ROSTER) return HubUpgradeGuideStep.OPEN_ROSTER;
   if (raw === HubUpgradeGuideStep.TAP_RAYEN) return HubUpgradeGuideStep.TAP_RAYEN;
   if (raw === HubUpgradeGuideStep.TAP_LEVELUP) return HubUpgradeGuideStep.TAP_LEVELUP;
+  if (raw === HubUpgradeGuideStep.OPEN_EMBLEM) return HubUpgradeGuideStep.OPEN_EMBLEM;
+  if (raw === HubUpgradeGuideStep.TAP_AWAKEN) return HubUpgradeGuideStep.TAP_AWAKEN;
   if (raw >= HubUpgradeGuideStep.DONE) return HubUpgradeGuideStep.DONE;
   return HubUpgradeGuideStep.IDLE;
 }
@@ -60,6 +66,11 @@ function rayenOf(meta: MetaState) {
  */
 export function shouldSkipHubUpgradeGuide(meta: MetaState): boolean {
   if (readHubUpgradeGuideStep(meta) >= HubUpgradeGuideStep.DONE) return true;
+  // 升完级还要指永久纹章页。这时雷恩已经是 2 级，不能按「练过了」掐掉。
+  if (
+    readHubUpgradeGuideStep(meta) === HubUpgradeGuideStep.OPEN_EMBLEM
+    || readHubUpgradeGuideStep(meta) === HubUpgradeGuideStep.TAP_AWAKEN
+  ) return false;
   const rayen = rayenOf(meta);
   if (!rayen || rayen.level > 1) return true;
   if ((meta.endlessBestFloor ?? 0) > 0) return true;
@@ -78,6 +89,11 @@ export function hydrateHubUpgradeGuide(meta: MetaState): void {
     return;
   }
   if (!canOfferHubUpgradeGuide(meta)) return;
+  // 庆祝层不进存档。读档时若停在「准备应战」，直接去指永久纹章。
+  if (readHubUpgradeGuideStep(meta) === HubUpgradeGuideStep.TAP_AWAKEN) {
+    meta.hubUpgradeGuideStep = HubUpgradeGuideStep.OPEN_EMBLEM;
+    return;
+  }
   if (readHubUpgradeGuideStep(meta) === HubUpgradeGuideStep.IDLE) {
     meta.hubUpgradeGuideStep = HubUpgradeGuideStep.OPEN_ROSTER;
   }
@@ -111,7 +127,9 @@ export function completeHubUpgradeGuide(meta: MetaState): boolean {
 export type HubUpgradeGuideEvent =
   | { type: 'openRoster' }
   | { type: 'openRayen'; rosterId: string }
-  | { type: 'leveledRayen'; rosterId?: string };
+  | { type: 'leveledRayen'; rosterId?: string }
+  | { type: 'confirmAwaken' }
+  | { type: 'openEmblemTab'; rosterId?: string };
 
 export function notifyHubUpgradeGuide(state: MvpGameState, ev: HubUpgradeGuideEvent): boolean {
   const step = readHubUpgradeGuideStep(state.meta);
@@ -134,6 +152,18 @@ export function notifyHubUpgradeGuide(state: MvpGameState, ev: HubUpgradeGuideEv
 
   if (ev.type === 'leveledRayen') {
     if (ev.rosterId && ev.rosterId !== TUTORIAL_RAYEN_ID) return false;
+    if (step !== HubUpgradeGuideStep.TAP_LEVELUP) return false;
+    return setHubUpgradeGuideStep(state.meta, HubUpgradeGuideStep.TAP_AWAKEN);
+  }
+
+  if (ev.type === 'confirmAwaken') {
+    if (step !== HubUpgradeGuideStep.TAP_AWAKEN) return false;
+    return setHubUpgradeGuideStep(state.meta, HubUpgradeGuideStep.OPEN_EMBLEM);
+  }
+
+  if (ev.type === 'openEmblemTab') {
+    if (ev.rosterId && ev.rosterId !== TUTORIAL_RAYEN_ID) return false;
+    if (step !== HubUpgradeGuideStep.OPEN_EMBLEM) return false;
     return completeHubUpgradeGuide(state.meta);
   }
 
@@ -150,9 +180,11 @@ export function visibleHubUpgradeGuideStep(
 ): HubUpgradeGuideStep {
   const step = readHubUpgradeGuideStep(meta);
   if (step <= HubUpgradeGuideStep.IDLE || step >= HubUpgradeGuideStep.DONE) return step;
+  if (step === HubUpgradeGuideStep.TAP_AWAKEN) return HubUpgradeGuideStep.TAP_AWAKEN;
   if (tab !== 'roster') return HubUpgradeGuideStep.OPEN_ROSTER;
-  if (step === HubUpgradeGuideStep.TAP_LEVELUP && detailRosterId === TUTORIAL_RAYEN_ID) {
-    return HubUpgradeGuideStep.TAP_LEVELUP;
+  if (detailRosterId === TUTORIAL_RAYEN_ID) {
+    if (step === HubUpgradeGuideStep.TAP_LEVELUP) return HubUpgradeGuideStep.TAP_LEVELUP;
+    if (step === HubUpgradeGuideStep.OPEN_EMBLEM) return HubUpgradeGuideStep.OPEN_EMBLEM;
   }
   return HubUpgradeGuideStep.TAP_RAYEN;
 }

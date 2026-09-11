@@ -171,6 +171,9 @@ describe('整章通关奖励', () => {
       unlockedRosterIds: [],
       newStars: [],
       starMask: 0,
+      grantedEmblemIds: [],
+      grantedEmblemLevelById: {},
+      unlockedDungeonIds: [],
     });
     expect(s.meta.metaCurrency).toBeGreaterThanOrEqual(soul);
   });

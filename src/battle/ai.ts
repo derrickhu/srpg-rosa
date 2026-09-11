@@ -2,7 +2,7 @@ import type { UnitArchetypeDef, UnitDef, UnitKind, UnitState, Vec2 } from './typ
 import { effectiveUnitDef } from './effectiveUnit';
 import { approachCostField, cellsFromDist, reachableCells } from './path';
 import { manhattan } from './grid';
-import { computeDamage, counterMultiplier } from './damage';
+import { applyBasicDealtMul, computeDamage, counterMultiplier } from './damage';
 import type { TerrainGrid } from './grid';
 import { getTerrainAt } from './grid';
 import { hasLineOfSight } from './sight';
@@ -117,7 +117,9 @@ function evaluateCell(
 ): { score: number; target: UnitState | null } {
   const foes = living(allUnits).filter((u) => u.faction !== self.faction);
   const t = selectAttackTarget(atkDef, cell, foes, defs, terrain, difficulty);
-  const dmg = t ? computeDamage(atkDef, defOf(t, defs), terrain, cell, t.pos) : 0;
+  const dmg = t
+    ? applyBasicDealtMul(computeDamage(atkDef, defOf(t, defs), terrain, cell, t.pos), atkDef)
+    : 0;
 
   let score = dmg;
   const tSpec = getTerrainSpec(getTerrainAt(terrain, cell));

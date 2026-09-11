@@ -151,6 +151,14 @@ export const UI_BUNDLE: AssetBundleDef = {
     // 升级解锁专属纹章的庆祝：夜殿底 + 交叉剑徽。图里不写字。
     emblem_awaken_bg: 'images/ui/emblem_awaken_bg.jpg',
     emblem_awaken_crest: 'images/ui/emblem_awaken_crest.png',
+    // 跟人永久纹章：一枚一张，不复用词条 mod_*。未铭刻占位用 sealed。
+    emblem_pe_grassland: 'images/ui/emblem_pe_grassland.png',
+    emblem_pe_forest: 'images/ui/emblem_pe_forest.png',
+    emblem_pe_fortress: 'images/ui/emblem_pe_fortress.png',
+    emblem_pe_swamp: 'images/ui/emblem_pe_swamp.png',
+    emblem_pe_dragon: 'images/ui/emblem_pe_dragon.png',
+    emblem_pe_altar: 'images/ui/emblem_pe_altar.png',
+    emblem_pe_sealed: 'images/ui/emblem_pe_sealed.png',
     // 战斗胜利弹窗的标题横幅。图里刻意留空——「胜利」两个字用游戏字体在代码里画，
     // 烧进贴图的话既换不了文案，字形也和界面其余部分对不上。
     banner_victory: 'images/ui/banner_victory.png',

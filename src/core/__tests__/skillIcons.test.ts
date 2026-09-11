@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { BG_BUNDLE, FX_BUNDLE, TERRAIN_BUNDLE, UI_BUNDLE, UNIT_BUNDLE } from '@/core/assetBundles';
 import { ENEMY_SKILL_SKINS } from '@/data/enemySkillCatalog';
 import { allPlayerSkillSpecs, getSkillSpec } from '@/data/skillCatalog';
+import { allPersonalEmblems } from '@/data/personalEmblemCatalog';
 import { allSkillMods } from '@/data/skillModCatalog';
 import { STAGES_MVP } from '@/data/stagesMvp';
 import { TERRAIN_IDS } from '@/data/terrainSpec';
@@ -78,6 +79,17 @@ describe('图标资源完整性', () => {
       if (mod.scope.kind !== 'exclusive') continue;
       expect(mod.icon, `专属词条「${mod.name}」不该自带图标`).toBe('mod_signature');
     }
+  });
+
+  it('跟人永久纹章各有独立图标，不复用词条', () => {
+    const seen = new Set<string>();
+    for (const emblem of allPersonalEmblems()) {
+      expect(emblem.icon.startsWith('mod_'), `「${emblem.name}」不该复用词条图`).toBe(false);
+      expect(UI_BUNDLE.assets[emblem.icon], `纹章「${emblem.name}」缺图标`).toBeDefined();
+      expect(seen.has(emblem.icon), `纹章「${emblem.name}」和图标 ${emblem.icon} 撞车`).toBe(false);
+      seen.add(emblem.icon);
+    }
+    expect(UI_BUNDLE.assets.emblem_pe_sealed).toBe('images/ui/emblem_pe_sealed.png');
   });
 
   // 操作条上的按钮已经不写字了，图标掉了就只剩一圈空环，玩家没法知道哪个是待机

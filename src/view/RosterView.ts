@@ -18,6 +18,12 @@ import {
 } from '@/data/skillModCatalog';
 import { describeSkillRole } from '@/data/skillText';
 import { characterEffectiveStats } from '@/game/characterFactory';
+import {
+  addCharacterStats,
+  personalEmblemModsFor,
+  personalEmblemRosterCards,
+  type PersonalEmblemCardCopy,
+} from '@/data/personalEmblemCatalog';
 import type { Character, CharacterBaseStats } from '@/game/characterTypes';
 import { resolveBattleSkillIdForCharacter } from '@/game/state/DeployManager';
 import {
@@ -83,6 +89,7 @@ export interface RosterViewHandle {
   root: PIXI.Container;
   cardRect(rosterId: string): SpotlightRect | null;
   levelUpButtonRect(): SpotlightRect | null;
+  detailTabRect(id: RosterDetailTab): SpotlightRect | null;
   detailRosterId(): string | null;
 }
 
@@ -177,6 +184,7 @@ export function rosterUpgradeCostItems(haveSoul: number, level: number): RosterU
 export const ROSTER_DETAIL_TABS = [
   { id: 'upgrade', label: '升级' },
   { id: 'skill', label: '技能详情' },
+  { id: 'emblem', label: '永久纹章' },
 ] as const;
 
 export type RosterDetailTab = (typeof ROSTER_DETAIL_TABS)[number]['id'];
@@ -516,6 +524,7 @@ export function createRosterView(
   let detailOpenId: string | null = null;
   let levelUpBtn: PIXI.Container | null = null;
   let levelUpBtnSize = { w: 0, h: 38 };
+  const detailTabHits = new Map<RosterDetailTab, { node: PIXI.Container; w: number; h: number }>();
   let soulHud: CurrencyPill | null = null;
   let listScroll: ScrollListHandle | null = null;
   let flipLockUntil = 0;
@@ -637,6 +646,7 @@ export function createRosterView(
     modal.body.removeChildren();
     modal.titleBar.removeChildren();
     modal.footer.removeChildren();
+    detailTabHits.clear();
     fillDetail(modal, m);
   }
 
@@ -677,7 +687,9 @@ export function createRosterView(
       });
       md.body.addChild(scroll.root);
       listScroll = scroll;
-      const listH = addSkillBlock(scroll.content, m, w, 0);
+      const listH = detailTab === 'emblem'
+        ? addPersonalEmblemBlock(scroll.content, m, w, 0)
+        : addSkillBlock(scroll.content, m, w, 0);
       scroll.refresh(listH);
     }
     addFooterTabs(md, m);
@@ -829,8 +841,10 @@ export function createRosterView(
     parent.addChild(box);
 
     const maxed = m.level >= MAX_CHARACTER_LEVEL;
-    const cur = characterEffectiveStats(m);
-    const next = def && !maxed ? characterStatsAtLevel(def, m.level + 1) : null;
+    const emblemStats = personalEmblemModsFor(state.meta, m.rosterId).stats;
+    const cur = addCharacterStats(characterEffectiveStats(m), emblemStats);
+    const nextBase = def && !maxed ? characterStatsAtLevel(def, m.level + 1) : null;
+    const next = nextBase ? addCharacterStats(nextBase, emblemStats) : null;
     const rows = rosterStatTotals(cur, next);
     const rowH = ROSTER_STAT_ROW_H;
     const gap = 2;
@@ -901,7 +915,7 @@ export function createRosterView(
       }
       const label = makeText(t.label, 'uiStrong', {
         fill: on ? C.ink : 0xf7f1e6,
-        fontSize: 14,
+        fontSize: n > 2 ? 12 : 14,
       });
       label.anchor.set(0.5);
       label.x = tw / 2;
@@ -911,11 +925,16 @@ export function createRosterView(
       tab.cursor = 'pointer';
       tab.hitArea = new PIXI.Rectangle(0, 0, tw, h);
       tab.on('pointertap', () => {
+        if (t.id === 'emblem' && notifyHubUpgradeGuide(state, { type: 'openEmblemTab', rosterId: m.rosterId })) {
+          cb.onPersist();
+        }
         if (t.id === detailTab) return;
         detailTab = t.id;
         refillDetail(m);
+        cb.onGuideRefresh?.();
       });
       md.footer.addChild(tab);
+      detailTabHits.set(t.id, { node: tab, w: tw, h });
     }
   }
 
@@ -974,6 +993,92 @@ export function createRosterView(
       y += 4;
     }
     return y + 2;
+  }
+
+  /**
+   * 跟人的永久被动。没拿到整页留空，不写占位也不剧透。
+   */
+  function addPersonalEmblemBlock(parent: PIXI.Container, m: Character, w: number, top: number): number {
+    const cards = personalEmblemRosterCards(state.meta, m.rosterId);
+    if (cards.length === 0) return top;
+
+    const box = new PIXI.Container();
+    box.y = top;
+    parent.addChild(box);
+
+    let y = addSectionTitle(box, '永久纹章', w, 0);
+    for (const card of cards) {
+      y += addPersonalEmblemCard(box, w, y, card.copy, {
+        icon: card.def.icon,
+        owned: true,
+      });
+      y += 4;
+    }
+    return y + 2;
+  }
+
+  function addPersonalEmblemCard(
+    box: PIXI.Container,
+    w: number,
+    top: number,
+    copy: PersonalEmblemCardCopy,
+    mark: { icon: string; owned: boolean },
+  ): number {
+    const card = new PIXI.Container();
+    card.y = top;
+    const iconSize = 20;
+    const pad = 6;
+    const textX = pad + iconSize + 8;
+    const textW = Math.max(60, w - textX - pad);
+
+    const nm = makeText(copy.title, 'uiStrong', {
+      fill: mark.owned ? C.primary : C.muted,
+      fontSize: 12,
+    });
+    const tag = makeText(copy.source, 'caption', {
+      fill: mark.owned ? 0x2f9a58 : C.muted,
+      fontSize: 10,
+    });
+    const desc = makeText(copy.desc, 'caption', {
+      fill: C.muted,
+      fontSize: 10,
+      lineHeight: 13,
+      wordWrap: true,
+      wordWrapWidth: textW,
+      breakWords: true,
+    });
+    const headH = Math.max(nm.height, tag.height);
+    const h = pad + headH + 2 + desc.height + pad;
+
+    const bg = new PIXI.Graphics();
+    bg.beginFill(mark.owned ? 0xfff6e4 : 0x1a1410, mark.owned ? 1 : 0.035);
+    if (mark.owned) bg.lineStyle(1.2, C.primary, 0.9);
+    bg.drawRoundedRect(0, 0, w, h, 8);
+    bg.endFill();
+    card.addChild(bg);
+
+    const icon = createUiIcon(mark.icon, iconSize);
+    if (icon) {
+      icon.x = pad;
+      icon.y = pad;
+      icon.alpha = mark.owned ? 1 : 0.45;
+      card.addChild(icon);
+    }
+
+    nm.x = textX;
+    nm.y = pad;
+    tag.anchor.set(1, 0);
+    tag.x = w - pad;
+    tag.y = pad + (headH - tag.height) / 2;
+    desc.x = textX;
+    desc.y = pad + headH + 2;
+    card.addChild(nm);
+    card.addChild(tag);
+    card.addChild(desc);
+    if (!mark.owned) card.alpha = 0.75;
+
+    box.addChild(card);
+    return h;
   }
 
   function addEmblemCard(
@@ -1074,6 +1179,10 @@ export function createRosterView(
             : [];
           if (m.rosterId === HUB_GUIDE_RAYEN_ID) {
             notifyHubUpgradeGuide(state, { type: 'leveledRayen', rosterId: m.rosterId });
+            if (unlocked.length === 0) {
+              notifyHubUpgradeGuide(state, { type: 'confirmAwaken' });
+            }
+            cb.onPersist();
           }
           refillDetail(m);
           if (unlocked.length) {
@@ -1172,6 +1281,11 @@ export function createRosterView(
     levelUpButtonRect(): SpotlightRect | null {
       if (!levelUpBtn?.parent) return null;
       return spotlightRectOf(root, levelUpBtn, levelUpBtnSize, 8);
+    },
+    detailTabRect(id: RosterDetailTab): SpotlightRect | null {
+      const hit = detailTabHits.get(id);
+      if (!hit?.node.parent) return null;
+      return spotlightRectOf(root, hit.node, { w: hit.w, h: hit.h }, 8);
     },
     detailRosterId: () => detailOpenId,
   };

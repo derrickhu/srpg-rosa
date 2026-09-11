@@ -69,8 +69,8 @@ describe('角色详情升级页', () => {
     expect(ROSTER_DETAIL_TITLE_H).toBeGreaterThan(64);
   });
 
-  it('底栏是升级和技能详情，升级效果用完整纹章链', () => {
-    expect(ROSTER_DETAIL_TABS.map((t) => t.label)).toEqual(['升级', '技能详情']);
+  it('底栏是升级、技能详情和永久纹章，升级效果用完整纹章链', () => {
+    expect(ROSTER_DETAIL_TABS.map((t) => t.label)).toEqual(['升级', '技能详情', '永久纹章']);
     const spec = getSkillSpec(ray.defaultSkillId);
     expect(spec).toBeDefined();
     const chain = exclusiveChainForSkill(spec!);

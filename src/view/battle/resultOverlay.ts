@@ -4,7 +4,9 @@ import { C, shade } from '@/view/mvpTheme';
 import { makeAdButton, makeButton } from '@/ui/Button';
 import { makePanel } from '@/ui/Panel';
 import { AudioManager } from '@/core/AudioManager';
-import { createUiIcon } from '@/view/renderHelpers';
+import { characterArtKey, getCharacterDef } from '@/data/characterCatalog';
+import { createUiIcon, createUnitToken, drawCheck } from '@/view/renderHelpers';
+import type { ClearStarBeat } from '@/data/chapterStars';
 import type { SkillModRarity } from '@/data/skillModCatalog';
 import {
   attachGlowRing,
@@ -17,6 +19,7 @@ import {
   flyTokenTo,
   staggerPop,
 } from '@/view/fx/celebration';
+import { awaitDelay, awaitEase } from '@/view/fx/tween';
 
 /**
  * 战后结算弹层。
@@ -39,6 +42,10 @@ export interface RewardEntry {
   sources: string[];
   /** 详情弹窗标题栏配色 */
   tint: number;
+  /** 方框下方的短标签，如「永久纹章」 */
+  badge?: string;
+  /** 跟人奖励：详情和格下画这个人的形象 */
+  whoRosterId?: string;
 }
 
 export interface RewardOverlayOpts {
@@ -48,6 +55,8 @@ export interface RewardOverlayOpts {
   title: string;
   /** 横幅下方一行小字，如「草原关隘 3/8」 */
   subtitle: string;
+  /** 通关横幅后的三星。有则先演点亮，再出奖励格 */
+  stars?: ClearStarBeat[];
   entries: RewardEntry[];
   confirmLabel: string;
   onConfirm: () => void;
@@ -227,8 +236,18 @@ function placeBanner(
   return { banner, height };
 }
 
+function makeWhoToken(rosterId: string, size: number): PIXI.Container {
+  const def = getCharacterDef(rosterId);
+  return createUnitToken(
+    characterArtKey({ rosterId, profession: def?.profession ?? 'sword' }),
+    'player',
+    size,
+  );
+}
+
 /**
- * 物品详情弹窗。奖励格本身只放图标和数量，说明藏在点击之后。
+ * 物品详情弹窗。奖励格本身只放图标，说明藏在点击之后。
+ * 点卡片外面的遮罩关闭；卡片自己吃掉点击，避免点到内容也关掉。
  */
 function createItemDetail(
   screenW: number,
@@ -237,12 +256,20 @@ function createItemDetail(
   onClose: () => void,
 ): PIXI.Container {
   const layer = new PIXI.Container();
+  layer.eventMode = 'static';
+  layer.hitArea = new PIXI.Rectangle(0, 0, screenW, screenH);
+
   const scrim = createScrim(screenW, screenH, 0.7);
-  scrim.on('pointertap', onClose);
+  const close = (): void => onClose();
+  scrim.on('pointertap', close);
+  layer.on('pointertap', (ev) => {
+    if (ev.target === layer || ev.target === scrim) close();
+  });
   layer.addChild(scrim);
 
   const w = Math.min(300, screenW - 48);
-  const headerH = 74;
+  const portraitSize = entry.whoRosterId ? 56 : 0;
+  const headerH = entry.whoRosterId ? 88 : 74;
   const bodyPad = 12;
 
   const descTx = makeText(entry.desc, 'body', {
@@ -260,6 +287,9 @@ function createItemDetail(
   const card = new PIXI.Container();
   card.x = x;
   card.y = y;
+  card.eventMode = 'static';
+  card.hitArea = new PIXI.Rectangle(0, 0, w, h);
+  card.on('pointertap', (ev) => ev.stopPropagation());
   card.addChild(panelBg(w, h));
 
   const header = new PIXI.Graphics();
@@ -269,29 +299,44 @@ function createItemDetail(
   header.endFill();
   card.addChild(header);
 
+  const textRight = portraitSize > 0 ? w - portraitSize - 20 : w - 12;
   const nameTx = makeText(entry.name, 'uiStrong', {
     fill: C.textOnDark, fontSize: 15,
+    wordWrap: true,
+    wordWrapWidth: textRight - 12,
   });
   nameTx.x = 12;
   nameTx.y = 8;
   card.addChild(nameTx);
 
-  const icon = createUiIcon(entry.iconKey, 38);
+  const icon = createUiIcon(entry.iconKey, 36);
   if (icon) {
     icon.x = 14;
-    icon.y = 30;
+    icon.y = headerH - 44;
     card.addChild(icon);
   }
-  const qTx = makeText(`品质：${entry.quality}`, 'uiStrong', {
+  const subLine = entry.badge
+    ? (entry.quality ? `${entry.badge} · ${entry.quality}` : entry.badge)
+    : `品质：${entry.quality}`;
+  const qTx = makeText(subLine, 'uiStrong', {
     fill: C.textOnDark, fontSize: 12,
   });
-  qTx.x = 62;
-  qTx.y = 34;
+  qTx.x = 58;
+  qTx.y = headerH - 40;
   card.addChild(qTx);
-  const amtTx = makeText(`本次获得：${entry.amount}`, 'caption', { fill: 0xffe8c0 });
-  amtTx.x = 62;
-  amtTx.y = 52;
-  card.addChild(amtTx);
+  if (entry.amount > 1) {
+    const amtTx = makeText(`本次获得：${entry.amount}`, 'caption', { fill: 0xffe8c0 });
+    amtTx.x = 58;
+    amtTx.y = headerH - 22;
+    card.addChild(amtTx);
+  }
+
+  if (entry.whoRosterId) {
+    const token = makeWhoToken(entry.whoRosterId, portraitSize);
+    token.x = w - 16 - portraitSize / 2;
+    token.y = headerH / 2 + 2;
+    card.addChild(token);
+  }
 
   let by = headerH + 10;
   const sect = (label: string): void => {
@@ -337,6 +382,7 @@ function createItemDetail(
   hint.anchor.set(0.5, 0);
   hint.x = screenW / 2;
   hint.y = y + h + 10;
+  hint.eventMode = 'none';
   layer.addChild(hint);
 
   return layer;
@@ -366,7 +412,77 @@ function makeSummaryChip(iconKey: string, label: string, tint: number): PIXI.Con
   return c;
 }
 
-/** 结算奖励屏：横幅落下 + 奖励格弹出 + 确定 */
+function makeClearStarIcon(filled: boolean, size: number): PIXI.Container {
+  const icon = createUiIcon(filled ? 'chapter_star_on' : 'chapter_star_off', size);
+  if (icon) {
+    const sprite = icon.getChildAt(0);
+    if (sprite instanceof PIXI.Sprite && filled) sprite.tint = C.primary;
+    return icon;
+  }
+  const g = new PIXI.Graphics();
+  g.beginFill(filled ? C.primary : 0x5a5044, 1);
+  g.drawCircle(size / 2, size / 2, size / 2);
+  g.endFill();
+  const c = new PIXI.Container();
+  c.addChild(g);
+  return c;
+}
+
+function fillClearStarSlot(slot: PIXI.Container, filled: boolean, size: number): void {
+  slot.removeChildren();
+  slot.addChild(makeClearStarIcon(filled, size));
+}
+
+/** 通关条件一行：对勾 + 文案，出现后留着，不覆盖上一条 */
+function makeStarCondRow(label: string): PIXI.Container {
+  const row = new PIXI.Container();
+  const tx = makeText(label, 'body', { fill: 0xffe08a, fontSize: 13 });
+  const check = drawCheck(6, 0xb8f08a);
+  const gap = 8;
+  const w = 12 + gap + tx.width;
+  check.x = -w / 2 + 6;
+  check.y = tx.height * 0.55;
+  tx.x = check.x + 10;
+  tx.y = 0;
+  row.addChild(check);
+  row.addChild(tx);
+  return row;
+}
+
+/** 方框底下的细标签：米白底、墨线、暖字，不压在图标上 */
+function addRewardCaption(parent: PIXI.Container, text: string, cx: number, y: number): number {
+  const tx = makeText(text, 'caption', {
+    fill: 0x8a5a18,
+    fontSize: 10,
+    fontWeight: 'bold',
+  });
+  const padX = 6;
+  const w = tx.width + padX * 2;
+  const h = 16;
+  const bg = new PIXI.Graphics();
+  bg.lineStyle(1.4, C.ink, 0.55);
+  bg.beginFill(0xfff6e4, 1);
+  bg.drawRoundedRect(-w / 2, 0, w, h, 8);
+  bg.endFill();
+  bg.x = cx;
+  bg.y = y;
+  tx.anchor.set(0.5, 0.5);
+  tx.x = cx;
+  tx.y = y + h / 2;
+  parent.addChild(bg);
+  parent.addChild(tx);
+  return h;
+}
+
+function rewardCaptionH(entry: RewardEntry): number {
+  let h = 6;
+  if (entry.badge) h += 18;
+  else if (entry.amount > 0) h += 16;
+  if (entry.whoRosterId) h += 22;
+  return h;
+}
+
+/** 结算奖励屏：横幅落下 +（通关时三星逐条点亮）+ 奖励格弹出 + 确定 */
 export function createRewardOverlay(opts: RewardOverlayOpts): PIXI.Container {
   const { screenW: W, screenH: H } = opts;
   const root = new PIXI.Container();
@@ -378,21 +494,57 @@ export function createRewardOverlay(opts: RewardOverlayOpts): PIXI.Container {
 
   const cx = W / 2;
   const bannerW = Math.min(300, W - 40);
-  const bannerY = Math.max(40, H * 0.12);
+  const bannerY = Math.max(36, H * 0.1);
   const { height: bannerH } = placeBanner(root, cx, bannerY, opts.title, bannerW);
+
+  const stars = opts.stars ?? [];
+  const starSize = 28;
+  const starGap = 8;
+  const starRowW = stars.length * starSize + Math.max(0, stars.length - 1) * starGap;
+  const starRowY = bannerY + Math.max(bannerH, 60) + 6;
+  const starSlots: PIXI.Container[] = [];
+  const condLineH = 20;
+  const metBeats = stars
+    .map((beat, i) => ({ beat, index: i }))
+    .filter((x) => x.beat.state !== 'miss');
+  const condList = new PIXI.Container();
+  condList.x = cx;
+  condList.y = starRowY + (stars.length > 0 ? starSize + 8 : 0);
+  root.addChild(condList);
+  const condRows: PIXI.Container[] = [];
+  metBeats.forEach((item, rowI) => {
+    const row = makeStarCondRow(item.beat.label);
+    row.y = rowI * condLineH;
+    row.alpha = item.beat.state === 'held' ? 1 : 0;
+    condList.addChild(row);
+    condRows.push(row);
+  });
+
+  for (let i = 0; i < stars.length; i++) {
+    const beat = stars[i]!;
+    const slot = new PIXI.Container();
+    slot.x = cx - starRowW / 2 + i * (starSize + starGap) + starSize / 2;
+    slot.y = starRowY + starSize / 2;
+    slot.pivot.set(starSize / 2, starSize / 2);
+    fillClearStarSlot(slot, beat.state === 'held', starSize);
+    if (beat.state !== 'held') slot.alpha = 0.42;
+    root.addChild(slot);
+    starSlots.push(slot);
+  }
 
   const sub = makeText(opts.subtitle, 'body', { fill: 0xe8e8d8 });
   sub.anchor.set(0.5, 0);
   sub.x = cx;
-  sub.y = bannerY + Math.max(bannerH, 60) + 10;
+  sub.y = condList.y + (metBeats.length > 0 ? metBeats.length * condLineH + 6 : 4);
   root.addChild(sub);
 
   const entries = opts.entries.filter((e) => e.amount > 0);
-  const cellSize = 62;
-  const gap = 10;
+  const cellSize = 72;
+  const gap = 20;
   const n = entries.length;
+  const captionH = entries.reduce((h, e) => Math.max(h, rewardCaptionH(e)), 0);
   const gridW = n * cellSize + Math.max(0, n - 1) * gap;
-  const gridY = sub.y + 22;
+  const gridY = sub.y + 24;
   const cells: PIXI.Container[] = [];
   let soulFrom: { x: number; y: number } | null = null;
   let soulAmount = 0;
@@ -424,24 +576,43 @@ export function createRewardOverlay(opts: RewardOverlayOpts): PIXI.Container {
     bg.endFill();
     cell.addChild(bg);
 
-    const icon = createUiIcon(e.iconKey, 34);
+    const iconPad = 6;
+    const icon = createUiIcon(e.iconKey, cellSize - iconPad * 2);
     if (icon) {
-      icon.x = (cellSize - icon.width) / 2;
-      icon.y = 8;
+      icon.x = iconPad;
+      icon.y = iconPad;
       cell.addChild(icon);
     }
 
-    const amt = makeText(`+${e.amount}`, 'uiStrong', {
-      fill: e.tint,
-    });
-    amt.anchor.set(0.5, 1);
-    amt.x = cellSize / 2;
-    amt.y = cellSize - 4;
-    cell.addChild(amt);
+    let cy = cellSize + 4;
+    if (e.badge) {
+      cy += addRewardCaption(cell, e.badge, cellSize / 2, cy) + 2;
+    } else {
+      const amt = makeText(`+${e.amount}`, 'uiStrong', { fill: e.tint });
+      amt.anchor.set(0.5, 0);
+      amt.x = cellSize / 2;
+      amt.y = cy;
+      cell.addChild(amt);
+      cy += amt.height + 2;
+    }
+    if (e.whoRosterId) {
+      const face = makeWhoToken(e.whoRosterId, 20);
+      const whoName = getCharacterDef(e.whoRosterId)?.name ?? '';
+      const nameTx = makeText(whoName, 'caption', { fill: 0xf0e6c8, fontSize: 11 });
+      const rowW = 22 + (whoName ? nameTx.width + 4 : 0);
+      face.x = cellSize / 2 - rowW / 2 + 10;
+      face.y = cy + 10;
+      cell.addChild(face);
+      if (whoName) {
+        nameTx.x = face.x + 12;
+        nameTx.y = cy + (20 - nameTx.height) / 2;
+        cell.addChild(nameTx);
+      }
+    }
 
     cell.eventMode = 'static';
     cell.cursor = 'pointer';
-    cell.hitArea = new PIXI.Rectangle(0, 0, cellSize, cellSize);
+    cell.hitArea = new PIXI.Rectangle(0, 0, cellSize, cellSize + captionH);
     cell.on('pointertap', () => openDetail(e));
     root.addChild(cell);
     cells.push(cell);
@@ -450,15 +621,16 @@ export function createRewardOverlay(opts: RewardOverlayOpts): PIXI.Container {
       soulAmount = e.amount;
     }
   });
-  staggerPop(cells, 80);
 
   let btnY = gridY;
+  const extras: PIXI.Container[] = [];
   if (n > 0) {
     const tapHint = makeText('点击奖励查看说明', 'caption', { fill: 0xb8b8a8, fontSize: 10 });
     tapHint.anchor.set(0.5, 0);
     tapHint.x = cx;
-    tapHint.y = gridY + cellSize + 8;
+    tapHint.y = gridY + cellSize + captionH + 6;
     root.addChild(tapHint);
+    extras.push(tapHint);
     btnY = tapHint.y + 28;
   }
 
@@ -485,6 +657,56 @@ export function createRewardOverlay(opts: RewardOverlayOpts): PIXI.Container {
   btn.x = cx - btnW / 2;
   btn.y = btnY;
   root.addChild(btn);
+  extras.push(btn);
+
+  const live = (): boolean => !root.destroyed;
+  const fresh = metBeats
+    .map((item, rowI) => ({
+      beat: item.beat,
+      slot: starSlots[item.index]!,
+      row: condRows[rowI]!,
+    }))
+    .filter((x) => x.beat.state === 'fresh');
+
+  const revealRewards = (): void => {
+    if (!live()) return;
+    staggerPop(cells, 80);
+    for (const node of extras) {
+      node.alpha = 1;
+      node.visible = true;
+    }
+  };
+
+  if (fresh.length === 0) {
+    staggerPop(cells, 80);
+  } else {
+    for (const cell of cells) cell.alpha = 0;
+    for (const node of extras) node.alpha = 0;
+    void (async () => {
+      await awaitDelay(340);
+      if (!live()) return;
+      for (const { slot, row } of fresh) {
+        if (!live()) return;
+        await awaitEase(220, (t) => {
+          if (live()) row.alpha = t;
+        }, { live });
+        if (!live()) return;
+        fillClearStarSlot(slot, true, starSize);
+        slot.alpha = 1;
+        slot.scale.set(0.7);
+        await awaitEase(260, (t) => {
+          if (!live()) return;
+          const s = t < 0.7 ? 0.7 + 0.5 * (t / 0.7) : 1.2 - 0.2 * ((t - 0.7) / 0.3);
+          slot.scale.set(s);
+        }, { live });
+        if (!live()) return;
+        slot.scale.set(1);
+        confettiBurst(root, slot.x, slot.y, 10);
+        await awaitDelay(180);
+      }
+      revealRewards();
+    })();
+  }
 
   return root;
 }

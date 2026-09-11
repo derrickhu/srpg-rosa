@@ -77,7 +77,7 @@ describe('大厅升级指引', () => {
     expect(readHubUpgradeGuideStep(meta)).toBe(HubUpgradeGuideStep.OPEN_ROSTER);
   });
 
-  it('按角色页 → 雷恩 → 升级往前走，点错人不进升级步', () => {
+  it('按角色页 → 雷恩 → 升级 → 准备应战 → 永久纹章往前走，点错人不进升级步', () => {
     const state = createInitialState();
     state.meta = ch1Meta();
     tryBeginHubUpgradeGuide(state.meta);
@@ -87,6 +87,10 @@ describe('大厅升级指引', () => {
     expect(notifyHubUpgradeGuide(state, { type: 'openRayen', rosterId: TUTORIAL_RAYEN_ID })).toBe(true);
     expect(readHubUpgradeGuideStep(state.meta)).toBe(HubUpgradeGuideStep.TAP_LEVELUP);
     expect(notifyHubUpgradeGuide(state, { type: 'leveledRayen', rosterId: TUTORIAL_RAYEN_ID })).toBe(true);
+    expect(readHubUpgradeGuideStep(state.meta)).toBe(HubUpgradeGuideStep.TAP_AWAKEN);
+    expect(notifyHubUpgradeGuide(state, { type: 'confirmAwaken' })).toBe(true);
+    expect(readHubUpgradeGuideStep(state.meta)).toBe(HubUpgradeGuideStep.OPEN_EMBLEM);
+    expect(notifyHubUpgradeGuide(state, { type: 'openEmblemTab', rosterId: TUTORIAL_RAYEN_ID })).toBe(true);
     expect(readHubUpgradeGuideStep(state.meta)).toBe(HubUpgradeGuideStep.DONE);
     expect(completeHubUpgradeGuide(state.meta)).toBe(false);
   });
@@ -98,11 +102,40 @@ describe('大厅升级指引', () => {
     expect(visibleHubUpgradeGuideStep(meta, 'roster', null)).toBe(HubUpgradeGuideStep.TAP_RAYEN);
     expect(visibleHubUpgradeGuideStep(meta, 'roster', TUTORIAL_RAYEN_ID)).toBe(HubUpgradeGuideStep.TAP_LEVELUP);
     expect(visibleHubUpgradeGuideStep(meta, 'roster', TUTORIAL_HILL_ID)).toBe(HubUpgradeGuideStep.TAP_RAYEN);
+
+    meta.hubUpgradeGuideStep = HubUpgradeGuideStep.OPEN_EMBLEM;
+    expect(visibleHubUpgradeGuideStep(meta, 'roster', TUTORIAL_RAYEN_ID)).toBe(HubUpgradeGuideStep.OPEN_EMBLEM);
+    expect(visibleHubUpgradeGuideStep(meta, 'roster', null)).toBe(HubUpgradeGuideStep.TAP_RAYEN);
+
+    meta.hubUpgradeGuideStep = HubUpgradeGuideStep.TAP_AWAKEN;
+    expect(visibleHubUpgradeGuideStep(meta, 'adventure', null)).toBe(HubUpgradeGuideStep.TAP_AWAKEN);
+    expect(visibleHubUpgradeGuideStep(meta, 'roster', TUTORIAL_RAYEN_ID)).toBe(HubUpgradeGuideStep.TAP_AWAKEN);
   });
 
-  it('三步文案都点名要做什么', () => {
+  it('升完级不因雷恩已是 2 级而掐掉庆祝确认和永久纹章步', () => {
+    const meta = ch1Meta();
+    meta.roster[0]!.level = 2;
+    meta.hubUpgradeGuideStep = HubUpgradeGuideStep.TAP_AWAKEN;
+    expect(shouldSkipHubUpgradeGuide(meta)).toBe(false);
+    expect(isHubUpgradeGuideActive(meta)).toBe(true);
+    meta.hubUpgradeGuideStep = HubUpgradeGuideStep.OPEN_EMBLEM;
+    expect(shouldSkipHubUpgradeGuide(meta)).toBe(false);
+    expect(isHubUpgradeGuideActive(meta)).toBe(true);
+  });
+
+  it('读档时庆祝确认步改成指永久纹章', () => {
+    const meta = ch1Meta();
+    meta.hubUpgradeGuideStep = HubUpgradeGuideStep.TAP_AWAKEN;
+    hydrateHubUpgradeGuide(meta);
+    expect(readHubUpgradeGuideStep(meta)).toBe(HubUpgradeGuideStep.OPEN_EMBLEM);
+  });
+
+  it('文案点名要做什么，永久纹章和三选一专属分开说', () => {
     expect(HUB_UPGRADE_GUIDE_COPY[HubUpgradeGuideStep.OPEN_ROSTER]!.body).toContain('[[角色]]');
     expect(HUB_UPGRADE_GUIDE_COPY[HubUpgradeGuideStep.TAP_RAYEN]!.body).toContain('[[雷恩]]');
     expect(HUB_UPGRADE_GUIDE_COPY[HubUpgradeGuideStep.TAP_LEVELUP]!.body).toContain('[[升级]]');
+    expect(HUB_UPGRADE_GUIDE_COPY[HubUpgradeGuideStep.TAP_LEVELUP]!.body).toContain('专属纹章');
+    expect(HUB_UPGRADE_GUIDE_COPY[HubUpgradeGuideStep.OPEN_EMBLEM]!.body).toContain('[[永久纹章]]');
+    expect(HUB_UPGRADE_GUIDE_COPY[HubUpgradeGuideStep.TAP_AWAKEN]).toBeUndefined();
   });
 });

@@ -22,6 +22,10 @@ export interface EmblemAwakenOpts {
   onConfirm: () => void;
 }
 
+export type EmblemAwakenOverlay = PIXI.Container & {
+  confirmRect: () => { x: number; y: number; w: number; h: number; r: number };
+};
+
 const NIGHT = 0x140818;
 const GOLD = 0xeec462;
 const CREAM = 0xfff8e8;
@@ -110,7 +114,7 @@ function spawnSparks(layer: PIXI.Container, cx: number, cy: number): void {
  * 不走角色获得厅堂，也不走升级白闪——那两套说的是「人来了」和「数字跳了」。
  * 这里要说的是：纹章会进后续战斗的三选一。
  */
-export function createEmblemAwakenOverlay(opts: EmblemAwakenOpts): PIXI.Container {
+export function createEmblemAwakenOverlay(opts: EmblemAwakenOpts): EmblemAwakenOverlay {
   const { screenW: W, screenH: H, info } = opts;
   const root = new PIXI.Container();
   root.eventMode = 'static';
@@ -291,5 +295,7 @@ export function createEmblemAwakenOverlay(opts: EmblemAwakenOpts): PIXI.Containe
     });
   });
 
-  return root;
+  const overlay = root as EmblemAwakenOverlay;
+  overlay.confirmRect = () => ({ x: btn.x, y: btn.y, w: btnW, h: 48, r: 14 });
+  return overlay;
 }

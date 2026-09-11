@@ -27,6 +27,7 @@ import {
   type LootCard,
   type RewardEntry,
 } from '@/view/battle/resultOverlay';
+import { chapterClearRewardEntries } from '@/view/battle/chapterClearRewards';
 import { createSweepRewardOverlay } from '@/view/sweepRewardOverlay';
 import {
   abandonRun,
@@ -85,10 +86,13 @@ import { createChallengeView } from '@/view/ChallengeView';
 import { createTabBar, tabBarHeight, tabSlotRect, type TabId } from '@/view/TabBar';
 import { createEmblemAwakenOverlay } from '@/view/emblemAwaken';
 import { attachHubUpgradeGuideOverlay } from '@/view/hubGuide/HubUpgradeGuideOverlay';
+import type { SpotlightRect } from '@/view/tutorial/TutorialOverlay';
 import {
+  HubUpgradeGuideStep,
   isHubUpgradeGuideActive,
   isHubUpgradeGuideClear,
   notifyHubUpgradeGuide,
+  readHubUpgradeGuideStep,
   tryBeginHubUpgradeGuide,
 } from '@/game/hubGuide/hubUpgradeGuide';
 import { C } from '@/view/mvpTheme';
@@ -205,6 +209,7 @@ export class GameFlow {
   private shellRoot: PIXI.Container | null = null;
   private rosterHandle: RosterViewHandle | null = null;
   private detachHubGuide: (() => void) | null = null;
+  private awakenConfirmHole: SpotlightRect | null = null;
   /** 刚结束那场战斗的单位快照，无尽用来把血量和站位带进下一波 */
   private lastBattleUnits: UnitState[] = [];
   private lastBattleDrops: GroundDrop[] = [];
@@ -434,6 +439,7 @@ export class GameFlow {
   private renderShell(tab?: TabId): void {
     if (tab) this.currentTab = tab;
     const unlocking = this.currentTab === 'adventure' && !!this.pendingChapterUnlockId;
+    this.awakenConfirmHole = null;
     this.detachHubGuide = null;
     this.rosterHandle = null;
     const root = new PIXI.Container();
@@ -457,6 +463,11 @@ export class GameFlow {
   private attachHubUpgradeGuide(root: PIXI.Container): void {
     this.detachHubGuide?.();
     this.detachHubGuide = null;
+    if (readHubUpgradeGuideStep(this.state.meta) === HubUpgradeGuideStep.TAP_AWAKEN && !this.awakenConfirmHole) {
+      if (notifyHubUpgradeGuide(this.state, { type: 'confirmAwaken' })) {
+        SaveManager.saveMeta(this.state.meta);
+      }
+    }
     if (!isHubUpgradeGuideActive(this.state.meta)) return;
     this.detachHubGuide = attachHubUpgradeGuideOverlay(root, {
       getState: () => this.state,
@@ -466,6 +477,8 @@ export class GameFlow {
       tabRect: (id) => tabSlotRect(id, this.screen),
       cardRect: (id) => this.rosterHandle?.cardRect(id) ?? null,
       levelUpButtonRect: () => this.rosterHandle?.levelUpButtonRect() ?? null,
+      detailTabRect: (id) => this.rosterHandle?.detailTabRect(id) ?? null,
+      awakenConfirmRect: () => this.awakenConfirmHole,
       detailRosterId: () => this.rosterHandle?.detailRosterId() ?? null,
     });
   }
@@ -535,14 +548,26 @@ export class GameFlow {
             onExclusiveAwaken: (info) => {
               persist();
               let close = (): void => undefined;
-              close = this.pushOverlay(
-                createEmblemAwakenOverlay({
-                  screenW: this.app.screen.width,
-                  screenH: this.app.screen.height,
-                  info,
-                  onConfirm: () => close(),
-                }),
-              );
+              const overlay = createEmblemAwakenOverlay({
+                screenW: this.app.screen.width,
+                screenH: this.app.screen.height,
+                info,
+                onConfirm: () => {
+                  this.awakenConfirmHole = null;
+                  close();
+                  if (notifyHubUpgradeGuide(this.state, { type: 'confirmAwaken' })) {
+                    persist();
+                  }
+                  if (this.shellRoot && !this.shellRoot.destroyed) {
+                    this.attachHubUpgradeGuide(this.shellRoot);
+                  }
+                },
+              });
+              this.awakenConfirmHole = overlay.confirmRect();
+              close = this.pushOverlay(overlay);
+              if (this.shellRoot && !this.shellRoot.destroyed) {
+                this.attachHubUpgradeGuide(this.shellRoot);
+              }
             },
           },
           screen,
@@ -906,6 +931,10 @@ export class GameFlow {
           run.potions[potionId] = Math.max(0, (run.potions[potionId] ?? 0) - 1);
           if (!sandbox) recordRunPotionUse(run);
         },
+        allowShareHeal: !sandbox && !tut && currentNode(this.state).kind === 'boss',
+        onShareHeal: () => {
+          SaveManager.save(this.state);
+        },
         onPickupPotion: endless
           ? (potionId: string) => {
               run.potions[potionId] = (run.potions[potionId] ?? 0) + 1;
@@ -1059,22 +1088,7 @@ export class GameFlow {
         });
       }
     } else if (chapterPreview) {
-      const starNote = chapterPreview.labels.length > 0
-        ? `新点亮：${chapterPreview.labels.join('、')}。`
-        : chapterPreview.firstClear
-          ? '本趟没有点亮新的星。'
-          : '本关奖励每次通关都能领。';
-      entries.push({
-        iconKey: 'icon_soul',
-        name: '魂晶',
-        amount: chapterPreview.soul,
-        quality: '永久',
-        desc: chapterPreview.firstClear
-          ? `通关「${dungeon.name}」。${starNote}每颗星的魂晶只领一次。`
-          : `再通「${dungeon.name}」。${starNote}`,
-        sources: ['章节星级', '本关奖励'],
-        tint: C.soul,
-      });
+      entries.push(...chapterClearRewardEntries(chapterPreview, dungeon.name));
     } else {
       if (v && v.gold > 0) {
         entries.push({
@@ -1105,9 +1119,7 @@ export class GameFlow {
     const subtitle = endless
       ? `${dungeon.name} 第 ${wave}/${ENDLESS_MAX_WAVES} 波`
       : chapterPreview
-        ? (chapterPreview.labels.length > 0
-          ? `${dungeon.name} · 新点亮 ${chapterPreview.labels.join('、')}`
-          : `${dungeon.name} · 魂晶 +${chapterPreview.soul}`)
+        ? dungeon.name
         : `${dungeon.name} ${run.nodeIndex + 1}/${dungeon.nodes.length}`;
     let close = (): void => undefined;
     close = this.pushOverlay(
@@ -1116,6 +1128,7 @@ export class GameFlow {
         screenH: this.app.screen.height,
         title: isRunFinal ? '通  关' : '胜  利',
         subtitle,
+        stars: chapterPreview?.starBeats,
         entries,
         confirmLabel: hasLoot ? '选择纹章' : (isRunFinal ? (endless ? '离开试炼' : '返回大厅') : (endless ? '下一波' : '继续前进')),
         onConfirm: () => {

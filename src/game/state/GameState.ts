@@ -112,6 +112,15 @@ export interface MetaState {
    * hydrate 会把教学标成完成，大厅步骤会被冲掉。
    */
   hubUpgradeGuideStep?: number;
+  /**
+   * 已领取的跟人永久专属纹章 id。可选：老档没有，读档时按 `clearedDungeonIds` 补。
+   * 不写在角色实例上——人还没入队也能先记账。
+   */
+  claimedPersonalEmblemIds?: string[];
+  /**
+   * 纹章等级。1 = 主线首通，2 = 同章精英首通。可选：老档只有 id 列表时按 1 算。
+   */
+  personalEmblemLevelById?: Record<string, number>;
 }
 
 /** 单副本一局的临时状态（roguelike 构筑都在这里，结束即弃） */
@@ -308,6 +317,8 @@ export function createInitialMeta(): MetaState {
     sweepUsageByDungeonId: {},
     chapterStarsByDungeonId: {},
     tutorialStep: 0,
+    claimedPersonalEmblemIds: [],
+    personalEmblemLevelById: {},
   };
 }
 

@@ -10,7 +10,13 @@ import type {
 } from './types';
 import { effectiveUnitDef } from './effectiveUnit';
 import { canAttackFrom, chooseTurnAction, selectAttackTarget, type AiDifficulty } from './ai';
-import { computeDamage, guardNote, terrainAttackNote, terrainDefenseNote } from './damage';
+import {
+  applyBasicDealtMul,
+  computeDamage,
+  guardNote,
+  terrainAttackNote,
+  terrainDefenseNote,
+} from './damage';
 import { applyCritToDamage } from './crit';
 import { POTION_DEFS } from '@/data/potionCatalog';
 import { getTerrainAt, inBounds, neighbors4, type TerrainGrid } from './grid';
@@ -62,6 +68,10 @@ function cloneUnits(units: UnitState[]): UnitState[] {
     mercRange: u.mercRange,
     mercIsRanged: u.mercIsRanged,
     mercTaunt: u.mercTaunt,
+    personalSkillDealtMul: u.personalSkillDealtMul,
+    personalBasicDealtMul: u.personalBasicDealtMul,
+    personalTakenMul: u.personalTakenMul,
+    personalHealGivenMul: u.personalHealGivenMul,
     timedBattleEffects: u.timedBattleEffects?.map((e) => {
       switch (e.kind) {
         case 'taunt':
@@ -753,7 +763,10 @@ export function createBattleSim(
   function basicAttack(self: UnitState, target: UnitState): BattleEvent[] {
     const atkDef = effectiveUnitDef(self, defs);
     const defT = effectiveUnitDef(target, defs);
-    let dmg = computeDamage(atkDef, defT, terrain, self.pos, target.pos);
+    let dmg = applyBasicDealtMul(
+      computeDamage(atkDef, defT, terrain, self.pos, target.pos),
+      atkDef,
+    );
     const sk = atkDef.skill;
     // 走 `unitSkillSpec` 而不是 `getSkillSpec`：冲锋的倍率也吃词条（「蓄势」「践地」），
     // 读原始规格的话那两条选了等于没选，而表现只是普攻数字偏小，肉眼查不出来。

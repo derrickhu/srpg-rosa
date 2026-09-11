@@ -107,6 +107,12 @@ export interface UnitDef {
    * 从而改去打别人——不然玩家的减伤只是在数值上生效，在 AI 眼里根本不存在。
    */
   damageTakenMul: number;
+  /** 跟人永久纹章等：技能伤害倍率。缺省按 1 */
+  skillDealtMul?: number;
+  /** 跟人永久纹章等：普攻伤害倍率。缺省按 1 */
+  basicDealtMul?: number;
+  /** 跟人永久纹章等：技能治疗倍率。缺省按 1 */
+  healGivenMul?: number;
   skill?: SkillDef;
   /** 第二技能槽，见 `UnitState.tempSkill` */
   tempSkill?: SkillDef;
@@ -167,6 +173,14 @@ export interface UnitState {
   mercTaunt?: boolean;
   /** 战斗中限时 buff/debuff（含技能施放产生的嘲讽等） */
   timedBattleEffects?: TimedBattleEffect[];
+  /** 跟人永久纹章：技能伤害倍率，缺省 1 */
+  personalSkillDealtMul?: number;
+  /** 跟人永久纹章：普攻伤害倍率，缺省 1 */
+  personalBasicDealtMul?: number;
+  /** 跟人永久纹章：受伤倍率，缺省 1 */
+  personalTakenMul?: number;
+  /** 跟人永久纹章：技能治疗倍率，缺省 1 */
+  personalHealGivenMul?: number;
 }
 
 export type TerrainId =

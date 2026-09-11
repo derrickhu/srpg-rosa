@@ -15,7 +15,8 @@ import { isSandboxDungeon } from '@/data/sandboxLab';
 import { allPlayerSkillSpecs, allSkillSpecs } from '@/data/skillCatalog';
 import { canProfessionEquipSkill, defaultSkillId, skillDefForId } from '@/data/skillCatalog';
 import { resolveEnemyBattleSkill } from '@/data/enemySkillCatalog';
-import { characterEffectiveStats } from '@/game/characterFactory';
+import { characterSheetStats } from '@/game/characterFactory';
+import { personalEmblemModsFor } from '@/data/personalEmblemCatalog';
 import type { Character } from '@/game/characterTypes';
 import {
   benchCharacters,
@@ -449,7 +450,8 @@ export function buildBattleUnits(state: MvpGameState): UnitState[] {
   for (const p of playerSlots) {
     const m = getCharacter(state, p.rosterId);
     if (!m) continue;
-    const eff = characterEffectiveStats(m);
+    const eff = characterSheetStats(m, state.meta);
+    const emblem = personalEmblemModsFor(state.meta, m.rosterId);
     const slots = battleSkillIdsForCharacter(state, m);
     const skInfo = skillDefForId(slots.main);
     const battleSkill = skInfo
@@ -489,6 +491,10 @@ export function buildBattleUnits(state: MvpGameState): UnitState[] {
       mercRange: m.strike.range,
       mercIsRanged: m.strike.isRanged,
       mercTaunt: m.strike.taunt,
+      personalSkillDealtMul: emblem.skillDealtMul,
+      personalBasicDealtMul: emblem.basicDealtMul,
+      personalTakenMul: emblem.takenMul,
+      personalHealGivenMul: emblem.healGivenMul,
     });
   }
   return units;

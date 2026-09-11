@@ -10,13 +10,12 @@ import { getTerrainSpec } from '@/data/terrainSpec';
 import { isSandboxDungeon } from '@/data/sandboxLab';
 import { characterArtKey } from '@/data/characterCatalog';
 import type { Character } from '@/game/characterTypes';
-import { characterEffectiveStats } from '@/game/characterFactory';
+import { characterSheetStats } from '@/game/characterFactory';
 import { enemySpawnToUnitState } from '@/game/state/DeployManager';
 import {
   activeSkillIdForRun,
   benchCharacters,
   currentDungeon,
-  currentNode,
   currentEnemyScale,
   currentStage,
   cycleSkillForRoster,
@@ -498,7 +497,7 @@ export function createDeployView(
           if (m) {
             const token = createUnitToken(characterArtKey(m), 'player', CELL);
             wrap.addChild(token);
-            const effHp = characterEffectiveStats(m).maxHp;
+            const effHp = characterSheetStats(m, state.meta).maxHp;
             const oh = createUnitOverhead({
               maxHp: effHp,
               currentHp: effHp,
@@ -980,18 +979,6 @@ export function createDeployView(
   const fh = 46;
   const btnW = fightW;
 
-  /**
-   * Boss 空手上阵要二次确认。
-   *
-   * 模拟里 Boss 裸打胜率 2.3%——这基本是必输。改成纯人工之后，一局 Boss 要打 2~3 分钟，
-   * 发现「原来我该在商店买药」的代价从一分钟涨到三分钟，而这个信息在开打前是完全可得的。
-   * 不改数值：自动代打的 2.3% 是下限而非玩家的真实水平，人工模式下会走位、会集火，
-   * 现在按自动代打胜率去削 Boss，等玩家真的上手就削过头了。缺的只是一句话，不是数字。
-   */
-  const bossNodeNow = currentNode(state).kind === 'boss';
-  const potionCount = Object.values(run.potions).reduce((a, b) => a + b, 0);
-  const needsPotionWarning = bossNodeNow && potionCount === 0;
-  let warned = false;
   const fightBar = new PIXI.Container();
   fightBar.y = fightY;
   root.addChild(fightBar);
@@ -1008,18 +995,13 @@ export function createDeployView(
     const gapFight = offerExtra ? 8 : 0;
     const startW = btnW - adW - gapFight;
 
-    const fightC = makeButton(needsPotionWarning ? '开始战斗（无药剂）' : '开始战斗', () => {
-      if (needsPotionWarning && !warned) {
-        warned = true;
-        callbacks.onWarn?.('Boss 战没带药剂，胜算极低。再点一次仍要开打');
-        return;
-      }
+    const fightC = makeButton('开始战斗', () => {
       callbacks.onStartBattle();
     }, {
       variant: 'primary',
       width: startW,
       height: fh,
-      fontSize: needsPotionWarning ? 13 : 15,
+      fontSize: 15,
       radius: 10,
     });
     fightC.x = fightX + (offerExtra ? adW + gapFight : 0);

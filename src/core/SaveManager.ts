@@ -5,6 +5,7 @@ import type { MetaState, MvpGameState, RunState } from '@/game/state/GameState';
 import { emptyRunStarStats } from '@/data/chapterStars';
 import { createInitialState, META_VERSION } from '@/game/state/GameState';
 import { hydrateChapterProgress } from '@/game/state/ProgressManager';
+import { hydratePersonalEmblems } from '@/data/personalEmblemCatalog';
 import { hydrateHubUpgradeGuide } from '@/game/hubGuide/hubUpgradeGuide';
 import { hydrateTutorial } from '@/game/tutorial/TutorialManager';
 import { getDungeonDef } from '@/data/dungeonCatalog';
@@ -175,10 +176,13 @@ function normalizeMeta(meta: MetaState): MetaState {
     sweepUsageByDungeonId: meta.sweepUsageByDungeonId ?? {},
     chapterStarsByDungeonId: meta.chapterStarsByDungeonId ?? {},
     tutorialStep: meta.tutorialStep,
+    claimedPersonalEmblemIds: meta.claimedPersonalEmblemIds ?? [],
+    personalEmblemLevelById: meta.personalEmblemLevelById ?? {},
   };
   hydrateChapterProgress(next);
   hydrateTutorial(next);
   hydrateHubUpgradeGuide(next);
+  hydratePersonalEmblems(next);
   return next;
 }
 

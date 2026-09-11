@@ -6,6 +6,10 @@ import {
   remapLegacyCharacterId,
   type CharacterDef,
 } from '@/data/characterCatalog';
+import {
+  addCharacterStats,
+  personalEmblemModsFor,
+} from '@/data/personalEmblemCatalog';
 import { UNIT_DEFS } from '@/data/unitDefs';
 import type { Character, CharacterBaseStats } from '@/game/characterTypes';
 
@@ -66,9 +70,18 @@ export function lockedCharacterDefs(roster: { rosterId: string }[]): CharacterDe
   return CHARACTER_DEFS.filter((c) => !have.has(c.id));
 }
 
-/** 按 meta 等级计算角色有效基础面板（含成长，未含精华/局内加成） */
+/** 按 meta 等级计算角色有效基础面板（含成长，未含精华/局内加成/永久纹章） */
 export function characterEffectiveStats(m: Character): CharacterBaseStats {
   const def = getCharacterDef(m.catalogId ?? m.rosterId);
   if (def) return characterStatsAtLevel(def, m.level);
   return { ...m.base };
+}
+
+/** 上场 / 角色页展示：等级成长 + 已领取的跟人纹章固定值 */
+export function characterSheetStats(
+  m: Character,
+  meta: { claimedPersonalEmblemIds?: readonly string[] },
+): CharacterBaseStats {
+  const mods = personalEmblemModsFor(meta, m.rosterId);
+  return addCharacterStats(characterEffectiveStats(m), mods.stats);
 }

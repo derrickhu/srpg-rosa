@@ -67,7 +67,9 @@ import { AD_ICON_KEY, makeButton } from '@/ui/Button';
 import { makeRoundHudButton } from '@/ui/hudGlyphButton';
 import { attachPress } from '@/ui/press';
 import { AdManager } from '@/platform/AdManager';
+import { shareAppMessage } from '@/platform/wxShare';
 import { Platform } from '@/platform/wxPlatform';
+import { canOfferBossShareHeal, SHARE_HEAL_POTION_ID } from '@/game/state/shareHeal';
 import { createBusyGate } from '@/view/battle/busyGate';
 import { ABANDON_RUN_CONFIRM, attachAbandonConfirm, createAdReviveOverlay } from '@/view/battle/resultOverlay';
 import { AudioManager } from '@/core/AudioManager';
@@ -134,6 +136,13 @@ export interface PlaybackState {
   potions: Record<string, number>;
   /** 使用药剂后同步扣减 run 库存 */
   onConsumePotion: (potionId: string) => void;
+  /**
+   * Boss 战没带 / 用完治疗药剂时，转发领一瓶。
+   * 本场只给一次；回布阵重打会新建本层，次数自然清零。
+   */
+  allowShareHeal?: boolean;
+  /** 转发领到药之后落盘（库存已写进上面的 potions） */
+  onShareHeal?: () => void;
   /** 无尽：待机拾取后写入 run 库存。有这个回调时药剂栏会把 0 库存的瓶子也画出来 */
   onPickupPotion?: (potionId: string) => void;
   /** 无尽第二波起不能回布阵：站位已经带过来了，回去等于拆掉这一局 */
@@ -1553,10 +1562,12 @@ export function createBattlePlaybackView(
       && sim.getUnits().some((u) => u.faction === 'player' && u.hp > 0);
   }
 
+  let shareHealUsed = false;
   const potionBtns = new Map<string, {
     count: number;
     countLbl: PIXI.Text;
     chip: PIXI.Container;
+    chipBg: PIXI.Graphics;
     icon: PIXI.Container | null;
     well: PIXI.Graphics;
     container: PIXI.Container;
@@ -1568,39 +1579,117 @@ export function createBattlePlaybackView(
   const POTION_SLOT_GAP = 8;
   const HUD_PAD = 10;
 
-  function drawPotionWell(g: PIXI.Graphics, filled: boolean): void {
+  function drawPotionWell(g: PIXI.Graphics, filled: boolean, share = false): void {
     const r = POTION_SLOT / 2;
     g.clear();
     // 米白外晕：槽要压在草地上，只有墨线会陷进去
-    g.beginFill(C.paper, 0.9);
-    g.drawCircle(0.5, 1.5, r + 1.5);
+    g.beginFill(C.paper, share ? 1 : 0.9);
+    g.drawCircle(0.5, 1.5, r + (share ? 3 : 1.5));
     g.endFill();
+    if (share) {
+      g.beginFill(C.primary, 0.55);
+      g.drawCircle(0, 0, r + 4);
+      g.endFill();
+    }
     g.beginFill(shade(C.panel, 0.42), 1);
     g.drawCircle(1, 2.5, r);
     g.endFill();
-    g.lineStyle(2, C.ink, 1, 0);
-    g.beginFill(mix(C.panel, C.paper, filled ? 0.16 : 0.05), 1);
+    g.lineStyle(share ? 3 : 2, share ? C.primary : C.ink, 1, 0);
+    g.beginFill(mix(C.panel, share ? C.primary : C.paper, share ? 0.42 : filled ? 0.16 : 0.05), 1);
     g.drawCircle(0, 0, r);
     g.endFill();
     g.lineStyle(0);
-    g.beginFill(0x12141c, filled ? 0.32 : 0.55);
+    g.beginFill(0x12141c, filled || share ? 0.28 : 0.55);
     g.drawCircle(0, 1, r - 6);
     g.endFill();
-    g.lineStyle(1.2, C.paper, filled ? 0.22 : 0.1);
+    g.lineStyle(1.2, share ? C.primary : C.paper, share ? 0.85 : filled ? 0.22 : 0.1);
     g.drawCircle(0, 0, r - 7);
+  }
+
+  function shareHealOpen(): boolean {
+    return canOfferBossShareHeal({
+      bossBattle: !!gameState.allowShareHeal,
+      healCount: potionBtns.get(SHARE_HEAL_POTION_ID)?.count ?? gameState.potions[SHARE_HEAL_POTION_ID] ?? 0,
+      alreadyShared: shareHealUsed,
+    }) && !completed && !skipping;
+  }
+
+  function drawCountChip(bg: PIXI.Graphics, share: boolean): void {
+    bg.clear();
+    const w = share ? 52 : 22;
+    const h = share ? 18 : 15;
+    if (share) {
+      bg.lineStyle(2, C.ink, 1, 0);
+      bg.beginFill(C.primary, 1);
+    } else {
+      bg.beginFill(C.ink, 0.82);
+    }
+    bg.drawRoundedRect(-w / 2, -h / 2 - 0.5, w, h, 8);
+    bg.endFill();
+  }
+
+  let sharePulse: (() => void) | null = null;
+
+  function stopSharePulse(container?: PIXI.Container): void {
+    if (sharePulse) {
+      PIXI.Ticker.shared.remove(sharePulse);
+      sharePulse = null;
+    }
+    if (container && !container.destroyed) container.scale.set(1);
+  }
+
+  function startSharePulse(container: PIXI.Container): void {
+    if (sharePulse) return;
+    let acc = 0;
+    sharePulse = (): void => {
+      if (!container.parent || container.destroyed) {
+        stopSharePulse();
+        return;
+      }
+      acc += PIXI.Ticker.shared.deltaMS;
+      container.scale.set(1 + 0.07 * (0.5 + 0.5 * Math.sin(acc / 200)));
+    };
+    PIXI.Ticker.shared.add(sharePulse);
   }
 
   function paintPotionSlot(pid: string, count: number): void {
     const h = potionBtns.get(pid);
     if (!h) return;
     h.count = count;
+    const share = pid === SHARE_HEAL_POTION_ID && shareHealOpen();
     const filled = count > 0;
-    drawPotionWell(h.well, filled);
-    if (h.icon) h.icon.alpha = filled ? 1 : 0.28;
-    h.countLbl.text = `×${count}`;
-    h.chip.visible = filled;
-    h.container.eventMode = filled ? 'static' : 'none';
-    h.container.cursor = filled ? 'pointer' : 'default';
+    drawPotionWell(h.well, filled, share);
+    if (h.icon) h.icon.alpha = filled || share ? 1 : 0.28;
+    drawCountChip(h.chipBg, share);
+    h.countLbl.text = share ? '转发+1' : `×${count}`;
+    h.countLbl.style.fill = share ? 0x4a3a12 : C.paper;
+    h.countLbl.style.fontSize = share ? 12 : 10;
+    h.chip.visible = filled || share;
+    h.chip.x = share ? 16 : 14;
+    h.chip.y = share ? -24 : -20;
+    h.container.eventMode = filled || share ? 'static' : 'none';
+    h.container.cursor = filled || share ? 'pointer' : 'default';
+    if (share) startSharePulse(h.container);
+    else if (pid === SHARE_HEAL_POTION_ID) stopSharePulse(h.container);
+  }
+
+  let shareHealBusy = false;
+
+  async function claimShareHeal(): Promise<void> {
+    if (!shareHealOpen() || reviveGate.busy || shareHealBusy) return;
+    shareHealBusy = true;
+    const ok = await shareAppMessage();
+    shareHealBusy = false;
+    if (!ok) {
+      floatUtility(sw / 2, originY + 28, '转发未完成，没有药剂');
+      return;
+    }
+    shareHealUsed = true;
+    const next = (gameState.potions[SHARE_HEAL_POTION_ID] ?? 0) + 1;
+    gameState.potions[SHARE_HEAL_POTION_ID] = next;
+    gameState.onShareHeal?.();
+    paintPotionSlot(SHARE_HEAL_POTION_ID, next);
+    floatUtility(sw / 2, originY + 28, '获得治疗药剂 ×1');
   }
 
   {
@@ -1629,9 +1718,6 @@ export function createBattlePlaybackView(
       chip.x = 14;
       chip.y = -20;
       const chipBg = new PIXI.Graphics();
-      chipBg.beginFill(C.ink, 0.82);
-      chipBg.drawRoundedRect(-11, -8, 22, 15, 7);
-      chipBg.endFill();
       chip.addChild(chipBg);
       const countLbl = makeText('×0', 'uiStrong', {
         fill: C.paper,
@@ -1645,7 +1731,12 @@ export function createBattlePlaybackView(
       c.hitArea = new PIXI.Circle(0, 0, POTION_SLOT / 2 + 2);
       c.on('pointertap', () => {
         const h = potionBtns.get(pid);
-        if (!h || h.count <= 0 || completed || sim.isDone() || reviveGate.busy) return;
+        if (!h || completed || sim.isDone() || reviveGate.busy) return;
+        if (pid === SHARE_HEAL_POTION_ID && h.count <= 0 && shareHealOpen()) {
+          void claimShareHeal();
+          return;
+        }
+        if (h.count <= 0) return;
         paintPotionSlot(pid, h.count - 1);
         gameState.onConsumePotion(pid);
         const evs = sim.usePotion(pid);
@@ -1659,6 +1750,7 @@ export function createBattlePlaybackView(
         count: 0,
         countLbl,
         chip,
+        chipBg,
         icon,
         well,
         container: c,
@@ -2524,6 +2616,8 @@ export function createBattlePlaybackView(
     completed = true;
     manualUi?.hide();
     updateOrderStrip(null);
+    const heal = potionBtns.get(SHARE_HEAL_POTION_ID);
+    if (heal) paintPotionSlot(SHARE_HEAL_POTION_ID, heal.count);
     void (async () => {
       if (!skipping) await awaitEase(dur(250), () => {});
       if (!root.destroyed) callbacks.onComplete(winner);

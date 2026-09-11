@@ -124,6 +124,8 @@ export function computeSkillHitDamage(ctx: SkillDamageContext): CritRollResult {
   const thMul = terrainHitMul(ctx);
   if (thMul !== 1) dmg = clampDamage(dmg * thMul);
   if (ctx.targetDef.damageTakenMul !== 1) dmg = clampDamage(dmg * ctx.targetDef.damageTakenMul);
+  const skillMul = ctx.casterDef.skillDealtMul ?? 1;
+  if (skillMul !== 1) dmg = clampDamage(dmg * skillMul);
   return applyCritToDamage(dmg, ctx.spec, ctx.rng ?? Math.random);
 }
 

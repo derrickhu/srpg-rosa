@@ -836,9 +836,11 @@ function pushAllyHeal(
   tgt: UnitState,
   defs: Record<UnitKind, UnitArchetypeDef>,
   events: BattleEvent[],
+  healMul = 1,
 ): void {
   let amount = 0;
   for (const e of spec.onCastAllyEffects ?? []) if (e.kind === 'heal') amount += e.amount;
+  if (healMul !== 1) amount = Math.max(0, Math.floor(amount * healMul));
   if (amount <= 0 || tgt.hp <= 0) return;
   const maxHp = effectiveUnitDef(tgt, defs).maxHp;
   const heal = Math.min(amount, Math.max(0, maxHp - tgt.hp));
@@ -886,7 +888,7 @@ function castNeighborPickAlly(
   ];
   pushDeathIfNeeded(events, tgt);
   applySkillCastAllyEffects(tgt, spec);
-  pushAllyHeal(spec, tgt, defs, events);
+  pushAllyHeal(spec, tgt, defs, events, def.healGivenMul ?? 1);
   applySkillCastSelfEffects(self, spec);
   pushAttrNotes(events, spec, { self, ally: tgt });
   return events;
