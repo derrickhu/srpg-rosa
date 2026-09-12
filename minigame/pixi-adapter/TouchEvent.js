@@ -251,15 +251,9 @@ function registerTouchEvents() {
     Object.defineProperty(canvas, 'clientHeight', { get: function() { return screenH; }, configurable: true });
   } catch (e) {}
 
-  // PixiJS 会检查 canvas.style（微信 canvas 部分属性可能只读）
-  try {
-    if (!canvas.style) canvas.style = {};
-    canvas.style.touchAction = '';
-    canvas.style.msTouchAction = '';
-    canvas.style.cursor = '';
-    canvas.style.width = screenW + 'px';
-    canvas.style.height = screenH + 'px';
-  } catch (e) {}
+  // iOS 微信 3.17+ 主屏 canvas.style 是原生只读对象。Pixi EventSystem
+  // 会写 touchAction='none'，不 catch 就会 TypeError，卡在建 Application。
+  installWritableCanvasStyle(canvas, screenW, screenH);
 
   // PixiJS 检查 focus
   if (!canvas.focus) canvas.focus = function() {};
@@ -290,4 +284,51 @@ function registerTouchEvents() {
     ', getBoundingClientRect:', typeof canvas.getBoundingClientRect);
 }
 
-module.exports = { TouchEvent, registerTouchEvents };
+/**
+ * 换成可写 style。defineProperty 必须用微信包装前的原函数，
+ * adapter 里的 Object.defineProperty 会把 TypeError 吞掉、装上看似成功其实没换上。
+ */
+function installWritableCanvasStyle(canvas, screenW, screenH) {
+  if (!canvas) return false;
+  var bag = {
+    touchAction: 'none',
+    msTouchAction: 'none',
+    msContentZooming: 'none',
+    cursor: '',
+    width: (screenW || 0) + 'px',
+    height: (screenH || 0) + 'px',
+  };
+  var style = bag;
+  try {
+    style = new Proxy(bag, {
+      set: function (t, p, v) {
+        try { t[p] = v; } catch (e) {}
+        return true;
+      },
+    });
+  } catch (e) { /* 无 Proxy 就用普通对象 */ }
+
+  var defineProperty = (typeof GameGlobal !== 'undefined' && GameGlobal.__origDefineProperty)
+    || Object.defineProperty;
+  var ok = false;
+  try {
+    canvas.style = style;
+    canvas.style.touchAction = 'none';
+    ok = true;
+  } catch (e) {}
+  if (!ok) {
+    try {
+      defineProperty(canvas, 'style', {
+        configurable: true,
+        enumerable: true,
+        get: function () { return style; },
+        set: function () {},
+      });
+      ok = true;
+    } catch (e2) {}
+  }
+  console.log('[TouchEvent] writable canvas.style:', ok);
+  return ok;
+}
+
+module.exports = { TouchEvent, registerTouchEvents, installWritableCanvasStyle };

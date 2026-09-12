@@ -57,6 +57,7 @@ if (typeof GameGlobal !== 'undefined' && typeof GameGlobal.Intl === 'undefined')
 
 // ======== Patch Object.defineProperty ========
 const _origDefineProperty = Object.defineProperty;
+try { GameGlobal.__origDefineProperty = _origDefineProperty; } catch (_) {}
 Object.defineProperty = function safeDefineProperty(obj, prop, descriptor) {
   try {
     return _origDefineProperty.call(Object, obj, prop, descriptor);
@@ -112,19 +113,53 @@ if (typeof GameGlobal !== 'undefined') {
 // 这两件事必须打在**正式** WebGL 上，不要为了拿 constructor 再 createCanvas+getContext：
 // 微信第一次 createCanvas 才是主屏，后面每次再开一块；低端 Android 多开一块
 // 带 antialias 的 WebGL，正式上下文经常建失败，表现就是打开失败 / 卡在微信开屏。
+//
+// 但补丁只许「尽力而为」：iOS 的原生 gl 是只读对象，往上写一个字段就 TypeError，
+// 而这里是被 Pixi 在 new Application() 里调到的，抛出去就等于整个游戏起不来。
+const _glPlatform = String(sysInfo.platform || '').toLowerCase();
+const _glBrand = String(sysInfo.brand || '').toLowerCase();
+const _needsGlQuirkPatch = _glPlatform === 'android' || _glPlatform === 'ohos'
+  || _glPlatform === 'harmony' || _glPlatform === 'harmonyos'
+  || _glBrand.indexOf('huawei') !== -1 || _glBrand.indexOf('honor') !== -1;
+
 let _WebGLRenderingContext = Object;
-function _patchGlContext(gl) {
-  if (!gl || gl.__srpgGlPatched) return;
-  gl.__srpgGlPatched = true;
-  if (!_WebGLRenderingContext || _WebGLRenderingContext === Object) {
-    _WebGLRenderingContext = gl.constructor || Object;
-    try { _realGlobal.WebGLRenderingContext = _WebGLRenderingContext; } catch (_) {}
-    try { if (typeof GameGlobal !== 'undefined') GameGlobal.WebGLRenderingContext = _WebGLRenderingContext; } catch (_) {}
+const _patchedGl = typeof WeakSet === 'function' ? new WeakSet() : null;
+
+/** 往原生对象上装东西；只读就放弃，绝不外抛。 */
+function _softAssign(obj, key, value) {
+  try {
+    obj[key] = value;
+    return obj[key] === value;
+  } catch (e) {
+    return false;
   }
+}
+
+function _patchGlContext(gl) {
+  if (!gl) return;
+  // 重入标记只放在 WeakSet 里。写 gl.__srpgGlPatched 在 iOS 上会抛只读。
+  try {
+    if (_patchedGl) {
+      if (_patchedGl.has(gl)) return;
+      _patchedGl.add(gl);
+    }
+  } catch (_) { /* */ }
+
+  if (!_WebGLRenderingContext || _WebGLRenderingContext === Object) {
+    try { _WebGLRenderingContext = gl.constructor || Object; } catch (_) { /* */ }
+    _softAssign(_realGlobal, 'WebGLRenderingContext', _WebGLRenderingContext);
+    if (typeof GameGlobal !== 'undefined') {
+      _softAssign(GameGlobal, 'WebGLRenderingContext', _WebGLRenderingContext);
+    }
+  }
+
+  // 0/1 布尔化和假 VAO 都只是鸿蒙/安卓的毛病，iOS 不要碰原生上下文。
+  if (!_needsGlQuirkPatch) return;
+
   try {
     const origGetCtxAttr = gl.getContextAttributes && gl.getContextAttributes.bind(gl);
     if (origGetCtxAttr) {
-      gl.getContextAttributes = function () {
+      _softAssign(gl, 'getContextAttributes', function () {
         const attr = origGetCtxAttr();
         if (attr) {
           attr.stencil = !!attr.stencil;
@@ -134,20 +169,21 @@ function _patchGlContext(gl) {
           attr.preserveDrawingBuffer = !!attr.preserveDrawingBuffer;
         }
         return attr;
-      };
+      });
     }
   } catch (e3) {
     console.warn('[pixi-adapter] patch getContextAttributes 失败:', e3);
   }
+
   try {
     const vaoExt = gl.getExtension('OES_vertex_array_object');
     if (vaoExt && typeof vaoExt.createVertexArrayOES !== 'function') {
       const origGetExt = gl.getExtension.bind(gl);
-      gl.getExtension = function (name) {
+      const ok = _softAssign(gl, 'getExtension', function (name) {
         if (name === 'OES_vertex_array_object') return null;
         return origGetExt(name);
-      };
-      console.warn('[pixi-adapter] OES_vertex_array_object 为假扩展，已禁用');
+      });
+      console.warn('[pixi-adapter] OES_vertex_array_object 为假扩展，已禁用:', ok);
     }
   } catch (_) { /* 忽略 */ }
 }
@@ -155,13 +191,32 @@ function _patchGlContext(gl) {
 try {
   if (canvas && typeof canvas.getContext === 'function') {
     const origGetContext = canvas.getContext.bind(canvas);
-    canvas.getContext = function (type, attrs) {
+    const wrappedGetContext = function (type, attrs) {
       const ctx = origGetContext(type, attrs);
-      if (ctx && (type === 'webgl' || type === 'experimental-webgl' || type === 'webgl2')) {
-        _patchGlContext(ctx);
+      // 补丁失败绝不能影响拿上下文，否则 Pixi 整个建不起来。
+      try {
+        if (ctx && (type === 'webgl' || type === 'experimental-webgl' || type === 'webgl2')) {
+          _patchGlContext(ctx);
+        }
+      } catch (e) {
+        console.warn('[pixi-adapter] patch gl 上下文失败，已跳过:', e);
       }
       return ctx;
     };
+    canvas.getContext = wrappedGetContext;
+    // 万一还有别的只读点，让启动代码能一键还原成原生 getContext 再试一次。
+    if (typeof GameGlobal !== 'undefined') {
+      GameGlobal.__restoreNativeGetContext = function () {
+        try {
+          if (canvas.getContext !== wrappedGetContext) return false;
+          canvas.getContext = origGetContext;
+          console.warn('[pixi-adapter] 已还原原生 canvas.getContext');
+          return true;
+        } catch (e) {
+          return false;
+        }
+      };
+    }
   }
 } catch (e) {
   console.warn('[pixi-adapter] wrap canvas.getContext 失败:', e);

@@ -335,8 +335,13 @@ export class GameFlow {
 
   private finishLoadingIntoHub(): void {
     if (this.started) return;
-    this.state = SaveManager.loadOrCreate();
-    this.dropHiddenGmRun();
+    try {
+      this.state = SaveManager.loadOrCreate();
+      this.dropHiddenGmRun();
+    } catch (e) {
+      console.error('[GameFlow] 读档失败，用空档进大厅:', e);
+      this.state = createInitialState();
+    }
     this.started = true;
     this.loading?.setProgress(1);
     this.loading = null;

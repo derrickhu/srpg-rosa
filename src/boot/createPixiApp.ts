@@ -111,7 +111,9 @@ function pixiRendererOptions(canvas: PIXI.ICanvas, w: number, h: number, dpr: nu
     // 截屏分享不走 toDataURL，不需要 preserveDrawingBuffer。
     antialias: !androidLike,
     resolution: dpr,
-    autoDensity: true,
+    // 花花同款：微信 canvas 没有完整 CSS。autoDensity 会写 view.style，
+    // 真机 style 缺失或只读时 Application 当场 throw。
+    autoDensity: false,
     preserveDrawingBuffer: !androidLike,
     // 花花同款：鸿蒙假 WebGL2 会建上下文成功但画不出来；必须 WebGL1 + stencil。
     preferWebGLVersion: 1,
@@ -123,16 +125,120 @@ function pixiRendererOptions(canvas: PIXI.ICanvas, w: number, h: number, dpr: nu
 /**
  * 创建可渲染的 Pixi 宿主；若 Application 缺 ticker/renderer 则降级。
  */
+/** Application 用的可能是 pixi.js 里另一份 ShaderSystem，运行时再盖一次。 */
+function silencePixiShaderSystemCheck(): void {
+  const SS = (PIXI as any).ShaderSystem;
+  if (SS?.prototype) {
+    SS.prototype.systemCheck = function systemCheck() {};
+  }
+}
+
+function isReadonlyAssignError(e: unknown): boolean {
+  return /readonly|assign to/i.test(String((e as { message?: string })?.message || e));
+}
+
+/** adapter 把主屏 canvas.getContext 包了一层鸿蒙补丁；出事时换回原生的。 */
+function restoreNativeGetContext(): boolean {
+  try {
+    const restore = typeof GameGlobal !== 'undefined'
+      && (GameGlobal as any).__restoreNativeGetContext;
+    return typeof restore === 'function' ? !!restore() : false;
+  } catch {
+    return false;
+  }
+}
+
+/** iOS 微信主屏 canvas.style 只读时，换成可写袋，避免 EventSystem 写 touchAction 炸。 */
+export function forceWritableCanvasStyle(el: { style?: any }): boolean {
+  if (!el) return false;
+  const bag: Record<string, string> = {
+    touchAction: 'none',
+    msTouchAction: 'none',
+    msContentZooming: 'none',
+    cursor: '',
+  };
+  try {
+    const cur = el.style;
+    if (cur && typeof cur === 'object') {
+      try { cur.touchAction = 'none'; return true; } catch { /* native readonly */ }
+    }
+  } catch { /* */ }
+  try {
+    el.style = bag;
+    el.style.touchAction = 'none';
+    return true;
+  } catch { /* */ }
+  try {
+    const defineProperty = (typeof GameGlobal !== 'undefined' && (GameGlobal as any).__origDefineProperty)
+      || Object.defineProperty;
+    defineProperty(el, 'style', {
+      configurable: true,
+      enumerable: true,
+      get: () => bag,
+      set: () => {},
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function patchPixiReadonlyDom(): void {
+  const ES = (PIXI as any).EventSystem;
+  if (ES?.prototype && !ES.prototype.__srpgReadonlyPatched) {
+    ES.prototype.__srpgReadonlyPatched = true;
+    for (const name of ['addEvents', 'removeEvents', 'setCursor'] as const) {
+      const orig = ES.prototype[name];
+      if (typeof orig !== 'function') continue;
+      ES.prototype[name] = function (...args: unknown[]) {
+        try {
+          return orig.apply(this, args);
+        } catch (e) {
+          if (!isReadonlyAssignError(e)) throw e;
+          forceWritableCanvasStyle(this.domElement);
+          try {
+            return orig.apply(this, args);
+          } catch (e2) {
+            console.warn(`[createPixiHost] EventSystem.${name} readonly assign skipped:`, e2);
+            if (name === 'addEvents') this.eventsAdded = true;
+          }
+        }
+      };
+    }
+  }
+
+  const Acc = (PIXI as any).AccessibilityManager;
+  try {
+    if (Acc && (PIXI as any).extensions?.remove) {
+      (PIXI as any).extensions.remove(Acc);
+    }
+  } catch { /* 小游戏不需要无障碍 DOM */ }
+}
+
 export function createPixiHost(canvas: PIXI.ICanvas): PixiHost {
+  silencePixiShaderSystemCheck();
+  patchPixiReadonlyDom();
+  forceWritableCanvasStyle(canvas);
   const { w, h, dpr, androidLike } = getWxInfo();
   applyCanvasSize(canvas, w * dpr, h * dpr);
   console.log(`[createPixiHost] logical=${w}x${h} dpr=${dpr} canvas=${w * dpr}x${h * dpr} webgl1+stencil androidLike=${androidLike}`);
 
+  const options = () => pixiRendererOptions(canvas, w, h, dpr, androidLike);
+
   let app: PIXI.Application | null = null;
   try {
-    app = new PIXI.Application(pixiRendererOptions(canvas, w, h, dpr, androidLike));
+    app = new PIXI.Application(options());
   } catch (e) {
     console.error('[createPixiHost] new PIXI.Application 失败:', e);
+    // adapter 给 canvas.getContext 套了鸿蒙补丁。真机若有只读属性写不得，
+    // 还原成原生 getContext 再试一次，别让一个兼容补丁把整个启动拖死。
+    if (isReadonlyAssignError(e) && restoreNativeGetContext()) {
+      try {
+        app = new PIXI.Application(options());
+      } catch (e2) {
+        console.error('[createPixiHost] 还原原生 getContext 后仍失败:', e2);
+      }
+    }
   }
 
   if (app && app.stage && app.ticker && app.renderer) {
@@ -148,20 +254,27 @@ export function createPixiHost(canvas: PIXI.ICanvas): PixiHost {
   }
 
   console.warn('[createPixiHost] Application 不完整或失败，降级 autoDetectRenderer + Ticker');
-  const renderer = PIXI.autoDetectRenderer(pixiRendererOptions(canvas, w, h, dpr, androidLike));
-  const stage = new PIXI.Container();
-  const ticker = new PIXI.Ticker();
-  ticker.add(() => {
-    renderer.render(stage);
-  });
-  ticker.start();
+  restoreNativeGetContext();
+  try {
+    const renderer = PIXI.autoDetectRenderer(options());
+    const stage = new PIXI.Container();
+    const ticker = new PIXI.Ticker();
+    ticker.add(() => {
+      renderer.render(stage);
+    });
+    ticker.start();
 
-  patchEventSystemCoords(renderer, w, h);
+    patchEventSystemCoords(renderer, w, h);
 
-  return {
-    stage,
-    ticker,
-    renderer,
-    screen: new Rectangle(0, 0, w, h),
-  };
+    return {
+      stage,
+      ticker,
+      renderer,
+      screen: new Rectangle(0, 0, w, h),
+    };
+  } catch (e) {
+    console.error('[createPixiHost] autoDetectRenderer 也失败:', e);
+    const msg = e instanceof Error ? `${e.name}:${e.message}` : String(e);
+    throw new Error(`createPixiHost failed: ${msg}`);
+  }
 }

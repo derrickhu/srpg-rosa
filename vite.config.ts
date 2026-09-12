@@ -2,8 +2,9 @@ import { defineConfig, type Plugin } from 'vite';
 import path from 'path';
 import fs from 'fs';
 import { mapEditorPlugin } from './tools/map-editor/server/plugin';
+import { remainingUnsafeEvalThrows, stripPixiUnsafeEval } from './tools/pixiUnsafeEvalStrip';
 
-/** 与 game2D_huahua 一致：构建后去掉 ShaderSystem 的 unsafe-eval 抛错 */
+/** 构建后抽空 ShaderSystem.systemCheck；剥不干净直接让构建失败。 */
 function pixiUnsafeEvalPlugin(): Plugin {
   return {
     name: 'pixi-unsafe-eval-patch',
@@ -11,13 +12,17 @@ function pixiUnsafeEvalPlugin(): Plugin {
       const outDir = options.dir || 'minigame';
       const bundlePath = path.resolve(outDir, 'game-bundle.js');
       if (!fs.existsSync(bundlePath)) return;
-      let code = fs.readFileSync(bundlePath, 'utf8');
-      const re =
-        /systemCheck\(\)\{if\(!\w+\(\)\)throw new Error\("Current environment does not allow unsafe-eval[^}]*\}/g;
-      const patched = code.replace(re, 'systemCheck(){}');
-      if (patched !== code) {
+      const code = fs.readFileSync(bundlePath, 'utf8');
+      const { code: patched, patched: count } = stripPixiUnsafeEval(code);
+      const leftover = remainingUnsafeEvalThrows(patched);
+      if (leftover > 0) {
+        throw new Error(
+          `[pixi-unsafe-eval-patch] 仍有 ${leftover} 处 unsafe-eval throw，iOS 真机会卡在建 Pixi`,
+        );
+      }
+      if (count > 0) {
         fs.writeFileSync(bundlePath, patched, 'utf8');
-        console.log('[pixi-unsafe-eval-patch] Patched systemCheck in bundle');
+        console.log(`[pixi-unsafe-eval-patch] Patched systemCheck x${count}`);
       }
     },
   };

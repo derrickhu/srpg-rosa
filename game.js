@@ -8,6 +8,10 @@ function _diag(msg) {
   try { console.log('[game.js]', msg); } catch (_) {}
 }
 
+try {
+  if (typeof GameGlobal !== 'undefined') GameGlobal.__diag = _diag;
+} catch (_) {}
+
 function _showDiag() {
   try {
     if (typeof wx !== 'undefined' && wx.showModal) {
@@ -108,6 +112,8 @@ setTimeout(function () {
 // 低端 Android 解析 1MB bundle + 建 WebGL 经常超过 5 秒，旧门槛会误伤打开成功率。
 setTimeout(function () {
   if (typeof GameGlobal !== 'undefined' && !GameGlobal.__srpgBooted && !GameGlobal.__gameRendered) {
+    if (GameGlobal.__bootStep) _diag('停在:' + GameGlobal.__bootStep);
+    if (GameGlobal.__bootErr) _diag('err:' + String(GameGlobal.__bootErr).slice(0, 180));
     _diag('8秒仍未启动');
     _showDiag();
   }

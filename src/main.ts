@@ -16,7 +16,11 @@ declare const wx: any;
 function formatBootErr(e: unknown): string {
   if (e == null) return String(e);
   if (typeof e === 'string') return e;
-  if (e instanceof Error) return e.stack || e.message;
+  if (e instanceof Error) {
+    const head = [e.name, e.message].filter(Boolean).join(':');
+    const stack = e.stack ? e.stack.split('\n').slice(0, 3).join('|') : '';
+    return [head, stack].filter(Boolean).join(' ').slice(0, 400);
+  }
   if (typeof e === 'object') {
     const o = e as { errMsg?: unknown; message?: unknown; reason?: unknown };
     if (o.errMsg != null) return String(o.errMsg);
@@ -42,56 +46,86 @@ if (typeof GameGlobal !== 'undefined') {
   };
 }
 
+function markBoot(step: string, err?: unknown): void {
+  if (typeof GameGlobal === 'undefined') return;
+  GameGlobal.__bootStep = step;
+  if (err !== undefined) GameGlobal.__bootErr = formatBootErr(err);
+  try {
+    GameGlobal.__diag?.(err !== undefined ? `${step}:${formatBootErr(err)}` : step);
+  } catch {
+    /* */
+  }
+}
+
 function boot(): boolean {
+  markBoot('canvas');
   const canvas =
     (typeof GameGlobal !== 'undefined' && GameGlobal.canvas) ||
     (typeof window !== 'undefined' && (window as unknown as { canvas?: HTMLCanvasElement }).canvas) ||
     null;
 
   if (!canvas) {
+    markBoot('no-canvas');
     console.error('[main] 无法获取 canvas，请确认 pixi-adapter 已加载');
     return false;
   }
 
+  markBoot('pixi');
   const host = createPixiHost(canvas);
   // 先清掉微信开屏，再跑 GameFlow。华为上 Text/云同步若卡住，至少能看见游戏底色。
+  markBoot('render0');
   try {
     host.renderer.render(host.stage);
     if (typeof GameGlobal !== 'undefined') GameGlobal.__gameRendered = true;
   } catch (e) {
+    markBoot('render0-fail', e);
     console.error('[main] empty stage render failed:', e);
   }
 
+  markBoot('gameflow');
   new GameFlow(host);
 
+  markBoot('render1');
   try {
     host.renderer.render(host.stage);
     if (typeof GameGlobal !== 'undefined') GameGlobal.__gameRendered = true;
   } catch (e) {
+    markBoot('render1-fail', e);
     console.error('[main] 首次 render 失败:', e);
   }
 
   // 分享 API 放在首帧之后：部分安卓 / 鸿蒙在开屏阶段调 onShareTimeline 会原生崩。
+  markBoot('share');
   try {
     installWxShare();
   } catch (e) {
     console.warn('[main] installWxShare 失败:', e);
+    markBoot('share-fail', e);
   }
 
   console.log(`[main] ${GAME_TITLE} (${GAME_KEY}) MVP 启动, screen:`, host.screen.width, 'x', host.screen.height);
   void AssetLoader.prefetchManifest();
+  markBoot('ok');
   return true;
 }
 
 let booted = false;
+let booting = false;
 
 function tryBoot(reason: string): void {
-  if (booted) return;
+  if (booted || booting) return;
+  booting = true;
+  markBoot(`try:${reason}`);
   try {
-    if (!boot()) return;
+    if (!boot()) {
+      booting = false;
+      return;
+    }
     booted = true;
     if (typeof GameGlobal !== 'undefined') GameGlobal.__srpgBooted = true;
   } catch (e) {
+    booting = false;
+    markBoot(`throw:${reason}`, e);
     console.error(`[main] boot 异常 (${reason}):`, e);
   }
 }

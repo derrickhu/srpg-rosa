@@ -225,7 +225,7 @@ export function hydratePersonalEmblems(meta: PersonalEmblemSave & {
   for (const id of meta.claimedPersonalEmblemIds ?? []) {
     if ((levels[id] ?? 0) < 1) levels[id] = 1;
   }
-  for (const id of meta.clearedDungeonIds) {
+  for (const id of meta.clearedDungeonIds ?? []) {
     const target = targetPersonalEmblemLevel(id);
     for (const e of personalEmblemsForDungeon(id)) {
       if ((levels[e.id] ?? 0) < target) levels[e.id] = target;
