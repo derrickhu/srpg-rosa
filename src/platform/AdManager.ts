@@ -20,11 +20,16 @@ export function adUnitIdFor(scenario: AdScenario): string {
   return SCENARIO_AD_UNIT[scenario];
 }
 
+/** 微信激励视频默认全局单例，只绑第一次的 adUnitId。多广告位必须 multiton。 */
+export function rewardedVideoCreateOptions(adUnitId: string): { adUnitId: string; multiton: true } {
+  return { adUnitId, multiton: true };
+}
+
 function getRewardedAd(adUnitId: string): any {
   if (!hasWx() || typeof wx.createRewardedVideoAd !== 'function') return null;
   if (rewardedCache.has(adUnitId)) return rewardedCache.get(adUnitId);
   try {
-    const ad = wx.createRewardedVideoAd({ adUnitId });
+    const ad = wx.createRewardedVideoAd(rewardedVideoCreateOptions(adUnitId));
     ad.onError?.((err: unknown) => {
       console.warn('[AdManager] rewarded error:', err);
     });
