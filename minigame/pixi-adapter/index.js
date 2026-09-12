@@ -124,6 +124,8 @@ const _needsGlQuirkPatch = _glPlatform === 'android' || _glPlatform === 'ohos'
 
 let _WebGLRenderingContext = Object;
 const _patchedGl = typeof WeakSet === 'function' ? new WeakSet() : null;
+// 装上去的 gl 方法，出事时要能一个个摘掉。
+const _glUndo = [];
 
 /** 往原生对象上装东西；只读就放弃，绝不外抛。 */
 function _softAssign(obj, key, value) {
@@ -133,6 +135,32 @@ function _softAssign(obj, key, value) {
   } catch (e) {
     return false;
   }
+}
+
+/** 装完记一笔，方便 __restoreNativeGetContext 回滚。 */
+function _softAssignGl(gl, key, value) {
+  let original;
+  try { original = gl[key]; } catch (_) { original = undefined; }
+  if (!_softAssign(gl, key, value)) return false;
+  _glUndo.push({ gl, key, original });
+  return true;
+}
+
+/**
+ * 华为返回的 contextAttributes 是只读对象，直接写 attr.stencil 会抛。
+ * 复制一份再把 0/1 收成布尔，原对象一个字段都不碰。
+ */
+function _booleanizeContextAttributes(attr) {
+  const out = {};
+  try {
+    for (const k in attr) out[k] = attr[k];
+  } catch (_) { /* 原生对象可能不可枚举 */ }
+  out.stencil = !!attr.stencil;
+  out.antialias = !!attr.antialias;
+  out.alpha = !!attr.alpha;
+  out.depth = !!attr.depth;
+  out.preserveDrawingBuffer = !!attr.preserveDrawingBuffer;
+  return out;
 }
 
 function _patchGlContext(gl) {
@@ -159,16 +187,16 @@ function _patchGlContext(gl) {
   try {
     const origGetCtxAttr = gl.getContextAttributes && gl.getContextAttributes.bind(gl);
     if (origGetCtxAttr) {
-      _softAssign(gl, 'getContextAttributes', function () {
+      _softAssignGl(gl, 'getContextAttributes', function () {
         const attr = origGetCtxAttr();
-        if (attr) {
-          attr.stencil = !!attr.stencil;
-          attr.antialias = !!attr.antialias;
-          attr.alpha = !!attr.alpha;
-          attr.depth = !!attr.depth;
-          attr.preserveDrawingBuffer = !!attr.preserveDrawingBuffer;
+        if (!attr) return attr;
+        // Pixi 在建 renderer 时就会调这里，抛出去等于整个游戏起不来。
+        try {
+          return _booleanizeContextAttributes(attr);
+        } catch (e) {
+          console.warn('[pixi-adapter] contextAttributes 布尔化失败，用原值:', e);
+          return attr;
         }
-        return attr;
       });
     }
   } catch (e3) {
@@ -179,7 +207,7 @@ function _patchGlContext(gl) {
     const vaoExt = gl.getExtension('OES_vertex_array_object');
     if (vaoExt && typeof vaoExt.createVertexArrayOES !== 'function') {
       const origGetExt = gl.getExtension.bind(gl);
-      const ok = _softAssign(gl, 'getExtension', function (name) {
+      const ok = _softAssignGl(gl, 'getExtension', function (name) {
         if (name === 'OES_vertex_array_object') return null;
         return origGetExt(name);
       });
@@ -204,17 +232,26 @@ try {
       return ctx;
     };
     canvas.getContext = wrappedGetContext;
-    // 万一还有别的只读点，让启动代码能一键还原成原生 getContext 再试一次。
+    // 万一还有别的只读点，让启动代码能一键卸掉所有兼容补丁再试一次。
+    // getContext 会返回同一个 gl，所以装到 gl 上的方法也必须一起摘掉。
     if (typeof GameGlobal !== 'undefined') {
       GameGlobal.__restoreNativeGetContext = function () {
+        let restored = false;
         try {
-          if (canvas.getContext !== wrappedGetContext) return false;
-          canvas.getContext = origGetContext;
-          console.warn('[pixi-adapter] 已还原原生 canvas.getContext');
-          return true;
-        } catch (e) {
-          return false;
+          if (canvas.getContext === wrappedGetContext) {
+            canvas.getContext = origGetContext;
+            restored = true;
+          }
+        } catch (e) { /* */ }
+        while (_glUndo.length) {
+          const undo = _glUndo.pop();
+          try {
+            undo.gl[undo.key] = undo.original;
+            restored = true;
+          } catch (e) { /* 摘不掉就算了 */ }
         }
+        console.warn('[pixi-adapter] 已卸掉 gl 兼容补丁:', restored);
+        return restored;
       };
     }
   }

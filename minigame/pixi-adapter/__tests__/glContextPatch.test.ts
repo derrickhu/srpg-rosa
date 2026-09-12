@@ -137,4 +137,30 @@ describe('pixi-adapter 主屏 canvas.getContext', () => {
     expect(attrs.stencil).toBe(true);
     expect(attrs.antialias).toBe(false);
   });
+
+  it('华为返回的 contextAttributes 只读时，布尔化不改原对象也不抛', () => {
+    // BLK-AL80 真机：attributes 是只读对象，写 attr.stencil 直接 TypeError。
+    const readonlyAttrs = new Proxy(
+      { stencil: 1, antialias: 1, alpha: 1, depth: 1, preserveDrawingBuffer: 0 },
+      {
+        set() {
+          throw new TypeError("Cannot assign to read only property 'stencil' of object");
+        },
+      },
+    );
+    const gl: Record<string, unknown> = {
+      getContextAttributes: () => readonlyAttrs,
+      getExtension: () => null,
+    };
+    const { sandbox, canvas } = makeSandbox(gl, 'android', 'HUAWEI');
+    loadAdapter(sandbox);
+
+    const ctx = (canvas.getContext as any)('webgl', { stencil: true });
+    let attrs: any;
+    expect(() => { attrs = ctx.getContextAttributes(); }).not.toThrow();
+    expect(attrs.stencil).toBe(true);
+    expect(attrs.preserveDrawingBuffer).toBe(false);
+    // 原生对象必须原样不动
+    expect((readonlyAttrs as any).stencil).toBe(1);
+  });
 });
