@@ -34,6 +34,7 @@ import {
   type MvpGameState,
 } from '@/game/MvpState';
 import { C } from '@/view/mvpTheme';
+import { applyBoardDepth } from '@/view/boardDepth';
 import { createUnitOverhead, tokenOverheadLocalY } from '@/view/unitOverhead';
 import { battleUnitInfoModel, characterInfoModel } from '@/view/unitInfoModel';
 import { createUnitInfoOverlay, type UnitInfoModel } from '@/view/unitInfoPanel';
@@ -400,6 +401,9 @@ export function createDeployView(
 
   const gridLayer = new PIXI.Container();
   root.addChild(gridLayer);
+  const unitLayer = new PIXI.Container();
+  unitLayer.sortableChildren = true;
+  root.addChild(unitLayer);
 
   const toolbarLayer = new PIXI.Container();
   toolbarLayer.y = toolbarY;
@@ -416,6 +420,7 @@ export function createDeployView(
 
   function redrawGrid(): void {
     gridLayer.removeChildren();
+    unitLayer.removeChildren();
     const st = currentStage(state);
     for (let y = 0; y < GH; y++) {
       for (let x = 0; x < GW; x++) {
@@ -488,7 +493,8 @@ export function createDeployView(
           wrap.on('pointertap', () => showUnitInfo(
             battleUnitInfoModel(enemySpawnToUnitState(enemy, scale), { showCooldown: false }),
           ));
-          gridLayer.addChild(wrap);
+          applyBoardDepth(wrap);
+          unitLayer.addChild(wrap);
         } else if (placed) {
           const m = getCharacter(state, placed.rosterId);
           const wrap = new PIXI.Container();
@@ -514,7 +520,8 @@ export function createDeployView(
             t.anchor.set(0.5, 1);
             wrap.addChild(t);
           }
-          gridLayer.addChild(wrap);
+          applyBoardDepth(wrap);
+          unitLayer.addChild(wrap);
         }
       }
     }

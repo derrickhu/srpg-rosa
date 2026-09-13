@@ -2,14 +2,38 @@ import { getCharacterDef } from '@/data/characterCatalog';
 import {
   describePersonalEmblem,
   getPersonalEmblem,
+  personalEmblemEffectLines,
   personalEmblemSourceLabel,
 } from '@/data/personalEmblemCatalog';
 import type { ChapterClearPreview } from '@/game/state/ProgressManager';
 import { C } from '@/view/mvpTheme';
 import type { RewardEntry } from '@/view/battle/resultOverlay';
 
+/** 通关 / 首杀专页共用的一枚跟人纹章格 */
+export function personalEmblemRewardEntry(emblemId: string, level: number): RewardEntry | null {
+  const emblem = getPersonalEmblem(emblemId);
+  if (!emblem) return null;
+  const who = getCharacterDef(emblem.rosterId);
+  const upgraded = level >= 2;
+  return {
+    iconKey: emblem.icon,
+    name: upgraded ? `${emblem.name} · 2级` : emblem.name,
+    amount: 1,
+    quality: upgraded ? `2级 · ${who?.name ?? '专属'}` : (who?.name ?? '专属'),
+    badge: '永久纹章',
+    whoRosterId: emblem.rosterId,
+    desc: upgraded
+      ? `${emblem.blurb}升到 2 级：${describePersonalEmblem(emblem, level)}`
+      : `${emblem.blurb}${describePersonalEmblem(emblem, level)}铭刻在${who?.name ?? '这个人'}身上。`,
+    sources: [personalEmblemSourceLabel(emblem, level)],
+    tint: C.primary,
+    effectLines: personalEmblemEffectLines(emblem, level),
+    flavor: emblem.blurb,
+  };
+}
+
 /**
- * 通关结算格只留当场能点开看的东西：魂晶、跟人永久纹章。
+ * 通关结算格只留魂晶。跟人纹章在首杀专页演过，这里不再复写一格。
  * 三星跟在「通关」横幅后面演；入队和开下一章回大厅再亮相。
  */
 export function chapterClearRewardEntries(
@@ -28,26 +52,6 @@ export function chapterClearRewardEntries(
         : `再通「${dungeonName}」。本关奖励每次通关都能领。`,
       sources: ['章节星级', '本关奖励'],
       tint: C.soul,
-    });
-  }
-  for (const emblemId of preview.grantedEmblemIds) {
-    const emblem = getPersonalEmblem(emblemId);
-    if (!emblem) continue;
-    const who = getCharacterDef(emblem.rosterId);
-    const level = preview.grantedEmblemLevelById[emblemId] ?? 1;
-    const upgraded = level >= 2;
-    entries.push({
-      iconKey: emblem.icon,
-      name: upgraded ? `${emblem.name} · 2级` : emblem.name,
-      amount: 1,
-      quality: upgraded ? `2级 · ${who?.name ?? '专属'}` : (who?.name ?? '专属'),
-      badge: '永久纹章',
-      whoRosterId: emblem.rosterId,
-      desc: upgraded
-        ? `${emblem.blurb}升到 2 级：${describePersonalEmblem(emblem, level)}`
-        : `${emblem.blurb}${describePersonalEmblem(emblem, level)}铭刻在${who?.name ?? '这个人'}身上。`,
-      sources: [personalEmblemSourceLabel(emblem, level)],
-      tint: C.primary,
     });
   }
   return entries;

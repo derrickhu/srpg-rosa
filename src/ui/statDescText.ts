@@ -28,7 +28,7 @@ export function makeStatDescBlock(lines: string[], opts: StatDescBlockOpts): PIX
   let y = 0;
   for (const line of lines) {
     if (!line) continue;
-    const row = makeHighlightLine(line, {
+    const row = makeStatDescLine(line, {
       maxWidth: opts.maxWidth,
       fontSize,
       bodyFill: opts.bodyFill ?? C.muted,
@@ -41,7 +41,7 @@ export function makeStatDescBlock(lines: string[], opts: StatDescBlockOpts): PIX
   return root;
 }
 
-function makeHighlightLine(
+export function makeStatDescLine(
   text: string,
   opts: { maxWidth: number; fontSize: number; bodyFill: number; accentFill: number },
 ): PIXI.Container {

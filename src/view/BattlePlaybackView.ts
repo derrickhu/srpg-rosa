@@ -24,6 +24,7 @@ import {
   SKILL_VFX,
   attackRecipeFor,
   recipeAnimSets,
+  skillSparks,
   vfxSetsForKinds,
   type FlashDef,
   type PropBurstDef,
@@ -47,6 +48,7 @@ import {
   type CombatFloatHost,
 } from '@/view/battle/combatFloatText';
 import { C, mix, shade } from '@/view/mvpTheme';
+import { applyBoardDepth } from '@/view/boardDepth';
 import { createUnitOverhead, type UnitOverheadHandle } from '@/view/unitOverhead';
 import {
   createTerrainBadge,
@@ -63,15 +65,24 @@ import {
   runHudRowY,
 } from '@/view/renderHelpers';
 import { createRunTitleBanner } from '@/view/runTitleBanner';
-import { AD_ICON_KEY, makeButton } from '@/ui/Button';
+import { AD_ICON_KEY, makeButton, type ButtonNode } from '@/ui/Button';
 import { makeRoundHudButton } from '@/ui/hudGlyphButton';
 import { attachPress } from '@/ui/press';
 import { AdManager } from '@/platform/AdManager';
 import { shareAppMessage } from '@/platform/wxShare';
 import { Platform } from '@/platform/wxPlatform';
-import { canOfferBossShareHeal, SHARE_HEAL_POTION_ID } from '@/game/state/shareHeal';
+import {
+  canOfferBossShareHeal,
+  SHARE_HEAL_POTION_ID,
+  SHARE_HEAL_PLUS_LABEL,
+} from '@/game/state/shareHeal';
 import { createBusyGate } from '@/view/battle/busyGate';
-import { ABANDON_RUN_CONFIRM, attachAbandonConfirm, createAdReviveOverlay } from '@/view/battle/resultOverlay';
+import {
+  ABANDON_RUN_CONFIRM,
+  attachAbandonConfirm,
+  attachShareHealConfirm,
+  createAdReviveOverlay,
+} from '@/view/battle/resultOverlay';
 import { AudioManager } from '@/core/AudioManager';
 import { sfxForAttack, sfxForAttackHit, sfxForSkillCast, sfxForSkillHit } from '@/data/audioCatalog';
 import { AssetManager } from '@/core/AssetManager';
@@ -83,6 +94,11 @@ import {
   type AnimatedUnitHandle,
 } from '@/view/AnimatedUnit';
 import { isDisplayLive } from '@/view/pixiLive';
+import { attachCircleGlow } from '@/view/fx/celebration';
+import {
+  bossFirstKillDropLabel,
+  type BossFirstKillDrop,
+} from '@/view/battle/bossFirstKill';
 import {
   AOE_STAGGER_MS,
   aoeImpactFloatDelayMs,
@@ -145,6 +161,11 @@ export interface PlaybackState {
   onShareHeal?: () => void;
   /** 无尽：待机拾取后写入 run 库存。有这个回调时药剂栏会把 0 库存的瓶子也画出来 */
   onPickupPotion?: (potionId: string) => void;
+  /**
+   * Boss 首杀将铭刻的永久纹章。Boss 死后掉在格子上，点了播拾取；
+   * 不点也照样进结算首杀页。
+   */
+  emblemDrops?: readonly BossFirstKillDrop[];
   /** 无尽第二波起不能回布阵：站位已经带过来了，回去等于拆掉这一局 */
   allowReturnDeploy?: boolean;
   /** 特效试炼：连放 + GM 清冷却 */
@@ -262,7 +283,7 @@ export function createBattlePlaybackView(
   }
   let skipping = false;
   let completed = false;
-  const reviveGate = createBusyGate();
+  const pauseGate = createBusyGate();
   /** 人工操作 UI，自动模式下为 null */
   let manualUi: ManualTurnUi | null = null;
   /**
@@ -293,6 +314,8 @@ export function createBattlePlaybackView(
           finish();
           return;
         }
+        // 转发 / 看广告时停住当前这一拍，回来再接着走。
+        if (pauseGate.busy) return;
         acc += app.ticker.deltaMS;
         const k = skipping ? 1 : Math.min(1, acc / ms);
         const e = 1 - (1 - k) ** 2;
@@ -327,6 +350,7 @@ export function createBattlePlaybackView(
    */
   const groundFxLayer = new PIXI.Container();
   const tokenLayer = new PIXI.Container();
+  tokenLayer.sortableChildren = true;
   /** 棋盘点击接收层，夹在棋子和特效之间（见 manualTurnUi 的 inputLayer 说明） */
   const inputLayer = new PIXI.Container();
   const fxLayer = new PIXI.Container();
@@ -337,6 +361,8 @@ export function createBattlePlaybackView(
    * 飘字若和特效抢同一层，后挂上去的火花/残影会把数字盖住，读起来就是「群攻没飘字」。
    */
   const floatLayer = new PIXI.Container();
+  /** 纹章掉落要压过棋盘点击层，否则点不到发光图标 */
+  const lootLayer = new PIXI.Container();
   root.addChild(bgLayer);
   root.addChild(gridLayer);
   root.addChild(dropLayer);
@@ -346,6 +372,7 @@ export function createBattlePlaybackView(
   root.addChild(inputLayer);
   root.addChild(fxLayer);
   root.addChild(floatLayer);
+  root.addChild(lootLayer);
 
   /**
    * 震动只带棋盘相关的层。背景不带（整屏晃很晕）、HUD 不带（读起来像界面坏了）、
@@ -359,6 +386,7 @@ export function createBattlePlaybackView(
     tokenLayer,
     fxLayer,
     floatLayer,
+    lootLayer,
   ]);
 
   // --- 设置按钮（左上角齿轮） ---
@@ -674,7 +702,7 @@ export function createBattlePlaybackView(
   let tutorialPilotLocked = false;
   const showPilot = !gameState.tutorialLock || !!gameState.tutorialAllowPilot;
   const onPilotPress = (): void => {
-    if (reviveGate.busy) return;
+    if (pauseGate.busy) return;
     if (gameState.tutorialLock && !gameState.tutorialAllowPilot) return;
     if (tutorialPilotLocked) return;
     const now = Date.now();
@@ -1015,6 +1043,116 @@ export function createBattlePlaybackView(
     dropMarkers.delete(key);
   }
 
+  const bossUids = new Set(
+    initialUnits.filter((u) => u.faction === 'enemy' && u.boss).map((u) => u.uid),
+  );
+  let emblemOnGround = 0;
+  let emblemDropped = false;
+
+  function emblemFlyTarget(rosterId: string): { x: number; y: number } {
+    for (const u of sim.getUnits()) {
+      if (u.rosterId !== rosterId || u.hp <= 0) continue;
+      const tok = tokens.get(u.uid);
+      if (tok && isDisplayLive(tok)) return { x: tok.x, y: tok.y };
+    }
+    return { x: sw / 2, y: originY + 24 };
+  }
+
+  function pickupEmblemDrop(marker: PIXI.Container, drop: BossFirstKillDrop): void {
+    if (marker.eventMode === 'none') return;
+    marker.eventMode = 'none';
+    marker.cursor = 'default';
+    emblemOnGround = Math.max(0, emblemOnGround - 1);
+    AudioManager.playSfx('sfx_soul_gain');
+    const from = { x: marker.x, y: marker.y };
+    const to = emblemFlyTarget(drop.rosterId);
+    floatUtility(from.x, from.y - cell * 0.4, `获得 ${bossFirstKillDropLabel(drop)}`);
+    void (async () => {
+      await awaitEase(dur(520), (k) => {
+        if (!isDisplayLive(marker)) return;
+        const e = 1 - (1 - k) * (1 - k);
+        marker.x = from.x + (to.x - from.x) * e;
+        marker.y = from.y + (to.y - from.y) * e - Math.sin(k * Math.PI) * 40;
+        marker.scale.set(1 + 0.25 * Math.sin(k * Math.PI));
+        marker.alpha = k > 0.78 ? 1 - (k - 0.78) / 0.22 : 1;
+      });
+      if (isDisplayLive(marker)) {
+        marker.parent?.removeChild(marker);
+        marker.destroy({ children: true });
+      }
+    })();
+  }
+
+  function showEmblemDrop(pos: Vec2, drop: BossFirstKillDrop, offsetX = 0): void {
+    const marker = new PIXI.Container();
+    const at = cellCenter(originX, originY, cell, pos);
+    marker.x = at.x + offsetX;
+    marker.y = at.y;
+    const size = Math.max(22, Math.floor(cell * 0.72));
+    attachCircleGlow(marker, size * 1.05, 0xffe08a).setActive(true);
+    emitSparks(lootLayer, marker.x, marker.y, skillSparks([0xfff6d0, 0xffc94a, 0xff8a1f]));
+    const icon = createUiIcon(drop.iconKey, size);
+    if (icon) {
+      icon.x = -size / 2;
+      icon.y = -size / 2;
+      marker.addChild(icon);
+    } else {
+      const fallback = new PIXI.Graphics();
+      fallback.beginFill(0xffe08a, 0.95);
+      fallback.drawCircle(0, 0, size / 2);
+      fallback.endFill();
+      marker.addChild(fallback);
+    }
+    marker.eventMode = 'static';
+    marker.cursor = 'pointer';
+    marker.hitArea = new PIXI.Circle(0, 0, size * 0.7);
+    marker.on('pointertap', (ev) => {
+      ev.stopPropagation();
+      pickupEmblemDrop(marker, drop);
+    });
+    lootLayer.addChild(marker);
+    emblemOnGround += 1;
+    floatUtility(marker.x, marker.y - cell * 0.4, `掉落 ${bossFirstKillDropLabel(drop)}`);
+    if (skipping) {
+      marker.scale.set(1);
+      return;
+    }
+    marker.scale.set(0.2);
+    void (async () => {
+      await awaitEase(dur(280), (t) => {
+        if (!isDisplayLive(marker) || marker.eventMode === 'none') return;
+        const s = t < 0.7 ? 0.2 + 1.1 * (t / 0.7) : 1.3 - 0.3 * ((t - 0.7) / 0.3);
+        marker.scale.set(s);
+      });
+      if (isDisplayLive(marker) && marker.eventMode !== 'none') marker.scale.set(1);
+    })();
+    const baseY = marker.y;
+    const ticker = app.ticker;
+    const bob = (): void => {
+      if (!isDisplayLive(marker) || marker.eventMode === 'none') {
+        ticker.remove(bob);
+        return;
+      }
+      marker.y = baseY + Math.sin(ticker.lastTime / 380) * 4;
+    };
+    ticker.add(bob);
+  }
+
+  function dropBossEmblems(pos: Vec2): void {
+    const drops = gameState.emblemDrops ?? [];
+    if (emblemDropped || drops.length === 0) return;
+    emblemDropped = true;
+    drops.forEach((d, i) => {
+      showEmblemDrop(pos, d, (i - (drops.length - 1) / 2) * 16);
+    });
+  }
+
+  function placeBoardToken(tok: PIXI.Container, x: number, y: number): void {
+    tok.x = x;
+    tok.y = y;
+    applyBoardDepth(tok);
+  }
+
   function mountUnitView(u: UnitState): void {
     if (tokens.has(u.uid)) return;
     posByUid.set(u.uid, { ...u.pos });
@@ -1043,8 +1181,7 @@ export function createBattlePlaybackView(
     c.addChild(oh.root);
     const p = posByUid.get(u.uid)!;
     const ctr = cellCenter(originX, originY, cell, p);
-    c.x = ctr.x;
-    c.y = ctr.y;
+    placeBoardToken(c, ctr.x, ctr.y);
     tokenLayer.addChild(c);
     tokens.set(u.uid, c);
     tokenOverheads.set(u.uid, oh);
@@ -1539,14 +1676,14 @@ export function createBattlePlaybackView(
     tone: C.ad,
     onPress: () => {
       void (async () => {
-        if (reviveGate.busy || reviveUsed || completed || skipping) return;
-        reviveGate.set(true);
+        if (pauseGate.busy || reviveUsed || completed || skipping) return;
+        pauseGate.set(true);
         const choice = await waitReviveChoice();
         if (choice !== 'skip') {
           const ok = await applyRevive(choice);
           if (!ok) floatUtility(sw / 2, originY + 28, '广告未播完，没有复活');
         }
-        reviveGate.set(false);
+        pauseGate.set(false);
         updateReviveHud();
       })();
     },
@@ -1578,31 +1715,28 @@ export function createBattlePlaybackView(
   const POTION_SLOT = 52;
   const POTION_SLOT_GAP = 8;
   const HUD_PAD = 10;
+  const SHARE_BTN_W = 40;
+  const SHARE_BTN_H = 26;
 
-  function drawPotionWell(g: PIXI.Graphics, filled: boolean, share = false): void {
+  function drawPotionWell(g: PIXI.Graphics, filled: boolean): void {
     const r = POTION_SLOT / 2;
     g.clear();
     // 米白外晕：槽要压在草地上，只有墨线会陷进去
-    g.beginFill(C.paper, share ? 1 : 0.9);
-    g.drawCircle(0.5, 1.5, r + (share ? 3 : 1.5));
+    g.beginFill(C.paper, 0.9);
+    g.drawCircle(0.5, 1.5, r + 1.5);
     g.endFill();
-    if (share) {
-      g.beginFill(C.primary, 0.55);
-      g.drawCircle(0, 0, r + 4);
-      g.endFill();
-    }
     g.beginFill(shade(C.panel, 0.42), 1);
     g.drawCircle(1, 2.5, r);
     g.endFill();
-    g.lineStyle(share ? 3 : 2, share ? C.primary : C.ink, 1, 0);
-    g.beginFill(mix(C.panel, share ? C.primary : C.paper, share ? 0.42 : filled ? 0.16 : 0.05), 1);
+    g.lineStyle(2, C.ink, 1, 0);
+    g.beginFill(mix(C.panel, C.paper, filled ? 0.16 : 0.05), 1);
     g.drawCircle(0, 0, r);
     g.endFill();
     g.lineStyle(0);
-    g.beginFill(0x12141c, filled || share ? 0.28 : 0.55);
+    g.beginFill(0x12141c, filled ? 0.28 : 0.55);
     g.drawCircle(0, 1, r - 6);
     g.endFill();
-    g.lineStyle(1.2, share ? C.primary : C.paper, share ? 0.85 : filled ? 0.22 : 0.1);
+    g.lineStyle(1.2, C.paper, filled ? 0.22 : 0.1);
     g.drawCircle(0, 0, r - 7);
   }
 
@@ -1614,86 +1748,108 @@ export function createBattlePlaybackView(
     }) && !completed && !skipping;
   }
 
-  function drawCountChip(bg: PIXI.Graphics, share: boolean): void {
+  function drawCountChip(bg: PIXI.Graphics): void {
     bg.clear();
-    const w = share ? 52 : 22;
-    const h = share ? 18 : 15;
-    if (share) {
-      bg.lineStyle(2, C.ink, 1, 0);
-      bg.beginFill(C.primary, 1);
-    } else {
-      bg.beginFill(C.ink, 0.82);
-    }
-    bg.drawRoundedRect(-w / 2, -h / 2 - 0.5, w, h, 8);
+    bg.beginFill(C.ink, 0.82);
+    bg.drawRoundedRect(-11, -8, 22, 15, 8);
     bg.endFill();
   }
 
-  let sharePulse: (() => void) | null = null;
+  let shareHealBtn: ButtonNode | null = null;
+  let shareHealBusy = false;
+  let shareHealPulse: (() => void) | null = null;
 
-  function stopSharePulse(container?: PIXI.Container): void {
-    if (sharePulse) {
-      PIXI.Ticker.shared.remove(sharePulse);
-      sharePulse = null;
+  function stopShareHealPulse(): void {
+    if (shareHealPulse) {
+      PIXI.Ticker.shared.remove(shareHealPulse);
+      shareHealPulse = null;
     }
-    if (container && !container.destroyed) container.scale.set(1);
+    if (shareHealBtn && !shareHealBtn.destroyed) {
+      shareHealBtn.scale.set(1);
+      shareHealBtn.alpha = 1;
+    }
   }
 
-  function startSharePulse(container: PIXI.Container): void {
-    if (sharePulse) return;
+  function startShareHealPulse(): void {
+    if (!shareHealBtn || shareHealBtn.destroyed || shareHealPulse) return;
     let acc = 0;
-    sharePulse = (): void => {
-      if (!container.parent || container.destroyed) {
-        stopSharePulse();
+    const btn = shareHealBtn;
+    shareHealPulse = (): void => {
+      if (!btn.parent || btn.destroyed) {
+        stopShareHealPulse();
         return;
       }
       acc += PIXI.Ticker.shared.deltaMS;
-      container.scale.set(1 + 0.07 * (0.5 + 0.5 * Math.sin(acc / 200)));
+      const wave = 0.5 + 0.5 * Math.sin(acc / 180);
+      btn.scale.set(1 + 0.1 * wave);
+      btn.alpha = 0.72 + 0.28 * wave;
     };
-    PIXI.Ticker.shared.add(sharePulse);
+    PIXI.Ticker.shared.add(shareHealPulse);
+  }
+
+  function updateShareHealBtn(): void {
+    if (!shareHealBtn || shareHealBtn.destroyed) return;
+    const offer = shareHealOpen();
+    shareHealBtn.visible = offer;
+    shareHealBtn.setDisabled(!offer || shareHealBusy);
+    if (offer) startShareHealPulse();
+    else stopShareHealPulse();
   }
 
   function paintPotionSlot(pid: string, count: number): void {
     const h = potionBtns.get(pid);
     if (!h) return;
     h.count = count;
-    const share = pid === SHARE_HEAL_POTION_ID && shareHealOpen();
     const filled = count > 0;
-    drawPotionWell(h.well, filled, share);
-    if (h.icon) h.icon.alpha = filled || share ? 1 : 0.28;
-    drawCountChip(h.chipBg, share);
-    h.countLbl.text = share ? '转发+1' : `×${count}`;
-    h.countLbl.style.fill = share ? 0x4a3a12 : C.paper;
-    h.countLbl.style.fontSize = share ? 12 : 10;
-    h.chip.visible = filled || share;
-    h.chip.x = share ? 16 : 14;
-    h.chip.y = share ? -24 : -20;
-    h.container.eventMode = filled || share ? 'static' : 'none';
-    h.container.cursor = filled || share ? 'pointer' : 'default';
-    if (share) startSharePulse(h.container);
-    else if (pid === SHARE_HEAL_POTION_ID) stopSharePulse(h.container);
+    drawPotionWell(h.well, filled);
+    if (h.icon) h.icon.alpha = filled ? 1 : 0.28;
+    drawCountChip(h.chipBg);
+    h.countLbl.text = `×${count}`;
+    h.countLbl.style.fill = C.paper;
+    h.countLbl.style.fontSize = 10;
+    h.chip.visible = filled;
+    h.chip.x = 14;
+    h.chip.y = -20;
+    h.container.eventMode = filled ? 'static' : 'none';
+    h.container.cursor = filled ? 'pointer' : 'default';
+    if (pid === SHARE_HEAL_POTION_ID) updateShareHealBtn();
   }
 
-  let shareHealBusy = false;
-
   async function claimShareHeal(): Promise<void> {
-    if (!shareHealOpen() || reviveGate.busy || shareHealBusy) return;
+    if (!shareHealOpen() || pauseGate.busy || shareHealBusy) return;
     shareHealBusy = true;
-    const ok = await shareAppMessage();
-    shareHealBusy = false;
-    if (!ok) {
-      floatUtility(sw / 2, originY + 28, '转发未完成，没有药剂');
-      return;
+    // 确认框和微信转发面板底下，托管还在 stepTurn 就会把这关打完。
+    pauseGate.set(true);
+    updateShareHealBtn();
+    try {
+      const go = await new Promise<boolean>((resolve) => {
+        attachShareHealConfirm(root, sw, sh, {
+          onCancel: () => resolve(false),
+          onShare: () => resolve(true),
+        });
+      });
+      if (!go) return;
+      const ok = await shareAppMessage();
+      if (!ok) {
+        floatUtility(sw / 2, originY + 28, '转发未完成，没有药剂');
+        return;
+      }
+      shareHealUsed = true;
+      const next = (gameState.potions[SHARE_HEAL_POTION_ID] ?? 0) + 1;
+      gameState.potions[SHARE_HEAL_POTION_ID] = next;
+      gameState.onShareHeal?.();
+      paintPotionSlot(SHARE_HEAL_POTION_ID, next);
+      floatUtility(sw / 2, originY + 28, '获得治疗药剂 ×1');
+    } finally {
+      shareHealBusy = false;
+      pauseGate.set(false);
+      updateShareHealBtn();
     }
-    shareHealUsed = true;
-    const next = (gameState.potions[SHARE_HEAL_POTION_ID] ?? 0) + 1;
-    gameState.potions[SHARE_HEAL_POTION_ID] = next;
-    gameState.onShareHeal?.();
-    paintPotionSlot(SHARE_HEAL_POTION_ID, next);
-    floatUtility(sw / 2, originY + 28, '获得治疗药剂 ×1');
   }
 
   {
-    const slotTop = sh - Math.max(10, inset.bottom + 6) - POTION_SLOT;
+    const slotTop = sh - Math.max(10, inset.bottom + 6) - POTION_SLOT
+      - (gameState.allowShareHeal ? SHARE_BTN_H + 4 : 0);
     potionTopY = slotTop;
 
     // 三种药剂永远占左下三个槽，空的也画井——有药才冒出来会让底栏每局换形。
@@ -1731,11 +1887,7 @@ export function createBattlePlaybackView(
       c.hitArea = new PIXI.Circle(0, 0, POTION_SLOT / 2 + 2);
       c.on('pointertap', () => {
         const h = potionBtns.get(pid);
-        if (!h || completed || sim.isDone() || reviveGate.busy) return;
-        if (pid === SHARE_HEAL_POTION_ID && h.count <= 0 && shareHealOpen()) {
-          void claimShareHeal();
-          return;
-        }
+        if (!h || completed || sim.isDone() || pauseGate.busy) return;
         if (h.count <= 0) return;
         paintPotionSlot(pid, h.count - 1);
         gameState.onConsumePotion(pid);
@@ -1757,6 +1909,24 @@ export function createBattlePlaybackView(
       });
       paintPotionSlot(pid, gameState.potions[pid] ?? 0);
     });
+
+    const healSlot = potionBtns.get(SHARE_HEAL_POTION_ID);
+    if (healSlot && gameState.allowShareHeal) {
+      shareHealBtn = makeButton(SHARE_HEAL_PLUS_LABEL, () => {
+        void claimShareHeal();
+      }, {
+        variant: 'primary',
+        width: SHARE_BTN_W,
+        height: SHARE_BTN_H,
+        fontSize: 15,
+        radius: 10,
+      });
+      shareHealBtn.pivot.set(SHARE_BTN_W / 2, SHARE_BTN_H / 2);
+      shareHealBtn.x = healSlot.container.x;
+      shareHealBtn.y = healSlot.container.y + POTION_SLOT / 2 + 2 + SHARE_BTN_H / 2;
+      hudLayer.addChild(shareHealBtn);
+      updateShareHealBtn();
+    }
 
     // 圆盘和药井同一条中线；底下名牌探进安全区，不把整行顶高
     if (showPilot) {
@@ -2191,12 +2361,14 @@ export function createBattlePlaybackView(
           animByUid.get(ev.uid)?.playWalk(dx, dy);
           const fromC = cellCenter(originX, originY, cell, ev.from);
           const toC = cellCenter(originX, originY, cell, ev.to);
-          tok.x = fromC.x;
-          tok.y = fromC.y;
+          placeBoardToken(tok, fromC.x, fromC.y);
           await awaitEase(dur(150), (k) => {
             if (!isDisplayLive(tok)) return;
-            tok.x = fromC.x + (toC.x - fromC.x) * k;
-            tok.y = fromC.y + (toC.y - fromC.y) * k;
+            placeBoardToken(
+              tok,
+              fromC.x + (toC.x - fromC.x) * k,
+              fromC.y + (toC.y - fromC.y) * k,
+            );
           });
           posByUid.set(ev.uid, { ...ev.to });
           if (inspectUid === ev.uid) paintInspectRing(ev.uid);
@@ -2220,14 +2392,16 @@ export function createBattlePlaybackView(
           const fromC = cellCenter(originX, originY, cell, ev.from);
           const toC = cellCenter(originX, originY, cell, ev.to);
           const cells = Math.abs(ev.to.x - ev.from.x) + Math.abs(ev.to.y - ev.from.y);
-          tok.x = fromC.x;
-          tok.y = fromC.y;
+          placeBoardToken(tok, fromC.x, fromC.y);
           await awaitEase(dur(90 * Math.max(1, cells)), (k) => {
             if (!isDisplayLive(tok)) return;
             // 先快后慢：被顶开的那一下没有加速过程，速度峰值在起手
             const e = 1 - (1 - k) * (1 - k);
-            tok.x = fromC.x + (toC.x - fromC.x) * e;
-            tok.y = fromC.y + (toC.y - fromC.y) * e;
+            placeBoardToken(
+              tok,
+              fromC.x + (toC.x - fromC.x) * e,
+              fromC.y + (toC.y - fromC.y) * e,
+            );
           });
           posByUid.set(ev.uid, { ...ev.to });
           if (inspectUid === ev.uid) paintInspectRing(ev.uid);
@@ -2440,12 +2614,15 @@ export function createBattlePlaybackView(
       case 'death': {
         AudioManager.playSfx('sfx_death');
         const tok = tokens.get(ev.uid);
+        const deathPos = posByUid.get(ev.uid);
+        const dropEmblem = bossUids.has(ev.uid);
         if (tok) {
           if (enemyUids.has(ev.uid)) {
             const share = enemyKillShares[enemyKillIndex] ?? 0;
             enemyKillIndex += 1;
             flyCoinsToHud(tok.x, tok.y, share);
           }
+          if (dropEmblem && deathPos) dropBossEmblems(deathPos);
           await awaitEase(dur(260), (k) => {
             if (isDisplayLive(tok)) tok.alpha = 1 - k;
           });
@@ -2455,6 +2632,8 @@ export function createBattlePlaybackView(
           tok.destroy({ children: true });
           tokens.delete(ev.uid);
           tokenOverheads.delete(ev.uid);
+        } else if (dropEmblem && deathPos) {
+          dropBossEmblems(deathPos);
         }
         if (inspectUid === ev.uid) hideUnitInfo();
         updateReviveHud();
@@ -2523,6 +2702,8 @@ export function createBattlePlaybackView(
       const ev = events[i]!;
       if (root.destroyed) return;
       if (ev.type === 'end') return;
+      await pauseGate.wait();
+      if (root.destroyed) return;
       await playEvent(ev);
       if (ev.type === 'moveStep') {
         const next = events[i + 1];
@@ -2536,11 +2717,11 @@ export function createBattlePlaybackView(
   /** 主循环：AI 单位边模拟边播，玩家单位停下来等指令 */
   async function run(): Promise<void> {
     while (!root.destroyed) {
-      // 托管时点复活会去播广告。不在这里停住的话，主循环还在 stepTurn，
-      // 广告结束时人已经死光。选人和看片期间下一回合不准推进。
-      await reviveGate.wait();
+      // 托管时点复活去看广告、点转发去分享：不在这里停住的话主循环还在
+      // stepTurn，回来时人已经死光或关打完了。离开期间下一回合不准推进。
+      await pauseGate.wait();
       if (root.destroyed) return;
-      if (reviveGate.busy) continue;
+      if (pauseGate.busy) continue;
       // 中途切托管时，引擎已经把手上那个单位打完了（见 pilotBtn），先把它的动作播出来。
       // 走同一条 playEvents 是有意的：托管接手看起来必须和 AI 平时行动一模一样，
       // 否则玩家会以为自己那一下点出了别的效果。
@@ -2560,7 +2741,7 @@ export function createBattlePlaybackView(
       if (wipeOffer) {
         // 本步动画里可能已经点了右下复活：先等那次结束，避免叠第二层选人，
         // 也避免广告还在播就按全灭结算。
-        await reviveGate.wait();
+        await pauseGate.wait();
         if (root.destroyed) return;
         if (!sim.isDone()) {
           updateReviveHud();
@@ -2570,18 +2751,18 @@ export function createBattlePlaybackView(
           finishPlayback('enemy');
           return;
         }
-        reviveGate.set(true);
+        pauseGate.set(true);
         const choice = await waitReviveChoice();
         if (choice !== 'skip') {
           const ok = await applyRevive(choice);
-          reviveGate.set(false);
+          pauseGate.set(false);
           if (ok) {
             updateReviveHud();
             continue;
           }
           floatUtility(sw / 2, originY + 28, '广告未播完，没有复活');
         } else {
-          reviveGate.set(false);
+          pauseGate.set(false);
         }
         finishPlayback('enemy');
         return;
@@ -2619,7 +2800,12 @@ export function createBattlePlaybackView(
     const heal = potionBtns.get(SHARE_HEAL_POTION_ID);
     if (heal) paintPotionSlot(SHARE_HEAL_POTION_ID, heal.count);
     void (async () => {
-      if (!skipping) await awaitEase(dur(250), () => {});
+      if (!skipping) {
+        await awaitEase(dur(250), () => {});
+        if (winner === 'player' && emblemOnGround > 0) {
+          await awaitEase(dur(1200), () => {});
+        }
+      }
       if (!root.destroyed) callbacks.onComplete(winner);
     })();
   }
@@ -2646,6 +2832,8 @@ export function createBattlePlaybackView(
   // 面板开着时也能点另一张头像换人看，不必先关再点。
   root.addChild(infoOverlay);
   root.addChild(orderStrip);
+  // 纹章掉落最后拎上来：要压过棋盘点击和底栏，否则发光图标点不到
+  root.addChild(lootLayer);
 
   void run();
 

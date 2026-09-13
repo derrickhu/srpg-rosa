@@ -151,6 +151,8 @@ export const UI_BUNDLE: AssetBundleDef = {
     // 升级解锁专属纹章的庆祝：夜殿底 + 交叉剑徽。图里不写字。
     emblem_awaken_bg: 'images/ui/emblem_awaken_bg.jpg',
     emblem_awaken_crest: 'images/ui/emblem_awaken_crest.png',
+    // Boss 首杀页人和纹章中间的蜡印。图里留空井，「铭刻」两个字用游戏字体叠。
+    emblem_inscribe_stamp: 'images/ui/emblem_inscribe_stamp.png',
     // 跟人永久纹章：一枚一张，不复用词条 mod_*。未铭刻占位用 sealed。
     emblem_pe_grassland: 'images/ui/emblem_pe_grassland.png',
     emblem_pe_forest: 'images/ui/emblem_pe_forest.png',

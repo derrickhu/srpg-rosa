@@ -342,8 +342,8 @@ function fmtMul(mul: number): string {
   return pct > 0 ? `+${pct}%` : `${pct}%`;
 }
 
-/** 效果文案从数值现算，改表不用改两处字 */
-export function describePersonalEmblem(def: PersonalEmblemDef, level = 1): string {
+/** 一条一条的效果，给首杀专页排在图框下。数字仍由等级现算 */
+export function personalEmblemEffectLines(def: PersonalEmblemDef, level = 1): string[] {
   const parts: string[] = [];
   for (const e of personalEmblemEffectsAtLevel(def, level)) {
     if (e.kind === 'stat') {
@@ -358,6 +358,12 @@ export function describePersonalEmblem(def: PersonalEmblemDef, level = 1): strin
     else if (e.kind === 'takenMul') parts.push(`受到伤害 ${fmtMul(e.mul)}`);
     else parts.push(`技能治疗 ${fmtMul(e.mul)}`);
   }
+  return parts;
+}
+
+/** 效果文案从数值现算，改表不用改两处字 */
+export function describePersonalEmblem(def: PersonalEmblemDef, level = 1): string {
+  const parts = personalEmblemEffectLines(def, level);
   return parts.join('。') + (parts.length > 0 ? '。' : '');
 }
 

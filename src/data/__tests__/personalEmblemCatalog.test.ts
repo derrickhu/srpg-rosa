@@ -4,6 +4,7 @@ import { DUNGEON_DEFS } from '@/data/dungeonCatalog';
 import {
   allPersonalEmblems,
   describePersonalEmblem,
+  personalEmblemEffectLines,
   hydratePersonalEmblems,
   officialChaptersMissingEmblem,
   personalEmblemLevel,
@@ -29,6 +30,12 @@ describe('跟人专属纹章目录', () => {
       expect(e.effects.length).toBeGreaterThan(0);
       expect(describePersonalEmblem(e).length).toBeGreaterThan(2);
     }
+  });
+
+  it('效果行拆开，给首杀专页排在图框下', () => {
+    const e = allPersonalEmblems().find((x) => x.id === 'pe_ray_grassland')!;
+    expect(personalEmblemEffectLines(e, 1)).toEqual(['攻击 +2', '技能伤害 +5%']);
+    expect(personalEmblemEffectLines(e, 2)).toEqual(['攻击 +4', '技能伤害 +8%']);
   });
 
   it('岚骑没有主线纹章——他是魂晶解锁，不绑在某一章首通上', () => {

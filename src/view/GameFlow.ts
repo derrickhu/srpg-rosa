@@ -19,6 +19,7 @@ import { formatModStars, getSkillMod, isExclusiveMod, modStacks } from '@/data/s
 import {
   ABANDON_RUN_CONFIRM,
   attachAbandonConfirm,
+  createBossFirstKillOverlay,
   createDefeatOverlay,
   createLootOverlay,
   createRewardOverlay,
@@ -27,7 +28,12 @@ import {
   type LootCard,
   type RewardEntry,
 } from '@/view/battle/resultOverlay';
-import { chapterClearRewardEntries } from '@/view/battle/chapterClearRewards';
+import { chapterClearRewardEntries, personalEmblemRewardEntry } from '@/view/battle/chapterClearRewards';
+import {
+  previewBossFirstKillDrops,
+  shouldPresentBossFirstKill,
+} from '@/view/battle/bossFirstKill';
+import { previewPersonalEmblemsForDungeon } from '@/data/personalEmblemCatalog';
 import { createSweepRewardOverlay } from '@/view/sweepRewardOverlay';
 import {
   abandonRun,
@@ -945,6 +951,11 @@ export class GameFlow {
               run.potions[potionId] = (run.potions[potionId] ?? 0) + 1;
             }
           : undefined,
+        emblemDrops: previewBossFirstKillDrops(
+          this.state.meta,
+          run.dungeonId,
+          currentNode(this.state).kind,
+        ),
         tutorialLock: tut && (run.nodeIndex === 0 || run.nodeIndex === 1 || run.nodeIndex === 3),
         tutorialAllowPilot: tut && run.nodeIndex === 1,
         onTutorialEvent: (e) => notifyTutorial(this.state, e),
@@ -1027,12 +1038,38 @@ export class GameFlow {
    */
   private presentBattleWin(isRunFinal: boolean): void {
     if (isRunFinal) {
+      const dungeon = currentDungeon(this.state);
+      const grants = isEndlessRun(this.state)
+        ? []
+        : previewPersonalEmblemsForDungeon(this.state.meta, dungeon.id);
+      const emblemEntries = grants
+        .map((g) => personalEmblemRewardEntry(g.def.id, g.level))
+        .filter((e): e is RewardEntry => !!e);
+      if (shouldPresentBossFirstKill(true, emblemEntries.length)) {
+        this.showBossFirstKillOverlay(emblemEntries, () => this.showRewardOverlay(true));
+        return;
+      }
       this.showRewardOverlay(true);
       return;
     }
     const loot = this.state.run?.pendingLoot ?? [];
     if (loot.length > 0) this.showLootOverlay();
     else this.showRewardOverlay(false);
+  }
+
+  private showBossFirstKillOverlay(entries: RewardEntry[], then: () => void): void {
+    let close = (): void => undefined;
+    close = this.pushOverlay(
+      createBossFirstKillOverlay({
+        screenW: this.app.screen.width,
+        screenH: this.app.screen.height,
+        entries,
+        onConfirm: () => {
+          close();
+          then();
+        },
+      }),
+    );
   }
 
   /** 无尽战后弹层的底板。不能直接盖在已销毁的战场上，也不该把人送回布阵改站位 */

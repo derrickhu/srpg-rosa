@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { canOfferBossShareHeal, SHARE_HEAL_POTION_ID } from '../shareHeal';
+import {
+  canOfferBossShareHeal,
+  SHARE_HEAL_CONFIRM,
+  SHARE_HEAL_PLUS_LABEL,
+  SHARE_HEAL_POTION_ID,
+} from '../shareHeal';
 
 describe('Boss 战转发领血瓶', () => {
   it('只给治疗药剂', () => {
@@ -15,5 +20,18 @@ describe('Boss 战转发领血瓶', () => {
   it('本场转过一次就不能再转，有没有库存都一样', () => {
     expect(canOfferBossShareHeal({ bossBattle: true, healCount: 0, alreadyShared: true })).toBe(false);
     expect(canOfferBossShareHeal({ bossBattle: true, healCount: 1, alreadyShared: true })).toBe(false);
+  });
+
+  it('空瓶下面只写 +1，说明放进确认页', () => {
+    expect(SHARE_HEAL_PLUS_LABEL).toBe('+1');
+  });
+
+  it('确认框先说清 Boss 关只有一次，再给取消和转发', () => {
+    expect(SHARE_HEAL_CONFIRM.title).toContain('转发');
+    expect(SHARE_HEAL_CONFIRM.body).toContain('一次');
+    expect(SHARE_HEAL_CONFIRM.body).toContain('治疗药剂');
+    expect(SHARE_HEAL_CONFIRM.body).toContain('暂停');
+    expect(SHARE_HEAL_CONFIRM.cancelLabel).toBe('取消');
+    expect(SHARE_HEAL_CONFIRM.shareLabel).toBe('转发');
   });
 });

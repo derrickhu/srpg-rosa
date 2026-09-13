@@ -31,6 +31,7 @@ const PACKAGED_SFX = [
   'sfx_reveal',
   'sfx_levelup',
   'sfx_emblem_awaken',
+  'sfx_emblem_inscribe',
   'sfx_coin',
   'sfx_buy',
   'sfx_deploy',

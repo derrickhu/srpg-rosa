@@ -194,6 +194,118 @@ export function attachGlowRing(
   };
 }
 
+/**
+ * 掉落物用的金光晕。锚在父节点原点。
+ *
+ * 草地已经很亮，纯 additive 会洗成白团；外圈用普通混合保住金币黄，
+ * 核心 / 射线 / 碎光再 ADD，才读得像「在发光」而不是淡圆。
+ * 整圈缩放会像廉价光圈，只呼吸透明度和碎光。
+ */
+export function attachCircleGlow(
+  parent: PIXI.Container,
+  radius: number,
+  color = 0xffe08a,
+): GlowHandle {
+  const layer = new PIXI.Container();
+  layer.eventMode = 'none';
+  layer.alpha = 0;
+  parent.addChildAt(layer, 0);
+
+  const halo = new PIXI.Graphics();
+  halo.beginFill(color, 0.32);
+  halo.drawCircle(0, 0, radius * 1.62);
+  halo.endFill();
+  halo.beginFill(color, 0.26);
+  halo.drawCircle(0, 0, radius * 1.18);
+  halo.endFill();
+  layer.addChild(halo);
+
+  const core = new PIXI.Graphics();
+  core.blendMode = PIXI.BLEND_MODES.ADD;
+  core.beginFill(color, 0.42);
+  core.drawCircle(0, 0, radius * 1.08);
+  core.endFill();
+  core.beginFill(0xfff6c8, 0.5);
+  core.drawCircle(0, 0, radius * 0.62);
+  core.endFill();
+  layer.addChild(core);
+
+  const rays = new PIXI.Graphics();
+  rays.blendMode = PIXI.BLEND_MODES.ADD;
+  const rayN = 6;
+  for (let i = 0; i < rayN; i++) {
+    const a = (i / rayN) * Math.PI * 2;
+    rays.lineStyle(2.4, 0xfff8e0, 0.62);
+    rays.moveTo(Math.cos(a) * radius * 0.28, Math.sin(a) * radius * 0.28);
+    rays.lineTo(Math.cos(a) * radius * 1.52, Math.sin(a) * radius * 1.52);
+  }
+  layer.addChild(rays);
+
+  const ringInner = new PIXI.Graphics();
+  ringInner.blendMode = PIXI.BLEND_MODES.ADD;
+  ringInner.lineStyle(2, color, 0.7);
+  ringInner.drawCircle(0, 0, radius * 0.98);
+  layer.addChild(ringInner);
+
+  const ringOuter = new PIXI.Graphics();
+  ringOuter.blendMode = PIXI.BLEND_MODES.ADD;
+  ringOuter.lineStyle(1.6, 0xfff6c8, 0.45);
+  ringOuter.drawCircle(0, 0, radius * 1.28);
+  layer.addChild(ringOuter);
+
+  const motes = new PIXI.Container();
+  motes.blendMode = PIXI.BLEND_MODES.ADD;
+  const moteCount = 8;
+  const dots: PIXI.Graphics[] = [];
+  for (let i = 0; i < moteCount; i++) {
+    const d = new PIXI.Graphics();
+    d.beginFill(i % 2 === 0 ? 0xfff8e0 : color, 1);
+    d.drawCircle(0, 0, i % 2 === 0 ? 2.2 : 1.45);
+    d.endFill();
+    motes.addChild(d);
+    dots.push(d);
+  }
+  layer.addChild(motes);
+
+  let active = false;
+  const ticker = PIXI.Ticker.shared;
+  const step = (): void => {
+    if (!isDisplayLive(layer)) {
+      ticker.remove(step);
+      return;
+    }
+    if (!active) {
+      layer.alpha = 0;
+      return;
+    }
+    const t = ticker.lastTime;
+    layer.alpha = 0.88 + Math.sin(t / 320) * 0.12;
+    halo.alpha = 0.7 + Math.sin(t / 380) * 0.18;
+    core.alpha = 0.75 + Math.sin(t / 280) * 0.2;
+    rays.rotation = t / 1600;
+    rays.alpha = 0.55 + Math.sin(t / 240) * 0.25;
+    ringInner.alpha = 0.5 + Math.sin(t / 260) * 0.22;
+    ringOuter.alpha = 0.28 + Math.sin(t / 260 + 1.3) * 0.16;
+    ringOuter.scale.set(1 + Math.sin(t / 420) * 0.04);
+    motes.rotation = t / 1800;
+    dots.forEach((d, i) => {
+      const ang = (i / moteCount) * Math.PI * 2;
+      const rr = radius * (1.12 + Math.sin(t / 190 + i) * 0.08);
+      d.x = Math.cos(ang) * rr;
+      d.y = Math.sin(ang) * rr;
+      d.alpha = 0.4 + (Math.sin(t / 150 + i * 0.85) * 0.5 + 0.5) * 0.6;
+    });
+  };
+  if (ticker.started) ticker.add(step);
+  return {
+    setActive(on: boolean) {
+      active = on;
+      if (!isDisplayLive(layer)) return;
+      layer.alpha = on ? 0.92 : 0;
+    },
+  };
+}
+
 /** 几枚魂晶错帧飞向顶栏。枚数跟入账数量走，最多 5，避免扫荡 5 晶排成火车。 */
 export function sweepFlyCount(soul: number): number {
   return Math.max(1, Math.min(5, Math.floor(soul)));

@@ -325,6 +325,14 @@
       "prompt_influence": 0.55,
       "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_skill_frost_ring.mp3",
       "notes": "芙洛 霜环"
+    },
+    {
+      "name": "sfx_emblem_inscribe",
+      "text": "a wax seal stamp slammed onto thick parchment: low wooden thud, brief metallic clack, short ink-press rustle that decays naturally over half a second, dry room, no choir, no voice, no music",
+      "duration": 0.7,
+      "prompt_influence": 0.55,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_emblem_inscribe.mp3",
+      "notes": "Boss 首杀页「铭刻」盖章"
     }
   ]
 }

@@ -9,6 +9,7 @@ import { createUiIcon, createUnitToken, drawCheck } from '@/view/renderHelpers';
 import type { ClearStarBeat } from '@/data/chapterStars';
 import type { SkillModRarity } from '@/data/skillModCatalog';
 import {
+  attachCircleGlow,
   attachGlowRing,
   confettiBurst,
   createScrim,
@@ -20,6 +21,9 @@ import {
   staggerPop,
 } from '@/view/fx/celebration';
 import { awaitDelay, awaitEase } from '@/view/fx/tween';
+import { isDisplayLive } from '@/view/pixiLive';
+import { SHARE_HEAL_CONFIRM } from '@/game/state/shareHeal';
+import { makeStatDescLine } from '@/ui/statDescText';
 
 /**
  * 战后结算弹层。
@@ -46,6 +50,10 @@ export interface RewardEntry {
   badge?: string;
   /** 跟人奖励：详情和格下画这个人的形象 */
   whoRosterId?: string;
+  /** 首杀专页：图框下单独排的效果行，如「攻击 +2」 */
+  effectLines?: string[];
+  /** 首杀专页：效果行之外的一句身份，不含数字 */
+  flavor?: string;
 }
 
 export interface RewardOverlayOpts {
@@ -477,7 +485,7 @@ function addRewardCaption(parent: PIXI.Container, text: string, cx: number, y: n
 function rewardCaptionH(entry: RewardEntry): number {
   let h = 6;
   if (entry.badge) h += 18;
-  else if (entry.amount > 0) h += 16;
+  else if (entry.amount > 0 && !entry.whoRosterId) h += 16;
   if (entry.whoRosterId) h += 22;
   return h;
 }
@@ -587,7 +595,7 @@ export function createRewardOverlay(opts: RewardOverlayOpts): PIXI.Container {
     let cy = cellSize + 4;
     if (e.badge) {
       cy += addRewardCaption(cell, e.badge, cellSize / 2, cy) + 2;
-    } else {
+    } else if (!e.whoRosterId) {
       const amt = makeText(`+${e.amount}`, 'uiStrong', { fill: e.tint });
       amt.anchor.set(0.5, 0);
       amt.x = cellSize / 2;
@@ -707,6 +715,339 @@ export function createRewardOverlay(opts: RewardOverlayOpts): PIXI.Container {
       revealRewards();
     })();
   }
+
+  return root;
+}
+
+export interface BossFirstKillOverlayOpts {
+  screenW: number;
+  screenH: number;
+  entries: RewardEntry[];
+  onConfirm: () => void;
+}
+
+const EFFECT_BODY = 0xffe3a8;
+const EFFECT_NUM = 0xfff25a;
+
+/** 图框下的效果条：说明用暖金，数字再提亮加粗 */
+function makeBossFirstKillEffectRow(lines: string[]): PIXI.Container {
+  const row = new PIXI.Container();
+  let x = 0;
+  for (const line of lines) {
+    const chip = new PIXI.Container();
+    const inner = makeStatDescLine(line, {
+      maxWidth: 200,
+      fontSize: 16,
+      bodyFill: EFFECT_BODY,
+      accentFill: EFFECT_NUM,
+    });
+    const w = Math.ceil(inner.width) + 20;
+    const h = Math.max(30, Math.ceil(inner.height) + 10);
+    const bg = new PIXI.Graphics();
+    bg.lineStyle(1.5, 0xffe08a, 0.85);
+    bg.beginFill(0x2a1c0c, 0.78);
+    bg.drawRoundedRect(0, 0, w, h, 8);
+    bg.endFill();
+    inner.x = 10;
+    inner.y = (h - inner.height) / 2;
+    chip.addChild(bg);
+    chip.addChild(inner);
+    chip.x = x;
+    row.addChild(chip);
+    x += w + 8;
+  }
+  return row;
+}
+
+const INSCRIBE_STAMP = 36;
+
+function makeInscribeStamp(): PIXI.Container {
+  const stamp = new PIXI.Container();
+  const icon = createUiIcon('emblem_inscribe_stamp', INSCRIBE_STAMP);
+  if (icon) {
+    icon.x = -INSCRIBE_STAMP / 2;
+    icon.y = -INSCRIBE_STAMP / 2;
+    stamp.addChild(icon);
+  } else {
+    const plate = new PIXI.Graphics();
+    plate.lineStyle(1.5, 0x6a3a08, 1);
+    plate.beginFill(0xeec462, 1);
+    plate.drawRoundedRect(-16, -9, 32, 18, 6);
+    plate.endFill();
+    stamp.addChild(plate);
+  }
+  const tx = makeText('铭刻', 'title', {
+    fill: 0x5a2a08,
+    fontSize: 9,
+    letterSpacing: 1,
+    stroke: 0xfff4d0,
+    strokeThickness: 2,
+  });
+  tx.anchor.set(0.5);
+  // 蜡滴把贴图视觉中心往下拽，字往上贴进空井
+  tx.y = -2;
+  stamp.addChild(tx);
+  stamp.rotation = -0.12;
+  return stamp;
+}
+
+/** 人和纹章中间：细金线 + 「铭刻」印。印单独拿出来做盖章拍 */
+function makeEmblemBond(width: number): { root: PIXI.Container; stamp: PIXI.Container } {
+  const root = new PIXI.Container();
+  const half = width / 2;
+  const line = new PIXI.Graphics();
+  line.lineStyle(5, 0xc9a04a, 0.2);
+  line.moveTo(-half, 0);
+  line.lineTo(half, 0);
+  line.lineStyle(1.6, 0xffe08a, 0.88);
+  line.moveTo(-half, 0);
+  line.lineTo(-18, 0);
+  line.moveTo(18, 0);
+  line.lineTo(half, 0);
+  root.addChild(line);
+  const stamp = makeInscribeStamp();
+  root.addChild(stamp);
+  return { root, stamp };
+}
+
+function makeFirstKillWho(rosterId: string, size: number): PIXI.Container {
+  return makeWhoToken(rosterId, size);
+}
+
+function makeFirstKillEmblem(iconKey: string, size: number): PIXI.Container {
+  const stage = new PIXI.Container();
+  attachCircleGlow(stage, size * 0.7, 0xffe08a).setActive(true);
+  const icon = createUiIcon(iconKey, size);
+  if (icon) {
+    icon.x = -size / 2;
+    icon.y = -size / 2;
+    stage.addChild(icon);
+  }
+  return stage;
+}
+
+function popIn(node: PIXI.Container, ms = 280): Promise<void> {
+  node.alpha = 0;
+  node.scale.set(0.55);
+  const live = (): boolean => isDisplayLive(node);
+  return awaitEase(ms, (t) => {
+    if (!live()) return;
+    node.alpha = Math.min(1, t * 1.15);
+    const s = t < 0.68 ? 0.55 + 0.62 * (t / 0.68) : 1.17 - 0.17 * ((t - 0.68) / 0.32);
+    node.scale.set(s);
+  }, { live }).then(() => {
+    if (live()) {
+      node.alpha = 1;
+      node.scale.set(1);
+    }
+  });
+}
+
+function makeFirstKillTitle(badge: string, name: string): PIXI.Container {
+  const row = new PIXI.Container();
+  const tag = makeText(badge, 'caption', {
+    fill: 0xe8c878,
+    fontSize: 13,
+    letterSpacing: 1,
+  });
+  const title = makeText(name, 'heading', {
+    fill: 0xfff6de,
+    fontSize: 18,
+    letterSpacing: 1,
+  });
+  const gap = 8;
+  const w = tag.width + gap + title.width;
+  tag.x = -w / 2;
+  title.x = tag.x + tag.width + gap;
+  tag.y = Math.max(0, (title.height - tag.height) / 2);
+  title.y = 0;
+  row.addChild(tag);
+  row.addChild(title);
+  return row;
+}
+
+/**
+ * Boss 首杀专页：标题落下 → 人亮相 → 纹章飞到身侧 → 效果弹出。
+ * 不画白框。盖在战场上，点收下后再出普通通关页。
+ */
+export function createBossFirstKillOverlay(opts: BossFirstKillOverlayOpts): PIXI.Container {
+  const { screenW: W, screenH: H } = opts;
+  const entries = opts.entries.filter((e) => e.amount > 0);
+  const root = new PIXI.Container();
+  AudioManager.playSfx('sfx_reveal');
+  root.addChild(fadeScrim(W, H, 0.78));
+
+  const cx = W / 2;
+  const bannerW = Math.min(300, W - 40);
+  const bannerY = Math.max(36, H * 0.08);
+  const { height: bannerH } = placeBanner(root, cx, bannerY, '首领首杀', bannerW);
+
+  const first = entries[0];
+  let bodyY = bannerY + Math.max(bannerH, 60) + 10;
+
+  const title = first
+    ? makeFirstKillTitle(first.badge ?? '永久纹章', first.name)
+    : new PIXI.Container();
+  if (first) {
+    title.x = cx;
+    title.y = bodyY;
+    title.alpha = 0;
+    root.addChild(title);
+    bodyY += title.height + 18;
+  }
+
+  const whoSize = 100;
+  const emblemSize = 58;
+  const stageY = bodyY + whoSize * 0.28;
+  const whoRestX = first?.whoRosterId ? cx - 68 : cx;
+  const emblemRestX = first?.whoRosterId ? cx + 74 : cx;
+  const who = first?.whoRosterId ? makeFirstKillWho(first.whoRosterId, whoSize) : null;
+  if (who) {
+    who.x = cx;
+    who.y = stageY;
+    who.alpha = 0;
+    root.addChild(who);
+  }
+
+  const emblem = first ? makeFirstKillEmblem(first.iconKey, emblemSize) : null;
+  if (emblem) {
+    emblem.x = cx;
+    emblem.y = stageY - 108;
+    emblem.alpha = 0;
+    emblem.scale.set(0.2);
+    root.addChild(emblem);
+  }
+
+  const bondW = Math.max(56, emblemRestX - whoRestX - 52);
+  const bond = first?.whoRosterId ? makeEmblemBond(bondW) : null;
+  if (bond) {
+    bond.root.x = (whoRestX + emblemRestX) / 2;
+    bond.root.y = stageY;
+    bond.root.alpha = 0;
+    bond.stamp.alpha = 0;
+    bond.stamp.scale.set(1.8);
+    bond.stamp.y = -18;
+    root.addChild(bond.root);
+  }
+
+  bodyY = stageY + whoSize * 0.42 + 12;
+
+  const chipRow = first && (first.effectLines?.length ?? 0) > 0
+    ? makeBossFirstKillEffectRow(first.effectLines!)
+    : null;
+  if (chipRow) {
+    chipRow.x = cx - chipRow.width / 2;
+    chipRow.y = bodyY;
+    chipRow.alpha = 0;
+    root.addChild(chipRow);
+    bodyY += chipRow.height + 12;
+  }
+
+  const flavor = first?.flavor
+    ? makeText(first.flavor, 'body', {
+      fill: 0xc8c0b0,
+      fontSize: 12,
+      wordWrap: true,
+      wordWrapWidth: Math.min(280, W - 56),
+      breakWords: true,
+      align: 'center',
+      lineHeight: 18,
+    })
+    : null;
+  if (flavor) {
+    flavor.anchor.set(0.5, 0);
+    flavor.x = cx;
+    flavor.y = bodyY;
+    flavor.alpha = 0;
+    root.addChild(flavor);
+    bodyY += flavor.height + 18;
+  }
+
+  const btnW = Math.min(220, W - 80);
+  let confirmed = false;
+  const btn = makeButton('收下', () => {
+    if (confirmed) return;
+    confirmed = true;
+    btn.setDisabled(true);
+    opts.onConfirm();
+  }, {
+    variant: 'primary', width: btnW, height: 48, fontSize: 17, radius: 14,
+  });
+  btn.x = cx - btnW / 2;
+  btn.y = Math.min(H - 72, Math.max(bodyY, H * 0.78));
+  btn.alpha = 0;
+  root.addChild(btn);
+
+  const live = (): boolean => isDisplayLive(root);
+  void (async () => {
+    await awaitDelay(280);
+    if (!live() || !first) return;
+    await popIn(title, 260);
+    if (!live()) return;
+    await awaitDelay(80);
+    if (who) {
+      await popIn(who, 320);
+      if (!live()) return;
+      if (who.x !== whoRestX) {
+        const fromX = who.x;
+        await awaitEase(220, (t) => {
+          if (!live() || !isDisplayLive(who)) return;
+          who.x = fromX + (whoRestX - fromX) * t;
+        }, { live });
+      }
+    }
+    if (!live() || !emblem) return;
+    const from = { x: emblem.x, y: emblem.y };
+    await awaitEase(520, (t) => {
+      if (!live() || !isDisplayLive(emblem)) return;
+      emblem.x = from.x + (emblemRestX - from.x) * t;
+      emblem.y = from.y + (stageY - from.y) * t - Math.sin(t * Math.PI) * 46;
+      emblem.alpha = Math.min(1, t * 1.4);
+      const s = t < 0.72 ? 0.2 + 1.15 * (t / 0.72) : 1.35 - 0.35 * ((t - 0.72) / 0.28);
+      emblem.scale.set(s);
+      emblem.rotation = (1 - t) * 0.35;
+    }, { live });
+    if (!live() || !isDisplayLive(emblem)) return;
+    emblem.x = emblemRestX;
+    emblem.y = stageY;
+    emblem.alpha = 1;
+    emblem.scale.set(1);
+    emblem.rotation = 0;
+    confettiBurst(root, emblemRestX, stageY, 12);
+    if (bond) {
+      await awaitEase(140, (t) => {
+        if (!live() || !isDisplayLive(bond.root)) return;
+        bond.root.alpha = t;
+      }, { live });
+      if (!live()) return;
+      AudioManager.playSfx('sfx_emblem_inscribe');
+      await awaitEase(240, (t) => {
+        if (!live() || !isDisplayLive(bond.stamp)) return;
+        bond.stamp.alpha = Math.min(1, t * 1.4);
+        bond.stamp.y = -18 + 18 * t;
+        const s = t < 0.62 ? 1.8 - 0.95 * (t / 0.62) : 0.85 + 0.15 * ((t - 0.62) / 0.38);
+        bond.stamp.scale.set(s);
+        bond.stamp.rotation = -0.28 + 0.16 * t;
+      }, { live });
+      if (isDisplayLive(bond.stamp)) {
+        bond.stamp.alpha = 1;
+        bond.stamp.y = 0;
+        bond.stamp.scale.set(1);
+        bond.stamp.rotation = -0.12;
+      }
+    }
+    if (!live()) return;
+    if (chipRow) {
+      staggerPop([chipRow], 0);
+      await awaitDelay(180);
+    }
+    if (!live()) return;
+    await awaitEase(220, (t) => {
+      if (!live()) return;
+      if (flavor) flavor.alpha = t;
+      btn.alpha = t;
+    }, { live });
+  })();
 
   return root;
 }
@@ -1167,6 +1508,73 @@ function buildDefeatCard(
     });
   }
   return { card, height };
+}
+
+export function attachShareHealConfirm(
+  root: PIXI.Container,
+  screenW: number,
+  screenH: number,
+  handlers: { onCancel: () => void; onShare: () => void },
+): void {
+  if (root.getChildByName('shareHealConfirm')) return;
+  const layer = new PIXI.Container();
+  layer.name = 'shareHealConfirm';
+  const scrim = createScrim(screenW, screenH, 0.55);
+  layer.addChild(scrim);
+
+  const w = Math.min(300, screenW - 48);
+  const pad = 16;
+  const title = makeText(SHARE_HEAL_CONFIRM.title, 'heading', { fill: C.text, fontSize: 17 });
+  const body = makeText(SHARE_HEAL_CONFIRM.body, 'body', {
+    fill: C.text,
+    fontSize: 13,
+    wordWrap: true,
+    wordWrapWidth: w - pad * 2,
+    breakWords: true,
+    lineHeight: 19,
+  });
+  const btnH = 42;
+  const h = pad + title.height + 10 + body.height + 18 + btnH + pad;
+  const panel = makePanel({ width: w, height: h, light: true, radius: 14 });
+  panel.x = (screenW - w) / 2;
+  panel.y = Math.max(36, (screenH - h) / 2 - 20);
+  layer.addChild(panel);
+
+  title.x = pad;
+  title.y = pad;
+  panel.addChild(title);
+  body.x = pad;
+  body.y = pad + title.height + 10;
+  panel.addChild(body);
+
+  let settled = false;
+  const finish = (share: boolean): void => {
+    if (settled) return;
+    settled = true;
+    if (layer.parent) layer.parent.removeChild(layer);
+    if (!layer.destroyed) layer.destroy({ children: true });
+    if (share) handlers.onShare();
+    else handlers.onCancel();
+  };
+  scrim.on('pointertap', () => finish(false));
+
+  const gap = 8;
+  const btnW = (w - pad * 2 - gap) / 2;
+  const by = pad + title.height + 10 + body.height + 18;
+  const cancel = makeButton(SHARE_HEAL_CONFIRM.cancelLabel, () => finish(false), {
+    variant: 'ghost', width: btnW, height: btnH, fontSize: 15, radius: 12,
+  });
+  cancel.x = pad;
+  cancel.y = by;
+  panel.addChild(cancel);
+  const share = makeButton(SHARE_HEAL_CONFIRM.shareLabel, () => finish(true), {
+    variant: 'primary', width: btnW, height: btnH, fontSize: 15, radius: 12,
+  });
+  share.x = pad + btnW + gap;
+  share.y = by;
+  panel.addChild(share);
+
+  root.addChild(layer);
 }
 
 export function attachAbandonConfirm(

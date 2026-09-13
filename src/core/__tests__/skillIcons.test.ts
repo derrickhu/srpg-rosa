@@ -92,6 +92,10 @@ describe('图标资源完整性', () => {
     expect(UI_BUNDLE.assets.emblem_pe_sealed).toBe('images/ui/emblem_pe_sealed.png');
   });
 
+  it('首杀页铭刻蜡印已登记', () => {
+    expect(UI_BUNDLE.assets.emblem_inscribe_stamp).toBe('images/ui/emblem_inscribe_stamp.png');
+  });
+
   // 操作条上的按钮已经不写字了，图标掉了就只剩一圈空环，玩家没法知道哪个是待机
   it('战斗操作条的动作图标齐全', () => {
     for (const key of ['act_wait', 'act_undo', 'act_cancel']) {
