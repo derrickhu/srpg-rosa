@@ -24,7 +24,6 @@ import {
   SKILL_VFX,
   attackRecipeFor,
   recipeAnimSets,
-  skillSparks,
   vfxSetsForKinds,
   type FlashDef,
   type PropBurstDef,
@@ -1089,8 +1088,7 @@ export function createBattlePlaybackView(
     marker.x = at.x + offsetX;
     marker.y = at.y;
     const size = Math.max(22, Math.floor(cell * 0.72));
-    attachCircleGlow(marker, size * 1.05, 0xffe08a).setActive(true);
-    emitSparks(lootLayer, marker.x, marker.y, skillSparks([0xfff6d0, 0xffc94a, 0xff8a1f]));
+    attachCircleGlow(marker, size * 0.52, 0xffe08a).setActive(true);
     const icon = createUiIcon(drop.iconKey, size);
     if (icon) {
       icon.x = -size / 2;

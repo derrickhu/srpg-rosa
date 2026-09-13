@@ -816,7 +816,7 @@ function makeFirstKillWho(rosterId: string, size: number): PIXI.Container {
 
 function makeFirstKillEmblem(iconKey: string, size: number): PIXI.Container {
   const stage = new PIXI.Container();
-  attachCircleGlow(stage, size * 0.7, 0xffe08a).setActive(true);
+  attachCircleGlow(stage, size * 0.52, 0xffe08a).setActive(true);
   const icon = createUiIcon(iconKey, size);
   if (icon) {
     icon.x = -size / 2;
