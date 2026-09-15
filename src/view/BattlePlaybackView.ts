@@ -283,6 +283,11 @@ export function createBattlePlaybackView(
   let skipping = false;
   let completed = false;
   const pauseGate = createBusyGate();
+  /**
+   * 门关上时主循环和当前这一拍都停。复活却要在门还锁着时把人播上场——
+   * 否则 `playEvents` / `awaitEase` 一起等这扇门，广告回来就卡死，托管再也走不动。
+   */
+  let playbackThroughPause = 0;
   /** 人工操作 UI，自动模式下为 null */
   let manualUi: ManualTurnUi | null = null;
   /**
@@ -314,7 +319,8 @@ export function createBattlePlaybackView(
           return;
         }
         // 转发 / 看广告时停住当前这一拍，回来再接着走。
-        if (pauseGate.busy) return;
+        // 复活演出会抬 throughPause，不能跟主循环一起冻住。
+        if (pauseGate.busy && playbackThroughPause === 0) return;
         acc += app.ticker.deltaMS;
         const k = skipping ? 1 : Math.min(1, acc / ms);
         const e = 1 - (1 - k) ** 2;
@@ -1662,7 +1668,12 @@ export function createBattlePlaybackView(
     if (!ok) return false;
     const evs = sim.reviveUnit(uid);
     if (evs.length === 0) return false;
-    await playEvents(evs);
+    playbackThroughPause += 1;
+    try {
+      await playEvents(evs);
+    } finally {
+      playbackThroughPause -= 1;
+    }
     reviveUsed = true;
     updateReviveHud();
     return true;
@@ -1820,6 +1831,7 @@ export function createBattlePlaybackView(
     pauseGate.set(true);
     updateShareHealBtn();
     try {
+      // 跟复活不同：回来只改库存和飘字，不播战场事件。门在 finally 开，不会自己等自己。
       const go = await new Promise<boolean>((resolve) => {
         attachShareHealConfirm(root, sw, sh, {
           onCancel: () => resolve(false),
@@ -2700,7 +2712,7 @@ export function createBattlePlaybackView(
       const ev = events[i]!;
       if (root.destroyed) return;
       if (ev.type === 'end') return;
-      await pauseGate.wait();
+      if (playbackThroughPause === 0) await pauseGate.wait();
       if (root.destroyed) return;
       await playEvent(ev);
       if (ev.type === 'moveStep') {

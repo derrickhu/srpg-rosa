@@ -33,6 +33,16 @@ describe('托管离开必须先停主循环', () => {
     expect(src.indexOf('await pauseGate.wait()')).toBeLessThan(src.indexOf('sim.stepTurn()'));
   });
 
+  it('复活在门还锁着时也能播完上场，避免广告回来卡死', () => {
+    const src = readFileSync('src/view/BattlePlaybackView.ts', 'utf8');
+    const start = src.indexOf('async function applyRevive');
+    const fn = src.slice(start, start + 800);
+    expect(fn).toContain('playbackThroughPause += 1');
+    expect(fn.indexOf('playbackThroughPause += 1')).toBeLessThan(fn.indexOf('await playEvents(evs)'));
+    expect(fn).toContain('finally');
+    expect(src).toContain('playbackThroughPause === 0');
+  });
+
   it('转发领药在拉起分享之前锁门，回来再开', () => {
     const src = readFileSync('src/view/BattlePlaybackView.ts', 'utf8');
     const start = src.indexOf('async function claimShareHeal');
@@ -40,6 +50,8 @@ describe('托管离开必须先停主循环', () => {
     expect(fn.indexOf('pauseGate.set(true)')).toBeLessThan(fn.indexOf('shareAppMessage()'));
     expect(fn).toContain('pauseGate.set(false)');
     expect(fn).toContain('finally');
+    expect(fn).not.toContain('await playEvents');
+    expect(fn).not.toContain('playbackThroughPause');
   });
 });
 
