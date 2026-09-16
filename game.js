@@ -12,7 +12,32 @@ try {
   if (typeof GameGlobal !== 'undefined') GameGlobal.__diag = _diag;
 } catch (_) {}
 
+function _fmtErr(err) {
+  try {
+    if (err == null) return String(err);
+    if (typeof err === 'string') return err;
+    var parts = [];
+    if (err.message) parts.push(String(err.message));
+    if (err.errMsg && err.errMsg !== err.message) parts.push(String(err.errMsg));
+    if (err.stack) parts.push(String(err.stack).split('\n').slice(0, 4).join('|'));
+    if (parts.length) return parts.join(' ').slice(0, 400);
+    return JSON.stringify(err).slice(0, 400);
+  } catch (_) {
+    return String(err);
+  }
+}
+
+function _booted() {
+  try {
+    return !!(typeof GameGlobal !== 'undefined' && (GameGlobal.__srpgBooted || GameGlobal.__gameRendered));
+  } catch (_) {
+    return false;
+  }
+}
+
 function _showDiag() {
+  // 首帧已经出来之后再弹，玩家会当成闪退。后面的 wx.onError（比如 BGM）只打日志。
+  if (_booted()) return;
   try {
     if (typeof wx !== 'undefined' && wx.showModal) {
       wx.showModal({
@@ -41,11 +66,11 @@ if (typeof Intl === 'undefined') {
 try {
   if (typeof GameGlobal !== 'undefined') {
     GameGlobal.onError = function (msg) {
-      _diag('onError:' + msg);
+      _diag('onError:' + _fmtErr(msg));
       _showDiag();
     };
     GameGlobal.onUnhandledRejection = function (ev) {
-      _diag('unhandledRej:' + (ev && ev.reason || ev));
+      _diag('unhandledRej:' + _fmtErr(ev && ev.reason || ev));
       _showDiag();
     };
   }
@@ -55,13 +80,13 @@ try {
   if (typeof wx !== 'undefined') {
     if (wx.onError) {
       wx.onError(function (err) {
-        _diag('wx.onError:' + (err && (err.message || err.errMsg) || err));
+        _diag('wx.onError:' + _fmtErr(err));
         _showDiag();
       });
     }
     if (wx.onUnhandledRejection) {
       wx.onUnhandledRejection(function (ev) {
-        _diag('wx.unhandledRej:' + (ev && ev.reason || ev));
+        _diag('wx.unhandledRej:' + _fmtErr(ev && ev.reason || ev));
         _showDiag();
       });
     }

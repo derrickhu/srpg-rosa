@@ -280,6 +280,52 @@ export async function resolveOrDownload(logicalPath: string): Promise<string> {
   });
 }
 
+/**
+ * 开发者工具 USER_DATA_PATH 是 `http://usr`，图片能读，InnerAudio 不行。
+ * 真机已是 `wxfile://usr`。不要无脑改前缀：Mac 基础库两套路径不是同一份文件。
+ */
+export function toInnerAudioSrc(path: string): string {
+  if (/^https?:\/\/usr\//.test(path)) return path.replace(/^https?:\/\/usr\//, 'wxfile://usr/');
+  return path;
+}
+
+function audioFileReady(path: string): boolean {
+  if (!path || !fs) return false;
+  try {
+    const size = Number(fs.statSync(path)?.size ?? 0);
+    return size >= 64;
+  } catch {
+    try {
+      fs.accessSync(path);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+}
+
+/**
+ * InnerAudio 能播的地址。开发者工具缓存是 `http://usr`，图片能读、音乐会抛 MiniProgramError。
+ * `wxfile://` 只有那边真有文件才用；否则直接 CDN https。
+ */
+export function playableAudioSrc(resolved: string, logicalPath: string): string {
+  if (/^https?:\/\//.test(resolved) && !/^https?:\/\/usr\//.test(resolved)) return resolved;
+  if (/^https?:\/\/usr\//.test(resolved)) {
+    const alt = toInnerAudioSrc(resolved);
+    if (alt !== resolved && audioFileReady(alt)) return alt;
+    return isCdnPath(logicalPath) ? getCdnUrl(logicalPath) : alt;
+  }
+  if (audioFileReady(resolved)) return resolved;
+  const alt = toInnerAudioSrc(resolved);
+  if (alt !== resolved && audioFileReady(alt)) return alt;
+  if (isCdnPath(logicalPath) && !packageFileExists(logicalPath)) return getCdnUrl(logicalPath);
+  return resolved;
+}
+
+export async function resolveAudioSrc(logicalPath: string): Promise<string> {
+  return playableAudioSrc(await resolveOrDownload(logicalPath), logicalPath);
+}
+
 /** 删掉某条 CDN 本地缓存，下次 resolveOrDownload 会重新拉。图集升级后旧 idle 图还占着同名路径时用。 */
 export function invalidateCache(logicalPath: string): void {
   runtimeTempUrlCache.delete(logicalPath);
@@ -335,6 +381,9 @@ export const AssetLoader = {
   getCdnUrl,
   resolveAsset,
   resolveOrDownload,
+  resolveAudioSrc,
+  playableAudioSrc,
+  toInnerAudioSrc,
   downloadAndNotify,
   invalidateCache,
   prefetchManifest,

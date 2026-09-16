@@ -1,3 +1,4 @@
+import { AssetLoader } from '@/core/AssetLoader';
 import { hasWx } from '@/platform/wxPlatform';
 
 declare const wx: any;
@@ -67,6 +68,7 @@ interface AudioEntry {
   volume?: number;
 }
 
+/** 路径在 `cdnDirs` 的 `audio/bgm`，瘦包后按需下载，不挡启动。 */
 const BGM_MAP: Record<BgmId, AudioEntry> = {
   hub: { src: 'audio/bgm/hub.mp3', loop: true, volume: 0.72 },
   deploy: { src: 'audio/bgm/deploy.mp3', loop: true, volume: 0.68 },
@@ -137,6 +139,8 @@ const MUTE_KEY = 'srpg.audio.muted';
 
 let bgmInstance: AudioHandle | null = null;
 let currentBgmId: BgmId | null = null;
+/** 切曲 / 停止时作废还在飞的 resolveAudioSrc */
+let bgmRequestSeq = 0;
 let muted = readMuted();
 const lastSfxAt = new Map<SfxId, number>();
 
@@ -222,10 +226,79 @@ function createAudio(src: string, loop: boolean, volume = 1): AudioHandle | null
   }
 }
 
-function applyMuteToBgm(): void {
+/**
+ * BGM 可能是缓存文件或 CDN https。等 onCanplay 再 play；
+ * 开发者工具 InnerAudio 读不了 `http://usr` 时，再试一次公开 https。
+ */
+function createBgmAudio(src: string, logical: string, loop: boolean, volume = 1): AudioHandle | null {
+  if (!hasWx()) return createAudio(src, loop, volume);
+  try {
+    const ctx = wx.createInnerAudioContext();
+    ctx.loop = loop;
+    applyVolume(ctx, volume);
+    let started = false;
+    let usedHttps = false;
+    const https = AssetLoader.isCdnPath(logical) ? AssetLoader.getCdnUrl(logical) : '';
+    const playable = AssetLoader.playableAudioSrc(src, logical);
+    const tryPlay = (): void => {
+      if (started || muted) return;
+      started = true;
+      try { ctx.play(); } catch { /* */ }
+    };
+    try {
+      ctx.onCanplay?.(tryPlay);
+      ctx.onError?.(() => {
+        if (usedHttps || !https || playable === https) return;
+        usedHttps = true;
+        started = false;
+        try { ctx.src = https; } catch { /* */ }
+      });
+    } catch { /* */ }
+    ctx.src = playable;
+    setTimeout(tryPlay, 400);
+    return wrapWx(ctx);
+  } catch (e) {
+    console.warn('[AudioManager] createInnerAudioContext failed:', e);
+    return null;
+  }
+}
+
+function disposeBgmInstance(): void {
   if (!bgmInstance) return;
-  if (muted) bgmInstance.pause();
-  else if (currentBgmId) bgmInstance.play();
+  bgmInstance.stop();
+  bgmInstance.destroy();
+  bgmInstance = null;
+}
+
+async function startResolvedBgm(id: BgmId, seq: number): Promise<void> {
+  const entry = BGM_MAP[id];
+  try {
+    const src = await AssetLoader.resolveAudioSrc(entry.src);
+    if (seq !== bgmRequestSeq || currentBgmId !== id || muted) return;
+    const handle = createBgmAudio(src, entry.src, entry.loop, entry.volume ?? 1);
+    if (seq !== bgmRequestSeq || currentBgmId !== id) {
+      handle?.destroy();
+      return;
+    }
+    bgmInstance = handle;
+  } catch (e) {
+    if (seq !== bgmRequestSeq) return;
+    console.warn('[AudioManager] BGM resolve failed:', id, e);
+  }
+}
+
+function applyMuteToBgm(): void {
+  if (muted) {
+    bgmInstance?.pause();
+    return;
+  }
+  if (!currentBgmId) return;
+  if (bgmInstance) {
+    bgmInstance.play();
+    return;
+  }
+  const seq = ++bgmRequestSeq;
+  void startResolvedBgm(currentBgmId, seq);
 }
 
 export const AudioManager = {
@@ -245,24 +318,20 @@ export const AudioManager = {
   },
 
   playBgm(id: BgmId): void {
-    if (currentBgmId === id && bgmInstance) {
-      if (!muted) bgmInstance.play();
+    if (currentBgmId === id) {
+      if (bgmInstance && !muted) bgmInstance.play();
       return;
     }
-    AudioManager.stopBgm();
+    disposeBgmInstance();
     currentBgmId = id;
+    const seq = ++bgmRequestSeq;
     if (muted) return;
-    const entry = BGM_MAP[id];
-    bgmInstance = createAudio(entry.src, entry.loop, entry.volume ?? 1);
-    bgmInstance?.play();
+    void startResolvedBgm(id, seq);
   },
 
   stopBgm(): void {
-    if (bgmInstance) {
-      bgmInstance.stop();
-      bgmInstance.destroy();
-      bgmInstance = null;
-    }
+    bgmRequestSeq += 1;
+    disposeBgmInstance();
     currentBgmId = null;
   },
 

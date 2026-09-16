@@ -144,6 +144,10 @@
         "type": "folder"
       },
       {
+        "value": "audio/bgm",
+        "type": "folder"
+      },
+      {
         "value": "package.json",
         "type": "file"
       },

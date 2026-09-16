@@ -11,7 +11,8 @@
     "images/units",
     "images/fx",
     "images/bg",
-    "images/anim"
+    "images/anim",
+    "audio/bgm"
   ],
   "bundledDirs": [
     "images/ui",

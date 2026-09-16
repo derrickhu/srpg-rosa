@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { allPlayerSkillSpecs, allSkillSpecs } from '@/data/skillCatalog';
@@ -161,5 +161,18 @@ describe('主包音效文件', () => {
     expect(existsSync(resolve(process.cwd(), 'audio/bgm.mp3'))).toBe(false);
     expect(existsSync(resolve(process.cwd(), 'audio/bullet.mp3'))).toBe(false);
     expect(existsSync(resolve(process.cwd(), 'audio/boom.mp3'))).toBe(false);
+  });
+
+  it('BGM 源文件仍在仓库，但走 CDN 不进主包', async () => {
+    const { cdnConfig } = await import('@/config/cdnConfig');
+    const pack = JSON.parse(readFileSync('project.config.json', 'utf8')) as {
+      packOptions?: { ignore?: Array<{ type: string; value: string }> };
+    };
+    expect(cdnConfig.cdnDirs).toContain('audio/bgm');
+    expect(cdnConfig.cdnDirs.some((d) => d === 'audio/sfx' || d.startsWith('audio/sfx/'))).toBe(false);
+    expect(pack.packOptions?.ignore?.some((r) => r.type === 'folder' && r.value === 'audio/bgm')).toBe(true);
+    for (const name of ['hub', 'deploy', 'battle', 'shop']) {
+      expect(existsSync(resolve(process.cwd(), `audio/bgm/${name}.mp3`)), `缺 audio/bgm/${name}.mp3`).toBe(true);
+    }
   });
 });
