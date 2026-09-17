@@ -1037,24 +1037,48 @@ export class GameFlow {
    * 没有三选一时仍要出胜利拍，不能直接切走。整章通关走魂晶结算。
    */
   private presentBattleWin(isRunFinal: boolean): void {
-    if (isRunFinal) {
-      const dungeon = currentDungeon(this.state);
-      const grants = isEndlessRun(this.state)
-        ? []
-        : previewPersonalEmblemsForDungeon(this.state.meta, dungeon.id);
-      const emblemEntries = grants
-        .map((g) => personalEmblemRewardEntry(g.def.id, g.level))
-        .filter((e): e is RewardEntry => !!e);
-      if (shouldPresentBossFirstKill(true, emblemEntries.length)) {
-        this.showBossFirstKillOverlay(emblemEntries, () => this.showRewardOverlay(true));
+    try {
+      if (isRunFinal) {
+        const dungeon = currentDungeon(this.state);
+        const grants = isEndlessRun(this.state)
+          ? []
+          : previewPersonalEmblemsForDungeon(this.state.meta, dungeon.id);
+        const emblemEntries = grants
+          .map((g) => personalEmblemRewardEntry(g.def.id, g.level))
+          .filter((e): e is RewardEntry => !!e);
+        if (shouldPresentBossFirstKill(true, emblemEntries.length)) {
+          this.showBossFirstKillOverlay(emblemEntries, () => this.showRewardOverlay(true));
+          return;
+        }
+        this.showRewardOverlay(true);
         return;
       }
-      this.showRewardOverlay(true);
-      return;
+      const loot = this.state.run?.pendingLoot ?? [];
+      if (loot.length > 0) this.showLootOverlay();
+      else this.showRewardOverlay(false);
+    } catch (e) {
+      console.error('[GameFlow] presentBattleWin failed', e);
+      if (!this.state.run) {
+        this.renderShell('adventure');
+        return;
+      }
+      if (isRunFinal) {
+        try {
+          this.showRewardOverlay(true);
+        } catch (e2) {
+          console.error('[GameFlow] final reward overlay failed', e2);
+          this.renderShell('adventure');
+        }
+        return;
+      }
+      skipLoot(this.state);
+      try {
+        this.advanceAfterVictory();
+      } catch (e2) {
+        console.error('[GameFlow] presentBattleWin fallback advance failed', e2);
+        this.recoverAfterVictoryAdvance();
+      }
     }
-    const loot = this.state.run?.pendingLoot ?? [];
-    if (loot.length > 0) this.showLootOverlay();
-    else this.showRewardOverlay(false);
   }
 
   private showBossFirstKillOverlay(entries: RewardEntry[], then: () => void): void {
@@ -1175,34 +1199,39 @@ export class GameFlow {
         confirmLabel: hasLoot ? '选择纹章' : (isRunFinal ? (endless ? '离开试炼' : '返回大厅') : (endless ? '下一波' : '继续前进')),
         onConfirm: () => {
           close();
-          if (hasLoot) {
-            this.showLootOverlay();
-          } else if (isRunFinal) {
-            if (!this.state.run) return;
-            if (endless) {
-              this.trackRunEnd('clear');
-              const bonus = finishEndlessRun(this.state);
-              SaveManager.save(this.state);
-              this.showToast(bonus > 0 ? `试炼完成，额外魂晶 +${bonus}` : '试炼结束');
-              this.renderShell('challenge');
+          try {
+            if (hasLoot) {
+              this.showLootOverlay();
+            } else if (isRunFinal) {
+              if (!this.state.run) return;
+              if (endless) {
+                this.trackRunEnd('clear');
+                const bonus = finishEndlessRun(this.state);
+                SaveManager.save(this.state);
+                this.showToast(bonus > 0 ? `试炼完成，额外魂晶 +${bonus}` : '试炼结束');
+                this.renderShell('challenge');
+              } else {
+                const firstClear = !isEliteDungeon(dungeon.id)
+                  && !this.state.meta.clearedDungeonIds.includes(dungeon.id);
+                this.trackRunEnd('clear');
+                const result = finishRunVictory(this.state);
+                SaveManager.save(this.state);
+                this.showToast(`通关「${dungeon.name}」，魂晶 +${result.soul}`);
+                this.markAdventureAfterChapterClear(dungeon.id, firstClear);
+                this.presentUnlocksThen(result.unlockedRosterIds, () => {
+                  if (isHubUpgradeGuideClear(dungeon.id)) {
+                    tryBeginHubUpgradeGuide(this.state.meta);
+                    SaveManager.saveMeta(this.state.meta);
+                  }
+                  this.renderShell('adventure');
+                });
+              }
             } else {
-              const firstClear = !isEliteDungeon(dungeon.id)
-                && !this.state.meta.clearedDungeonIds.includes(dungeon.id);
-              this.trackRunEnd('clear');
-              const result = finishRunVictory(this.state);
-              SaveManager.save(this.state);
-              this.showToast(`通关「${dungeon.name}」，魂晶 +${result.soul}`);
-              this.markAdventureAfterChapterClear(dungeon.id, firstClear);
-              this.presentUnlocksThen(result.unlockedRosterIds, () => {
-                if (isHubUpgradeGuideClear(dungeon.id)) {
-                  tryBeginHubUpgradeGuide(this.state.meta);
-                  SaveManager.saveMeta(this.state.meta);
-                }
-                this.renderShell('adventure');
-              });
+              this.advanceAfterVictory();
             }
-          } else {
-            this.advanceAfterVictory();
+          } catch (e) {
+            console.error('[GameFlow] reward confirm failed', e);
+            this.recoverAfterVictoryAdvance();
           }
         },
       }),
@@ -1242,6 +1271,7 @@ export class GameFlow {
 
   /** 中途胜利 + 纹章三选一 */
   private showLootOverlay(): void {
+    try {
     const run = this.state.run!;
     const loot = run.pendingLoot ?? [];
     const v = run.lastVictory;
@@ -1259,7 +1289,12 @@ export class GameFlow {
           const opt = loot[i];
           if (!opt || !claimLoot(this.state, opt)) return;
           close();
-          this.advanceAfterVictory();
+          try {
+            this.advanceAfterVictory();
+          } catch (e) {
+            console.error('[GameFlow] loot confirm advance failed', e);
+            this.recoverAfterVictoryAdvance();
+          }
           this.showToast(
             opt.kind === 'skillMod' ? `纹章已铭刻：${opt.name}` : `「${opt.name}」已放入背包`,
           );
@@ -1267,7 +1302,12 @@ export class GameFlow {
         onSkip: () => {
           skipLoot(this.state);
           close();
-          this.advanceAfterVictory();
+          try {
+            this.advanceAfterVictory();
+          } catch (e) {
+            console.error('[GameFlow] loot skip advance failed', e);
+            this.recoverAfterVictoryAdvance();
+          }
         },
         onNeedPick: () => this.showToast('先选一张纹章', { deny: true }),
         onRefresh: isTutorialRun(this.state)
@@ -1288,6 +1328,16 @@ export class GameFlow {
             },
       }),
     );
+    } catch (e) {
+      console.error('[GameFlow] showLootOverlay failed', e);
+      skipLoot(this.state);
+      try {
+        this.advanceAfterVictory();
+      } catch (e2) {
+        console.error('[GameFlow] loot overlay fallback advance failed', e2);
+        this.recoverAfterVictoryAdvance();
+      }
+    }
   }
 
   /**
@@ -1362,6 +1412,25 @@ export class GameFlow {
     this.renderNode();
   }
 
+  /** 领取奖励后切节点失败时，不要把人留在已结束的战场上 */
+  private recoverAfterVictoryAdvance(): void {
+    if (!this.state.run) {
+      this.renderShell('adventure');
+      return;
+    }
+    try {
+      if (currentNode(this.state).kind === 'shop') {
+        advanceNode(this.state);
+        this.shopOffers = null;
+        SaveManager.save(this.state);
+      }
+      this.renderNode();
+    } catch (e) {
+      console.error('[GameFlow] recoverAfterVictoryAdvance failed', e);
+      this.renderShell('adventure');
+    }
+  }
+
   // ---------------- 局内商店节点 ----------------
 
   private renderShop(): void {
@@ -1370,61 +1439,72 @@ export class GameFlow {
       advanceTutorial(this.state, TutorialStep.SHOP_INTRO);
     }
     if (!this.shopOffers) this.shopOffers = rollShop(this.state);
-    const handle = createShopView(
-      this.state,
-      this.shopOffers,
-      {
-        onBuy: (offer: ShopOffer, ctx?: BuyShopContext) => {
-          if (!buyShopOffer(this.state, offer, ctx)) {
-            this.showToast('金币不足或商品无效', { deny: true });
-            return;
-          }
-          AudioManager.playSfx('sfx_buy');
-          notifyTutorial(this.state, {
-            type: 'bought',
-            offer: offer.type === 'potion' ? 'potion' : 'tempSkill',
-          });
-          this.shopOffers = (this.shopOffers ?? []).filter((o) => o !== offer);
-          SaveManager.save(this.state);
-          this.renderShop();
+    try {
+      const handle = createShopView(
+        this.state,
+        this.shopOffers,
+        {
+          onBuy: (offer: ShopOffer, ctx?: BuyShopContext) => {
+            if (!buyShopOffer(this.state, offer, ctx)) {
+              this.showToast('金币不足或商品无效', { deny: true });
+              return;
+            }
+            AudioManager.playSfx('sfx_buy');
+            notifyTutorial(this.state, {
+              type: 'bought',
+              offer: offer.type === 'potion' ? 'potion' : 'tempSkill',
+            });
+            this.shopOffers = (this.shopOffers ?? []).filter((o) => o !== offer);
+            SaveManager.save(this.state);
+            this.renderShop();
+          },
+          onSkip: () => {
+            advanceNode(this.state);
+            this.shopOffers = null;
+            SaveManager.save(this.state);
+            this.renderNode();
+          },
+          onRefresh: isTutorialRun(this.state)
+            ? undefined
+            : () => {
+                void (async () => {
+                  const ok = await AdManager.showRewarded('shopRefresh');
+                  if (!ok) {
+                    this.showToast('广告未播完，货架没有换', { deny: true });
+                    return;
+                  }
+                  this.shopOffers = rollShop(this.state);
+                  SaveManager.save(this.state);
+                  this.showToast('货架已换新');
+                  this.renderShop();
+                })();
+              },
         },
-        onSkip: () => {
-          advanceNode(this.state);
-          this.shopOffers = null;
-          SaveManager.save(this.state);
-          this.renderNode();
-        },
-        onRefresh: isTutorialRun(this.state)
-          ? undefined
-          : () => {
-              void (async () => {
-                const ok = await AdManager.showRewarded('shopRefresh');
-                if (!ok) {
-                  this.showToast('广告未播完，货架没有换', { deny: true });
-                  return;
-                }
-                this.shopOffers = rollShop(this.state);
-                SaveManager.save(this.state);
-                this.showToast('货架已换新');
-                this.renderShop();
-              })();
-            },
-      },
-      this.screen,
-    );
-    this.scenes.replaceAll(containerScene(handle.root));
-    if (isTutorialRun(this.state)) {
-      attachTutorialOverlay(handle.root, {
-        getState: () => this.state,
-        scope: 'shop',
-        screenW: this.app.screen.width,
-        screenH: this.app.screen.height,
-        potionRect: () => handle.potionRect(),
-        buyRect: () => handle.buyRect(),
-        leaveRect: () => handle.leaveRect(),
-      });
+        this.screen,
+      );
+      this.scenes.replaceAll(containerScene(handle.root));
+      if (isTutorialRun(this.state)) {
+        attachTutorialOverlay(handle.root, {
+          getState: () => this.state,
+          scope: 'shop',
+          screenW: this.app.screen.width,
+          screenH: this.app.screen.height,
+          potionRect: () => handle.potionRect(),
+          buyRect: () => handle.buyRect(),
+          leaveRect: () => handle.leaveRect(),
+        });
+      }
+      AudioManager.playBgm('shop');
+    } catch (e) {
+      console.error('[GameFlow] renderShop failed', e);
+      this.showToast('补给点出了点问题，先继续赶路');
+      this.shopOffers = null;
+      if (this.state.run && currentNode(this.state).kind === 'shop') {
+        advanceNode(this.state);
+        SaveManager.save(this.state);
+      }
+      this.renderNode();
     }
-    AudioManager.playBgm('shop');
   }
 
   private trackRunStart(dungeonId: string): void {

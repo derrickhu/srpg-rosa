@@ -23,7 +23,15 @@ export function awaitEase(
   opts?: { live?: () => boolean },
 ): Promise<void> {
   return new Promise((resolve) => {
+    let settled = false;
+    let acc = 0;
+    let watchdog: ReturnType<typeof setTimeout> | undefined;
+    const ticker = PIXI.Ticker.shared;
     const finish = (t: number): void => {
+      if (settled) return;
+      settled = true;
+      if (watchdog !== undefined) clearTimeout(watchdog);
+      ticker.remove(step);
       try {
         onProgress(t);
       } catch {
@@ -31,20 +39,9 @@ export function awaitEase(
       }
       resolve();
     };
-    if (ms <= 0) {
-      finish(1);
-      return;
-    }
-    const ticker = PIXI.Ticker.shared;
-    if (!ticker.started) {
-      finish(1);
-      return;
-    }
-    let acc = 0;
     const step = (): void => {
       if (opts?.live && !opts.live()) {
-        ticker.remove(step);
-        resolve();
+        finish(1);
         return;
       }
       acc += ticker.deltaMS;
@@ -52,15 +49,22 @@ export function awaitEase(
       try {
         onProgress(easeOutQuad(k));
       } catch {
-        ticker.remove(step);
-        resolve();
+        finish(1);
         return;
       }
-      if (k >= 1) {
-        ticker.remove(step);
-        resolve();
-      }
+      if (k >= 1) finish(1);
     };
+    if (ms <= 0) {
+      finish(1);
+      return;
+    }
+    if (!ticker.started) {
+      finish(1);
+      return;
+    }
+    // 微信里 Ticker.shared 有时 started 但不再打拍。结算「领取」在等这段
+    // Promise，ticker 一停人就卡在刚打完的战场上。用真实时钟兜底。
+    watchdog = setTimeout(() => finish(1), Math.max(ms + 400, ms * 2));
     ticker.add(step);
   });
 }

@@ -217,6 +217,39 @@ export function resolveLootConfirm(
   return { ok: true, index: selected };
 }
 
+/** 飞魂晶最多等这么久。不能把「领取」绑死在 Pixi ticker 上。 */
+export const OVERLAY_CONFIRM_FX_MS = 700;
+
+/**
+ * 结算确认：过场可以看，失败或超时也必须进入下一屏。
+ *
+ * 微信里 `Ticker.shared` 有时 started 却不再打拍，只 `await` 飞行动画
+ * 会让 overlay 关不掉，人被留在刚打完的战场上。兜底用真实时钟。
+ */
+export function runOverlayConfirm(fx: Promise<void> | null, then: () => void): void {
+  let done = false;
+  const go = (): void => {
+    if (done) return;
+    done = true;
+    then();
+  };
+  if (!fx) {
+    go();
+    return;
+  }
+  const timer = setTimeout(go, OVERLAY_CONFIRM_FX_MS);
+  void fx.then(
+    () => {
+      clearTimeout(timer);
+      go();
+    },
+    () => {
+      clearTimeout(timer);
+      go();
+    },
+  );
+}
+
 /** 米白圆角面板 */
 function panelBg(w: number, h: number, radius = 14): PIXI.Graphics {
   const g = new PIXI.Graphics();
@@ -651,11 +684,10 @@ export function createRewardOverlay(opts: RewardOverlayOpts): PIXI.Container {
     const go = (): void => opts.onConfirm();
     if (soulFrom) {
       const to = opts.soulFlyTo ?? { x: 28, y: 28 };
-      if (opts.soulFlyBurst) {
-        void flySoulBurstTo(root, soulFrom, to, soulAmount).then(go);
-      } else {
-        void flyTokenTo(root, 'icon_soul', soulFrom, to).then(go);
-      }
+      const fx = opts.soulFlyBurst
+        ? flySoulBurstTo(root, soulFrom, to, soulAmount)
+        : flyTokenTo(root, 'icon_soul', soulFrom, to);
+      runOverlayConfirm(fx, go);
       return;
     }
     go();
@@ -1302,7 +1334,7 @@ export function createLootOverlay(opts: LootOverlayOpts): PIXI.Container {
       : null;
     const go = (): void => opts.onConfirm(resolved.index);
     if (from && (s?.soul ?? 0) > 0) {
-      void flyTokenTo(root, 'icon_soul', from, { x: 28, y: 28 }).then(go);
+      runOverlayConfirm(flyTokenTo(root, 'icon_soul', from, { x: 28, y: 28 }), go);
       return;
     }
     go();

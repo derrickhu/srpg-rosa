@@ -2807,16 +2807,27 @@ export function createBattlePlaybackView(
     completed = true;
     manualUi?.hide();
     updateOrderStrip(null);
+    updateReviveHud();
+    if (showPilot) {
+      pilotBtn.visible = false;
+      pilotBtn.eventMode = 'none';
+    }
     const heal = potionBtns.get(SHARE_HEAL_POTION_ID);
     if (heal) paintPotionSlot(SHARE_HEAL_POTION_ID, heal.count);
     void (async () => {
-      if (!skipping) {
-        await awaitEase(dur(250), () => {});
-        if (winner === 'player' && emblemOnGround > 0) {
-          await awaitEase(dur(1200), () => {});
+      // 转发 / 广告把门关上时，收尾那两拍也必须走完，否则胜利 overlay 永远不出来。
+      playbackThroughPause += 1;
+      try {
+        if (!skipping) {
+          await awaitEase(dur(250), () => {});
+          if (winner === 'player' && emblemOnGround > 0) {
+            await awaitEase(dur(1200), () => {});
+          }
         }
+        if (!root.destroyed) callbacks.onComplete(winner);
+      } finally {
+        playbackThroughPause -= 1;
       }
-      if (!root.destroyed) callbacks.onComplete(winner);
     })();
   }
 

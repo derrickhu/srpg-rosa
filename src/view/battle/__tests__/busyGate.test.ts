@@ -43,6 +43,15 @@ describe('托管离开必须先停主循环', () => {
     expect(src).toContain('playbackThroughPause === 0');
   });
 
+  it('战斗收尾那两拍也抬 throughPause，避免门关上时胜利 overlay 出不来', () => {
+    const src = readFileSync('src/view/BattlePlaybackView.ts', 'utf8');
+    const start = src.indexOf('function finishPlayback');
+    const fn = src.slice(start, start + 900);
+    expect(fn).toContain('playbackThroughPause += 1');
+    expect(fn.indexOf('playbackThroughPause += 1')).toBeLessThan(fn.indexOf('callbacks.onComplete(winner)'));
+    expect(fn).toContain('finally');
+  });
+
   it('转发领药在拉起分享之前锁门，回来再开', () => {
     const src = readFileSync('src/view/BattlePlaybackView.ts', 'utf8');
     const start = src.indexOf('async function claimShareHeal');
