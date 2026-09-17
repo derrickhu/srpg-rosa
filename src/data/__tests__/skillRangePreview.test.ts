@@ -15,6 +15,14 @@ describe('技能格子图跟结算同一把尺子', () => {
     expect(describeSkillRangeCaption(spec)).toContain('友方');
   });
 
+  it('回春把自身格画进圣疗范围', () => {
+    const spec = getSkillSpec('heal_touch')!;
+    const withSelf = { ...spec.shape, includeSelf: true } as typeof spec.shape;
+    const p = buildSkillRangePreview(withSelf);
+    expect(previewKindAt(p, 0, 0)).toBe('hit');
+    expect(previewKindAt(p, 1, 0)).toBe('hit');
+  });
+
   it('荆棘绞缠是正好 2 格的环，贴脸格必须空着', () => {
     const spec = getSkillSpec('temp_fo_thorn')!;
     const p = buildSkillRangePreview(spec.shape);

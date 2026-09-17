@@ -13,6 +13,7 @@ import { getSkillSpec } from '@/data/skillCatalog';
 import {
   groundAimTap,
   groundBlastCells,
+  specAppliesFreeze,
   specAppliesFrost,
   specAppliesPoison,
   unitSkillSpec,
@@ -246,7 +247,7 @@ export function animSetsForUnits(units: readonly UnitState[]): string[] {
       const recipe = SKILL_VFX[vfxKey] ?? SKILL_VFX[sk.id];
       if (recipe) for (const id of recipeAnimSets(recipe)) ids.add(id);
       if (spec && specAppliesPoison(spec)) ids.add(POISON_HIT_VFX.set);
-      if (spec && specAppliesFrost(spec)) ids.add(FROST_HIT_VFX.set);
+      if (spec && (specAppliesFrost(spec) || specAppliesFreeze(spec))) ids.add(FROST_HIT_VFX.set);
     }
   }
   return [...ids];
@@ -1242,7 +1243,11 @@ export function createBattlePlaybackView(
   function floatHeal(x: number, y: number, amount: number): void {
     spawnCombatFloat(floatHost(), x, y, `+${amount}`, 'heal');
   }
-  function floatDot(x: number, y: number, dmg: number, source: 'poison' | 'terrain'): void {
+  function floatDot(x: number, y: number, dmg: number, source: 'poison' | 'bleed' | 'terrain'): void {
+    if (source === 'bleed') {
+      spawnCombatFloat(floatHost(), x, y, `血-${dmg}`, 'damage');
+      return;
+    }
     spawnCombatFloat(floatHost(), x, y, source === 'poison' ? `毒-${dmg}` : `-${dmg}`, 'poison');
   }
   /**
@@ -2481,7 +2486,7 @@ export function createBattlePlaybackView(
             if (h.poisoned) {
               playFlash(POISON_HIT_VFX, { x: cx, y: cy }, { x: tt.x, y: tt.y });
             }
-            if (h.frostbitten) {
+            if (h.frostbitten || h.frozen) {
               playFlash(FROST_HIT_VFX, { x: cx, y: cy }, { x: tt.x, y: tt.y });
             }
           }

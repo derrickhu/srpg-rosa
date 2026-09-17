@@ -32,7 +32,7 @@ import {
   unitSkillSpec,
   type SkillAiming,
 } from './skills';
-import { tickTimedBattleEffects } from './timedBattleEffects';
+import { consumeFreeze, tickTimedBattleEffects } from './timedBattleEffects';
 import { createTerrainRuntime } from './terrainDynamics';
 import { getTerrainSpec, isPassable } from '@/data/terrainSpec';
 
@@ -91,6 +91,10 @@ function cloneUnits(units: UnitState[]): UnitState[] {
             roundsLeft: e.roundsLeft,
             ...(e.theme === 'frost' ? { theme: 'frost' as const } : {}),
           };
+        case 'bleed':
+          return { kind: 'bleed' as const, dmgPerRound: e.dmgPerRound, roundsLeft: e.roundsLeft };
+        case 'freeze':
+          return { kind: 'freeze' as const, roundsLeft: e.roundsLeft };
         case 'guard':
           return { kind: 'guard' as const, reduceRatio: e.reduceRatio, roundsLeft: e.roundsLeft };
       }
@@ -580,7 +584,7 @@ export function createBattleSim(
         uid: t.uid,
         damage: t.damage,
         hpLeft: t.hpLeft,
-        source: 'poison',
+        source: t.source,
       });
       if (t.died) events.push({ type: 'death', uid: t.uid });
     }
@@ -829,6 +833,14 @@ export function createBattleSim(
       if (!self || self.hp <= 0) continue;
       actedThisRound.add(self.uid);
       const turnStart: BattleEvent = { type: 'turnStart', uid: self.uid, faction: self.faction };
+      if (consumeFreeze(self)) {
+        const frozen: BattleEvent[] = [
+          turnStart,
+          { type: 'statusNote', target: self.uid, text: '冰冻', tone: 'debuff' },
+        ];
+        allEvents.push(...frozen);
+        return { events: frozen, done: false, winner: null };
+      }
       if (self.faction === 'player' && !forceAuto && !autoUids.has(self.uid)) {
         pendingTurn = {
           uid: self.uid,

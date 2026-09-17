@@ -83,6 +83,9 @@ export function buildSkillRangePreview(shape: SkillShape): SkillRangePreview {
         if (solid ? d <= md : d === md) set(cells, gridR, dx, dy, 'hit');
       }
     }
+    if (shape.type === 'neighborPickAlly' && shape.includeSelf) {
+      cells[gridR]![gridR] = 'hit';
+    }
   } else if (shape.type === 'lineBestRayAllFoes') {
     for (const [ddx, ddy] of [[0, -1], [0, 1], [-1, 0], [1, 0]] as const) {
       for (let s = 1; s <= gridR; s++) set(cells, gridR, ddx * s, ddy * s, 'ray');

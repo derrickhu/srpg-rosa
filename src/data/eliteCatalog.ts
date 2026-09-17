@@ -142,6 +142,10 @@ function boostFoe(e: SkillCastFoeEffect): SkillCastFoeEffect {
       return { ...e, subSpd: e.subSpd + 2, rounds: e.rounds + 1 };
     case 'poison':
       return { ...e, dmgPerRound: e.dmgPerRound + 1, rounds: e.rounds + 1 };
+    case 'bleed':
+      return { ...e, dmgPerRound: e.dmgPerRound + 1, rounds: e.rounds + 1 };
+    case 'freeze':
+      return { ...e, rounds: e.rounds + 1 };
   }
 }
 

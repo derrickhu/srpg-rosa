@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mainSlotSkillIds } from '@/data/characterCatalog';
+import { CHARACTER_DEFS, mainSlotSkillIds } from '@/data/characterCatalog';
 import { allPlayerSkillSpecs, getSkillSpec } from '@/data/skillCatalog';
 import {
   allSkillMods,
@@ -268,6 +268,62 @@ describe('专属词条', () => {
    * 内容——它连候选池都进不去。反过来主槽少一条专属，那个角色一整局都遇不上
    * 「这招的招牌强化」，而这正是加技能时最容易漏的一步。
    */
+  it('每个角色的招牌至少有 3 条专属词条', () => {
+    for (const c of CHARACTER_DEFS) {
+      const spec = getSkillSpec(c.defaultSkillId)!;
+      expect(
+        exclusiveChainForSkill(spec).length,
+        `${c.name}（${spec.name}）专属不足 3 条`,
+      ).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it('每条角色专属折进规格后都改了结算字段，没有空词条', () => {
+    const fingerprint = (s: ReturnType<typeof getSkillSpec>): string => JSON.stringify({
+      shape: s!.shape,
+      damage: s!.damage,
+      cooldown: s!.cooldown,
+      self: s!.onCastSelfEffects,
+      foe: s!.onCastFoeEffects,
+      ally: s!.onCastAllyEffects,
+      lifesteal: s!.lifestealRatio,
+      execute: s!.executeBonus,
+      splash: s!.splashRatio,
+      splashSq: s!.splashChebyshev,
+      passive: s!.passiveBasicAttackMulIfMoved,
+      displace: s!.onHitDisplace,
+      vfx: s!.vfxId,
+    });
+    for (const c of CHARACTER_DEFS) {
+      const spec = getSkillSpec(c.defaultSkillId)!;
+      for (const m of exclusiveChainForSkill(spec)) {
+        const next = effectiveSkillSpec(spec, [m.id]);
+        expect(
+          fingerprint(next),
+          `${c.name} 的「${m.name}」折进规格后什么都没变`,
+        ).not.toBe(fingerprint(spec));
+      }
+    }
+  });
+
+  it('裂伤 / 霜域 / 凝霜 / 回春折进规格', () => {
+    const bleed = effectiveSkillSpec(whirl(), ['ex_whirl_bleed']);
+    expect(bleed.onCastFoeEffects).toContainEqual({
+      kind: 'bleed', dmgPerRound: 6, rounds: 2, chance: 0.4,
+    });
+
+    const frost = getSkillSpec('frost_ring')!;
+    const spread = effectiveSkillSpec(frost, ['ex_frost_spread']);
+    expect(spread.shape).toEqual({ type: 'groundPickAoE', castRange: 3, blastRadius: 2 });
+
+    const freeze = effectiveSkillSpec(frost, ['ex_frost_freeze']);
+    expect(freeze.onCastFoeEffects).toContainEqual({ kind: 'freeze', rounds: 1, chance: 0.4 });
+
+    const heal = getSkillSpec('heal_touch')!;
+    const selfHeal = effectiveSkillSpec(heal, ['ex_heal_self']);
+    expect(selfHeal.shape).toMatchObject({ type: 'neighborPickAlly', includeSelf: true });
+  });
+
   it('每个能进主槽的技能都至少有一条专属词条', () => {
     for (const id of mainSlotSkillIds()) {
       const spec = getSkillSpec(id)!;
@@ -392,7 +448,7 @@ describe('抽卡权重', () => {
     expect(w('venom')).toBeGreaterThan(w('overwhelm'));
   });
 
-  it('专属词条同稀有度下权重更高（每招只有一两条，不加权基本见不到）', () => {
+  it('专属词条同稀有度下权重更高（每招只有几条，不加权基本见不到）', () => {
     // 两条都是稀有：只差在专属加权上
     expect(w('ex_whirl_momentum')).toBeGreaterThan(w('venom'));
   });
@@ -475,5 +531,28 @@ describe('升级只开门专属纹章', () => {
     const first = exclusiveModsUnlockedBetween('whirl', 1, 2);
     expect(first.map((m) => m.id)).toEqual(['ex_whirl_momentum']);
     expect(exclusiveModsUnlockedBetween('whirl', 2, 3)).toEqual([]);
+  });
+
+  it('补齐后的专属仍按 2 / 6 / 10 开门，不挤已有档位', () => {
+    expect(exclusiveModsUnlockedBetween('whirl', 6, 10).map((m) => m.id)).toEqual(['ex_whirl_bleed']);
+    expect(exclusiveModsUnlockedBetween('heal_touch', 6, 10).map((m) => m.id)).toEqual(['ex_heal_self']);
+    expect(exclusiveModsUnlockedBetween('frost_ring', 2, 6).map((m) => m.id)).toEqual(['ex_frost_spread']);
+    expect(exclusiveModsUnlockedBetween('frost_ring', 6, 10).map((m) => m.id)).toEqual(['ex_frost_freeze']);
+  });
+
+  it('等级闸门和战后抽卡同一条：不到级抽不到第三条', () => {
+    const pool = (skillId: string, level: number): string[] =>
+      exclusiveModsForSkill(skillId)
+        .filter((m) => m.canApply(getSkillSpec(skillId)!) && level >= m.minLevel)
+        .map((m) => m.id);
+
+    expect(pool('whirl', 9)).not.toContain('ex_whirl_bleed');
+    expect(pool('whirl', 10)).toContain('ex_whirl_bleed');
+    expect(pool('heal_touch', 9)).not.toContain('ex_heal_self');
+    expect(pool('heal_touch', 10)).toContain('ex_heal_self');
+    expect(pool('frost_ring', 5)).not.toContain('ex_frost_spread');
+    expect(pool('frost_ring', 6)).toContain('ex_frost_spread');
+    expect(pool('frost_ring', 9)).not.toContain('ex_frost_freeze');
+    expect(pool('frost_ring', 10)).toContain('ex_frost_freeze');
   });
 });

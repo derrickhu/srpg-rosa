@@ -32,7 +32,9 @@ function briefShape(spec: SkillSpec): string {
         ? `同行同列${describeReach(shape.manhattan, shape.reach)}·点一个敌人`
         : `${describeReach(shape.manhattan, shape.reach)}·点一个敌人`;
     case 'neighborPickAlly':
-      return `${describeReach(shape.manhattan, shape.reach)}·点一个友军`;
+      return shape.includeSelf
+        ? `${describeReach(shape.manhattan, shape.reach)}·点一个友军或自己`
+        : `${describeReach(shape.manhattan, shape.reach)}·点一个友军`;
     case 'lineBestRayAllFoes':
       return shape.range === undefined ? '直线穿透（不限）' : `直线穿透 ${shape.range} 格`;
     case 'groundPickAoE':

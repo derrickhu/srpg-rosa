@@ -126,6 +126,20 @@ describe('技能目标类型（自/友/敌）', () => {
     const events = castSkillManual(self, UNIT_DEFS, [self, full, hurt], terrain, 'e3');
     expect(events.some((e) => e.type === 'heal' && e.target === 'e3')).toBe(true);
   });
+
+  it('回春让残血的弥尔能把自己列入圣疗目标', () => {
+    const self = unit('p1', 'healer', 'player', { x: 1, y: 1 }, 'heal_touch');
+    self.hp = 20;
+    self.skillMods = ['ex_heal_self'];
+    const terrain = emptyTerrain(5, 5);
+
+    const bare = unit('p2', 'healer', 'player', { x: 2, y: 1 }, 'heal_touch');
+    bare.hp = 20;
+    expect(skillAiming(bare, UNIT_DEFS, [bare], terrain)?.candidates ?? []).toEqual([]);
+
+    const aim = skillAiming(self, UNIT_DEFS, [self], terrain);
+    expect(aim?.candidates).toEqual(['p1']);
+  });
 });
 
 describe('技能表形状与效果口径一致', () => {

@@ -7,9 +7,11 @@ import type {
 } from '@/data/skillCatalog';
 
 /**
- * 战局新回合开始时调用：所有单位限时效果 `roundsLeft` -1，并结算中毒伤害。
+ * 战局新回合开始时调用：所有单位限时效果 `roundsLeft` -1，并结算中毒 / 流血伤害。
  *
- * 返回中毒造成的扣血，交给引擎转成飘字——不返回的话中毒就是「血条自己少了一截」，
+ * 冰冻不在这里递减——它是「下一次行动跳过」的代币，轮到那个人出手时才消耗。
+ *
+ * 返回持续伤害造成的扣血，交给引擎转成飘字——不返回的话就是「血条自己少了一截」，
  * 玩家根本对不上是哪个词条在起作用，那这个词条选了等于没选。
  */
 export function tickTimedBattleEffects(units: UnitState[]): PoisonTick[] {
@@ -21,18 +23,41 @@ export function tickTimedBattleEffects(units: UnitState[]): PoisonTick[] {
     }
     if (!u.timedBattleEffects?.length) continue;
 
-    // 先扣毒伤再递减层数：这样「持续 2 回合」真的跳 2 次伤害。
+    // 先扣持续伤害再递减层数：这样「持续 2 回合」真的跳 2 次伤害。
     let poison = 0;
+    let bleed = 0;
     for (const e of u.timedBattleEffects) {
       if (e.kind === 'poison' && e.roundsLeft > 0) poison += e.dmgPerRound;
+      if (e.kind === 'bleed' && e.roundsLeft > 0) bleed += e.dmgPerRound;
     }
     if (poison > 0) {
       u.hp -= poison;
-      ticks.push({ uid: u.uid, damage: poison, hpLeft: Math.max(0, u.hp), died: u.hp <= 0 });
+      ticks.push({
+        uid: u.uid,
+        damage: poison,
+        hpLeft: Math.max(0, u.hp),
+        died: u.hp <= 0,
+        source: 'poison',
+      });
+    }
+    if (bleed > 0 && u.hp > 0) {
+      u.hp -= bleed;
+      ticks.push({
+        uid: u.uid,
+        damage: bleed,
+        hpLeft: Math.max(0, u.hp),
+        died: u.hp <= 0,
+        source: 'bleed',
+      });
     }
 
     const next: TimedBattleEffect[] = [];
     for (const e of u.timedBattleEffects) {
+      if (e.kind === 'freeze') {
+        // 冰冻等出手时消耗，轮首原样留下
+        if (e.roundsLeft > 0) next.push({ kind: 'freeze', roundsLeft: e.roundsLeft });
+        continue;
+      }
       const left = e.roundsLeft - 1;
       if (left <= 0) continue;
       switch (e.kind) {
@@ -59,6 +84,9 @@ export function tickTimedBattleEffects(units: UnitState[]): PoisonTick[] {
             ...(e.theme === 'frost' ? { theme: 'frost' as const } : {}),
           });
           break;
+        case 'bleed':
+          next.push({ kind: 'bleed', dmgPerRound: e.dmgPerRound, roundsLeft: left });
+          break;
         case 'guard':
           next.push({ kind: 'guard', reduceRatio: e.reduceRatio, roundsLeft: left });
           break;
@@ -70,12 +98,21 @@ export function tickTimedBattleEffects(units: UnitState[]): PoisonTick[] {
   return ticks;
 }
 
-/** 一次轮首中毒结算 */
+/** 一次轮首持续伤害结算 */
 export interface PoisonTick {
   uid: string;
   damage: number;
   hpLeft: number;
   died: boolean;
+  source: 'poison' | 'bleed';
+}
+
+/** 命中后实际挂上的敌方状态，给 hit 打标 / 回放用 */
+export interface AppliedFoeFlags {
+  poisoned?: true;
+  frostbitten?: true;
+  bleeding?: true;
+  frozen?: true;
 }
 
 /** 成功施放技能后：施加 `onCastSelfEffects`（嘲讽同类新盖旧；攻击加成可多条并存） */
@@ -87,13 +124,34 @@ export function applySkillCastSelfEffects(self: UnitState, spec: SkillSpec): voi
   self.timedBattleEffects = list.length ? list : undefined;
 }
 
-/** 对技能选中的敌方施加 `onCastFoeEffects`（同类 atkDown / spdDown 新盖旧） */
-export function applySkillCastFoeEffects(target: UnitState, spec: SkillSpec): void {
+function foeEffectHits(e: SkillCastFoeEffect, rng: () => number): boolean {
+  return e.chance == null || rng() < e.chance;
+}
+
+/** 对技能选中的敌方施加 `onCastFoeEffects`（同类 atkDown / spdDown / 流血 / 冰冻 新盖旧） */
+export function applySkillCastFoeEffects(
+  target: UnitState,
+  spec: SkillSpec,
+  rng: () => number = Math.random,
+): AppliedFoeFlags {
+  const flags: AppliedFoeFlags = {};
   const raw = spec.onCastFoeEffects;
-  if (!raw?.length) return;
+  if (!raw?.length) return flags;
   let list = [...(target.timedBattleEffects ?? [])];
-  for (const e of raw) list = mergeFoeCastEffect(list, e);
+  for (const e of raw) {
+    if (!foeEffectHits(e, rng)) continue;
+    list = mergeFoeCastEffect(list, e);
+    if (e.kind === 'poison') {
+      if (e.theme === 'frost') flags.frostbitten = true;
+      else flags.poisoned = true;
+    } else if (e.kind === 'bleed') {
+      flags.bleeding = true;
+    } else if (e.kind === 'freeze') {
+      flags.frozen = true;
+    }
+  }
   target.timedBattleEffects = list.length ? list : undefined;
+  return flags;
 }
 
 /** 对技能选中的友方施加 `onCastAllyEffects`（与自身 buff 共用 `TimedBattleEffect`，可多条并存） */
@@ -145,26 +203,65 @@ function mergeGuard(
 }
 
 function mergeFoeCastEffect(list: TimedBattleEffect[], e: SkillCastFoeEffect): TimedBattleEffect[] {
-  if (e.kind === 'atkDown') {
-    const rest = list.filter((x) => x.kind !== 'atkDown');
-    return [...rest, { kind: 'atkDown', subAtk: e.subAtk, roundsLeft: e.rounds }];
+  switch (e.kind) {
+    case 'atkDown': {
+      const rest = list.filter((x) => x.kind !== 'atkDown');
+      return [...rest, { kind: 'atkDown', subAtk: e.subAtk, roundsLeft: e.rounds }];
+    }
+    case 'spdDown': {
+      const rest = list.filter((x) => x.kind !== 'spdDown');
+      return [...rest, { kind: 'spdDown', subSpd: e.subSpd, roundsLeft: e.rounds }];
+    }
+    case 'poison': {
+      // 毒也是新盖旧：多层「淬毒」在词条侧已经合成一条更高的 dmgPerRound，
+      // 这里再叠加就成了同一个词条按施放次数无限翻倍。
+      const rest = list.filter((x) => x.kind !== 'poison');
+      return [
+        ...rest,
+        {
+          kind: 'poison',
+          dmgPerRound: e.dmgPerRound,
+          roundsLeft: e.rounds,
+          ...(e.theme === 'frost' ? { theme: 'frost' as const } : {}),
+        },
+      ];
+    }
+    case 'bleed': {
+      const rest = list.filter((x) => x.kind !== 'bleed');
+      return [...rest, { kind: 'bleed', dmgPerRound: e.dmgPerRound, roundsLeft: e.rounds }];
+    }
+    case 'freeze': {
+      const rest = list.filter((x) => x.kind !== 'freeze');
+      return [...rest, { kind: 'freeze', roundsLeft: e.rounds }];
+    }
   }
-  if (e.kind === 'poison') {
-    // 毒也是新盖旧：多层「淬毒」在词条侧已经合成一条更高的 dmgPerRound，
-    // 这里再叠加就成了同一个词条按施放次数无限翻倍。
-    const rest = list.filter((x) => x.kind !== 'poison');
-    return [
-      ...rest,
-      {
-        kind: 'poison',
-        dmgPerRound: e.dmgPerRound,
-        roundsLeft: e.rounds,
-        ...(e.theme === 'frost' ? { theme: 'frost' as const } : {}),
-      },
-    ];
+}
+
+export function unitHasFreeze(u: UnitState): boolean {
+  return (u.timedBattleEffects ?? []).some((x) => x.kind === 'freeze' && x.roundsLeft > 0);
+}
+
+export function unitHasBleed(u: UnitState): boolean {
+  return (u.timedBattleEffects ?? []).some((x) => x.kind === 'bleed' && x.roundsLeft > 0);
+}
+
+/** 轮到该单位出手时调用：有冰冻就消耗一层并返回 true（调用方跳过整回合） */
+export function consumeFreeze(u: UnitState): boolean {
+  const list = u.timedBattleEffects ?? [];
+  const idx = list.findIndex((x) => x.kind === 'freeze' && x.roundsLeft > 0);
+  if (idx < 0) return false;
+  const next: TimedBattleEffect[] = [];
+  for (let i = 0; i < list.length; i += 1) {
+    const e = list[i]!;
+    if (i === idx && e.kind === 'freeze') {
+      if (e.roundsLeft > 1) next.push({ kind: 'freeze', roundsLeft: e.roundsLeft - 1 });
+      continue;
+    }
+    next.push(e);
   }
-  const rest = list.filter((x) => x.kind !== 'spdDown');
-  return [...rest, { kind: 'spdDown', subSpd: e.subSpd, roundsLeft: e.rounds }];
+  if (next.length === 0) delete u.timedBattleEffects;
+  else u.timedBattleEffects = next;
+  return true;
 }
 
 function mergeAllyCastEffect(list: TimedBattleEffect[], e: SkillCastAllyEffect): TimedBattleEffect[] {

@@ -52,6 +52,11 @@ export interface UnitBaseBlock {
 export type TimedBattleEffect =
   | { kind: 'taunt'; roundsLeft: number }
   | { kind: 'poison'; dmgPerRound: number; roundsLeft: number; theme?: 'poison' | 'frost' }
+  | { kind: 'bleed'; dmgPerRound: number; roundsLeft: number }
+  /**
+   * 冰冻：不在轮首递减。轮到该单位出手时消耗一层并跳过整回合。
+   */
+  | { kind: 'freeze'; roundsLeft: number }
   | { kind: 'atkBonus'; addAtk: number; roundsLeft: number }
   | { kind: 'atkDown'; subAtk: number; roundsLeft: number }
   | { kind: 'spdDown'; subSpd: number; roundsLeft: number }
@@ -237,6 +242,10 @@ export type SkillHit = {
    * 和 `poisoned` 互斥：结算都走 poison，画面按 theme 分开。
    */
   frostbitten?: true;
+  /** 这一击挂上了流血。回放飘「流血」，和中毒紫雾分开。 */
+  bleeding?: true;
+  /** 这一击挂上了冰冻。回放叠霜晶并飘「冰冻」。 */
+  frozen?: true;
   /**
    * 溅射命中（不是主目标）。回放层据此叠「周围伤」闪光，
    * 主目标只播技能自己的命中，避免主目标身上两套特效糊在一起。
@@ -338,7 +347,7 @@ export type BattleEvent =
    * 以前这类扣血只改 `hp` 不发事件，表现是血条无缘无故短一截，玩家对不上原因。
    * 「淬毒」词条要是也这样，就完全看不出选它有什么用。
    */
-  | { type: 'dot'; uid: string; damage: number; hpLeft: number; source: 'poison' | 'terrain' }
+  | { type: 'dot'; uid: string; damage: number; hpLeft: number; source: 'poison' | 'bleed' | 'terrain' }
   /** 治疗（药剂、吸血等）：单个目标回复 */
   | { type: 'heal'; target: string; amount: number; hpLeft: number }
   /**

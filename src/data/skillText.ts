@@ -56,7 +56,9 @@ export function describeSkillRangeCaption(spec: SkillSpec): string {
         ? `同行或同列 ${describeReach(shape.manhattan, shape.reach)}\n点选一个敌人`
         : `${describeReach(shape.manhattan, shape.reach)}\n点选一个敌人`;
     case 'neighborPickAlly':
-      return `${describeReach(shape.manhattan, shape.reach)}\n点选一个友方`;
+      return shape.includeSelf
+        ? `${describeReach(shape.manhattan, shape.reach)}\n点选一个友方或自己`
+        : `${describeReach(shape.manhattan, shape.reach)}\n点选一个友方`;
     case 'selfCast':
       return '对自己释放\n无需选择目标';
     case 'lineBestRayAllFoes':
@@ -162,10 +164,18 @@ export function describeSkillSpec(spec: SkillSpec): string[] {
       case 'spdDown': out.push(`敌方速度 -${e.subSpd}，${e.rounds} 回合`); break;
       case 'poison':
         out.push(
-          e.theme === 'frost'
-            ? `冻伤: 每回合 -${e.dmgPerRound} 血，${e.rounds} 回合`
-            : `中毒: 每回合 -${e.dmgPerRound} 血，${e.rounds} 回合`,
+          `${chancePrefix(e)}${
+            e.theme === 'frost'
+              ? `冻伤: 每回合 -${e.dmgPerRound} 血，${e.rounds} 回合`
+              : `中毒: 每回合 -${e.dmgPerRound} 血，${e.rounds} 回合`
+          }`,
         );
+        break;
+      case 'bleed':
+        out.push(`${chancePrefix(e)}流血: 每回合 -${e.dmgPerRound} 血，${e.rounds} 回合`);
+        break;
+      case 'freeze':
+        out.push(`${chancePrefix(e)}冰冻敌人 ${e.rounds} 回合（跳过下一次行动）`);
         break;
       default: exhausted(e);
     }
@@ -174,7 +184,13 @@ export function describeSkillSpec(spec: SkillSpec): string[] {
     switch (e.kind) {
       case 'atkBonus': out.push(`友方攻击 +${e.addAtk}，${e.rounds} 回合`); break;
       case 'spdBonus': out.push(`友方速度 +${e.addSpd}，${e.rounds} 回合`); break;
-      case 'heal': out.push(`治疗友方 ${e.amount} 点生命`); break;
+      case 'heal':
+        out.push(
+          spec.shape.type === 'neighborPickAlly' && spec.shape.includeSelf
+            ? `治疗友方或自己 ${e.amount} 点生命`
+            : `治疗友方 ${e.amount} 点生命`,
+        );
+        break;
       case 'guard': out.push(`友方受到伤害 -${pctOf(e.reduceRatio)}，${e.rounds} 回合`); break;
       default: exhausted(e);
     }
@@ -198,6 +214,10 @@ const TERRAIN_EFFECT_TEXT: Record<SkillCastTerrainEffect['kind'], string> = {
 
 function pctOf(ratio: number): string {
   return `${Math.round(ratio * 100)}%`;
+}
+
+function chancePrefix(e: { chance?: number }): string {
+  return e.chance == null ? '' : `${Math.round(e.chance * 100)}%几率`;
 }
 
 /**

@@ -21,6 +21,9 @@ import {
   applySkillCastAllyEffects,
   applySkillCastFoeEffects,
   applySkillCastSelfEffects,
+  type AppliedFoeFlags,
+  unitHasBleed,
+  unitHasFreeze,
 } from './timedBattleEffects';
 import { canProfessionEquipSkill, getSkillSpec, type SkillSpec } from '@/data/skillCatalog';
 import { applyEliteTempSkillBoost } from '@/data/eliteCatalog';
@@ -257,6 +260,19 @@ function alliesWithinManhattanExcludingSelf(
   });
 }
 
+function allyPickPool(
+  self: UnitState,
+  units: UnitState[],
+  dist: number,
+  reach: 'exact' | 'within' | undefined,
+  includeSelf: boolean | undefined,
+): UnitState[] {
+  const others = reach === 'within'
+    ? alliesWithinManhattanExcludingSelf(self, units, dist)
+    : alliesAtManhattanExcludingSelf(self, units, dist);
+  return includeSelf ? [self, ...others] : others;
+}
+
 /**
  * 调用方没指定目标时的策略回退。点谁不是技能字段——玩家点谁打谁，
  * AI 才按这条规则选。口径和普攻 normal 对齐：敌人打最低血；
@@ -407,6 +423,10 @@ function pushAttrNotes(
         events.push({ type: 'statusNote', target: t.uid, text: `攻-${e.subAtk}`, tone: 'debuff' });
       } else if (e.kind === 'spdDown') {
         events.push({ type: 'statusNote', target: t.uid, text: `速-${e.subSpd}`, tone: 'debuff' });
+      } else if (e.kind === 'bleed' && unitHasBleed(t)) {
+        events.push({ type: 'statusNote', target: t.uid, text: '流血', tone: 'debuff' });
+      } else if (e.kind === 'freeze' && unitHasFreeze(t)) {
+        events.push({ type: 'statusNote', target: t.uid, text: '冰冻', tone: 'debuff' });
       }
     }
   }
@@ -459,9 +479,20 @@ function resolveHit(
     guardNote: guardNote(effectiveUnitDef(tgt, defs)) ?? undefined,
     modNote,
     crit: crit || undefined,
-    poisoned: specAppliesPoison(spec) || undefined,
-    frostbitten: specAppliesFrost(spec) || undefined,
   };
+}
+
+function stampFoeHitFlags(hits: SkillHit[], uid: string, flags: AppliedFoeFlags): void {
+  const h = hits.find((x) => x.target === uid && !x.splash);
+  if (!h) return;
+  if (flags.poisoned) h.poisoned = true;
+  if (flags.frostbitten) h.frostbitten = true;
+  if (flags.bleeding) h.bleeding = true;
+  if (flags.frozen) h.frozen = true;
+}
+
+function applyFoeEffectsAndStamp(target: UnitState, spec: SkillSpec, hits: SkillHit[]): void {
+  stampFoeHitFlags(hits, target.uid, applySkillCastFoeEffects(target, spec, hitRng));
 }
 
 /**
@@ -477,6 +508,14 @@ export function specAppliesPoison(spec: SkillSpec): boolean {
 /** 霜噬：挂冻伤，回放叠竖向霜晶，不叠紫雾。 */
 export function specAppliesFrost(spec: SkillSpec): boolean {
   return spec.onCastFoeEffects?.some((e) => e.kind === 'poison' && e.theme === 'frost') ?? false;
+}
+
+export function specAppliesBleed(spec: SkillSpec): boolean {
+  return spec.onCastFoeEffects?.some((e) => e.kind === 'bleed') ?? false;
+}
+
+export function specAppliesFreeze(spec: SkillSpec): boolean {
+  return spec.onCastFoeEffects?.some((e) => e.kind === 'freeze') ?? false;
 }
 
 /**
@@ -582,7 +621,7 @@ function castAreaAoE(
     if (spec.damage.kind !== 'none') {
       hits.push(resolveHit(self, def, spec, t, terrain, defs));
     }
-    applySkillCastFoeEffects(t, spec);
+    applyFoeEffectsAndStamp(t, spec, hits);
   }
   const events: BattleEvent[] = [
     {
@@ -633,7 +672,7 @@ function castGroundPickAoE(
     if (spec.damage.kind !== 'none') {
       hits.push(resolveHit(self, def, spec, t, terrain, defs));
     }
-    applySkillCastFoeEffects(t, spec);
+    applyFoeEffectsAndStamp(t, spec, hits);
   }
   const events: BattleEvent[] = [
     {
@@ -748,7 +787,7 @@ function castNeighborPickFoe(
     },
   ];
   pushHitDeaths(events, units, hits);
-  applySkillCastFoeEffects(tgt, spec);
+  applyFoeEffectsAndStamp(tgt, spec, hits);
   applySkillCastSelfEffects(self, spec);
   pushAttrNotes(events, spec, { self, foes: [tgt] });
   pushLifesteal(self, spec, hits, defs, events);
@@ -859,11 +898,10 @@ function castNeighborPickAlly(
   dist: number,
   chosenUid?: string,
   reach?: 'exact' | 'within',
+  includeSelf?: boolean,
 ): BattleEvent[] {
   const within = reach === 'within';
-  const allies = within
-    ? alliesWithinManhattanExcludingSelf(self, units, dist)
-    : alliesAtManhattanExcludingSelf(self, units, dist);
+  const allies = allyPickPool(self, units, dist, reach, includeSelf);
   const tgt = resolveChoice(allies, chosenUid, () => fallbackSkillTarget(spec, allies, defs));
   if (!tgt) return [];
   // 友方治疗/buff：不要 resolveHit，否则无伤也会被当成「打了友军 0 点」
@@ -955,7 +993,7 @@ function castLineBestRay(
   for (const t of line) {
     if (t.hp <= 0) continue;
     hits.push(resolveHit(self, def, spec, t, terrain, defs));
-    applySkillCastFoeEffects(t, spec);
+    applyFoeEffectsAndStamp(t, spec, hits);
   }
   if (hits.length === 0) return [];
   const events: BattleEvent[] = [
@@ -1234,9 +1272,7 @@ export function skillAiming(
     case 'neighborPickAlly': {
       const within = spec.shape.reach === 'within';
       const d = spec.shape.manhattan;
-      const raw = within
-        ? alliesWithinManhattanExcludingSelf(self, units, d)
-        : alliesAtManhattanExcludingSelf(self, units, d);
+      const raw = allyPickPool(self, units, d, spec.shape.reach, spec.shape.includeSelf);
       const heals = spec.onCastAllyEffects?.some((e) => e.kind === 'heal');
       const allies = heals
         ? raw.filter((a) => a.hp < effectiveUnitDef(a, defs).maxHp)
@@ -1396,7 +1432,7 @@ function castByShape(
     case 'neighborPickAlly':
       return castNeighborPickAlly(
         self, def, spec, units, terrain, defs,
-        spec.shape.manhattan, targetUid, spec.shape.reach,
+        spec.shape.manhattan, targetUid, spec.shape.reach, spec.shape.includeSelf,
       );
     case 'groundPickAoE':
       return castGroundPickAoE(

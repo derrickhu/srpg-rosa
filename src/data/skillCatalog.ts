@@ -98,13 +98,14 @@ export type SkillShape =
       axisOnly?: boolean;
     }
   /**
-   * 选**一个**友方（不含自身）。`reach` 和 `neighborPickFoe` 同口径：
-   * 缺省 `exact` 是环，`within` 是半径内整片（圣疗这类远程治疗要用）。
+   * 选**一个**友方。默认不含自身；`includeSelf` 打开后可以点自己（圣疗专属「回春」）。
+   * `reach` 和 `neighborPickFoe` 同口径：缺省 `exact` 是环，`within` 是半径内整片。
    */
   | {
       type: 'neighborPickAlly';
       manhattan: number;
       reach?: 'exact' | 'within';
+      includeSelf?: boolean;
     }
   /**
    * 只对自身生效（嘲讽 / 自 buff）。
@@ -123,15 +124,27 @@ export type SkillCastSelfEffect =
   /** 减伤：受到的攻击/技能伤害 ×(1 - `reduceRatio`)，见 `TimedBattleEffect` 的 `guard` */
   | { kind: 'guard'; reduceRatio: number; rounds: number };
 
-/** 对选中敌方单位施加的限时 debuff（成功施放且命中目标后） */
+/**
+ * 对选中敌方单位施加的限时 debuff（成功施放且命中目标后）。
+ *
+ * `chance` 缺省 = 必定挂上。写了之后按 `hitRng` 掷一次，没中就不进 `timedBattleEffects`，
+ * 回放也不该飘对应状态——几率词条「看起来每次都上」等于把概率写成了装饰。
+ */
 export type SkillCastFoeEffect =
-  | { kind: 'atkDown'; subAtk: number; rounds: number }
-  | { kind: 'spdDown'; subSpd: number; rounds: number }
+  | { kind: 'atkDown'; subAtk: number; rounds: number; chance?: number }
+  | { kind: 'spdDown'; subSpd: number; rounds: number; chance?: number }
   /**
    * 持续扣血。结算同一条（每轮开始、无视克制与地形），**玩家看到的名字和特效按 `theme` 分**：
    * 缺省 / `poison` = 中毒（紫雾）；`frost` = 冻伤（霜噬，竖向霜晶）。
    */
-  | { kind: 'poison'; dmgPerRound: number; rounds: number; theme?: 'poison' | 'frost' };
+  | { kind: 'poison'; dmgPerRound: number; rounds: number; theme?: 'poison' | 'frost'; chance?: number }
+  /** 流血：和中毒分条并存，轮首各跳各的伤害，飘「血-N」而不是紫雾。 */
+  | { kind: 'bleed'; dmgPerRound: number; rounds: number; chance?: number }
+  /**
+   * 冰冻：目标下一次行动整回合跳过（不能移动、放技能、普攻）。
+   * 不在轮首递减，轮到他出手时消耗一层——否则 `rounds: 1` 会在他行动前就被 tick 掉。
+   */
+  | { kind: 'freeze'; rounds: number; chance?: number };
 
 /** 对选中友方单位施加的限时 buff（成功施放且命中目标后） */
 export type SkillCastAllyEffect =
@@ -1298,6 +1311,7 @@ const SPECS: Record<string, SkillSpec> = {
   /**
    * 祭司默认：2 格内点一名友军，纯治疗。`reach: 'within'` 才能贴脸也救到人。
    * 普攻仍是打敌人的弱远程，治疗只走这一招（有冷却），不会每回合白抬血。
+   * 专属「回春」打开 `includeSelf` 之后才能点自己。
    */
   heal_touch: {
     id: 'heal_touch',

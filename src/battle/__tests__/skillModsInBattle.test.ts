@@ -128,7 +128,7 @@ describe('词条在实际战斗中生效', () => {
 
     const hpAfterCast = foe.hp;
     const t1 = tickTimedBattleEffects([foe]);
-    expect(t1).toEqual([{ uid: 'e1', damage: 3, hpLeft: hpAfterCast - 3, died: false }]);
+    expect(t1).toEqual([{ uid: 'e1', damage: 3, hpLeft: hpAfterCast - 3, died: false, source: 'poison' }]);
 
     const t2 = tickTimedBattleEffects([foe]);
     expect(t2[0]!.damage).toBe(3);
@@ -263,5 +263,105 @@ describe('词条在实际战斗中生效', () => {
     const foe = dummy('e2', { x: 3, y: 2 });
     castSkillManual(clean, DEFS, [clean, foe], FLAT);
     expect(foe.timedBattleEffects ?? []).toEqual([]);
+  });
+
+  it('裂伤掷中才挂流血，没命中不挂', () => {
+    const hitSelf = hero({ x: 3, y: 3 }, ['ex_whirl_bleed']);
+    const hitFoe = dummy('hit', { x: 3, y: 2 });
+    setHitRng(() => 0);
+    const hitEvs = castSkillManual(hitSelf, DEFS, [hitSelf, hitFoe], FLAT);
+    expect(hitFoe.timedBattleEffects).toContainEqual({ kind: 'bleed', dmgPerRound: 6, roundsLeft: 2 });
+    expect(rawSkillHits(hitEvs)[0]?.bleeding).toBe(true);
+    expect(hitEvs).toContainEqual({ type: 'statusNote', target: 'hit', text: '流血', tone: 'debuff' });
+
+    const missSelf = hero({ x: 3, y: 3 }, ['ex_whirl_bleed']);
+    const missFoe = dummy('miss', { x: 3, y: 2 });
+    setHitRng(() => 1);
+    const missEvs = castSkillManual(missSelf, DEFS, [missSelf, missFoe], FLAT);
+    expect(missFoe.timedBattleEffects ?? []).toEqual([]);
+    expect(rawSkillHits(missEvs)[0]?.bleeding).toBeUndefined();
+    expect(missEvs.some((e) => e.type === 'statusNote' && e.text === '流血')).toBe(false);
+  });
+
+  it('流血在之后的轮首持续扣血', () => {
+    const self = hero({ x: 3, y: 3 }, ['ex_whirl_bleed']);
+    const foe = dummy('e1', { x: 3, y: 2 });
+    setHitRng(() => 0);
+    castSkillManual(self, DEFS, [self, foe], FLAT);
+    const hpAfterCast = foe.hp;
+    expect(tickTimedBattleEffects([foe])).toEqual([
+      { uid: 'e1', damage: 6, hpLeft: hpAfterCast - 6, died: false, source: 'bleed' },
+    ]);
+    expect(tickTimedBattleEffects([foe])[0]!.damage).toBe(6);
+    expect(tickTimedBattleEffects([foe])).toEqual([]);
+  });
+
+  it('霜域把霜环爆炸半径扩到 2 格', () => {
+    const self: UnitState = {
+      uid: 'floe',
+      defId: 'mage',
+      faction: 'player',
+      hp: 50,
+      pos: { x: 3, y: 3 },
+      skillCd: 0,
+      movedInTurn: false,
+      battleSkill: { id: 'frost_ring', name: '霜环', cooldown: 3, kind: 'whirlwind' },
+      skillMods: ['ex_frost_spread'],
+    };
+    const near = dummy('near', { x: 3, y: 2 });
+    const far = dummy('far', { x: 3, y: 1 });
+    const hits = skillHits(
+      castSkillManual(self, DEFS, [self, near, far], FLAT, undefined, 'main', { x: 3, y: 3 }),
+    );
+    expect(hits.map((h) => h.target).sort()).toEqual(['far', 'near']);
+  });
+
+  it('凝霜掷中才冰冻', () => {
+    const makeFloe = (mods: string[]): UnitState => ({
+      uid: 'floe',
+      defId: 'mage',
+      faction: 'player',
+      hp: 50,
+      pos: { x: 3, y: 3 },
+      skillCd: 0,
+      movedInTurn: false,
+      battleSkill: { id: 'frost_ring', name: '霜环', cooldown: 3, kind: 'whirlwind' },
+      skillMods: mods,
+    });
+    const hitSelf = makeFloe(['ex_frost_freeze']);
+    const hitFoe = dummy('e1', { x: 3, y: 2 });
+    setHitRng(() => 0);
+    const hitEvs = castSkillManual(
+      hitSelf, DEFS, [hitSelf, hitFoe], FLAT,
+      undefined, 'main', { x: 3, y: 2 },
+    );
+    expect(hitFoe.timedBattleEffects).toContainEqual({ kind: 'freeze', roundsLeft: 1 });
+    expect(rawSkillHits(hitEvs)[0]?.frozen).toBe(true);
+
+    const missSelf = makeFloe(['ex_frost_freeze']);
+    const missFoe = dummy('e2', { x: 3, y: 2 });
+    setHitRng(() => 1);
+    castSkillManual(
+      missSelf, DEFS, [missSelf, missFoe], FLAT,
+      undefined, 'main', { x: 3, y: 2 },
+    );
+    expect(missFoe.timedBattleEffects ?? []).toEqual([]);
+  });
+
+  it('回春让圣疗能点自己', () => {
+    const self: UnitState = {
+      uid: 'healer',
+      defId: 'healer',
+      faction: 'player',
+      hp: 40,
+      pos: { x: 3, y: 3 },
+      skillCd: 0,
+      movedInTurn: false,
+      battleSkill: { id: 'heal_touch', name: '圣疗', cooldown: 2, kind: 'whirlwind' },
+      skillMods: ['ex_heal_self'],
+    };
+    const events = castSkillManual(self, DEFS, [self], FLAT, 'healer');
+    expect(events.some((e) => e.type === 'heal' && e.target === 'healer' && e.amount > 0)).toBe(true);
+    expect(self.hp).toBeGreaterThan(40);
   });
 });

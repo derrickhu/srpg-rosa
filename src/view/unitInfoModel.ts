@@ -111,6 +111,10 @@ function describeTimedEffect(e: TimedBattleEffect): string {
       return e.theme === 'frost'
         ? `冻伤: 每回合 -${e.dmgPerRound} 血（剩 ${e.roundsLeft} 回合）`
         : `中毒: 每回合 -${e.dmgPerRound} 血（剩 ${e.roundsLeft} 回合）`;
+    case 'bleed':
+      return `流血: 每回合 -${e.dmgPerRound} 血（剩 ${e.roundsLeft} 回合）`;
+    case 'freeze':
+      return '冰冻: 下一次行动无法出手';
     case 'atkBonus': return `攻击 +${e.addAtk}（剩 ${e.roundsLeft} 回合）`;
     case 'atkDown': return `攻击 -${e.subAtk}（剩 ${e.roundsLeft} 回合）`;
     case 'spdBonus': return `速度 +${e.addSpd}（剩 ${e.roundsLeft} 回合）`;

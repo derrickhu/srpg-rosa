@@ -835,6 +835,20 @@ const EXCLUSIVE_SEEDS: readonly ModSeed[] = [
     describe: () => '旋风斩：对血量低于 50% 的敌人，伤害提升 80%',
     apply: (spec) => withExecute(spec, 0.5, 1.8),
   },
+  /**
+   * 雷恩第三条。旋势改自己、斩残改残血，缺的是「砍完还在掉血」。
+   * 放在斩残后面当史诗：解锁仍是 2 / 6 / 10，不会把已经开过的两条挤级。
+   */
+  {
+    id: 'ex_whirl_bleed',
+    name: '裂伤',
+    rarity: 'epic',
+    maxStacks: 1,
+    only: ['whirl'],
+    fits: () => true,
+    describe: () => '旋风斩：40% 几率使敌人流血，每回合 -6 血（2 回合）',
+    apply: (spec) => mergeFoe(spec, { kind: 'bleed', dmgPerRound: 6, rounds: 2, chance: 0.4 }),
+  },
   {
     id: 'ex_blade_rush_break',
     name: '破军',
@@ -980,6 +994,26 @@ const EXCLUSIVE_SEEDS: readonly ModSeed[] = [
     apply: (spec) => mergeFoe(spec, { kind: 'poison', dmgPerRound: 4, rounds: 2, theme: 'frost' }),
   },
   {
+    id: 'ex_frost_spread',
+    name: '霜域',
+    rarity: 'rare',
+    maxStacks: 1,
+    only: ['frost_ring'],
+    fits: (spec) => spec.shape.type === 'groundPickAoE',
+    describe: () => '霜环：爆炸范围扩大 1 格',
+    apply: (spec) => widenAoE(spec, 1),
+  },
+  {
+    id: 'ex_frost_freeze',
+    name: '凝霜',
+    rarity: 'epic',
+    maxStacks: 1,
+    only: ['frost_ring'],
+    fits: () => true,
+    describe: () => '霜环：40% 几率冰冻敌人 1 回合，被冻住的敌人跳过下一次行动',
+    apply: (spec) => mergeFoe(spec, { kind: 'freeze', rounds: 1, chance: 0.4 }),
+  },
+  {
     id: 'ex_heal_spring',
     name: '涌泉',
     rarity: 'rare',
@@ -1002,6 +1036,23 @@ const EXCLUSIVE_SEEDS: readonly ModSeed[] = [
     fits: () => true,
     describe: () => '圣疗：目标额外获得 40% 减伤，持续 3 回合',
     apply: (spec) => setAlly(spec, { kind: 'guard', reduceRatio: 0.4, rounds: 3 }),
+  },
+  /**
+   * 弥尔第三条。涌泉加量、庇佑加盾，缺的是「没人可奶时自己也能喝一口」。
+   * 史诗排在庇佑后面，解锁仍是 2 / 6 / 10。
+   */
+  {
+    id: 'ex_heal_self',
+    name: '回春',
+    rarity: 'epic',
+    maxStacks: 1,
+    only: ['heal_touch'],
+    fits: (spec) => spec.shape.type === 'neighborPickAlly',
+    describe: () => '圣疗：治疗可以释放给自己',
+    apply: (spec) => {
+      if (spec.shape.type !== 'neighborPickAlly') return spec;
+      return { ...spec, shape: { ...spec.shape, includeSelf: true } };
+    },
   },
   {
     id: 'ex_ward_aegis',
@@ -1115,7 +1166,7 @@ const RARITY_WEIGHT: Record<SkillModRarity, number> = {
 /**
  * 专属词条的权重加成。
  *
- * 每招只有一两条专属，而普通词条一招能挂七八条，均匀抽的话专属基本见不到，
+ * 每招只有几条专属，而普通词条一招能挂七八条，均匀抽的话专属基本见不到，
  * 玩家一整局也遇不上一次「这招的招牌强化」。乘个系数把它拉回可感知的频率。
  */
 const EXCLUSIVE_WEIGHT_BONUS = 1.8;

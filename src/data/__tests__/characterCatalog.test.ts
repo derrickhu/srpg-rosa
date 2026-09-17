@@ -100,7 +100,7 @@ describe('角色之间的打法不能撞车', () => {
         case 'neighborPickFoe':
           return `pickFoe:${shape.manhattan}:${shape.reach ?? 'exact'}:${shape.axisOnly ? 'axis' : 'free'}`;
         case 'neighborPickAlly':
-          return `pickAlly:${shape.manhattan}:${shape.reach ?? 'exact'}`;
+          return `pickAlly:${shape.manhattan}:${shape.reach ?? 'exact'}:${shape.includeSelf ? 'self' : 'noself'}`;
         case 'lineBestRayAllFoes':
           return `line:${shape.range ?? 'inf'}`;
         case 'groundPickAoE':
