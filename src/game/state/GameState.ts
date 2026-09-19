@@ -280,6 +280,16 @@ export function activateRunLane(state: MvpGameState, lane: 'adventure' | 'challe
   return true;
 }
 
+/**
+ * 换章放弃框只给冒险页换另一章用。
+ * 无尽 / 试炼场走另一条线，不能当成「放弃密林再开无尽」。
+ */
+export function shouldConfirmAdventureSwitch(state: MvpGameState, nextDungeonId: string): boolean {
+  if (isEndlessDungeon(nextDungeonId) || isSandboxDungeon(nextDungeonId)) return false;
+  const current = adventureRunOf(state);
+  return !!current && current.dungeonId !== nextDungeonId;
+}
+
 /** 开新局前：把另一条线的进度停住，同线旧局直接丢掉 */
 export function prepareLaneForStart(state: MvpGameState, next: RunState): void {
   const nextIsChallenge = isChallengeLaneRun(next);

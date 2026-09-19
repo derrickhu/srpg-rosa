@@ -59,9 +59,8 @@ import {
   type RunState,
 } from './GameState';
 import {
-  ENDLESS_CLEAR_BONUS,
-  ENDLESS_MAX_WAVES,
-  ENDLESS_WAVE_SOUL,
+  endlessRecordBonus,
+  endlessWaveVictorySoul,
   isEndlessDungeon,
 } from '@/data/endlessCatalog';
 import { isSandboxDungeon } from '@/data/sandboxLab';
@@ -607,12 +606,10 @@ export function skipLoot(state: MvpGameState): void {
   run.lootAdRefreshCount = 0;
 }
 
-/** 是否已通关（节点走完） */
+/** 是否已通关（节点走完）。无尽没有终局，打到全灭才离场。 */
 export function isRunComplete(state: MvpGameState): boolean {
   const run = requireRun(state);
-  if (isEndlessDungeon(run.dungeonId)) {
-    return (run.endless?.clearedCurrent ?? false) && (run.endless?.wave ?? 0) >= ENDLESS_MAX_WAVES;
-  }
+  if (isEndlessDungeon(run.dungeonId)) return false;
   const d = currentDungeon(state);
   return run.nodeIndex >= d.nodes.length - 1;
 }
@@ -629,7 +626,7 @@ export function endlessWavesCleared(state: MvpGameState): number {
 }
 
 /**
- * 无尽一波胜利：当场给魂晶，非最后一波掷三选一。
+ * 无尽一波胜利：当场给魂晶（层数 + 每 10 波里程碑），并掷三选一。
  *
  * 不走 `applyVictory`：那条路径按节点首通发魂晶、按 `isRunComplete`（单节点恒真）
  * 跳过三选一，第一波就会被当成整章通关。
@@ -638,11 +635,11 @@ export function applyEndlessWaveVictory(state: MvpGameState): void {
   const run = requireRun(state);
   if (!run.endless) return;
   run.endless.clearedCurrent = true;
-  const soul = ENDLESS_WAVE_SOUL;
+  const soul = endlessWaveVictorySoul(run.endless.wave);
   state.meta.metaCurrency += soul;
   run.lastVictory = { gold: 0, soul, firstClear: false };
   run.lootAdRefreshCount = 0;
-  run.pendingLoot = isRunComplete(state) ? null : rollLoot(state);
+  run.pendingLoot = rollLoot(state);
 }
 
 /** 把还活着的我方记下来，供下一波原地接着打 */
@@ -686,18 +683,15 @@ export function continueEndlessWave(state: MvpGameState, lastUnits: readonly Uni
 }
 
 /**
- * 无尽结束（打完 / 全灭 / 放弃）：记下最高波，打完十波再给一笔通关奖。
- * 返回本次额外入账的魂晶（放弃和中途失败是 0，波次奖已经当场发过了）。
+ * 无尽结束（全灭 / 离开）：记下最高波；若破纪录再加「新纪录 − 旧纪录」魂晶。
+ * 波次奖和里程碑已经当场发过。返回这次破纪录入账的魂晶。
  */
 export function finishEndlessRun(state: MvpGameState): number {
   const waves = endlessWavesCleared(state);
   const prev = state.meta.endlessBestFloor ?? 0;
+  const bonus = endlessRecordBonus(prev, waves);
   if (waves > prev) state.meta.endlessBestFloor = waves;
-  let bonus = 0;
-  if (waves >= ENDLESS_MAX_WAVES) {
-    bonus = ENDLESS_CLEAR_BONUS;
-    state.meta.metaCurrency += bonus;
-  }
+  if (bonus > 0) state.meta.metaCurrency += bonus;
   state.run = null;
   state.phase = 'hub';
   return bonus;

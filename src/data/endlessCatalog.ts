@@ -3,11 +3,21 @@ import { playerDeployRowRange } from '@/battle/constants';
 import { getTerrainAt, gridSize, type TerrainGrid } from '@/battle/grid';
 import type { TroopKind, Vec2 } from '@/battle/types';
 import { getTerrainSpec } from '@/data/terrainSpec';
-import { CHAPTER1_ROOKIE, STAGES_MVP, type StageEnemySpawn } from '@/data/stagesMvp';
+import {
+  CHAPTER1_ROOKIE,
+  CHAPTER2_FOREST,
+  CHAPTER3_GARRISON,
+  CHAPTER4_MIRE,
+  CHAPTER5_DRAKE,
+  CHAPTER6_RITE,
+  STAGES_MVP,
+  type MookTemplate,
+  type StageEnemySpawn,
+} from '@/data/stagesMvp';
 import type { DungeonDef } from '@/data/dungeonCatalog';
 
 /**
- * 无尽试炼：同一张图、布阵一次、按波刷怪。
+ * 无尽试炼：同一张图、布阵一次、按波刷怪，打到全灭才结束。
  *
  * 不进 `DUNGEON_DEFS`——那张表是冒险页的章节列表。塞进去会多出一章「无尽试炼」，
  * 还会让「每个副本都有商店池」这类章节契约误伤它（它没有商店）。
@@ -15,13 +25,14 @@ import type { DungeonDef } from '@/data/dungeonCatalog';
  */
 export const ENDLESS_DUNGEON_ID = 'dungeon_endless';
 
-export const ENDLESS_MAX_WAVES = 10;
+/** 每清完这么多波发一笔里程碑魂晶（10 / 20 / 30…） */
+export const ENDLESS_MILESTONE_EVERY = 10;
 
-/** 清掉一波当场入账的魂晶。每波都给，才对得上「支持的波次越多奖励越多」。 */
+/** 里程碑当场入账的魂晶 */
+export const ENDLESS_MILESTONE_SOUL = 5;
+
+/** 第 1 波当场入账的魂晶；更高波见 `endlessWaveSoul`。 */
 export const ENDLESS_WAVE_SOUL = 1;
-
-/** 打完第 10 波的额外魂晶。没有这一笔的话第 10 波和前面 9 波没有区别。 */
-export const ENDLESS_CLEAR_BONUS = 5;
 
 /** 击杀掉药的概率。框架先给一个能看见掉落的数，后面再按手感调。 */
 export const ENDLESS_DROP_CHANCE = 0.35;
@@ -29,7 +40,7 @@ export const ENDLESS_DROP_CHANCE = 0.35;
 export const ENDLESS_DUNGEON: DungeonDef = {
   id: ENDLESS_DUNGEON_ID,
   name: '无尽试炼',
-  desc: '同一战场连续迎敌，最多十波。没有补给点，击杀掉落的药剂要走过去待机拾取。没拾取的会留到下一波；敌人走到那格就没了。',
+  desc: '同一战场连续迎敌，直到全队倒下。没有补给点，击杀掉落的药剂要走过去待机拾取。没拾取的会留到下一波；敌人走到那格就没了。',
   // 单节点只用来给存档和 currentStage 一个落点；波次推进不走 nodeIndex
   nodes: [{ kind: 'battle', name: '试炼场', stageIndex: 0, enemyScale: 1 }],
   roguelikePool: [],
@@ -59,9 +70,45 @@ export function endlessWaveCount(wave: number): number {
   return Math.min(6, 2 + Math.floor((Math.max(1, wave) - 1) / 2));
 }
 
-/** 第 `wave` 波的数值缩放。第 1 波和第一章开局同级，后面每波 +15%。 */
+/**
+ * 第 `wave` 波的数值缩放。
+ * 前 10 波每波 +15%；第 10 波以后每波 +20%，避免后期只靠堆血。
+ */
 export function endlessWaveScale(wave: number): number {
-  return 1 + (Math.max(1, wave) - 1) * 0.15;
+  const w = Math.max(1, wave);
+  if (w <= ENDLESS_MILESTONE_EVERY) return 1 + (w - 1) * 0.15;
+  return 1 + (ENDLESS_MILESTONE_EVERY - 1) * 0.15 + (w - ENDLESS_MILESTONE_EVERY) * 0.2;
+}
+
+/** 第 `wave` 波用哪一章的杂兵表（名字、图集、部分带技能）。 */
+export function endlessWaveChapter(wave: number): 1 | 2 | 3 | 4 | 5 | 6 {
+  const w = Math.max(1, wave);
+  if (w <= 3) return 1;
+  if (w <= 6) return 2;
+  if (w <= 9) return 3;
+  if (w <= 12) return 4;
+  if (w <= 15) return 5;
+  return 6;
+}
+
+/** 清掉第 `wave` 波当场给的层数魂晶：第 1 波 1，第 5 波 3，第 10 波 5。 */
+export function endlessWaveSoul(wave: number): number {
+  return ENDLESS_WAVE_SOUL + Math.floor((Math.max(1, wave) - 1) / 2);
+}
+
+/** 清完 10 的倍数波当场再给的里程碑魂晶。 */
+export function endlessMilestoneSoul(wave: number): number {
+  return wave > 0 && wave % ENDLESS_MILESTONE_EVERY === 0 ? ENDLESS_MILESTONE_SOUL : 0;
+}
+
+/** 一波胜利当场入账的魂晶（层数 + 里程碑）。 */
+export function endlessWaveVictorySoul(wave: number): number {
+  return endlessWaveSoul(wave) + endlessMilestoneSoul(wave);
+}
+
+/** 离开时若破纪录，再加「新纪录 − 旧纪录」魂晶。 */
+export function endlessRecordBonus(prevBest: number, waves: number): number {
+  return Math.max(0, waves - Math.max(0, prevBest));
 }
 
 export function endlessAiDifficulty(wave: number): AiDifficulty {
@@ -115,7 +162,32 @@ function shuffleInPlace<T>(arr: T[], rng: () => number): T[] {
   return arr;
 }
 
-/** 生成第 `wave` 波的敌人出生点（复用第一章杂兵外貌和数值）。 */
+const CHAPTER_MOOKS: Record<2 | 3 | 4 | 5 | 6, Record<TroopKind, MookTemplate>> = {
+  2: CHAPTER2_FOREST,
+  3: CHAPTER3_GARRISON,
+  4: CHAPTER4_MIRE,
+  5: CHAPTER5_DRAKE,
+  6: CHAPTER6_RITE,
+};
+
+function endlessMookFields(
+  wave: number,
+  defId: TroopKind,
+): Pick<StageEnemySpawn, 'name' | 'animSet' | 'stats' | 'skillId' | 'skillSkin'> {
+  const ch = endlessWaveChapter(wave);
+  if (ch === 1) {
+    const r = CHAPTER1_ROOKIE[defId];
+    return { name: r.name, animSet: r.animSet, stats: { ...r.stats } };
+  }
+  const t = CHAPTER_MOOKS[ch][defId];
+  return {
+    name: t.name,
+    animSet: t.animSet,
+    ...(t.skillSkin ? { skillSkin: t.skillSkin } : t.skillId ? { skillId: t.skillId } : {}),
+  };
+}
+
+/** 生成第 `wave` 波的敌人。按波换章节杂兵表，再乘 `endlessWaveScale`。 */
 export function generateEndlessWave(
   wave: number,
   terrain: TerrainGrid,
@@ -126,15 +198,12 @@ export function generateEndlessWave(
   const cells = pickEndlessSpawnCells(terrain, occupied, n, rng);
   return cells.map((c, i) => {
     const defId = KINDS[(wave - 1 + i) % KINDS.length]!;
-    const r = CHAPTER1_ROOKIE[defId];
     return {
       defId,
       x: c.x,
       y: c.y,
       uid: `ew_${wave}_${i}`,
-      name: r.name,
-      animSet: r.animSet,
-      stats: { ...r.stats },
+      ...endlessMookFields(wave, defId),
     };
   });
 }

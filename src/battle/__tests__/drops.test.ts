@@ -139,6 +139,27 @@ describe('无尽掉落与待机拾取', () => {
     expect(sim.getDrops()).toEqual([]);
   });
 
+  it('托管回合结束停在掉落格上会捡起来', () => {
+    const leftover = { pos: { x: 1, y: 0 }, potionId: 'heal' };
+    const p1 = unit('p1', 'player', { x: 0, y: 0 });
+    p1.mercSpd = 20;
+    const e1 = unit('e1', 'enemy', { x: 2, y: 0 }, 40);
+    e1.mercSpd = 1;
+    const sim = createBattleSim(
+      [p1, e1],
+      emptyTerrain(5, 5),
+      UNIT_DEFS,
+      { mode: 'auto', enableDrops: true, initialDrops: [leftover] },
+    );
+    const evs: BattleEvent[] = [];
+    for (let i = 0; i < 8 && !sim.isDone() && sim.getDrops().length > 0; i++) {
+      evs.push(...sim.stepTurn().events);
+    }
+    expect(evs.some((e) => e.type === 'pickup' && e.potionId === 'heal')).toBe(true);
+    expect(sim.getDrops()).toEqual([]);
+    expect(sim.getUnit('p1')?.pos).toEqual(leftover.pos);
+  });
+
   it('主线不开掉落', () => {
     const sim = createBattleSim(
       [unit('p1', 'player', { x: 1, y: 1 }), unit('e1', 'enemy', { x: 1, y: 0 }, 1)],

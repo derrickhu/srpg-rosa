@@ -29,6 +29,7 @@ export {
   adventureRunOf,
   challengeRunOf,
   activateRunLane,
+  shouldConfirmAdventureSwitch,
   requireRun,
   getCharacter,
   partyCharacters,

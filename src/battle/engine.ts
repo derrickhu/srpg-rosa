@@ -755,6 +755,9 @@ export function createBattleSim(
     w = checkWinner(units);
     if (w) return finish(w, events);
     const evs = withDropSideEffects(events);
+    // 托管没有「点待机」，回合收尾等于待机：还站在掉落格上就捡。
+    // 只看落点，路过中间格不捡（和手动「走过去再待机」同一条）。
+    evs.push(...tryPickup(self));
     allEvents.push(...evs);
     return { events: evs, done: false, winner: null };
   }

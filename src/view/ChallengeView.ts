@@ -221,7 +221,13 @@ export function createChallengeView(
       btn.y = (CARD_H - 36) / 2 - 8;
       card.addChild(btn);
 
-      if (d && entry.kind !== 'endless') {
+      if (d && entry.kind === 'endless') {
+        const keep = makeText('冒险进度保留', 'micro', { fill: C.muted, fontSize: 9 });
+        keep.anchor.set(0.5, 0);
+        keep.x = cardW - ACTION_W / 2;
+        keep.y = CARD_H / 2 + 18;
+        card.addChild(keep);
+      } else if (d) {
         const left = sweepLeftToday(state.meta, d.id);
         const quota = sweepQuota(d.id);
         const sw = makeText(`剩余 ${left}/${quota}`, 'micro', { fill: C.muted, fontSize: 9 });

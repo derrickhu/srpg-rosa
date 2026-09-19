@@ -8,11 +8,11 @@ import { isEliteDungeon, officialDungeonIdOfElite } from '@/data/eliteCatalog';
 import { adventureChapterList, isSandboxDungeon } from '@/data/sandboxLab';
 import { gmPrepareSandboxRoster } from '@/game/state/gmCheats';
 import {
-  ENDLESS_CLEAR_BONUS,
   ENDLESS_DUNGEON_ID,
-  ENDLESS_MAX_WAVES,
-  ENDLESS_WAVE_SOUL,
+  ENDLESS_MILESTONE_EVERY,
+  ENDLESS_MILESTONE_SOUL,
   endlessAiDifficulty,
+  endlessWaveVictorySoul,
   isEndlessDungeon,
 } from '@/data/endlessCatalog';
 import { formatModStars, getSkillMod, isExclusiveMod, modStacks } from '@/data/skillModCatalog';
@@ -71,6 +71,7 @@ import {
   undoDeployForRetry,
   activateRunLane,
   adventureRunOf,
+  shouldConfirmAdventureSwitch,
   type BuyShopContext,
   type LootOption,
   type MvpGameState,
@@ -197,7 +198,7 @@ function lootToCard(state: MvpGameState, o: LootOption): LootCard {
  * 两层流程：
  *   Loading → 大厅 Shell（底部 Tab：招募/角色/冒险/副本）
  *        → Run（节点序列：Deploy→Battle→三选一 / Shop）→ 结算回大厅
- *        → 无尽试炼（布阵一次，同图连打最多 10 波）
+ *        → 无尽试炼（布阵一次，同图连打直到全灭）
  */
 export class GameFlow {
   private readonly scenes: SceneManager;
@@ -641,12 +642,12 @@ export class GameFlow {
       party = this.state.meta.roster.map((m) => m.rosterId);
     }
     const current = adventureRunOf(this.state);
-    if (current && current.dungeonId !== dungeonId) {
-      if (isTutorialRun(this.state)) {
-        this.showToast('先打完这一章的教学', { deny: true });
-        return;
-      }
-      const runName = getDungeonDef(current.dungeonId)?.name ?? '当前章节';
+    if (current && current.dungeonId !== dungeonId && isTutorialRun(this.state)) {
+      this.showToast('先打完这一章的教学', { deny: true });
+      return;
+    }
+    if (shouldConfirmAdventureSwitch(this.state, dungeonId)) {
+      const runName = getDungeonDef(current!.dungeonId)?.name ?? '当前章节';
       const layer = new PIXI.Container();
       let close = (): void => undefined;
       attachAbandonConfirm(
@@ -688,7 +689,11 @@ export class GameFlow {
       return;
     }
     const party = this.state.meta.roster.map((m) => m.rosterId);
-    this.startRunAndEnter(ENDLESS_DUNGEON_ID, party);
+    startRun(this.state, ENDLESS_DUNGEON_ID, party);
+    this.shopOffers = null;
+    this.trackRunStart(ENDLESS_DUNGEON_ID);
+    SaveManager.save(this.state);
+    this.renderNode();
   }
 
   // ---------------- 副本节点路由 ----------------
@@ -722,15 +727,7 @@ export class GameFlow {
         this.renderDeploy();
         return;
       }
-      if (e?.clearedCurrent && e.wave >= ENDLESS_MAX_WAVES) {
-        this.trackRunEnd('clear');
-        const bonus = finishEndlessRun(this.state);
-        SaveManager.save(this.state);
-        this.showToast(bonus > 0 ? `试炼完成，额外魂晶 +${bonus}` : '试炼结束');
-        this.renderShell('challenge');
-        return;
-      }
-      if (e?.clearedCurrent && e.wave < ENDLESS_MAX_WAVES) {
+      if (e?.clearedCurrent) {
         continueEndlessWave(this.state, this.lastBattleUnits);
         SaveManager.save(this.state);
       }
@@ -924,13 +921,13 @@ export class GameFlow {
         nodeLabel: sandbox
           ? '特效试炼 · 木桩场'
           : endless
-            ? `${dungeon.name} ${run.endless?.wave ?? 1}/${ENDLESS_MAX_WAVES}`
+            ? `${dungeon.name} 第 ${run.endless?.wave ?? 1} 波`
             : `${dungeon.name} ${run.nodeIndex + 1}/${dungeon.nodes.length}`,
         nodeTitle: sandbox ? '特效试炼' : dungeon.name,
         nodeMark: sandbox
           ? '木桩场'
           : endless
-            ? `${run.endless?.wave ?? 1}/${ENDLESS_MAX_WAVES}`
+            ? `第 ${run.endless?.wave ?? 1} 波`
             : `${run.nodeIndex + 1}/${dungeon.nodes.length}`,
         battleBg: dungeonBattleBgKey(dungeon),
         sandbox,
@@ -1133,26 +1130,19 @@ export class GameFlow {
       : null;
 
     if (endless) {
+      const soul = v?.soul ?? endlessWaveVictorySoul(wave);
+      const milestone = wave > 0 && wave % ENDLESS_MILESTONE_EVERY === 0;
       entries.push({
         iconKey: 'icon_soul',
         name: '魂晶',
-        amount: v?.soul ?? ENDLESS_WAVE_SOUL,
+        amount: soul,
         quality: '永久',
-        desc: `清掉第 ${wave} 波当场入账。撑过的波次越多，这一局拿得越多。`,
+        desc: milestone
+          ? `第 ${wave} 波当场入账，含每 ${ENDLESS_MILESTONE_EVERY} 波里程碑 +${ENDLESS_MILESTONE_SOUL}。`
+          : `清掉第 ${wave} 波当场入账。层数越高给得越多。`,
         sources: ['无尽试炼'],
         tint: C.soul,
       });
-      if (isRunFinal) {
-        entries.push({
-          iconKey: 'icon_soul',
-          name: '通关魂晶',
-          amount: ENDLESS_CLEAR_BONUS,
-          quality: '永久',
-          desc: `打完全部 ${ENDLESS_MAX_WAVES} 波的额外奖励。离开时入账。`,
-          sources: ['无尽试炼'],
-          tint: C.soul,
-        });
-      }
     } else if (chapterPreview) {
       entries.push(...chapterClearRewardEntries(chapterPreview, dungeon.name));
     } else {
@@ -1183,7 +1173,7 @@ export class GameFlow {
 
     const hasLoot = !isRunFinal && (run.pendingLoot?.length ?? 0) > 0;
     const subtitle = endless
-      ? `${dungeon.name} 第 ${wave}/${ENDLESS_MAX_WAVES} 波`
+      ? `${dungeon.name} 第 ${wave} 波`
       : chapterPreview
         ? dungeon.name
         : `${dungeon.name} ${run.nodeIndex + 1}/${dungeon.nodes.length}`;
@@ -1208,7 +1198,7 @@ export class GameFlow {
                 this.trackRunEnd('clear');
                 const bonus = finishEndlessRun(this.state);
                 SaveManager.save(this.state);
-                this.showToast(bonus > 0 ? `试炼完成，额外魂晶 +${bonus}` : '试炼结束');
+                this.showToast(bonus > 0 ? `试炼结束，破纪录魂晶 +${bonus}` : '试炼结束');
                 this.renderShell('challenge');
               } else {
                 const firstClear = !isEliteDungeon(dungeon.id)
@@ -1367,9 +1357,13 @@ export class GameFlow {
           close();
           if (endless) {
             this.trackRunEnd('fail');
-            finishEndlessRun(this.state);
+            const bonus = finishEndlessRun(this.state);
             SaveManager.save(this.state);
-            this.showToast(`试炼结束，最高记录 ${this.state.meta.endlessBestFloor ?? waves} 波`);
+            this.showToast(
+              bonus > 0
+                ? `试炼结束，破纪录魂晶 +${bonus}`
+                : `试炼结束，最高记录 ${this.state.meta.endlessBestFloor ?? waves} 波`,
+            );
             this.renderShell('challenge');
             return;
           }

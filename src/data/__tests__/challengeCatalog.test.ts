@@ -72,6 +72,13 @@ describe('副本页条目表', () => {
     }
   });
 
+  it('无尽奖励行写明按层数和破纪录', () => {
+    const endless = CHALLENGE_ENTRIES.find((e) => e.kind === 'endless');
+    expect(endless?.reward).toContain('按层数');
+    expect(endless?.reward).toContain('破纪录');
+    expect(endless?.desc).toContain('冒险进度保留');
+  });
+
   it('无尽试炼可以直接挑战，并且挂着 dungeonId', () => {
     const meta = createInitialMeta();
     const endless = CHALLENGE_ENTRIES.filter((e) => e.kind === 'endless');

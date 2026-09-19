@@ -56,7 +56,7 @@ import {
   runHudRowY,
 } from '@/view/renderHelpers';
 import { createRunTitleBanner } from '@/view/runTitleBanner';
-import { ENDLESS_MAX_WAVES, isEndlessDungeon } from '@/data/endlessCatalog';
+import { isEndlessDungeon } from '@/data/endlessCatalog';
 import { createNodeStrip } from '@/view/NodeStrip';
 import { AssetManager } from '@/core/AssetManager';
 import { makeAdButton, makeButton } from '@/ui/Button';
@@ -292,7 +292,7 @@ export function createDeployView(
     subtitle: sandbox
       ? '点角色切技能'
       : endless
-        ? `第 ${run.endless?.wave ?? 1} / ${ENDLESS_MAX_WAVES} 波`
+        ? `第 ${run.endless?.wave ?? 1} 波`
         : undefined,
     maxWidth: runCenterBannerMaxWidth(screen.screenWidth),
   });

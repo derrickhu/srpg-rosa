@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
-  ENDLESS_CLEAR_BONUS,
   ENDLESS_DUNGEON_ID,
-  ENDLESS_MAX_WAVES,
-  ENDLESS_WAVE_SOUL,
+  ENDLESS_MILESTONE_EVERY,
+  ENDLESS_MILESTONE_SOUL,
+  endlessRecordBonus,
+  endlessWaveVictorySoul,
 } from '@/data/endlessCatalog';
 import type { UnitState } from '@/battle/types';
-import { UNIT_DEFS } from '@/data/unitDefs';
 import {
   applyEndlessWaveVictory,
   canSweepChapter,
@@ -27,7 +27,6 @@ function newEndless(): MvpGameState {
 }
 
 function dummyUnit(rosterId: string, hp = 20): UnitState {
-  const d = UNIT_DEFS.sword;
   return {
     uid: `u_${rosterId}`,
     defId: 'sword',
@@ -41,7 +40,7 @@ function dummyUnit(rosterId: string, hp = 20): UnitState {
 }
 
 describe('无尽试炼结算', () => {
-  it('开局是无尽 run，不能扫荡', () => {
+  it('开局是无尽 run，不能扫荡，也没有通关终局', () => {
     const s = newEndless();
     expect(isEndlessRun(s)).toBe(true);
     expect(s.run?.endless).toEqual({ wave: 1, clearedCurrent: false, carry: null });
@@ -50,11 +49,12 @@ describe('无尽试炼结算', () => {
     expect(endlessWavesCleared(s)).toBe(0);
   });
 
-  it('清一波当场给魂晶并掷三选一，最高波在离开时更新', () => {
+  it('清一波当场给层数魂晶并掷三选一，离开时破纪录另奖', () => {
     const s = newEndless();
+    const waveSoul = endlessWaveVictorySoul(1);
     applyEndlessWaveVictory(s);
-    expect(s.meta.metaCurrency).toBe(ENDLESS_WAVE_SOUL);
-    expect(s.run!.lastVictory?.soul).toBe(ENDLESS_WAVE_SOUL);
+    expect(s.meta.metaCurrency).toBe(waveSoul);
+    expect(s.run!.lastVictory?.soul).toBe(waveSoul);
     expect(s.run!.pendingLoot?.length).toBe(3);
     expect(endlessWavesCleared(s)).toBe(1);
     expect(isRunComplete(s)).toBe(false);
@@ -66,24 +66,39 @@ describe('无尽试炼结算', () => {
     expect(s.run!.endless?.carry?.[0]?.hp).toBe(12);
     expect(s.run!.pendingLoot).toBeNull();
 
-    const waves = finishEndlessRun(s);
-    expect(waves).toBe(0);
+    const bonus = finishEndlessRun(s);
+    expect(bonus).toBe(endlessRecordBonus(0, 1));
     expect(s.meta.endlessBestFloor).toBe(1);
+    expect(s.meta.metaCurrency).toBe(waveSoul + bonus);
     expect(s.run).toBeNull();
   });
 
-  it('打完第 10 波才算通关，离开时再给通关奖', () => {
+  it('第 10 波通关仍继续，当场发层数 + 里程碑，离开才结算破纪录', () => {
     const s = newEndless();
-    s.run!.endless = { wave: ENDLESS_MAX_WAVES, clearedCurrent: false, carry: null };
+    s.run!.endless = { wave: ENDLESS_MILESTONE_EVERY, clearedCurrent: false, carry: null };
     applyEndlessWaveVictory(s);
-    expect(isRunComplete(s)).toBe(true);
-    expect(s.run!.pendingLoot).toBeNull();
-    expect(s.meta.metaCurrency).toBe(ENDLESS_WAVE_SOUL);
+    expect(isRunComplete(s)).toBe(false);
+    expect(s.run!.pendingLoot?.length).toBe(3);
+    const granted = endlessWaveVictorySoul(ENDLESS_MILESTONE_EVERY);
+    expect(granted).toBe(5 + ENDLESS_MILESTONE_SOUL);
+    expect(s.meta.metaCurrency).toBe(granted);
+    expect(s.run!.lastVictory?.soul).toBe(granted);
 
     const bonus = finishEndlessRun(s);
-    expect(bonus).toBe(ENDLESS_CLEAR_BONUS);
-    expect(s.meta.metaCurrency).toBe(ENDLESS_WAVE_SOUL + ENDLESS_CLEAR_BONUS);
-    expect(s.meta.endlessBestFloor).toBe(ENDLESS_MAX_WAVES);
+    expect(bonus).toBe(ENDLESS_MILESTONE_EVERY);
+    expect(s.meta.metaCurrency).toBe(granted + bonus);
+    expect(s.meta.endlessBestFloor).toBe(ENDLESS_MILESTONE_EVERY);
+  });
+
+  it('没破纪录离开不加魂晶', () => {
+    const s = newEndless();
+    s.meta.endlessBestFloor = 8;
+    s.run!.endless = { wave: 4, clearedCurrent: true, carry: null };
+    const before = s.meta.metaCurrency;
+    const bonus = finishEndlessRun(s);
+    expect(bonus).toBe(0);
+    expect(s.meta.metaCurrency).toBe(before);
+    expect(s.meta.endlessBestFloor).toBe(8);
   });
 
   it('没有新快照时沿用已存的 carry，避免断线后下一波空场', () => {
