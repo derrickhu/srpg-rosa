@@ -1339,7 +1339,7 @@ export class GameFlow {
 
   /**
    * 战败盖在棋盘上：保留「刚输掉那一局」的上下文，再给回去改站位的出口。
-   * 失败不撒彩纸。章节失败先讲变强的办法；放弃要二次确认，避免误清章节进度。
+   * 失败不撒彩纸。章节失败先讲变强的办法；回大厅不结束本章，放弃要二次确认。
    */
   private showDefeatOverlay(): void {
     const endless = isEndlessRun(this.state);
@@ -1382,6 +1382,16 @@ export class GameFlow {
           }
           this.renderDeploy();
         },
+        homeLabel: endless || tutorial ? undefined : '返回大厅',
+        onHome: endless || tutorial
+          ? undefined
+          : () => {
+              close();
+              this.state.phase = 'hub';
+              SaveManager.save(this.state);
+              this.showToast('已返回大厅，本章可以继续');
+              this.renderShell('adventure');
+            },
         secondaryLabel: endless || tutorial ? undefined : '放弃副本',
         onSecondary: endless || tutorial
           ? undefined

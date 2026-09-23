@@ -191,6 +191,9 @@ export interface DefeatOverlayOpts {
   hints?: DefeatHint[];
   primaryLabel: string;
   onPrimary: () => void;
+  /** 回大厅，不放弃本章。排在重打和放弃之间 */
+  homeLabel?: string;
+  onHome?: () => void;
   secondaryLabel?: string;
   onSecondary?: () => void;
   /** 有这份文案时，点放弃先弹确认，确认才走 onSecondary */
@@ -429,26 +432,32 @@ function createItemDetail(
   return layer;
 }
 
-function makeSummaryChip(iconKey: string, label: string, tint: number): PIXI.Container {
+/**
+ * 横幅下的入账。不画底板：粗描边字再套一条胶囊，会和胜利横幅抢成第二颗按钮。
+ * 字走标题那套得意黑，只加一点向下的影子，压在暗遮罩上也能读。
+ */
+function makeSummaryChip(iconKey: string, label: string, fill: number): PIXI.Container {
+  const iconSize = 32;
+  const tx = makeText(label, 'title', {
+    fill,
+    fontSize: 22,
+    dropShadow: true,
+    dropShadowColor: 0x1a1208,
+    dropShadowAlpha: 0.7,
+    dropShadowBlur: 3,
+    dropShadowDistance: 2,
+    dropShadowAngle: Math.PI / 2,
+  });
+  const gap = 6;
   const c = new PIXI.Container();
-  const icon = createUiIcon(iconKey, 18);
-  const tx = makeText(label, 'uiStrong', { fill: tint, fontSize: 13 });
-  const pad = 8;
-  const iconW = icon ? 20 : 0;
-  const w = pad * 2 + iconW + tx.width;
-  const h = 26;
-  const bg = new PIXI.Graphics();
-  bg.beginFill(0x000000, 0.38);
-  bg.drawRoundedRect(0, 0, w, h, 13);
-  bg.endFill();
-  c.addChild(bg);
+  const icon = createUiIcon(iconKey, iconSize);
+  const rowH = Math.max(iconSize, tx.height);
   if (icon) {
-    icon.x = pad;
-    icon.y = (h - 18) / 2;
+    icon.y = (rowH - iconSize) / 2;
     c.addChild(icon);
   }
-  tx.x = pad + iconW;
-  tx.y = (h - tx.height) / 2;
+  tx.x = iconSize + gap;
+  tx.y = (rowH - tx.height) / 2;
   c.addChild(tx);
   return c;
 }
@@ -1245,11 +1254,12 @@ export function createLootOverlay(opts: LootOverlayOpts): PIXI.Container {
 
   const summaryBits: PIXI.Container[] = [];
   const s = opts.summary;
-  if (s && (s.gold > 0 || s.soul > 0)) {
-    if (s.gold > 0) summaryBits.push(makeSummaryChip('icon_gold', `+${s.gold} 金币`, C.gold));
-    if (s.soul > 0) summaryBits.push(makeSummaryChip('icon_soul', `+${s.soul} 魂晶`, C.soulText));
-  }
-  const summaryY = bannerY + Math.max(bannerH, 56) + 4;
+  const showGold = (s?.gold ?? 0) > 0;
+  const showSoul = (s?.soul ?? 0) > 0;
+  if (showGold) summaryBits.push(makeSummaryChip('icon_gold', `+${s!.gold} 金币`, 0xfff1c4));
+  if (showSoul) summaryBits.push(makeSummaryChip('icon_soul', `+${s!.soul} 魂晶`, 0xefd4ff));
+  const summaryY = bannerY + Math.max(bannerH, 56) + 8;
+  let summaryH = 0;
   if (summaryBits.length > 0) {
     const gap = 10;
     const total = summaryBits.reduce((w, c) => w + c.width, 0) + gap * (summaryBits.length - 1);
@@ -1260,6 +1270,7 @@ export function createLootOverlay(opts: LootOverlayOpts): PIXI.Container {
       root.addChild(chip);
       x += chip.width + gap;
     }
+    summaryH = summaryBits[0]!.height;
     staggerPop(summaryBits, 50);
   }
 
@@ -1269,7 +1280,7 @@ export function createLootOverlay(opts: LootOverlayOpts): PIXI.Container {
   });
   pickHint.anchor.set(0.5, 0);
   pickHint.x = cx;
-  pickHint.y = summaryY + (summaryBits.length > 0 ? 32 : 8);
+  pickHint.y = summaryY + (summaryH > 0 ? summaryH + 12 : 8);
 
   const SELECT_SCALE = 1.08;
   const n = Math.max(1, opts.cards.length);
@@ -1330,7 +1341,7 @@ export function createLootOverlay(opts: LootOverlayOpts): PIXI.Container {
     confirm.setDisabled(true);
     const soulChip = summaryBits.find((_, i) => (s?.soul ?? 0) > 0 && (s?.gold ?? 0) > 0 ? i === 1 : (s?.soul ?? 0) > 0);
     const from = soulChip
-      ? { x: soulChip.x + soulChip.width / 2, y: soulChip.y + 13 }
+      ? { x: soulChip.x + soulChip.width / 2, y: soulChip.y + soulChip.height / 2 }
       : null;
     const go = (): void => opts.onConfirm(resolved.index);
     if (from && (s?.soul ?? 0) > 0) {
@@ -1690,8 +1701,12 @@ export function createDefeatOverlay(opts: DefeatOverlayOpts): PIXI.Container {
   const { card, height: cardH } = buildDefeatCard(opts.subtitle, hints, cardW);
 
   const btnH = 46;
+  const homeH = 40;
+  const hasHome = Boolean(opts.homeLabel && opts.onHome);
   const hasSecondary = Boolean(opts.secondaryLabel && opts.onSecondary);
-  const stackH = bannerH + 18 + cardH + 16 + btnH + (hasSecondary ? 10 + 40 : 0);
+  const stackH = bannerH + 18 + cardH + 16 + btnH
+    + (hasHome ? 10 + homeH : 0)
+    + (hasSecondary ? 10 + 40 : 0);
   const top = Math.max(36, Math.min(H * 0.12, (H - stackH) / 2 - 8));
 
   const bar = createDefeatBanner(bannerW, bannerH);
@@ -1722,12 +1737,23 @@ export function createDefeatOverlay(opts: DefeatOverlayOpts): PIXI.Container {
   primary.y = card.y + cardH + 16;
   root.addChild(primary);
 
+  let nextY = primary.y + btnH + 10;
+  if (hasHome) {
+    const home = makeButton(opts.homeLabel!, opts.onHome!, {
+      variant: 'secondary', width: cardW, height: homeH, fontSize: 15, radius: 12,
+    });
+    home.x = cx - cardW / 2;
+    home.y = nextY;
+    root.addChild(home);
+    nextY += homeH + 10;
+  }
+
   if (hasSecondary) {
     const secondary = makeButton(opts.secondaryLabel!, requestAbandon, {
       variant: 'danger', width: cardW, height: 40, fontSize: 15, radius: 12,
     });
     secondary.x = cx - cardW / 2;
-    secondary.y = primary.y + btnH + 10;
+    secondary.y = nextY;
     root.addChild(secondary);
   }
 
