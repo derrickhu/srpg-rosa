@@ -34,6 +34,12 @@ import bonepupManifest from '@/data/anim/bonepup.json';
 import gorecrowManifest from '@/data/anim/gorecrow.json';
 import ritehornManifest from '@/data/anim/ritehorn.json';
 import slabwardManifest from '@/data/anim/slabward.json';
+import mistpuppetManifest from '@/data/anim/mistpuppet.json';
+import bronzewlManifest from '@/data/anim/bronzewl.json';
+import misthoofManifest from '@/data/anim/misthoof.json';
+import bellshellManifest from '@/data/anim/bellshell.json';
+import bellringerManifest from '@/data/anim/bellringer.json';
+import mistlordManifest from '@/data/anim/mistlord.json';
 import altarwardenManifest from '@/data/anim/altarwarden.json';
 import ritespeakerManifest from '@/data/anim/ritespeaker.json';
 import ritespeakerDrainManifest from '@/data/anim/ritespeaker_drain.json';
@@ -46,6 +52,7 @@ import castellanManifest from '@/data/anim/castellan.json';
 import mirespeakerManifest from '@/data/anim/mirespeaker.json';
 import drakekinManifest from '@/data/anim/drakekin.json';
 import roarManifest from '@/data/anim/roar.json';
+import bellPealManifest from '@/data/anim/bell_peal.json';
 import bloodfangRoarManifest from '@/data/anim/bloodfang_roar.json';
 import bloodfangWildfireManifest from '@/data/anim/bloodfang_wildfire.json';
 import bloodfangBreachManifest from '@/data/anim/bloodfang_breach.json';
@@ -99,6 +106,9 @@ import tempFoWardenManifest from '@/data/anim/temp_fo_warden.json';
 import tempFtRamManifest from '@/data/anim/temp_ft_ram.json';
 import tempFtSuppressManifest from '@/data/anim/temp_ft_suppress.json';
 import tempFtGrappleManifest from '@/data/anim/temp_ft_grapple.json';
+import tempMsVeilManifest from '@/data/anim/temp_ms_veil.json';
+import tempMsClearManifest from '@/data/anim/temp_ms_clear.json';
+import tempMsBellManifest from '@/data/anim/temp_ms_bell.json';
 // 蜂群弹体：唯一一个走**普通混合**的多帧弹体。蜜蜂是实体不是光，
 // additive 会把黑条纹吃掉、只剩一团发光的黄雾
 import swarmBeesManifest from '@/data/anim/swarm_bees.json';
@@ -203,12 +213,18 @@ const MANIFESTS: Record<string, AnimManifest> = {
   gorecrow: gorecrowManifest as AnimManifest,
   ritehorn: ritehornManifest as AnimManifest,
   slabward: slabwardManifest as AnimManifest,
+  // 第七章杂兵：雾钟构装。非人形，进 MOOK_ART_SETS
+  mistpuppet: mistpuppetManifest as AnimManifest,
+  bronzewl: bronzewlManifest as AnimManifest,
+  misthoof: misthoofManifest as AnimManifest,
+  bellshell: bellshellManifest as AnimManifest,
   // 第二至六章 Boss：和第一章酋长同档的完整图集（四向行走 + 两向攻击）。
   bloodshaman: bloodshamanManifest as AnimManifest,
   bloodcastellan: bloodcastellanManifest as AnimManifest,
   mirequeen: mirequeenManifest as AnimManifest,
   drakelord: drakelordManifest as AnimManifest,
   ritespeaker: ritespeakerManifest as AnimManifest,
+  mistlord: mistlordManifest as AnimManifest,
   // 第二至六章精英：单帧静止。**不算 MOOK**（按英雄身高）。
   // 第一章精英沿用 bloodfang，不在这里。
   torun: torunManifest as AnimManifest,
@@ -216,7 +232,9 @@ const MANIFESTS: Record<string, AnimManifest> = {
   mirespeaker: mirespeakerManifest as AnimManifest,
   drakekin: drakekinManifest as AnimManifest,
   altarwarden: altarwardenManifest as AnimManifest,
+  bellringer: bellringerManifest as AnimManifest,
   roar: roarManifest as AnimManifest,
+  bell_peal: bellPealManifest as AnimManifest,
   bloodfang_roar: bloodfangRoarManifest as AnimManifest,
   bloodfang_wildfire: bloodfangWildfireManifest as AnimManifest,
   bloodfang_breach: bloodfangBreachManifest as AnimManifest,
@@ -238,6 +256,9 @@ const MANIFESTS: Record<string, AnimManifest> = {
   temp_ft_ram: tempFtRamManifest as AnimManifest,
   temp_ft_suppress: tempFtSuppressManifest as AnimManifest,
   temp_ft_grapple: tempFtGrappleManifest as AnimManifest,
+  temp_ms_veil: tempMsVeilManifest as AnimManifest,
+  temp_ms_clear: tempMsClearManifest as AnimManifest,
+  temp_ms_bell: tempMsBellManifest as AnimManifest,
   arrow_hit: arrowHitManifest as AnimManifest,
   thrust: thrustManifest as AnimManifest,
   bash_hit: bashHitManifest as AnimManifest,
@@ -310,6 +331,8 @@ const MOOK_ART_SETS = new Set([
   'magmacore', 'emberbat', 'scalewyrm', 'ashshell',
   // 第六章 · 血牙祭坛祭仪构装
   'bonepup', 'gorecrow', 'ritehorn', 'slabward',
+  // 第七章 · 雾钟回廊。非人形，精英鸣钟人和 Boss 雾钟主不在这里
+  'mistpuppet', 'bronzewl', 'misthoof', 'bellshell',
   // 注意跳过了第三章：那一章是人形兽人守军，见上面的说明
 ]);
 

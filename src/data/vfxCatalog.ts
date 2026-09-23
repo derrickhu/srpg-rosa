@@ -398,6 +398,7 @@ const SIEGE = [0xffeccc, 0xd98a34, 0x8a4a12] as const;
  */
 const DRAKEFIRE = [0xfff6e0, 0xff7a18, 0xb3200c] as const;
 const RITE = [0xffe8dc, 0xb42a22, 0x5a1410] as const;
+const MIST = [0xe8eef4, 0x8aa0b4, 0x3a4a58] as const;
 /**
  * 毒沼章瘟疫脓黄绿。
  *
@@ -1483,6 +1484,93 @@ export const SKILL_VFX: Record<string, VfxRecipe> = {
       mode: 'burst',
       playbackSpeed: 0.8,
       sparks: skillSparks(RITE),
+    },
+  },
+  /** 第七章 · 铜鸮「哑鸣」：冷雾团飞过去，落点一团雾。 */
+  mist_chime: {
+    windup: windupGather(MIST, 0.9, 170),
+    travel: {
+      glowSet: 'mook_spit',
+      cells: 0.55,
+      speedPxPerSec: 320,
+      minMs: 200,
+      lingerMs: 40,
+      noRotate: true,
+      trail: trailSparks(MIST),
+      ribbon: ribbonGlow(MIST, 5),
+    },
+    impact: {
+      set: 'mook_puff',
+      anchor: 'target',
+      cells: 1.4,
+      mode: 'burst',
+      playbackSpeed: 0.95,
+      sparks: skillSparks(MIST),
+    },
+    shake: SHAKE_LIGHT,
+  },
+  /** 第七章 · 钟壳「沉钟」：自身一记闷响。 */
+  bell_toll: {
+    windup: windupGather(MIST, 1.1, 220),
+    shake: SHAKE_LIGHT,
+    impact: {
+      set: 'mook_thud',
+      anchor: 'caster',
+      cells: 1.9,
+      mode: 'burst',
+      playbackSpeed: 0.8,
+      sparks: skillSparks(MIST),
+    },
+  },
+  /**
+   * 第七章 Boss「雾钟」：向外的同心环。
+   * 图集先复用 roar 的像素，登记成独立 id，正式环图换上后不用改配方键。
+   */
+  bell_peal: {
+    windup: windupImplode(MIST, 1.7, 320),
+    shake: SHAKE_BLAST,
+    impact: {
+      set: 'bell_peal',
+      anchor: 'caster',
+      cells: 3.2,
+      mode: 'burst',
+      playbackSpeed: 0.7,
+      sparks: skillSparks(MIST),
+    },
+  },
+  temp_ms_veil: {
+    windup: windupGather(MIST, 1.1, 220),
+    impact: {
+      set: 'temp_ms_veil',
+      anchor: 'caster',
+      cells: 2.6,
+      mode: 'burst',
+      playbackSpeed: 0.7,
+      sparks: skillSparks(MIST),
+    },
+    shake: SHAKE_LIGHT,
+  },
+  temp_ms_clear: {
+    windup: windupImplode(MIST, 1.2, 240),
+    impact: {
+      set: 'temp_ms_clear',
+      anchor: 'caster',
+      cells: 2.4,
+      mode: 'burst',
+      playbackSpeed: 0.8,
+      sparks: skillSparks(MIST),
+    },
+  },
+  temp_ms_bell: {
+    windup: windupGather(MIST, 0.9, 180),
+    pathBeam: pathGlow(MIST, 'smooth', 6),
+    impact: {
+      set: 'temp_ms_bell',
+      anchor: 'target',
+      cells: 1.8,
+      mode: 'burst',
+      playbackSpeed: 0.85,
+      sparks: skillSparks(MIST),
     },
   },
 

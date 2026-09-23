@@ -532,6 +532,8 @@ describe('特效登记表', () => {
       'ash_harden',
       'rite_peck',
       'rite_chant',
+      'mist_chime',
+      'bell_toll',
     ];
     const leaked: string[] = [];
     for (const [k, r] of Object.entries(MOOK_ATTACK_VFX)) {

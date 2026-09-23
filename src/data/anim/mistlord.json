@@ -1,0 +1,202 @@
+{
+  "id": "mistlord",
+  "source": "art/sprite-runs/mistlord",
+  "blend": "normal",
+  "image": "images/anim/mistlord.png",
+  "meta": {
+    "size": {
+      "w": 512,
+      "h": 512
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 192,
+    "baselineY": 237,
+    "ref": "mistlord-idle/face-1.png"
+  },
+  "frames": {
+    "mistlord-idle/face-1.png": {
+      "frame": {
+        "x": 277,
+        "y": 2,
+        "w": 143,
+        "h": 215
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 56,
+        "y": 22,
+        "w": 143,
+        "h": 215
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mistlord-idle/face-2.png": {
+      "frame": {
+        "x": 2,
+        "y": 221,
+        "w": 130,
+        "h": 215
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 63,
+        "y": 22,
+        "w": 130,
+        "h": 215
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mistlord-idle/face-3.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 140,
+        "h": 217
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 58,
+        "y": 20,
+        "w": 140,
+        "h": 217
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "mistlord-idle/face-4.png": {
+      "frame": {
+        "x": 144,
+        "y": 2,
+        "w": 131,
+        "h": 217
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 62,
+        "y": 20,
+        "w": 131,
+        "h": 217
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "idle_down": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mistlord-idle/face-1.png"
+      ]
+    },
+    "walk_down": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mistlord-idle/face-1.png"
+      ]
+    },
+    "attack_down": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mistlord-idle/face-1.png"
+      ]
+    },
+    "idle_right": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mistlord-idle/face-2.png"
+      ]
+    },
+    "walk_right": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mistlord-idle/face-2.png"
+      ]
+    },
+    "attack_right": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mistlord-idle/face-2.png"
+      ]
+    },
+    "idle_up": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mistlord-idle/face-3.png"
+      ]
+    },
+    "walk_up": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mistlord-idle/face-3.png"
+      ]
+    },
+    "attack_up": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mistlord-idle/face-3.png"
+      ]
+    },
+    "idle_left": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mistlord-idle/face-4.png"
+      ]
+    },
+    "walk_left": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mistlord-idle/face-4.png"
+      ]
+    },
+    "attack_left": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mistlord-idle/face-4.png"
+      ]
+    },
+    "idle": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mistlord-idle/face-1.png"
+      ]
+    },
+    "default": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mistlord-idle/face-1.png"
+      ]
+    }
+  }
+}

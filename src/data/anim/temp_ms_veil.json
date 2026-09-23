@@ -1,0 +1,219 @@
+{
+  "id": "temp_ms_veil",
+  "source": "art/vfx-runs/temp_ms_veil",
+  "blend": "add",
+  "image": "images/anim/temp_ms_veil.png",
+  "meta": {
+    "size": {
+      "w": 1024,
+      "h": 512
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 166,
+    "baselineY": 169,
+    "ref": "temp_ms_veil/temp_ms_veil-1.png"
+  },
+  "frames": {
+    "temp_ms_veil/temp_ms_veil-1.png": {
+      "frame": {
+        "x": 183,
+        "y": 199,
+        "w": 256,
+        "h": 166
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 3,
+        "w": 256,
+        "h": 166
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_ms_veil/temp_ms_veil-2.png": {
+      "frame": {
+        "x": 249,
+        "y": 2,
+        "w": 250,
+        "h": 193
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 3,
+        "w": 250,
+        "h": 193
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_ms_veil/temp_ms_veil-3.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 245,
+        "h": 195
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 3,
+        "w": 245,
+        "h": 195
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_ms_veil/temp_ms_veil-4.png": {
+      "frame": {
+        "x": 617,
+        "y": 199,
+        "w": 181,
+        "h": 162
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 39,
+        "y": 43,
+        "w": 181,
+        "h": 162
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_ms_veil/temp_ms_veil-5.png": {
+      "frame": {
+        "x": 501,
+        "y": 2,
+        "w": 186,
+        "h": 182
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 34,
+        "y": 30,
+        "w": 186,
+        "h": 182
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_ms_veil/temp_ms_veil-6.png": {
+      "frame": {
+        "x": 2,
+        "y": 199,
+        "w": 179,
+        "h": 167
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 37,
+        "y": 40,
+        "w": 179,
+        "h": 167
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_ms_veil/temp_ms_veil-7.png": {
+      "frame": {
+        "x": 689,
+        "y": 2,
+        "w": 183,
+        "h": 176
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 39,
+        "y": 27,
+        "w": 183,
+        "h": 176
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_ms_veil/temp_ms_veil-8.png": {
+      "frame": {
+        "x": 441,
+        "y": 199,
+        "w": 174,
+        "h": 166
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 41,
+        "y": 38,
+        "w": 174,
+        "h": 166
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_ms_veil/temp_ms_veil-9.png": {
+      "frame": {
+        "x": 800,
+        "y": 199,
+        "w": 146,
+        "h": 147
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 52,
+        "y": 50,
+        "w": 146,
+        "h": 147
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "temp_ms_veil": {
+      "loop": false,
+      "fps": 18,
+      "frames": [
+        "temp_ms_veil/temp_ms_veil-1.png",
+        "temp_ms_veil/temp_ms_veil-2.png",
+        "temp_ms_veil/temp_ms_veil-3.png",
+        "temp_ms_veil/temp_ms_veil-4.png",
+        "temp_ms_veil/temp_ms_veil-5.png",
+        "temp_ms_veil/temp_ms_veil-6.png",
+        "temp_ms_veil/temp_ms_veil-7.png",
+        "temp_ms_veil/temp_ms_veil-8.png",
+        "temp_ms_veil/temp_ms_veil-9.png"
+      ]
+    }
+  }
+}

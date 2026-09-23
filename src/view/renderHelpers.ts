@@ -97,6 +97,8 @@ export function terrainBadge(terrainId: TerrainId): TerrainBadge | null {
   // 「属性 + 增减量」的格式一致。持续性靠沼泽贴图本身的语境读，不靠字数解释。
   if (spec.dotPerRound > 0) return { text: `血-${spec.dotPerRound}`, color: C.warnText };
   if ((spec.healPerRound ?? 0) > 0) return { text: `血+${spec.healPerRound}`, color: C.gold };
+  // 浓雾走得过，不能靠「过不去」自己说明挡箭。城墙不可通行，不走这条。
+  if (spec.blocksSight) return { text: '挡箭', color: C.warnText };
   return null;
 }
 
@@ -107,9 +109,8 @@ export function terrainBadge(terrainId: TerrainId): TerrainBadge | null {
  * 因为它必须在扫一眼的时间里读完；这里可以把移动消耗、视线遮挡、以及地形之间的
  * 转移边（可燃、会烧尽）都说清楚——玩家是主动点开的，愿意读。
  *
- * 视线遮挡尤其只能在这里说。它不给角标：要塞章节整片都是城墙，每格挂一个「挡视线」
- * 会把棋盘糊成一片文字；而它在对局中本来就是可见的——选中弓手时，被挡住的敌人
- * 不会出现在可攻击目标里。
+ * 城墙不可通行，靠「走不过去」自己说明，不出角标。浓雾走得过，角标只写「挡箭」，
+ * 完整说明仍在这里。选中弓手时，被挡住的敌人不会出现在可攻击目标里。
  *
  * 全部从 `TerrainSpec` 现算，理由同 `terrainBadge`：手写一份文案，改了数值忘了改字，
  * 玩家看到的说明和实际结算就会对不上，而这比没有说明更糟。
@@ -392,6 +393,7 @@ const BG_FALLBACK: Record<string, number> = {
   battle_bg_swamp: C.bg,
   battle_bg_dragon: 0xe8c8b0,
   battle_bg_altar: 0xc88858,
+  battle_bg_mist: 0x8aa0b0,
   shop_bg: C.bg,
   recruit_bg: 0x5eb4e8,
   roster_bg: 0xfcac95,

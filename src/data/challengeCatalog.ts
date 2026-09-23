@@ -81,7 +81,7 @@ export const CHALLENGE_ENTRIES: readonly ChallengeEntry[] = [
     id: 'endless_trial',
     kind: 'endless',
     name: '无尽试炼',
-    desc: '波次递增，敌人越打越强，直到全队倒下。冒险进度保留。',
+    desc: '波次递增，敌人越打越强，直到全队倒下。每天 3 次，冒险进度保留。',
     icon: 'tab_challenge',
     illust: 'illust_endless',
     reward: '按层数给魂晶，破纪录另奖',

@@ -28,8 +28,8 @@ import {
 import { canProfessionEquipSkill, getSkillSpec, type SkillSpec } from '@/data/skillCatalog';
 import { applyEliteTempSkillBoost } from '@/data/eliteCatalog';
 import { effectiveSkillSpec } from '@/data/skillModCatalog';
-import { gridSize, inBounds, manhattan, neighbors4, type TerrainGrid } from './grid';
-import { rayCellsUntilBlocked } from './sight';
+import { getTerrainAt, gridSize, inBounds, manhattan, neighbors4, type TerrainGrid } from './grid';
+import { hasLineOfSight, rayCellsUntilBlocked } from './sight';
 import { axisDirection, displaceLanding, displaceUnit } from './displace';
 import type { TerrainRuntime } from './terrainDynamics';
 
@@ -42,6 +42,17 @@ const RAY_DIRS: Vec2[] = [
 
 function livingFoes(self: UnitState, units: UnitState[]): UnitState[] {
   return units.filter((u) => u.hp > 0 && u.faction !== self.faction);
+}
+
+/** `requiresSight` 的点选招看不穿浓雾 / 城墙。没标的旧技能保持原样。 */
+function visibleFoes(
+  self: UnitState,
+  foes: UnitState[],
+  terrain: TerrainGrid,
+  spec: SkillSpec,
+): UnitState[] {
+  if (!spec.requiresSight) return foes;
+  return foes.filter((f) => hasLineOfSight(terrain, self.pos, f.pos));
 }
 
 function livingAllies(self: UnitState, units: UnitState[]): UnitState[] {
@@ -757,7 +768,12 @@ function castNeighborPickFoe(
   const all = within
     ? foesWithinManhattan(self, units, dist)
     : foesAtManhattan(self, units, dist);
-  const foes = axisFilter(all, self.pos, (t) => t.pos, axisOnly);
+  const foes = visibleFoes(
+    self,
+    axisFilter(all, self.pos, (t) => t.pos, axisOnly),
+    terrain,
+    spec,
+  );
   const tgt = resolveChoice(foes, chosenUid, () => fallbackSkillTarget(spec, foes, defs));
   if (!tgt) return [];
   // 纯 debuff（破甲/缠足）：保留 hit 供回放对准目标，但不走扣血
@@ -1098,7 +1114,12 @@ function applyCastTerrainEffects(
   const out: BattleEvent[] = [];
   for (const eff of effects) {
     if (eff.kind === 'ignite') out.push(...tr.ignite(cast.rangeCells));
-    if (eff.kind === 'transmute') out.push(...tr.transmute(cast.rangeCells, eff.to, 'rite'));
+    if (eff.kind === 'transmute') {
+      const cells = eff.from
+        ? cast.rangeCells.filter((c) => getTerrainAt(tr.grid, c) === eff.from)
+        : cast.rangeCells;
+      out.push(...tr.transmute(cells, eff.to, 'rite'));
+    }
   }
   return out;
 }
@@ -1257,7 +1278,7 @@ export function skillAiming(
       const d = spec.shape.manhattan;
       const axis = spec.shape.axisOnly;
       const all = within ? foesWithinManhattan(self, units, d) : foesAtManhattan(self, units, d);
-      const foes = axisFilter(all, self.pos, (f) => f.pos, axis);
+      const foes = visibleFoes(self, axisFilter(all, self.pos, (f) => f.pos, axis), terrain, spec);
       if (foes.length === 0) return null;
       const cells = within
         ? cellsWithinManhattan(self.pos, d, terrain)

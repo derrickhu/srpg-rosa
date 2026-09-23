@@ -47,6 +47,7 @@ function briefShape(spec: SkillSpec): string {
 /** 效果行压短：去掉「自身/敌方」重复主语，数字留给高亮 */
 function briefEffectLines(spec: SkillSpec): string[] {
   return describeSkillSpec(spec).map((line) => {
+    if (!line) return '';
     let s = line
       .replace(/^自身/, '')
       .replace(/^敌方/, '')
@@ -80,6 +81,7 @@ export function describeTerrainTicketLines(terrainId: TerrainId): string[] {
   }
   if (t.dotPerRound > 0) lines.push(`站上每回合 -${t.dotPerRound} HP`);
   if ((t.healPerRound ?? 0) > 0) lines.push(`站上每回合 +${t.healPerRound} HP`);
+  if (t.blocksSight && t.moveCost < Infinity) lines.push('阻挡远程攻击的视线');
   return lines;
 }
 

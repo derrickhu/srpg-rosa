@@ -9,8 +9,12 @@ import {
 import type { UnitState } from '@/battle/types';
 import {
   applyEndlessWaveVictory,
+  canStartEndlessAttempt,
   canSweepChapter,
+  consumeEndlessAttempt,
   continueEndlessWave,
+  ENDLESS_ATTEMPTS_PER_DAY,
+  endlessAttemptsLeftToday,
   endlessWavesCleared,
   finishEndlessRun,
   isEndlessRun,
@@ -144,5 +148,22 @@ describe('无尽试炼结算', () => {
     const enemies = buildBattleUnits(s).filter((u) => u.faction === 'enemy');
     expect(enemies.length).toBeGreaterThan(0);
     expect(enemies.some((e) => e.pos.x === drop.pos.x && e.pos.y === drop.pos.y)).toBe(false);
+  });
+
+  it('每天最多新开 3 局，跨天归零，开局本身不扣次数', () => {
+    const s = createInitialState();
+    expect(endlessAttemptsLeftToday(s.meta)).toBe(ENDLESS_ATTEMPTS_PER_DAY);
+    expect(canStartEndlessAttempt(s.meta)).toBe(true);
+
+    startRun(s, ENDLESS_DUNGEON_ID, s.meta.roster.slice(0, 1).map((m) => m.rosterId));
+    expect(endlessAttemptsLeftToday(s.meta)).toBe(ENDLESS_ATTEMPTS_PER_DAY);
+
+    for (let i = 0; i < ENDLESS_ATTEMPTS_PER_DAY; i++) consumeEndlessAttempt(s);
+    expect(endlessAttemptsLeftToday(s.meta)).toBe(0);
+    expect(canStartEndlessAttempt(s.meta)).toBe(false);
+
+    s.meta.endlessAttempts = { date: '2000-01-01', used: ENDLESS_ATTEMPTS_PER_DAY };
+    expect(endlessAttemptsLeftToday(s.meta)).toBe(ENDLESS_ATTEMPTS_PER_DAY);
+    expect(canStartEndlessAttempt(s.meta)).toBe(true);
   });
 });

@@ -1,0 +1,28 @@
+第七章精英「鸣钟人」单帧（英雄身高，preset single）
+参考图只提供画法。主体是戴钟盔的 Q 版小人，不是参考图里的剑士。
+
+A single cartoon game character sprite, centered, facing the viewer in 3/4 top-down view.
+
+The attached reference is DRAWING METHOD ONLY: thick near-black outline, flat cel fills,
+extreme super-deformed mascot. Draw the new character below.
+
+CRITICAL BACKGROUND: 100% solid flat MAGENTA #FF00FF. Chroma key. No floor, no shadow, no gradient.
+
+PROPORTIONS: the HEAD INCLUDING THE BELL HELMET is about HALF the total height. Body, arms
+and legs together are the other half: short, stubby, chunky. The body fits a roughly square
+box. This is a 1.5-head mascot, hero height, bigger and more important than a trash mob.
+
+STYLE: thick near-black outline #1A1410. Flat fills, 4–6 colours. One steamed-bun cream
+area #F0F0E0 covering about 15% of the body. One highlight, one shadow. No gradients,
+no belts, no rivets, no engraving, no text.
+
+CHARACTER — BELL RINGER:
+A chunky little person. The helmet IS a large old-coin brass bell (#C4923A, brighter edge
+#E8C878) sitting on the head, smooth, with one cream highlight stripe. The robe is
+rainy-window gray-blue #C5D4DE. A steamed-bun cream collar #F0F0E0. Two big simple dark
+eyes under the bell brim. Mitten hands. One hand holds a short fat brass clapper stick.
+Stubby legs, two simple feet. The bell helmet is the one memory point: huge, smooth, readable
+at 40 pixels.
+
+The whole figure sits in the central 65% of the square with a wide magenta margin.
+NO text, no labels, no watermark.

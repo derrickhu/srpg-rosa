@@ -263,6 +263,21 @@ const SPECS: Record<TerrainId, TerrainSpec> = {
     healPerRound: 6,
     color: 0xc43c4a,
   },
+  /**
+   * 浓雾：补上阻挡矩阵缺的那一角。
+   * 城墙挡路也挡箭，深渊挡路不挡箭，浓雾不挡路但挡箭。
+   * 移动 1、不加攻不减伤，角标只写「挡箭」。
+   */
+  mist: {
+    id: 'mist',
+    name: '浓雾',
+    moveCost: 1,
+    atkMul: 1,
+    defMul: 1,
+    dotPerRound: 0,
+    color: 0xb8c4d0,
+    blocksSight: true,
+  },
 };
 
 export function getTerrainSpec(id: TerrainId): TerrainSpec {

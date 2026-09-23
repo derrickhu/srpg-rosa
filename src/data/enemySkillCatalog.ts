@@ -137,6 +137,13 @@ export const ENEMY_SKILL_SKINS: Record<string, EnemySkillSkin> = {
     iconKey: 'skill_ritespeaker_drain',
     vfxId: 'ritespeaker_drain',
   },
+  bell_peal: {
+    id: 'bell_peal',
+    implementsId: 'bell_peal',
+    name: '雾钟',
+    iconKey: 'skill_bell_peal',
+    vfxId: 'bell_peal',
+  },
 };
 
 export function getEnemySkillSkin(id: string): EnemySkillSkin | undefined {

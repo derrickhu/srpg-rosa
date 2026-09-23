@@ -106,7 +106,7 @@ describe('技能音效族', () => {
     for (const skin of Object.values(ENEMY_SKILL_SKINS)) {
       const family = skillSfxFamily(skin.implementsId, skin.vfxId);
       expect(FAMILIES, `皮肤 ${skin.id}`).toContain(family);
-      if (skin.vfxId && /bloodfang|mirequeen|drake_cataclysm|ritespeaker_drain/.test(skin.vfxId)) {
+      if (skin.vfxId && /bloodfang|mirequeen|drake_cataclysm|ritespeaker_drain|bell_peal/.test(skin.vfxId)) {
         expect(family, `${skin.id} 该走 Boss 族`).toBe('boss');
       }
     }

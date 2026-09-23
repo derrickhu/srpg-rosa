@@ -1,0 +1,86 @@
+{
+  "id": "bellshell",
+  "source": "art/sprite-runs/mobs-ch7",
+  "blend": "normal",
+  "image": "images/anim/bellshell.png",
+  "meta": {
+    "size": {
+      "w": 256,
+      "h": 256
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 179,
+    "baselineY": 227,
+    "ref": "mobs-ch7-idle/mob-4.png"
+  },
+  "frames": {
+    "mobs-ch7-idle/mob-4.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 217,
+        "h": 189
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 19,
+        "y": 48,
+        "w": 217,
+        "h": 189
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "idle": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch7-idle/mob-4.png"
+      ]
+    },
+    "default": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch7-idle/mob-4.png"
+      ]
+    },
+    "idle_up": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch7-idle/mob-4.png"
+      ]
+    },
+    "idle_down": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch7-idle/mob-4.png"
+      ]
+    },
+    "idle_left": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch7-idle/mob-4.png"
+      ]
+    },
+    "idle_right": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch7-idle/mob-4.png"
+      ]
+    }
+  }
+}

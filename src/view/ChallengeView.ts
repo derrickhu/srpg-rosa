@@ -9,7 +9,14 @@ import {
   type ChallengeEntry,
 } from '@/data/challengeCatalog';
 import type { DungeonDef } from '@/data/dungeonCatalog';
-import { challengeRunOf, sweepLeftToday, sweepQuota, type MvpGameState } from '@/game/MvpState';
+import {
+  ENDLESS_ATTEMPTS_PER_DAY,
+  challengeRunOf,
+  endlessAttemptsLeftToday,
+  sweepLeftToday,
+  sweepQuota,
+  type MvpGameState,
+} from '@/game/MvpState';
 import { createHubHeader } from '@/view/hubHeader';
 import { C } from '@/view/mvpTheme';
 import { bgTexture, makeArtPlate, uiTexture } from '@/ui/chrome';
@@ -209,20 +216,31 @@ export function createChallengeView(
     if (status.kind === 'open') {
       const d = challengeDungeon(entry);
       const resume = !!(d && challengeRunOf(state)?.dungeonId === d.id);
+      const endlessLeft = entry.kind === 'endless' ? endlessAttemptsLeftToday(state.meta) : 0;
+      const endlessBlocked = entry.kind === 'endless' && !resume && endlessLeft <= 0;
       const btn = makeButton(
-        resume ? '继续' : '挑战',
+        resume ? '继续' : endlessBlocked ? '已用完' : '挑战',
         () => {
           if (scroll.wasDragging()) return;
           if (d) cb.onChallenge(d);
         },
-        { variant: 'primary', width: ACTION_W - 10, height: 36, fontSize: 14, radius: 12 },
+        {
+          variant: endlessBlocked ? 'secondary' : 'primary',
+          width: ACTION_W - 10,
+          height: 36,
+          fontSize: 14,
+          radius: 12,
+        },
       );
       btn.x = cardW - ACTION_W + 2;
       btn.y = (CARD_H - 36) / 2 - 8;
       card.addChild(btn);
 
       if (d && entry.kind === 'endless') {
-        const keep = makeText('冒险进度保留', 'micro', { fill: C.muted, fontSize: 9 });
+        const keep = makeText(`今日 ${endlessLeft}/${ENDLESS_ATTEMPTS_PER_DAY}`, 'micro', {
+          fill: C.muted,
+          fontSize: 9,
+        });
         keep.anchor.set(0.5, 0);
         keep.x = cardW - ACTION_W / 2;
         keep.y = CARD_H / 2 + 18;

@@ -5,6 +5,7 @@ import {
   resolveEnemyBattleSkill,
 } from '@/data/enemySkillCatalog';
 import { CHAPTER_STAGE_INDICES, STAGES_MVP } from '@/data/stagesMvp';
+import { getSkillSpec } from '@/data/skillCatalog';
 import { UNIT_DEFS } from '@/data/unitDefs';
 import { enemySpawnToUnitState } from '@/game/state/DeployManager';
 
@@ -37,6 +38,18 @@ describe('敌方技能皮肤', () => {
     expect(u.battleSkill?.iconKey).toBe('skill_ritespeaker_drain');
     expect(u.battleSkill?.vfxId).toBe('ritespeaker_drain');
     expect(effectiveUnitDef(u, UNIT_DEFS).skill?.id).toBe('blood_rite');
+  });
+
+  it('第七章 Boss 挂雾钟皮肤，结算走 bell_peal，且不要求视线', () => {
+    const ch7 = CHAPTER_STAGE_INDICES[6]!;
+    const boss = STAGES_MVP[ch7[ch7.length - 1]!]!.enemies.find((e) => e.boss)!;
+    expect(boss.skillSkin).toBe('bell_peal');
+    const u = enemySpawnToUnitState(boss, 1.1);
+    expect(u.battleSkill?.id).toBe('bell_peal');
+    expect(u.battleSkill?.name).toBe('雾钟');
+    expect(u.battleSkill?.vfxId).toBe('bell_peal');
+    expect(getSkillSpec('bell_peal')?.requiresSight).toBeUndefined();
+    expect(getSkillSpec('mist_chime')?.requiresSight).toBe(true);
   });
 
   it('皮肤表每条都能 resolve，implementsId 真实存在', () => {

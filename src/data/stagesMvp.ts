@@ -121,9 +121,10 @@ function euid(): string {
  * | 4 毒沼泥潭 | 8 | 11 | 河流、沼泽 | 走得慢、打得软、还掉血 |
  * | 5 龙岭绝巅 | 8 | 11 | 深渊 | 绝壁切断路线但不挡箭 |
  * | 6 血牙祭坛 | 6 |  8 | 血池 | 争池续航；战后篇，终章仍是龙岭 |
+ * | 7 雾钟回廊 | 6 |  8 | 浓雾 | 走得过，箭射不穿；钟声穿雾 |
  *
  * 节点数由 `dungeonCatalog.buildNodes` 从关数推出（每两场战斗插一个补给点），
- * 3/5/6/8/8/6 关对应 4/7/8/11/11/8 个节点。教学章打完精英即通关。酋长不进第六章。
+ * 3/5/6/8/8/6/6 关对应 4/7/8/11/11/8/8 个节点。教学章打完精英即通关。酋长不进第六章。
  *
  * 推论：一关只能用**它所在章节及更早**登场过的地形。想给第四章的图摆一堵墙可以
  * （城墙第三章就登场了），想给第二章的图摆一条河不行。地形券的售卖章节同理，
@@ -298,7 +299,7 @@ const c1_3: StageBlueprint = {
  * 所以同一只怪在这一章的每一关都是同样的威胁。挂在关卡上迟早会出现
  * 「第 17 关的吹箭虫会下毒、第 18 关的不会」，而玩家只会觉得这游戏的怪不讲道理。
  *
- * 投放曲线（第一章 0 条 → 第二、三章各 1 条 → 第四章 2 条 → 终章 4 条 → 祭坛 2 条）
+ * 投放曲线（第一章 0 条 → 第二、三章各 1 条 → 第四章 2 条 → 终章 4 条 → 祭坛 2 条 → 雾钟 2 条）
  * 和技能本身的设计依据都在 `skillCatalog` 的杂兵技能段落。
  */
 export interface MookTemplate {
@@ -1654,6 +1655,172 @@ const c6_6: StageBlueprint = {
   maxDeploy: 5,
 };
 
+// ─── Chapter 7: 雾钟回廊 ───
+//
+// 祭坛封雾松开。布阵回到南两行。浓雾不挡路、挡箭；Boss 钟声不看视线。
+
+export const CHAPTER7_MIST: Record<TroopKind, MookTemplate> = {
+  sword: { name: '雾傀', youngName: '残雾傀', animSet: 'mistpuppet' },
+  bow: { name: '铜鸮', youngName: '幼铜鸮', animSet: 'bronzewl', skillId: 'mist_chime' },
+  cavalry: { name: '雾蹄', youngName: '幼雾蹄', animSet: 'misthoof' },
+  shield: { name: '钟壳', youngName: '残钟壳', animSet: 'bellshell', skillId: 'bell_toll' },
+};
+
+function mistMook(defId: TroopKind, x: number, y: number): StageEnemySpawn {
+  return mook(CHAPTER7_MIST[defId], defId, x, y);
+}
+
+function mistYoung(defId: TroopKind, x: number, y: number): StageEnemySpawn {
+  return mookYoung(CHAPTER7_MIST[defId], defId, x, y);
+}
+
+/** 9×10。部署在 y=8、9。雾带留一个口：口上的剑打得着，雾后的鸮打不着。 */
+const c7_1: StageBlueprint = {
+  title: '雾带初见',
+  goldReward: 30,
+  terrain: withCells(emptyTerrain(9, 10), [
+    { x: 0, y: 4, t: 'mist' }, { x: 1, y: 4, t: 'mist' }, { x: 2, y: 4, t: 'mist' },
+    { x: 3, y: 4, t: 'mist' },
+    { x: 5, y: 4, t: 'mist' }, { x: 6, y: 4, t: 'mist' }, { x: 7, y: 4, t: 'mist' },
+    { x: 8, y: 4, t: 'mist' },
+  ]),
+  enemies: [
+    mistMook('bow', 1, 1),
+    mistMook('sword', 4, 2),
+  ],
+  aiDifficulty: 'normal',
+  maxDeploy: 5,
+};
+
+/** 两道雾错开，缺口不在一条直线上。 */
+const c7_2: StageBlueprint = {
+  title: '错缝',
+  goldReward: 34,
+  terrain: withCells(emptyTerrain(9, 10), [
+    { x: 0, y: 3, t: 'mist' }, { x: 1, y: 3, t: 'mist' }, { x: 2, y: 3, t: 'mist' },
+    { x: 3, y: 3, t: 'mist' }, { x: 4, y: 3, t: 'mist' },
+    { x: 4, y: 5, t: 'mist' }, { x: 5, y: 5, t: 'mist' }, { x: 6, y: 5, t: 'mist' },
+    { x: 7, y: 5, t: 'mist' }, { x: 8, y: 5, t: 'mist' },
+  ]),
+  enemies: [
+    mistMook('bow', 6, 1),
+    mistMook('sword', 2, 2),
+    mistMook('cavalry', 7, 4),
+  ],
+  aiDifficulty: 'normal',
+  maxDeploy: 5,
+};
+
+/** 三根竖雾。近战钻缝，鸮站在柱后。 */
+const c7_3: StageBlueprint = {
+  title: '雾柱',
+  goldReward: 36,
+  terrain: withCells(emptyTerrain(9, 10), [
+    { x: 2, y: 2, t: 'mist' }, { x: 4, y: 2, t: 'mist' }, { x: 6, y: 2, t: 'mist' },
+    { x: 2, y: 3, t: 'mist' }, { x: 4, y: 3, t: 'mist' }, { x: 6, y: 3, t: 'mist' },
+    { x: 2, y: 4, t: 'mist' }, { x: 4, y: 4, t: 'mist' }, { x: 6, y: 4, t: 'mist' },
+    { x: 2, y: 5, t: 'mist' }, { x: 4, y: 5, t: 'mist' }, { x: 6, y: 5, t: 'mist' },
+    { x: 2, y: 6, t: 'mist' }, { x: 4, y: 6, t: 'mist' }, { x: 6, y: 6, t: 'mist' },
+  ]),
+  enemies: [
+    mistMook('bow', 2, 1),
+    mistMook('bow', 6, 1),
+    mistMook('sword', 3, 3),
+    mistMook('shield', 5, 2),
+  ],
+  aiDifficulty: 'hard',
+  maxDeploy: 5,
+};
+
+/** 两侧雾墙，中间一条对射廊。廊上两格高地是假答案：雾后的人仍然射不到。 */
+const c7_4: StageBlueprint = {
+  title: '夹雾',
+  goldReward: 38,
+  terrain: withCells(emptyTerrain(9, 10), [
+    { x: 0, y: 2, t: 'mist' }, { x: 1, y: 2, t: 'mist' }, { x: 7, y: 2, t: 'mist' }, { x: 8, y: 2, t: 'mist' },
+    { x: 0, y: 3, t: 'mist' }, { x: 1, y: 3, t: 'mist' }, { x: 7, y: 3, t: 'mist' }, { x: 8, y: 3, t: 'mist' },
+    { x: 0, y: 4, t: 'mist' }, { x: 1, y: 4, t: 'mist' }, { x: 7, y: 4, t: 'mist' }, { x: 8, y: 4, t: 'mist' },
+    { x: 0, y: 5, t: 'mist' }, { x: 1, y: 5, t: 'mist' }, { x: 7, y: 5, t: 'mist' }, { x: 8, y: 5, t: 'mist' },
+    { x: 0, y: 6, t: 'mist' }, { x: 1, y: 6, t: 'mist' }, { x: 7, y: 6, t: 'mist' }, { x: 8, y: 6, t: 'mist' },
+    { x: 3, y: 6, t: 'high' },
+    { x: 5, y: 6, t: 'high' },
+  ]),
+  enemies: [
+    mistMook('bow', 0, 1),
+    mistMook('sword', 4, 2),
+    mistMook('cavalry', 4, 4),
+    mistYoung('shield', 4, 3),
+  ],
+  aiDifficulty: 'hard',
+  maxDeploy: 5,
+};
+
+/**
+ * 精英 · 鸣钟人。雾环包住中心，外面射不进去。
+ * 走进环上才和里面的人互相打得着。
+ */
+const c7_5: StageBlueprint = {
+  title: '鸣钟人',
+  goldReward: 40,
+  terrain: withCells(emptyTerrain(9, 10), [
+    { x: 2, y: 1, t: 'mist' }, { x: 3, y: 1, t: 'mist' }, { x: 4, y: 1, t: 'mist' },
+    { x: 5, y: 1, t: 'mist' }, { x: 6, y: 1, t: 'mist' },
+    { x: 2, y: 2, t: 'mist' }, { x: 6, y: 2, t: 'mist' },
+    { x: 2, y: 3, t: 'mist' }, { x: 6, y: 3, t: 'mist' },
+    { x: 2, y: 4, t: 'mist' }, { x: 6, y: 4, t: 'mist' },
+    { x: 2, y: 5, t: 'mist' }, { x: 3, y: 5, t: 'mist' }, { x: 4, y: 5, t: 'mist' },
+    { x: 5, y: 5, t: 'mist' }, { x: 6, y: 5, t: 'mist' },
+  ]),
+  enemies: [
+    {
+      defId: 'sword', x: 4, y: 3, uid: euid(),
+      name: '鸣钟人',
+      animSet: 'bellringer',
+      stats: { maxHp: 550, atk: 30, spd: 6 },
+    },
+    mistMook('shield', 4, 2),
+    mistMook('bow', 3, 3),
+    mistYoung('sword', 5, 3),
+  ],
+  aiDifficulty: 'hard',
+  maxDeploy: 5,
+};
+
+/**
+ * Boss · 雾钟主。身前两排雾。南边射不穿；
+ * 贴到 y=3 才够得着他，而那一格在钟声半径里。
+ */
+const c7_6: StageBlueprint = {
+  title: '雾钟主',
+  goldReward: 46,
+  terrain: withCells(emptyTerrain(9, 10), [
+    { x: 0, y: 4, t: 'mist' }, { x: 1, y: 4, t: 'mist' }, { x: 2, y: 4, t: 'mist' },
+    { x: 3, y: 4, t: 'mist' }, { x: 4, y: 4, t: 'mist' }, { x: 5, y: 4, t: 'mist' },
+    { x: 6, y: 4, t: 'mist' }, { x: 7, y: 4, t: 'mist' }, { x: 8, y: 4, t: 'mist' },
+    { x: 0, y: 5, t: 'mist' }, { x: 1, y: 5, t: 'mist' }, { x: 2, y: 5, t: 'mist' },
+    { x: 3, y: 5, t: 'mist' }, { x: 4, y: 5, t: 'mist' }, { x: 5, y: 5, t: 'mist' },
+    { x: 6, y: 5, t: 'mist' }, { x: 7, y: 5, t: 'mist' }, { x: 8, y: 5, t: 'mist' },
+    { x: 1, y: 7, t: 'high' },
+    { x: 7, y: 7, t: 'high' },
+  ]),
+  enemies: [
+    {
+      defId: 'sword', x: 4, y: 2, uid: euid(),
+      name: '雾钟主',
+      boss: true,
+      animSet: 'mistlord',
+      stats: { maxHp: 580, atk: 25, spd: 6 },
+      skillSkin: 'bell_peal',
+    },
+    mistMook('bow', 1, 1),
+    mistMook('shield', 6, 3),
+    mistYoung('sword', 2, 2),
+  ],
+  isBoss: true,
+  aiDifficulty: 'hard',
+  maxDeploy: 5,
+};
+
 /**
  * 章节 → 关卡，顺序即游戏顺序。这是关卡编号与章节归属的**唯一来源**。
  *
@@ -1675,6 +1842,7 @@ const CHAPTERS: StageBlueprint[][] = [
   [c4_1, c4_2, c4_3, c4_4, c4_5, c4_6, c4_7, c4_8],
   [c5_1, c5_2, c5_3, c5_4, c5_5, c5_6, c5_7, c5_8],
   [c6_1, c6_2, c6_3, c6_4, c6_5, c6_6],
+  [c7_1, c7_2, c7_3, c7_4, c7_5, c7_6],
 ];
 
 function toStages(blueprints: readonly StageBlueprint[], startId: number): StageDefMvp[] {

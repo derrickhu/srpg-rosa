@@ -164,8 +164,11 @@ export type SkillCastAllyEffect =
 export type SkillCastTerrainEffect =
   /** 点燃范围内所有可燃地形（`TerrainSpec.ignitesTo`） */
   | { kind: 'ignite' }
-  /** 范围内可通行格变成 `to`（血渠术铺血池） */
-  | { kind: 'transmute'; to: TerrainId };
+  /**
+   * 范围内可通行格变成 `to`（血渠术铺血池、起雾铺浓雾）。
+   * `from` 有值时只改这一种（驱雾：浓雾 → 平原），别把高地一并抹掉。
+   */
+  | { kind: 'transmute'; to: TerrainId; from?: TerrainId };
 
 /**
  * 技能对「单个目标」的伤害规则（由 `computeSkillHitDamage` 解析）。
@@ -304,6 +307,11 @@ export interface SkillSpec {
    * 拿它当点燃范围会烧掉一整圈。改地形的词条在 `canApply` 里守这条。
    */
   onCastTerrainEffects?: SkillCastTerrainEffect[];
+  /**
+   * 点选敌方时必须有视线。只加在新技能上，不回头改炎弹：
+   * 要塞的墙后对射是另一章的题目。浓雾挡的是哑鸣和普攻，钟声故意不看。
+   */
+  requiresSight?: true;
   /** 已挂载的词条 id（由 `effectiveSkillSpec` 填充，仅供 UI 展示，不参与结算） */
   mods?: string[];
 }
@@ -1258,6 +1266,97 @@ const SPECS: Record<string, SkillSpec> = {
     onCastAllyEffects: [{ kind: 'heal', amount: 16 }],
   },
   /**
+   * 第七章 · 铜鸮。远程减速，必须有视线：浓雾挡得住这一箭，挡不住 Boss 的钟声。
+   */
+  mist_chime: {
+    id: 'mist_chime',
+    name: '哑鸣',
+    cooldown: 2,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'control',
+    enemyOnly: true,
+    displayKind: 'lineShot',
+    shape: { type: 'neighborPickFoe', manhattan: 3, reach: 'within' },
+    damage: { kind: 'none' },
+    requiresSight: true,
+    onCastFoeEffects: [{ kind: 'spdDown', subSpd: 3, rounds: 2 }],
+  },
+  /**
+   * 第七章 · 钟壳。自己减伤，逼玩家先处理雾后的鸮，而不是啃最前面的壳。
+   */
+  bell_toll: {
+    id: 'bell_toll',
+    name: '沉钟',
+    cooldown: 3,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'control',
+    enemyOnly: true,
+    displayKind: 'whirlwind',
+    shape: { type: 'selfCast' },
+    damage: { kind: 'none' },
+    onCastSelfEffects: [{ kind: 'guard', reduceRatio: 0.3, rounds: 2 }],
+  },
+  /**
+   * 第七章 Boss · 雾钟。圆盘不看视线：雾挡住弓，贴上去却进钟声。
+   */
+  bell_peal: {
+    id: 'bell_peal',
+    name: '雾钟',
+    cooldown: 3,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'control',
+    enemyOnly: true,
+    displayKind: 'whirlwind',
+    shape: { type: 'discAoE', radius: 2 },
+    damage: { kind: 'scaledAtk', atkMul: 0.4 },
+    onCastFoeEffects: [{ kind: 'spdDown', subSpd: 2, rounds: 2 }],
+  },
+  /** 第七章临时技能。起雾对标火把 / 血渠：自己铺这一章的地形。 */
+  temp_ms_veil: {
+    id: 'temp_ms_veil',
+    name: '起雾',
+    cooldown: 3,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'control',
+    displayKind: 'whirlwind',
+    shape: { type: 'neighborAoE', manhattan: 1 },
+    damage: { kind: 'flat', amount: 6, applyCounter: false, applyTerrain: false },
+    shopPrice: 24,
+    onCastTerrainEffects: [{ kind: 'transmute', to: 'mist' }],
+  },
+  /** 只把已有浓雾揭开。没雾的章不进池。 */
+  temp_ms_clear: {
+    id: 'temp_ms_clear',
+    name: '驱雾',
+    cooldown: 3,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'control',
+    displayKind: 'whirlwind',
+    shape: { type: 'neighborAoE', manhattan: 1 },
+    damage: { kind: 'none' },
+    shopPrice: 24,
+    onCastTerrainEffects: [{ kind: 'transmute', to: 'plain', from: 'mist' }],
+  },
+  /** 邻格点一个敌人减速，不造成伤害。 */
+  temp_ms_bell: {
+    id: 'temp_ms_bell',
+    name: '静铃',
+    cooldown: 2,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'control',
+    displayKind: 'singleBash',
+    shape: { type: 'neighborPickFoe', manhattan: 1 },
+    damage: { kind: 'none' },
+    shopPrice: 22,
+    onCastFoeEffects: [{ kind: 'spdDown', subSpd: 3, rounds: 2 }],
+  },
+  /**
    * 法师默认：3 格内点杀。和弓手「速射」同形，差在两个职业和倍率；
    * 点谁由玩家或 AI 决定，不写进技能。
    *
@@ -1412,6 +1511,7 @@ export function skillNeedsExistingMapTerrain(spec: SkillSpec): TerrainId[] {
   const needs: TerrainId[] = [];
   for (const effect of spec.onCastTerrainEffects ?? []) {
     if (effect.kind === 'ignite') needs.push(...ignitableTerrainIds());
+    if (effect.kind === 'transmute' && effect.from) needs.push(effect.from);
   }
   return [...new Set(needs)];
 }

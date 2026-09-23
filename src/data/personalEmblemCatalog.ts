@@ -112,6 +112,18 @@ const DEFS: readonly PersonalEmblemDef[] = [
       { kind: 'healGivenMul', mul: 1.08 },
     ],
   },
+  {
+    id: 'pe_ray_mist',
+    name: '雾行',
+    blurb: '走过浓雾的人，脚步不再被雾拖住。',
+    rosterId: 'hero_sword_ray',
+    dungeonId: 'dungeon_mist',
+    icon: 'emblem_pe_mist',
+    effects: [
+      { kind: 'stat', spd: 1, maxHp: 8 },
+      { kind: 'takenMul', mul: 0.95 },
+    ],
+  },
 ];
 
 const BY_ID = new Map(DEFS.map((d) => [d.id, d]));

@@ -30,4 +30,16 @@ describe('选点爆炸的说明必须读出范围', () => {
     expect(describeSkillShape(spec)).toMatch(/正好\s*2\s*格/);
     expect(describeSkillShape(spec)).toContain('贴脸打不到');
   });
+
+  it('改地形写成地形名，不留空行', () => {
+    const veil = describeSkillSpec(getSkillSpec('temp_ms_veil')!);
+    const clear = describeSkillSpec(getSkillSpec('temp_ms_clear')!);
+    const channel = describeSkillSpec(getSkillSpec('temp_rt_channel')!);
+    const torch = describeSkillSpec(getSkillSpec('temp_fo_torch')!);
+    expect(veil.every((line) => typeof line === 'string' && line.length > 0)).toBe(true);
+    expect(veil).toContain('范围内可通行格变为浓雾');
+    expect(clear).toContain('范围内的浓雾变为平原');
+    expect(channel).toContain('范围内可通行格变为血池');
+    expect(torch).toContain('点燃范围内的可燃地形');
+  });
 });

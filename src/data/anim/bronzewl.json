@@ -1,0 +1,86 @@
+{
+  "id": "bronzewl",
+  "source": "art/sprite-runs/mobs-ch7",
+  "blend": "normal",
+  "image": "images/anim/bronzewl.png",
+  "meta": {
+    "size": {
+      "w": 256,
+      "h": 256
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 195,
+    "baselineY": 233,
+    "ref": "mobs-ch7-idle/mob-2.png"
+  },
+  "frames": {
+    "mobs-ch7-idle/mob-2.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 198,
+        "h": 210
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 29,
+        "y": 27,
+        "w": 198,
+        "h": 210
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "idle": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch7-idle/mob-2.png"
+      ]
+    },
+    "default": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch7-idle/mob-2.png"
+      ]
+    },
+    "idle_up": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch7-idle/mob-2.png"
+      ]
+    },
+    "idle_down": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch7-idle/mob-2.png"
+      ]
+    },
+    "idle_left": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch7-idle/mob-2.png"
+      ]
+    },
+    "idle_right": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch7-idle/mob-2.png"
+      ]
+    }
+  }
+}

@@ -1,3 +1,4 @@
+import { getTerrainSpec } from './terrainSpec';
 import type { SkillCastTerrainEffect, SkillRole, SkillSpec } from './skillCatalog';
 
 /**
@@ -122,9 +123,7 @@ export function describeSkillSpec(spec: SkillSpec): string[] {
     );
   }
   for (const te of spec.onCastTerrainEffects ?? []) {
-    if (te.kind === 'transmute') {
-      out.push(`范围内可通行格变为${te.to === 'blood' ? '血池' : te.to}`);
-    }
+    out.push(describeCastTerrainEffect(te));
   }
   if (spec.executeBonus) {
     const line = Math.round(spec.executeBonus.belowHpRatio * 100);
@@ -195,22 +194,27 @@ export function describeSkillSpec(spec: SkillSpec): string[] {
       default: exhausted(e);
     }
   }
-  // 地形效果也要出一行：`ignite` 不需要范围里有敌人就能生效，是玩家主动布置火场的
-  // 唯一手段。面板不写，「这招为什么对空地也能放」就只能靠试。
-  for (const e of spec.onCastTerrainEffects ?? []) {
-    out.push(TERRAIN_EFFECT_TEXT[e.kind]);
-  }
   return out;
 }
 
 /**
- * 走查表而不是 `switch` + `exhausted`，是因为 `SkillCastTerrainEffect` 目前只有一个成员：
- * 单成员「联合」并不是联合类型，`default` 分支里narrow不到 `never`，兜底函数就编译不过。
- * `Record` 用键覆盖来保证同样的事——加了新种类而这里忘了写文案，`tsc` 会报缺键。
+ * 地形效果必须出一行：它不需要范围里有敌人就能生效。
+ * 漏写时商店会把 `undefined` 送进 `.replace`，整页补给点直接渲染失败。
  */
-const TERRAIN_EFFECT_TEXT: Record<SkillCastTerrainEffect['kind'], string> = {
-  ignite: '点燃范围内的可燃地形',
-};
+function describeCastTerrainEffect(te: SkillCastTerrainEffect): string {
+  switch (te.kind) {
+    case 'ignite':
+      return '点燃范围内的可燃地形';
+    case 'transmute': {
+      const toName = getTerrainSpec(te.to).name;
+      if (te.from) return `范围内的${getTerrainSpec(te.from).name}变为${toName}`;
+      return `范围内可通行格变为${toName}`;
+    }
+    default:
+      exhausted(te);
+      return '';
+  }
+}
 
 function pctOf(ratio: number): string {
   return `${Math.round(ratio * 100)}%`;

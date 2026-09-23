@@ -1,0 +1,17 @@
+个人纹章「雾行」单枚
+画法参考现有纹章：厚描边、平涂、米白底。主体是一把短剑穿过一团雾。
+
+One single personal-emblem icon for a tactics game.
+
+The attached emblem is DRAWING METHOD ONLY: chunky shapes, thick near-black outline,
+flat fills, cream card.
+
+CRITICAL BACKGROUND: 100% solid flat MAGENTA #FF00FF around the card.
+
+SUBJECT: a small cream rounded-square card #FCFCF6. On it, a short fat sword in
+old-coin brass #C4923A pointing up, and a chubby rainy-window gray cloud #C5D4DE
+wrapped around the lower half of the blade, with a steamed-bun cream highlight.
+Thick outline #1A1410. Flat fills. The sword and the cloud are both big and simple,
+readable at 20 pixels. The card fills the central 70% of the square.
+
+NO text, no letters, no numbers, no watermark.

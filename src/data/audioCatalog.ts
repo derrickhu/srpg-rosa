@@ -63,6 +63,11 @@ const SKILL_FAMILY: Record<string, SkillSfxFamily> = {
   rite_peck: 'physical',
   temp_rt_channel: 'physical',
   temp_rt_siphon: 'physical',
+  temp_ms_veil: 'physical',
+  temp_ms_clear: 'physical',
+  temp_ms_bell: 'physical',
+  mist_chime: 'physical',
+  bell_toll: 'physical',
 
   ember: 'fire',
   flame_ring: 'fire',
@@ -93,6 +98,7 @@ const SKILL_FAMILY: Record<string, SkillSfxFamily> = {
   swamp_miasma: 'boss',
   dragon_breath: 'boss',
   blood_rite: 'boss',
+  bell_peal: 'boss',
 };
 
 /** 词条改过的特效键、Boss 皮肤 vfxId。回放层优先读事件上的 vfxId。 */
@@ -104,6 +110,7 @@ const VFX_FAMILY: Record<string, SkillSfxFamily> = {
   mirequeen_miasma: 'boss',
   drake_cataclysm: 'boss',
   ritespeaker_drain: 'boss',
+  bell_peal: 'boss',
 };
 
 const BOSS_SKILL_IDS = new Set([
@@ -113,6 +120,7 @@ const BOSS_SKILL_IDS = new Set([
   'swamp_miasma',
   'dragon_breath',
   'blood_rite',
+  'bell_peal',
 ]);
 
 function inferSkillFamily(spec: SkillSpec): SkillSfxFamily {
@@ -161,9 +169,10 @@ const TERRAIN_PLACE_SFX: Partial<Record<TerrainId, SfxId>> = {
   forest: 'sfx_place_forest',
   wall: 'sfx_place_wall',
   blood: 'sfx_place_blood',
+  mist: 'sfx_place_forest',
 };
 
-/** 布阵放地形：高地 / 森林 / 城墙 / 血池各一条，避免几种券听起来像同一声落子 */
+/** 布阵放地形：高地 / 森林 / 城墙 / 血池各一条。浓雾先复用森林的落子声。 */
 export function sfxForTerrainPlace(id: TerrainId): SfxId {
   return TERRAIN_PLACE_SFX[id] ?? 'sfx_deploy';
 }

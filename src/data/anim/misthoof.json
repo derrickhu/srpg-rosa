@@ -1,0 +1,86 @@
+{
+  "id": "misthoof",
+  "source": "art/sprite-runs/mobs-ch7",
+  "blend": "normal",
+  "image": "images/anim/misthoof.png",
+  "meta": {
+    "size": {
+      "w": 256,
+      "h": 256
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 141,
+    "baselineY": 227,
+    "ref": "mobs-ch7-idle/mob-3.png"
+  },
+  "frames": {
+    "mobs-ch7-idle/mob-3.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 211,
+        "h": 158
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 22,
+        "y": 79,
+        "w": 211,
+        "h": 158
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "idle": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch7-idle/mob-3.png"
+      ]
+    },
+    "default": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch7-idle/mob-3.png"
+      ]
+    },
+    "idle_up": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch7-idle/mob-3.png"
+      ]
+    },
+    "idle_down": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch7-idle/mob-3.png"
+      ]
+    },
+    "idle_left": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch7-idle/mob-3.png"
+      ]
+    },
+    "idle_right": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch7-idle/mob-3.png"
+      ]
+    }
+  }
+}

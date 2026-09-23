@@ -1,0 +1,219 @@
+{
+  "id": "bell_peal",
+  "source": "art/vfx-runs/bell_peal",
+  "blend": "add",
+  "image": "images/anim/bell_peal.png",
+  "meta": {
+    "size": {
+      "w": 1024,
+      "h": 512
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 110,
+    "baselineY": 173,
+    "ref": "bell_peal/bell_peal-1.png"
+  },
+  "frames": {
+    "bell_peal/bell_peal-1.png": {
+      "frame": {
+        "x": 743,
+        "y": 229,
+        "w": 113,
+        "h": 112
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 72,
+        "y": 63,
+        "w": 113,
+        "h": 112
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bell_peal/bell_peal-2.png": {
+      "frame": {
+        "x": 591,
+        "y": 229,
+        "w": 150,
+        "h": 149
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 52,
+        "y": 46,
+        "w": 150,
+        "h": 149
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bell_peal/bell_peal-3.png": {
+      "frame": {
+        "x": 423,
+        "y": 229,
+        "w": 166,
+        "h": 165
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 43,
+        "y": 38,
+        "w": 166,
+        "h": 165
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bell_peal/bell_peal-4.png": {
+      "frame": {
+        "x": 213,
+        "y": 229,
+        "w": 208,
+        "h": 209
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 24,
+        "y": 1,
+        "w": 208,
+        "h": 209
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bell_peal/bell_peal-5.png": {
+      "frame": {
+        "x": 2,
+        "y": 229,
+        "w": 209,
+        "h": 211
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 22,
+        "y": 1,
+        "w": 209,
+        "h": 211
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bell_peal/bell_peal-6.png": {
+      "frame": {
+        "x": 479,
+        "y": 2,
+        "w": 222,
+        "h": 218
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 15,
+        "y": 0,
+        "w": 222,
+        "h": 218
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bell_peal/bell_peal-7.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 240,
+        "h": 225
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 8,
+        "y": 0,
+        "w": 240,
+        "h": 225
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bell_peal/bell_peal-8.png": {
+      "frame": {
+        "x": 244,
+        "y": 2,
+        "w": 233,
+        "h": 220
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 10,
+        "y": 0,
+        "w": 233,
+        "h": 220
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "bell_peal/bell_peal-9.png": {
+      "frame": {
+        "x": 703,
+        "y": 2,
+        "w": 230,
+        "h": 218
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 11,
+        "y": 0,
+        "w": 230,
+        "h": 218
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "bell_peal": {
+      "loop": false,
+      "fps": 20,
+      "frames": [
+        "bell_peal/bell_peal-1.png",
+        "bell_peal/bell_peal-2.png",
+        "bell_peal/bell_peal-3.png",
+        "bell_peal/bell_peal-4.png",
+        "bell_peal/bell_peal-5.png",
+        "bell_peal/bell_peal-6.png",
+        "bell_peal/bell_peal-7.png",
+        "bell_peal/bell_peal-8.png",
+        "bell_peal/bell_peal-9.png"
+      ]
+    }
+  }
+}

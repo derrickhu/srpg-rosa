@@ -7,6 +7,7 @@ import {
   CHAPTER4_MIRE,
   CHAPTER5_DRAKE,
   CHAPTER6_RITE,
+  CHAPTER7_MIST,
   type StageDefMvp,
   type StageEnemySpawn,
 } from '@/data/stagesMvp';
@@ -43,7 +44,7 @@ function dummy(
 }
 
 /**
- * 十只会出手的杂兵木桩，按章号从左到右、每排四只（祭坛两只另起一行）。
+ * 会出手的杂兵木桩，按章号从左到右、每排四只。
  *
  * 技能与外观都从 `stagesMvp` 的章节模板读，**不在这里另抄一份 id**：抄下来就会和
  * 关卡里的走岔，而走岔的表现是「试炼场里试的招和实战里放的不是同一个」——
@@ -55,6 +56,7 @@ const MOOK_SKILL_DUMMIES: StageEnemySpawn[] = [
   CHAPTER4_MIRE,
   CHAPTER5_DRAKE,
   CHAPTER6_RITE,
+  CHAPTER7_MIST,
 ]
   .flatMap((chapter) => Object.values(chapter).filter((t) => t.skillId))
   .map((t, i) =>
@@ -70,8 +72,8 @@ const MOOK_SKILL_DUMMIES: StageEnemySpawn[] = [
  * 木桩场：中排各职业木桩（看普攻/命中），最北一排五只 Boss 皮（看敌方技能）。
  * 血厚攻低，方便同一场里把技能连着放完。
  *
- * Boss 那排**按章号从左到右排**，六个各带自己的 `animSet` 与专属特效，
- * 一屏之内就能比出六种形态（环 / 柱 / 线 / 沉雾 / 锥 / 向心漩）有没有撞车——
+ * Boss 那排**按章号从左到右排**，七个各带自己的 `animSet` 与专属特效，
+ * 一屏之内就能比出形态（环 / 柱 / 线 / 沉雾 / 锥 / 向心漩 / 雾钟环）有没有撞车——
  * 这是形态区分唯一靠得住的验收方式，靠隔着几关回忆判断不了。
  * 棋盘宽 10 让前五个隔格站开；祭主站在最右，特效往里收，不往外扩。
  */
@@ -118,6 +120,12 @@ export const SANDBOX_STAGE: StageDefMvp = {
     dummy('sword', 9, 2, '祭主·戈尔什', {
       skillSkin: 'ritespeaker_drain',
       animSet: 'ritespeaker',
+      boss: true,
+      stats: { maxHp: 2400, atk: 1, spd: 4, move: 2 },
+    }),
+    dummy('sword', 9, 3, '雾钟主', {
+      skillSkin: 'bell_peal',
+      animSet: 'mistlord',
       boss: true,
       stats: { maxHp: 2400, atk: 1, spd: 4, move: 2 },
     }),

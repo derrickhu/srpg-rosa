@@ -20,6 +20,7 @@ export const TERRAIN_BUNDLE: AssetBundleDef = {
     river: 'images/terrain/river.png',
     swamp: 'images/terrain/swamp.png',
     blood: 'images/terrain/blood.png',
+    mist: 'images/terrain/mist.png',
     wall: 'images/terrain/wall.png',
     abyss: 'images/terrain/abyss.png',
     burning: 'images/terrain/burning.png',
@@ -72,12 +73,18 @@ export const UNIT_BUNDLE: AssetBundleDef = {
     gorecrow: 'images/units/gorecrow.png',
     ritehorn: 'images/units/ritehorn.png',
     slabward: 'images/units/slabward.png',
+    // 第七章 · 雾钟回廊（占位 token，正式剪影替换同名文件）
+    mistpuppet: 'images/units/mistpuppet.png',
+    bronzewl: 'images/units/bronzewl.png',
+    misthoof: 'images/units/misthoof.png',
+    bellshell: 'images/units/bellshell.png',
     // 第二至六章精英（第一章精英沿用 bloodfang）。
     torun: 'images/units/torun.png',
     castellan: 'images/units/castellan.png',
     mirespeaker: 'images/units/mirespeaker.png',
     drakekin: 'images/units/drakekin.png',
     altarwarden: 'images/units/altarwarden.png',
+    bellringer: 'images/units/bellringer.png',
     // Boss
     bloodfang: 'images/units/bloodfang.png',
     bloodshaman: 'images/units/bloodshaman.png',
@@ -85,6 +92,7 @@ export const UNIT_BUNDLE: AssetBundleDef = {
     mirequeen: 'images/units/mirequeen.png',
     drakelord: 'images/units/drakelord.png',
     ritespeaker: 'images/units/ritespeaker.png',
+    mistlord: 'images/units/mistlord.png',
   },
 };
 
@@ -160,6 +168,7 @@ export const UI_BUNDLE: AssetBundleDef = {
     emblem_pe_swamp: 'images/ui/emblem_pe_swamp.png',
     emblem_pe_dragon: 'images/ui/emblem_pe_dragon.png',
     emblem_pe_altar: 'images/ui/emblem_pe_altar.png',
+    emblem_pe_mist: 'images/ui/emblem_pe_mist.png',
     emblem_pe_sealed: 'images/ui/emblem_pe_sealed.png',
     // 战斗胜利弹窗的标题横幅。图里刻意留空——「胜利」两个字用游戏字体在代码里画，
     // 烧进贴图的话既换不了文案，字形也和界面其余部分对不上。
@@ -226,6 +235,9 @@ export const UI_BUNDLE: AssetBundleDef = {
     skill_temp_rt_channel: 'images/ui/skill_temp_rt_channel.png',
     skill_temp_rt_siphon: 'images/ui/skill_temp_rt_siphon.png',
     skill_temp_rt_oath: 'images/ui/skill_temp_rt_oath.png',
+    skill_temp_ms_veil: 'images/ui/skill_temp_ms_veil.png',
+    skill_temp_ms_clear: 'images/ui/skill_temp_ms_clear.png',
+    skill_temp_ms_bell: 'images/ui/skill_temp_ms_bell.png',
     // 敌方技能皮肤图标（键名见 enemySkillCatalog.iconKey，不进玩家商店池）
     skill_bloodfang_roar: 'images/ui/skill_bloodfang_roar.png',
     skill_bloodfang_wildfire: 'images/ui/skill_bloodfang_wildfire.png',
@@ -233,6 +245,7 @@ export const UI_BUNDLE: AssetBundleDef = {
     skill_mirequeen_miasma: 'images/ui/skill_mirequeen_miasma.png',
     skill_drake_cataclysm: 'images/ui/skill_drake_cataclysm.png',
     skill_ritespeaker_drain: 'images/ui/skill_ritespeaker_drain.png',
+    skill_bell_peal: 'images/ui/skill_bell_peal.png',
     // 杂兵技能图标。这一批**没有皮肤**，直接按底层 SkillSpec id 挂在怪种上
     // （`stagesMvp` 的 `MookTemplate.skillId`），所以键名是 `skill_<specId>`
     // 而不是 `skill_<skinId>`。少登记一个的表现是面板上一个灰圆，不报错。
@@ -246,6 +259,8 @@ export const UI_BUNDLE: AssetBundleDef = {
     skill_ash_harden: 'images/ui/skill_ash_harden.png',
     skill_rite_peck: 'images/ui/skill_rite_peck.png',
     skill_rite_chant: 'images/ui/skill_rite_chant.png',
+    skill_mist_chime: 'images/ui/skill_mist_chime.png',
+    skill_bell_toll: 'images/ui/skill_bell_toll.png',
     // 战斗操作条的动作图标。压在深色圆按钮上，所以这批是**浅色填充**，
     // 和压在米白卡上的那两批（mod_* / skill_*）配色相反，不要互相借用。
     act_wait: 'images/ui/act_wait.png',
@@ -318,6 +333,7 @@ const HUB_BG_ASSETS: Record<string, string> = {
   chapter_swamp: 'images/bg/chapter_swamp.png',
   chapter_dragon: 'images/bg/chapter_dragon.png',
   chapter_altar: 'images/bg/chapter_altar.png',
+  chapter_mist: 'images/bg/chapter_mist.png',
 };
 
 /** 战斗底图。`images/bg` 走 CDN，绝不能算进「进大厅」门槛。 */
@@ -328,6 +344,7 @@ const BATTLE_BG_ASSETS: Record<string, string> = {
   battle_bg_swamp: 'images/bg/battle_bg_swamp.png',
   battle_bg_dragon: 'images/bg/battle_bg_dragon.png',
   battle_bg_altar: 'images/bg/battle_bg_altar.png',
+  battle_bg_mist: 'images/bg/battle_bg_mist.png',
 };
 
 export const HUB_BG_BUNDLE: AssetBundleDef = {

@@ -197,7 +197,11 @@ export function mapEditorPlugin(): Plugin {
           terrains,
           characters,
           troopKinds: Object.keys(unitMod.UNIT_DEFS as Record<string, unknown>),
-          templates: ['rookie', 'forest', 'forestYoung', 'garrison', 'garrisonGreen', 'rite', 'riteYoung'],
+          templates: [
+            'rookie', 'forest', 'forestYoung', 'garrison', 'garrisonGreen',
+            'mire', 'mireYoung', 'drake', 'drakeYoung', 'rite', 'riteYoung',
+            'mistMook', 'mistYoung',
+          ],
         };
       };
 

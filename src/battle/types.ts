@@ -202,6 +202,8 @@ export type TerrainId =
   | 'gate_open'
   /** 第六章：站上每回合回血。沼泽的镜像 */
   | 'blood'
+  /** 第七章：走得过，箭射不穿。城墙挡路也挡箭，深渊挡路不挡箭 */
+  | 'mist'
   // 以下是战斗中由地形转移产生的**中间态**，关卡底图一般不直接摆（见 terrainSpec 的转移边）
   | 'burning'
   | 'scorched';

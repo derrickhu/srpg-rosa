@@ -97,6 +97,12 @@ export interface MetaState {
    */
   endlessBestFloor?: number;
   /**
+   * 无尽今天新开过几局。可选：老档没有，读的时候按今天 0 次算。
+   *
+   * 和扫荡一样记「哪天用了多少」，跨天自己归零。继续没打完的那局不写这里。
+   */
+  endlessAttempts?: { date: string; used: number };
+  /**
    * 各章已领奖的星（3bit）。可选：老档没有，读档时按 `clearedDungeonIds` 补满，
    * 避免把已经拿过的整笔 metaReward 再发一遍。
    */

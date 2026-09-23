@@ -48,6 +48,8 @@ import {
   claimLoot,
   refreshPendingLoot,
   grantAdExtraSlot,
+  canStartEndlessAttempt,
+  consumeEndlessAttempt,
   continueEndlessWave,
   currentDungeon,
   currentNode,
@@ -688,8 +690,13 @@ export class GameFlow {
       this.renderNode();
       return;
     }
+    if (!canStartEndlessAttempt(this.state.meta)) {
+      this.showToast('今日挑战已用完', { deny: true });
+      return;
+    }
     const party = this.state.meta.roster.map((m) => m.rosterId);
     startRun(this.state, ENDLESS_DUNGEON_ID, party);
+    consumeEndlessAttempt(this.state);
     this.shopOffers = null;
     this.trackRunStart(ENDLESS_DUNGEON_ID);
     SaveManager.save(this.state);

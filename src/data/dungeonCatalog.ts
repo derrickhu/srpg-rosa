@@ -43,7 +43,7 @@ export type ShopPoolRow =
   | { category: 'tempSkill'; skillId: string; price?: number };
 
 /** 玩家可通过地形券放置的地形类型 */
-export const PLACEABLE_TERRAIN_IDS: readonly TerrainId[] = ['high', 'forest', 'wall', 'blood'];
+export const PLACEABLE_TERRAIN_IDS: readonly TerrainId[] = ['high', 'forest', 'wall', 'blood', 'mist'];
 
 /** 地形券显示名（如「高地券」） */
 export function terrainTicketName(id: TerrainId): string {
@@ -103,10 +103,10 @@ const r = (rows: ShopPoolRow[]): ShopPoolRow[] => rows;
  *    花钱买一个他读不懂的东西。登场章节见 `stagesMvp` 的投放曲线总纲：
  *    高地（章 1）、森林（章 2）、城墙（章 3）。
  *
- * 2. **临时技能每章只新增 1/2/3/4/4/3 招。** 原先第一章一口气开四招——那是四段
+ * 2. **临时技能每章只新增 1/2/3/4/4/3/3 招。** 原先第一章一口气开四招——那是四段
  *    要读的说明文字，出现在玩家连高地都还没用熟的时候。现在第一章只有一招
  *    （野草缠足：最便宜、最好懂的控制），后面随着战斗变长再加。第五章是终章
- *    四招收口；第六章战后篇另开三招，不再从第五章拆。
+ *    四招收口；第六、七章战后篇各另开三招，不再从第五章拆。
  *
  * 3. **池子是「本章新增 + 上一章」的滑动窗口，不是全量累积。** 全量累积到第五章
  *    会有 14 招，而商店一次只 roll 3 件（还保底一件药剂）——想要的那招基本抽不到，
@@ -121,7 +121,7 @@ const r = (rows: ShopPoolRow[]): ShopPoolRow[] => rows;
  *    的第二层选择。教程店单独标价，不受这条约束。
  */
 
-/** 各章**新增**的临时技能。1–5 章 14 招 + 祭坛 3 招 */
+/** 各章**新增**的临时技能。1–5 章 14 招 + 祭坛 3 招 + 雾钟 3 招 */
 const TEMP_NEW_BY_CHAPTER: ShopPoolRow[][] = [
   // 章 1 草原：一招就够。控制类里最便宜、最好懂的那个
   r([{ category: 'tempSkill', skillId: 'temp_gl_snare', price: 12 }]),
@@ -156,6 +156,12 @@ const TEMP_NEW_BY_CHAPTER: ShopPoolRow[][] = [
     { category: 'tempSkill', skillId: 'temp_rt_channel', price: 24 },
     { category: 'tempSkill', skillId: 'temp_rt_siphon', price: 22 },
     { category: 'tempSkill', skillId: 'temp_rt_oath', price: 22 },
+  ]),
+  // 章 7 雾钟回廊：起雾 / 驱雾 / 静铃。都是控制，不占伤害位
+  r([
+    { category: 'tempSkill', skillId: 'temp_ms_veil', price: 24 },
+    { category: 'tempSkill', skillId: 'temp_ms_clear', price: 24 },
+    { category: 'tempSkill', skillId: 'temp_ms_bell', price: 22 },
   ]),
 ];
 
@@ -298,6 +304,21 @@ const POOL_BLOODFANG = r([
 ]);
 
 /**
+ * 章 7 雾钟回廊：浓雾券是这一章的关键一格。
+ * 治疗药略贵于蛮力 / 迟缓——雾挡得住箭，续航不是答案。
+ */
+const POOL_MIST = r([
+  { category: 'terrain', terrainId: 'high', price: 24 },
+  { category: 'terrain', terrainId: 'forest', price: 24 },
+  { category: 'terrain', terrainId: 'wall', price: 24 },
+  { category: 'terrain', terrainId: 'mist', price: 24 },
+  { category: 'potion', potionId: 'heal', price: 26 },
+  { category: 'potion', potionId: 'draught', price: 24 },
+  { category: 'potion', potionId: 'slow', price: 24 },
+  ...tempSkillPool(7),
+]);
+
+/**
  * 把一段连续战斗关卡按「打几场插一个商店、Boss 关收尾」编排为节点序列。
  *
  * Boss 由关卡自己的 `StageDefMvp.isBoss` 决定，不再按「数组最后一个」推。
@@ -351,6 +372,7 @@ const NODES_FORTRESS = buildNodes(chapterStages(3));
 const NODES_SWAMP = buildNodes(chapterStages(4));
 const NODES_DRAGON = buildNodes(chapterStages(5));
 const NODES_BLOODFANG = buildNodes(chapterStages(6));
+const NODES_MIST = buildNodes(chapterStages(7));
 
 export const DUNGEON_DEFS: DungeonDef[] = [
   {
@@ -466,6 +488,25 @@ export const DUNGEON_DEFS: DungeonDef[] = [
     themeColor: 0x6a2424,
     art: 'chapter_altar',
     battleBg: 'battle_bg_altar',
+  },
+  {
+    id: 'dungeon_mist',
+    name: '雾钟回廊',
+    desc: '祭坛封雾松开。脚过得去，箭过不去。贴上去，钟声却穿雾。',
+    nodes: NODES_MIST,
+    roguelikePool: POOL_MIST,
+    metaReward: 24,
+    stars: [
+      { cond: { kind: 'clear' }, soul: 8 },
+      { cond: { kind: 'maxDeaths', max: 1 }, soul: 8 },
+      { cond: { kind: 'maxRounds', max: roundCap(NODES_MIST) }, soul: 8 },
+    ],
+    enemyScaleBase: 1.4,
+    maxParty: 5,
+    unlock: { kind: 'clearDungeon', dungeonId: 'dungeon_bloodfang' },
+    themeColor: 0x6a7a8a,
+    art: 'chapter_mist',
+    battleBg: 'battle_bg_mist',
   },
 ];
 

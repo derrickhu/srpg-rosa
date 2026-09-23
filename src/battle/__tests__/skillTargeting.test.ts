@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { UNIT_DEFS } from '@/data/unitDefs';
 import { allSkillSpecs, getSkillSpec, skillDefForId } from '@/data/skillCatalog';
-import { emptyTerrain } from '../grid';
+import { emptyTerrain, getTerrainAt } from '../grid';
+import { createTerrainRuntime } from '../terrainDynamics';
 import type { BattleEvent, UnitState } from '../types';
 import { castSkillManual, skillAiming } from '../skills';
 
@@ -139,6 +140,40 @@ describe('技能目标类型（自/友/敌）', () => {
 
     const aim = skillAiming(self, UNIT_DEFS, [self], terrain);
     expect(aim?.candidates).toEqual(['p1']);
+  });
+
+  it('哑鸣看不穿浓雾，雾钟圆盘穿雾', () => {
+    const terrain = emptyTerrain(4, 5);
+    terrain[1]![0] = 'mist';
+    const owl = unit('e1', 'bow', 'enemy', { x: 0, y: 0 }, 'mist_chime');
+    const hidden = unit('p1', 'sword', 'player', { x: 0, y: 2 });
+    const open = unit('p2', 'bow', 'player', { x: 2, y: 0 });
+    expect(skillAiming(owl, UNIT_DEFS, [owl, hidden, open], terrain)?.candidates).toEqual(['p2']);
+
+    const boss = unit('e2', 'sword', 'enemy', { x: 0, y: 0 }, 'bell_peal');
+    const peal = skillAiming(boss, UNIT_DEFS, [boss, hidden], terrain);
+    expect(peal?.autoTargets).toContain('p1');
+  });
+
+  it('驱雾只揭浓雾，高地留着；起雾把邻格铺成浓雾', () => {
+    const terrain = emptyTerrain(4, 4);
+    terrain[0]![1] = 'mist';
+    terrain[1]![2] = 'high';
+    terrain[1]![0] = 'wall';
+    const caster = unit('p1', 'mage', 'player', { x: 1, y: 1 });
+    caster.tempSkill = skillDefForId('temp_ms_clear') ?? undefined;
+    const rt = createTerrainRuntime(terrain);
+    castSkillManual(caster, UNIT_DEFS, [caster], terrain, undefined, 'temp', undefined, rt);
+    expect(getTerrainAt(rt.grid, { x: 1, y: 0 })).toBe('plain');
+    expect(getTerrainAt(rt.grid, { x: 2, y: 1 })).toBe('high');
+    expect(getTerrainAt(rt.grid, { x: 0, y: 1 })).toBe('wall');
+
+    const veil = unit('p2', 'mage', 'player', { x: 2, y: 2 });
+    veil.tempSkill = skillDefForId('temp_ms_veil') ?? undefined;
+    const rt2 = createTerrainRuntime(emptyTerrain(4, 4));
+    castSkillManual(veil, UNIT_DEFS, [veil], rt2.grid, undefined, 'temp', undefined, rt2);
+    expect(getTerrainAt(rt2.grid, { x: 2, y: 1 })).toBe('mist');
+    expect(getTerrainAt(rt2.grid, { x: 2, y: 2 })).toBe('plain');
   });
 });
 

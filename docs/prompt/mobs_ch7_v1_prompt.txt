@@ -1,0 +1,72 @@
+第七章杂兵 v1 —— 四只雾钟构装一张 2x2（generate2dsprite --mode grid --rows 2 --cols 2）
+#
+# 剪影四槽：无腿雾团 / 宽翼铜喙 / 低伏四足 / 冷铜穹顶。
+# 配色：雨窗那种冷灰蓝 + 旧铜币那种暖黄铜 + 一处蒸馒头白。厚近黑描边。
+# 参考图只提供画法（描边、平涂、极端 Q 版），不要把参考角色画进格子。
+#
+# 处理：
+#   python3 scripts/respace-sheet.py --input art/sprite-runs/mobs-ch7/raw-2x2.png \
+#     --output art/sprite-runs/mobs-ch7/raw-2x2-spaced.png --rows 2 --cols 2 --margin 0.10
+#   python3 ~/.cursor/skills/generate2dsprite/scripts/generate2dsprite.py process \
+#     --input art/sprite-runs/mobs-ch7/raw-2x2-spaced.png --target creature --mode grid \
+#     --rows 2 --cols 2 --label-prefix mob --cell-size 256 \
+#     --output-dir art/sprite-runs/mobs-ch7/idle \
+#     --align feet --shared-scale --component-mode largest --strict-qc \
+#     --write-scale-profile art/sprite-runs/mobs-ch7/scale-profile.json
+#   python3 scripts/despill-magenta.py art/sprite-runs/mobs-ch7/idle
+#   node scripts/sprite2anim.mjs --only mistpuppet --only bronzewl --only misthoof --only bellshell
+
+A 2-column x 2-row grid of 4 CARTOON MONSTER CHARACTERS for a tactics game, drawn as game sprites.
+The attached reference is DRAWING METHOD ONLY: thick near-black outline, flat cel fills, extreme
+super-deformed mascot. Draw the four new creatures described below.
+
+CRITICAL BACKGROUND: the entire background, including all space between and around the four
+creatures, must be 100% solid flat MAGENTA, hex #FF00FF. It is a chroma key and will be deleted.
+No white, no grey floor, no gradient, no ground shadow, no drop shadow.
+
+CAMERA: a 3/4 top-down view. Every creature faces the viewer. Same eye level, same angle.
+
+CRITICAL SIZE CONSTRAINT: displayed at only about 40 pixels tall. ONE bold chunky readable
+silhouette each. Low-tier trash mobs, simpler than a hero. Head or main mass is about half
+the height. The whole body fits a roughly square box.
+
+CRITICAL CONTAINMENT: each creature INCLUDING wings, horns, and feet must stay inside the
+central 60–68% of its own cell. Leave a wide magenta gutter. Wings and horns finish with
+their tips well inside the cell.
+
+STYLE: chunky rounded toy-like cartoon. THICK near-black outline (#1A1410) all the way around
+every silhouette. FLAT fills, 4 to 6 colours. One light cream area (#F0F0E0) on each creature,
+about 10–15% of the body. One highlight tone, one shadow tone. No gradients, no texture,
+no belts, no rivets, no text.
+
+PALETTE, anchored to real objects:
+- Fog body: rainy-window glass, light cool gray-blue #C5D4DE, shadow #6E8AA0.
+- Metal: an old Chinese coin, warm tarnished brass #C4923A, brighter coin edge #E8C878.
+- Cream highlight: steamed-bun white #F0F0E0.
+The palette is BRIGHT. Light fog plus warm coin-brass plus cream. Wide value range.
+
+Per-cell contents:
+
+TOP-LEFT — FOG LUMP (sword). A fat rounded teardrop of rainy-window gray-blue sitting on
+the ground with NO legs. Cream belly patch. Two big round black eyes. The whole shape is
+one smooth lump. Memory point: legless teardrop.
+
+TOP-RIGHT — BRONZE OWL (bow). A round owl. Body is rainy-window gray-blue, chest is
+steamed-bun cream. The beak is one big chunky old-coin brass triangle. Wings are SHORT
+rounded fans, clearly finished teardrop tips, wider than the body, still inside the cell.
+Two stubby feet. Memory point: wide short wings plus a brass beak.
+
+BOTTOM-LEFT — MIST HOOF (cavalry). A low four-legged lizard-hound, body close to the
+ground, longer than it is tall. Rainy-window gray-blue body, a cream stripe along the back.
+Four short legs end in old-coin brass hooves. A short blunt snout. Memory point: low and wide.
+
+BOTTOM-RIGHT — BELL SHELL (shield). A heavy squat DOME walker. The dome is old-coin brass,
+with a steamed-bun cream patch on the front like a bell face. Four stubby feet fully visible
+under the rim. A tiny round clapper dot on the cream face. Memory point: brass dome on stubby feet.
+
+LAYOUT RULES:
+1. EXACTLY 4 creatures in a clean 2x2.
+2. NO borders, NO frames, NO platforms.
+3. Each fills about 60–68% of its cell with magenta margin. Nothing crosses cells.
+4. Same outline thickness, same simplification, same camera.
+5. NO text, no labels, no watermark.

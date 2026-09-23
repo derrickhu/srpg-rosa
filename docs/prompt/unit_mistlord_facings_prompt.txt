@@ -1,0 +1,27 @@
+第七章 Boss「雾钟主」四朝向 2x2
+同一只角色，四个朝向。参考图只提供画法。
+
+A 2-column x 2-row grid of the SAME cartoon boss character in four facings.
+The attached reference is DRAWING METHOD ONLY: thick near-black outline, flat cel fills,
+extreme super-deformed mascot.
+
+CRITICAL BACKGROUND: 100% solid flat MAGENTA #FF00FF everywhere between and around the figure.
+No floor, no shadow, no gradient.
+
+CHARACTER — MIST LORD, the same design in every cell:
+The body IS a tall old-coin brass bell (#C4923A, brighter coin edge #E8C878). A steamed-bun
+cream stripe #F0F0E0 runs down the bell shoulder. Under the bell rim, rainy-window gray-blue
+fog (#C5D4DE) pours out like a short skirt, and two big dark eyes sit in the bell mouth.
+Two stubby arms. A round brass clapper hangs in the mouth. The bell is taller than it is
+wide, so the silhouette reads as a standing bell, distinct from a squat dome. Head-mass
+(the bell) is about half the height. Chunky, readable at 40 pixels. Thick outline #1A1410.
+Flat fills only. 4–6 colours.
+
+FACINGS, each figure in the central 60% of its cell, wide magenta gutter:
+TOP-LEFT — facing the viewer (front). Eyes and clapper visible.
+TOP-RIGHT — facing screen-right, 3/4 side. Bell profile, one eye.
+BOTTOM-LEFT — facing away, the back of the bell, cream stripe, fog skirt, no face.
+BOTTOM-RIGHT — facing screen-left, 3/4 side, mirror of the right-facing cell.
+
+Same size, same colours, same outline in all four cells. Nothing touches a cell edge.
+NO text, no labels, no watermark, no borders, no frames.

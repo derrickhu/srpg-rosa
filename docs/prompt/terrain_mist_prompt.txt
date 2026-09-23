@@ -1,0 +1,19 @@
+第七章地形贴纸「浓雾」
+规范：美术风格圣经 §5。地形贴纸不描黑边。参考血泊贴纸的体积和留白，主体换成一团雾。
+
+One single terrain STICKER, centered, for a tactics grid cell.
+
+The attached reference shows the sticker language: a small centered prop with a soft cream
+rim and a soft contact shadow, sitting alone. Match that sticker construction. The subject
+is a fog puff.
+
+CRITICAL BACKGROUND: 100% solid flat MAGENTA #FF00FF. Chroma key. The sticker floats in
+the middle with a wide magenta margin. No tile, no grass, no grid.
+
+SUBJECT: one chubby cloud puff of rainy-window gray-blue. Main body #C5D4DE, a slightly
+deeper shadow lobe #8AA0B0, a steamed-bun cream highlight #F0F0E0 on the upper lobe.
+Soft rounded edge, a thin cream rim so it reads on green grass. A very soft darker contact
+shadow tucked under the puff. No black outline. No face. No eyes. Flat cartoon, 3 tones,
+soft edges, toy-like volume like the reference pool sticker.
+
+The puff fills about 55% of the square, centered. NO text, no icon frame, no characters.

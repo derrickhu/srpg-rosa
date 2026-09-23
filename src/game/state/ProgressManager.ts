@@ -418,6 +418,34 @@ export function nodeClearedBefore(state: MvpGameState): boolean {
   return run.nodeIndex < (state.meta.clearedNodesByDungeonId[run.dungeonId] ?? 0);
 }
 
+/** 无尽每天能新开几局。接着打没结束的那局不算新的一次。 */
+export const ENDLESS_ATTEMPTS_PER_DAY = 3;
+
+/** 今天已经新开过几局无尽（跨天自动归零） */
+export function endlessAttemptsUsedToday(meta: MetaState): number {
+  const rec = meta.endlessAttempts;
+  if (!rec || rec.date !== todayKey()) return 0;
+  return rec.used;
+}
+
+/** 今天还能新开几局无尽 */
+export function endlessAttemptsLeftToday(meta: MetaState): number {
+  return Math.max(0, ENDLESS_ATTEMPTS_PER_DAY - endlessAttemptsUsedToday(meta));
+}
+
+/** 今天是否还能新开一局。已有进行中的局走继续，不看这个。 */
+export function canStartEndlessAttempt(meta: MetaState): boolean {
+  return endlessAttemptsLeftToday(meta) > 0;
+}
+
+/** 扣一次今日无尽次数。调用方须先过 `canStartEndlessAttempt`，并且这次真的是新开一局。 */
+export function consumeEndlessAttempt(state: MvpGameState): void {
+  const today = todayKey();
+  const rec = state.meta.endlessAttempts;
+  const used = rec && rec.date === today ? rec.used : 0;
+  state.meta.endlessAttempts = { date: today, used: used + 1 };
+}
+
 /** 扣一次该副本的整章扫荡配额。调用方须先过 `canSweepChapter` */
 export function consumeSweep(state: MvpGameState, dungeonId: string): void {
   const today = todayKey();

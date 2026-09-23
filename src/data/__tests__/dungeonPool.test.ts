@@ -96,6 +96,15 @@ describe('副本商店池', () => {
     expect(fortressSkills, '要塞没有可燃林子，火把不该跟窗过来').not.toContain('temp_fo_torch');
     expect(fortressSkills, '绞缠不绑地形，滑动窗口该留下').toContain('temp_fo_thorn');
 
+    const mist = DUNGEON_DEFS.find((d) => d.id === 'dungeon_mist');
+    const bloodfang = DUNGEON_DEFS.find((d) => d.id === 'dungeon_bloodfang');
+    const mistSkills = mist!.roguelikePool.filter((r) => r.category === 'tempSkill').map((r) => r.skillId);
+    const bloodSkills = bloodfang!.roguelikePool.filter((r) => r.category === 'tempSkill').map((r) => r.skillId);
+    expect(mistSkills, '雾钟回廊卖起雾和驱雾').toEqual(expect.arrayContaining(['temp_ms_veil', 'temp_ms_clear', 'temp_ms_bell']));
+    expect(bloodSkills, '祭坛没有浓雾，驱雾不该跟窗过去').not.toContain('temp_ms_clear');
+    expect(mist!.roguelikePool.some((r) => r.category === 'terrain' && r.terrainId === 'mist')).toBe(true);
+    expect(bloodfang!.roguelikePool.some((r) => r.category === 'terrain' && r.terrainId === 'mist')).toBe(false);
+
     for (const d of DUNGEON_DEFS) {
       const stageIndices = d.nodes
         .filter((n) => n.stageIndex !== undefined)

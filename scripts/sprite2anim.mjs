@@ -342,6 +342,19 @@ const SETS = [
     downscale: 1,
     runs: [{ dir: 'mobs-ch6/idle', preset: 'single', label }],
   })),
+  // 第七章杂兵：雾钟构装。剪影四槽：无腿雾团 / 宽翼铜喙 / 低伏四足 / 冷铜穹顶。
+  ...[
+    { id: 'mistpuppet', label: 'mob-1' },
+    { id: 'bronzewl', label: 'mob-2' },
+    { id: 'misthoof', label: 'mob-3' },
+    { id: 'bellshell', label: 'mob-4' },
+  ].map(({ id, label }) => ({
+    id,
+    source: `${RUNS_DIR}/mobs-ch7`,
+    blend: 'normal',
+    downscale: 1,
+    runs: [{ dir: 'mobs-ch7/idle', preset: 'single', label }],
+  })),
   // 第二至五章精英：血牙部族的人形兽人，四只一张 2x2（art/sprite-runs/elites/raw-2x2.png）。
   //
   // 精英和 Boss 是血牙部族、杂兵是当地野物——这条读图规矩第一章就立下了，剪影本身就是
@@ -364,6 +377,21 @@ const SETS = [
     downscale: 1,
     runs: [{ dir: 'elites/idle', preset: 'single', label }],
   })),
+  // 第七章精英鸣钟人：英雄身高，单帧。第七章 Boss 雾钟主：四朝向各一帧。
+  {
+    id: 'bellringer',
+    source: `${RUNS_DIR}/elites-ch7`,
+    blend: 'normal',
+    downscale: 1,
+    runs: [{ dir: 'elites-ch7/idle', preset: 'single', label: 'elite-1' }],
+  },
+  {
+    id: 'mistlord',
+    source: `${RUNS_DIR}/mistlord`,
+    blend: 'normal',
+    downscale: 1,
+    runs: [{ dir: 'mistlord/idle', preset: 'four_facing' }],
+  },
   // 黑底 additive 技能/命中特效，取用见 src/data/vfxCatalog.ts。
   //
   // 帧数与 fps 是两档标准，理由在 docs/特效圣经.md：
@@ -377,6 +405,11 @@ const SETS = [
   // `temp_gl_*`：第一章草原临时技能专属特效（缠足/敷治/蜂群/号角），形态互不撞车。
   ...[
     { id: 'roar', frames: 9, fps: 20 },
+    { id: 'bell_peal', frames: 9, fps: 20 },
+    // 第七章临时技能：起雾是实心雾团，驱雾是左右分开的两团，静铃是钟的剪影。
+    { id: 'temp_ms_veil', frames: 9, fps: 18 },
+    { id: 'temp_ms_clear', frames: 9, fps: 18 },
+    { id: 'temp_ms_bell', frames: 9, fps: 18 },
     { id: 'bloodfang_roar', frames: 9, fps: 20 },
     { id: 'bloodfang_wildfire', frames: 9, fps: 20 },
     // `bloodfang_breach`：第三章 Boss 皮肤「破阵冲撞」——等宽贯穿线。原先拼 charge_aura +
@@ -530,6 +563,22 @@ const PRESETS = {
       fps: 1,
       labels: [label],
     }));
+  },
+  // 四朝向各一帧。行走和攻击复用该朝向的静止帧（和 ritespeaker 一样，不另画行走表）。
+  // 标签：face-1 正对、face-2 朝右、face-3 背面、face-4 朝左。
+  four_facing: () => {
+    const face = { down: 'face-1', right: 'face-2', up: 'face-3', left: 'face-4' };
+    const clips = [];
+    for (const [dir, label] of Object.entries(face)) {
+      for (const kind of ['idle', 'walk', 'attack']) {
+        clips.push({ name: `${kind}_${dir}`, loop: true, fps: 1, labels: [label] });
+      }
+    }
+    clips.push(
+      { name: 'idle', loop: true, fps: 1, labels: ['face-1'] },
+      { name: 'default', loop: true, fps: 1, labels: ['face-1'] },
+    );
+    return clips;
   },
   // 2x2 呼吸循环。同时登记 default，AnimatedUnit 在非 up 朝向时会取它
   idle: () =>

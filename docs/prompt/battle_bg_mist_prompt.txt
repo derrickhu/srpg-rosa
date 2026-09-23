@@ -1,0 +1,26 @@
+第 7 章「雾钟回廊」战斗底图（832×1248 / 2:3）
+生成器：Cursor 内置 GenerateImage，aspect_ratio 3:4
+唯一画法参考：images/bg/battle_bg.png
+规范：美术风格圣经 §5.1。同一张画换地板和角落道具。
+
+The visible grassland battle background is the SAME painting. Redress it. Do not invent a new style.
+
+KEEP EXACTLY:
+- Strict top-down camera. No 3/4 canyon, no vanishing point, no sky, no horizon.
+- The SAME painting language: flat cartoon, 2–3 clean colors per object, soft edges, no thick black outlines, no painterly texture.
+- Walkable center is CLEAN (1–2 flat colors), mid-high value, bright enough for tokens.
+
+CHANGE the floor and the corner props.
+
+CENTER ~60% is a clean flat field of pale cool stone, like a foggy courtyard:
+- Main fill #C9D6DE, slightly lighter patches #D8E4EA.
+- At most two very large faint rectangular flagstone seams, almost invisible.
+- The center stays empty so a tactics grid can sit on it.
+- Mid-high value on purpose: rainy-window gray creatures and old-coin brass must read on top.
+
+EDGE IDENTITY, two corners only:
+- TOP-RIGHT only: one short square post topped with a smooth old-coin brass bell (#C4923A), toy-like, 2–3 tones, plus a small low fog bush in #A8B8C4.
+- BOTTOM-LEFT only: one low bank of the same fog bush and one flat rectangular stone step.
+- Do not wrap props around all four sides. Do not fill the center with fog. Do not draw trees in a ring.
+
+NO text, NO grid, NO UI, NO characters, NO buildings filling the frame, NO sky.

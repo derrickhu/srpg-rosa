@@ -1,0 +1,17 @@
+第七章章节卡「雾钟回廊」（生成 16:9，再裁中间横带 654×272）
+画法参考章节卡：扁平卡通海报，软边，重要内容压在画面中段。
+
+The attached chapter card is DRAWING METHOD ONLY: a wide flat cartoon poster, soft edges,
+2–3 flat colours per object, a clear middle band. Draw a new scene.
+
+A wide 16:9 cartoon illustration of a mist corridor. Important shapes sit in the CENTRAL
+HORIZONTAL BAND (the middle 40% of the height), because the top and bottom will be cropped.
+
+SCENE: a short stone corridor seen from the side, slightly above. Walls and floor are
+rainy-window gray-blue stone, mid value #8AA0B4 and #C5D4DE, clean and flat. In the center
+of the band stands ONE large old-coin brass bell (#C4923A), smooth, with a steamed-bun
+cream highlight. Low fog banks in cool gray sit at the left and right ends of the corridor,
+leaving the bell readable. A pale cool sky wash behind the corridor, flat, no clouds of detail.
+
+Soft edges, no thick black outlines, no painterly texture. Toy-like, few shapes.
+NO soldiers, NO characters, NO text, NO UI, NO logo.

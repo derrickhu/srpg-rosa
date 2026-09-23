@@ -1,0 +1,39 @@
+第七章技能图标 2x3
+产出 → skill_mist_chime, skill_bell_toll, skill_temp_ms_veil,
+        skill_temp_ms_clear, skill_temp_ms_bell, skill_bell_peal
+生成器：Cursor 内置 GenerateImage，aspect_ratio 1:1
+切图：python3 scripts/split-tile-sheet.py --grid 2x3 --size 72
+
+配色：雨窗冷灰蓝 + 旧铜币黄铜 + 蒸馒头白。压在米白卡上，厚近黑描边。
+
+---
+
+A 2-column x 3-row grid of 6 GAME UI ICONS for a cartoon fantasy tactics mobile game.
+Theme: cold fog and old-coin brass.
+
+The attached icon is DRAWING METHOD ONLY: chunky filled shape, thick near-black outline,
+flat colour, one cream highlight, sitting on a cream card.
+
+CRITICAL BACKGROUND: 100% solid flat MAGENTA #FF00FF between and around the six cards.
+
+CRITICAL SIZE: displayed at 26-56 pixels. ONE bold chunky silhouette each. NO thin lines,
+NO small parts.
+
+CRITICAL: each icon sits on a cream-white rounded-square card #FCFCF6. THICK near-black
+outline #1A1410. Flat fills, at most 3 colours plus outline. Palette: rainy-window gray-blue
+#C5D4DE, old-coin brass #C4923A, steamed-bun cream #F0F0E0.
+
+Per-cell, left-to-right then top-to-bottom:
+
+Cell 1 (MUTE CHIME) — a fat bird beak in old-coin brass, pointing down-right, with one
+short sound dash beside it in rainy-window gray.
+Cell 2 (SINKING BELL) — a squat brass dome, cream face, one round clapper dot.
+Cell 3 (LAY FOG) — one chubby rainy-window gray cloud puff with a cream highlight.
+Cell 4 (CLEAR FOG) — the same cloud puff with a clean cream gap opening through the middle,
+like the fog is parting.
+Cell 5 (QUIET BELL) — one small simple brass hand-bell, cream highlight, chunky.
+Cell 6 (BELL PEAL) — three smooth concentric circles, cream core, gray middle, brass outer
+ring. Smooth circles, even spacing.
+
+LAYOUT: exactly 6 icons, no extra frames, each icon about 70% of its cell, magenta margin.
+NO text, no numbers, no letters.
