@@ -72,6 +72,7 @@ function cloneUnits(units: UnitState[]): UnitState[] {
     personalBasicDealtMul: u.personalBasicDealtMul,
     personalTakenMul: u.personalTakenMul,
     personalHealGivenMul: u.personalHealGivenMul,
+    personalPoisonTickAdd: u.personalPoisonTickAdd,
     timedBattleEffects: u.timedBattleEffects?.map((e) => {
       switch (e.kind) {
         case 'taunt':

@@ -1,0 +1,58 @@
+A 4x4 sprite sheet, full 4-direction walk cycle, top-down tactics RPG.
+One character only: Luoling, a hooded hex archer.
+
+CHARACTER — extreme super-deformed mascot. HEAD INCLUDING THE HOOD is about HALF
+total height. Tiny stubby body. The whole body fits in a roughly square box.
+Giant round head, short limbs, mitten hands, two dark oval eyes, two brows, a tiny mouth.
+
+IDENTITY COLORS, 6 flat colors plus near-black outline:
+- Short hooded cloak in lilac, the color of a pale amethyst stone, covering the body.
+- Cream hood lining and a cream collar, about one sixth of the body, the bright lock.
+- One big round cream paper charm, a simple disc with a dark ring, hanging at the bow hand.
+- A short thick wooden bow, old-coin brass brown, held out as one bold shape.
+- Warm skin on the face. Brown shoes.
+Thick near-black outlines. Flat cel fills, one highlight, one shadow. No gradients.
+
+ART STYLE (project style bible — do not deviate):
+hand-drawn cartoon game sprite, thick near-black outlines (pure black or very dark warm
+brown — never a mid-tone or colorful outline), flat saturated fills with light cel shading
+(one highlight tone, one shadow tone), no gradients, no texture noise, no painterly
+rendering, no photographic detail, 3/4 top-down camera matching a tactics grid.
+
+PROPORTIONS — check against this, drawing them too tall is the most common failure:
+- Extreme super-deformed mascot. The HEAD INCLUDING HAIR OR HELMET is about HALF the
+  character's total height. Body, arms and legs together are the other half: short,
+  stubby, chunky.
+- The whole character fits in a roughly SQUARE box — total width is about 0.9 to 1.0
+  times total height. If it looks like a slim standing person, it is wrong.
+- This is NOT a 2-head or 2.5-head chibi. Think 1.5-head mascot: giant head, tiny body.
+
+WALK MOTION — the walk must be readable from the SILHOUETTE ALONE at 44 pixels tall.
+Columns 1 and 3 must look obviously different from columns 2 and 4 even with all interior
+detail removed. Understating this is the single most common failure:
+  Column 1: neutral. Both feet together directly under the body, legs straight, body at its
+            FULL standing height.
+  Column 2: LEFT foot planted far FORWARD, right foot trailing far BEHIND, with a clearly
+            VISIBLE GAP between the two feet — the stride is wide, not a shuffle. The whole
+            body drops noticeably, squashing down about one tenth of its height. Arms swing
+            opposite to the legs. Bow and paper charm stay in the bow hand.
+  Column 3: neutral again, identical to column 1.
+  Column 4: mirror of column 2 — RIGHT foot far forward, left foot trailing behind, same
+            heavy body drop, arms swung the other way.
+Exaggerate far past realism. A subtle, realistic walk reads as a statue sliding across the
+board. If in doubt, make the stride wider and the body drop deeper.
+
+ROWS:
+  Row 1 top:    facing DOWN, face visible, bow on the viewer's right, charm in front of the bow
+  Row 2:        facing LEFT, left profile, bow leading toward the left
+  Row 3:        facing RIGHT, right profile, bow leading toward the right
+  Row 4 bottom: facing UP, back of the lilac hood, bow still visible beside the body
+
+RULES:
+1. EXACTLY 16 equal cells, 4 columns by 4 rows. No borders, no lines between cells.
+2. Background 100% solid chroma green #00FF00. No shadow, no gradient, no floor.
+3. Identical body scale and camera in every cell. Body never zooms.
+4. Body fills about 50% of cell height, centered. Generous green margin on every side.
+5. Nothing crosses a cell edge. Feet share one baseline inside each cell.
+6. Face: two dark oval eyes, two brows, tiny mouth. Mitten hands.
+7. NO TEXT, no labels, no numbers, no watermark.

@@ -49,7 +49,7 @@ export interface CharacterDef {
    * **路线属于角色，不属于职业。** 同职业的两个角色可以是两条路线——
    * 「另一个战士，走的是控制」是合法且期待中的扩展方式，玩家玩的是角色。
    * 输出路线占大多数，弥尔走 `support`。
-   * 控制路线的角色上线时再接 `reserved` 的那几招（破甲咒 / 盾墙震慑 / 战吼）。
+   * 洛铃已经走控制（破甲咒）。还空着的是盾墙震慑和战吼。
    */
   skillRoute: SkillRole;
   /**
@@ -148,6 +148,17 @@ export const CHARACTER_DEFS: CharacterDef[] = [
     unlock: { kind: 'clearDungeon', dungeonId: 'dungeon_fortress' },
     animSet: 'floe',
   },
+  {
+    id: 'hero_bow_luoling',
+    name: '洛铃',
+    profession: 'bow',
+    skillRoute: 'control',
+    base: { maxHp: 62, atk: 14, spd: 8, move: 2 },
+    growth: { maxHp: 5, atk: 1, spd: 0, move: 0 },
+    defaultSkillId: 'hex_mark',
+    unlock: { kind: 'meta', cost: 12 },
+    animSet: 'luoling',
+  },
 ];
 
 /** 角色卡片 / 战场 token 的图集 id。同职业两人各有各的脸时走 `animSet`。 */
@@ -194,7 +205,7 @@ export function canCharacterUseSkill(def: CharacterDef, skillId: string): boolea
 }
 
 /**
- * 能进**主槽**的全部技能 id，一人一招之后就是六个角色的招牌技能。
+ * 能进**主槽**的全部技能 id，一人一招之后就是每个角色的招牌技能。
  *
  * 单开一个入口是因为「主槽 / 临时槽」这条线有规则挂在上面——**纹章只强化主技能**
  * （见 `unitSkillSpec`），所以「每一招都要配专属纹章」这条纪律的范围是这里，

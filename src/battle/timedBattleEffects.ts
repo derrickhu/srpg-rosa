@@ -133,6 +133,7 @@ export function applySkillCastFoeEffects(
   target: UnitState,
   spec: SkillSpec,
   rng: () => number = Math.random,
+  poisonTickAdd = 0,
 ): AppliedFoeFlags {
   const flags: AppliedFoeFlags = {};
   const raw = spec.onCastFoeEffects;
@@ -140,7 +141,11 @@ export function applySkillCastFoeEffects(
   let list = [...(target.timedBattleEffects ?? [])];
   for (const e of raw) {
     if (!foeEffectHits(e, rng)) continue;
-    list = mergeFoeCastEffect(list, e);
+    // 冻伤是另一套表现，咒毒只加在中毒上
+    const effect = e.kind === 'poison' && e.theme !== 'frost' && poisonTickAdd > 0
+      ? { ...e, dmgPerRound: e.dmgPerRound + poisonTickAdd }
+      : e;
+    list = mergeFoeCastEffect(list, effect);
     if (e.kind === 'poison') {
       if (e.theme === 'frost') flags.frostbitten = true;
       else flags.poisoned = true;

@@ -75,6 +75,7 @@ export function createChallengeView(
     title: '副本',
     page: 'challenge',
     soul: state.meta.metaCurrency,
+    emblemTokens: state.meta.universalEmblemTokens ?? 0,
   });
   root.addChild(header.root);
 

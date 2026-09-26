@@ -6,6 +6,7 @@ import {
   makePageTitle,
   type HubPageId,
 } from '@/ui/chrome';
+import { UNIVERSAL_EMBLEM_ICON } from '@/data/personalEmblemCatalog';
 import { createCurrencyPill, type CurrencyPill } from '@/view/renderHelpers';
 
 export type { HubPageId };
@@ -15,6 +16,8 @@ export const HUB_SOUL_PAD = 12;
 export const HUB_SOUL_TOP_GAP = 2;
 export const HUB_SOUL_ICON = 20;
 export const HUB_SOUL_PILL_H = HUB_SOUL_ICON + 10;
+/** 魂晶和纹玉两条之间的空隙 */
+export const HUB_CURRENCY_GAP = 8;
 
 export interface HubHeaderOptions {
   screenWidth: number;
@@ -24,6 +27,8 @@ export interface HubHeaderOptions {
   page?: HubPageId;
   /** 魂晶数量；传 undefined 则不显示货币条 */
   soul?: number;
+  /** 纹玉。和魂晶同一行，贴在它右边 */
+  emblemTokens?: number;
 }
 
 export interface HubHeaderHandle {
@@ -31,13 +36,15 @@ export interface HubHeaderHandle {
   /** 头部占掉的高度：页面内容从这个 y 开始排 */
   height: number;
   setSoul(amount: number): void;
+  setEmblemTokens(amount: number): void;
+  /** 详情弹窗会自己再画一条。藏的是整行货币，不只是魂晶。 */
   setSoulVisible(visible: boolean): void;
 }
 
 /**
- * 大厅四页共用的顶栏：魂晶条 + 居中页名。
+ * 大厅四页共用的顶栏：魂晶、纹玉 + 居中页名。
  *
- * 魂晶贴左，避开微信胶囊（`safeArea.top` 已经在胶囊下沿）。
+ * 两条货币贴左排成一行，避开微信胶囊（`safeArea.top` 已经在胶囊下沿）。
  * 页名另起一行居中，压在各页自己的装饰底上——不再贴左、也不再用同一根金绶带。
  */
 
@@ -50,6 +57,15 @@ export function hubSoulPillOrigin(): { x: number; y: number } {
 /** 魂晶条下沿。详情弹窗要从这条线下面开始，避免黄标题压住数字。 */
 export function hubSoulBarBottom(): number {
   return hubSoulPillOrigin().y + HUB_SOUL_PILL_H;
+}
+
+/** 纹玉条左上角。魂晶变宽时要重算，详情弹窗上的那一条也走这里。 */
+export function hubEmblemPillOrigin(soulPillWidth: number): { x: number; y: number } {
+  const origin = hubSoulPillOrigin();
+  return {
+    x: origin.x + soulPillWidth + HUB_CURRENCY_GAP,
+    y: origin.y,
+  };
 }
 
 /** 顶栏魂晶图标中心。扫荡入账飞币落在这里，必须和 `createHubHeader` 同一套边距。 */
@@ -66,12 +82,22 @@ export function createHubHeader(opts: HubHeaderOptions): HubHeaderHandle {
   const origin = hubSoulPillOrigin();
   let y = origin.y;
   let soulPill: CurrencyPill | null = null;
+  let tokenPill: CurrencyPill | null = null;
+
+  const placePills = (): void => {
+    if (!soulPill) return;
+    soulPill.position.set(origin.x, origin.y);
+    if (!tokenPill) return;
+    const next = hubEmblemPillOrigin(soulPill.width);
+    tokenPill.position.set(next.x, next.y);
+  };
 
   if (opts.soul !== undefined) {
     soulPill = createCurrencyPill('icon_soul', `${opts.soul}`);
-    soulPill.x = origin.x;
-    soulPill.y = origin.y;
+    tokenPill = createCurrencyPill(UNIVERSAL_EMBLEM_ICON, `${opts.emblemTokens ?? 0}`);
     root.addChild(soulPill);
+    root.addChild(tokenPill);
+    placePills();
     y += soulPill.height + 6;
   }
 
@@ -89,9 +115,14 @@ export function createHubHeader(opts: HubHeaderOptions): HubHeaderHandle {
     height: y,
     setSoul(amount: number) {
       soulPill?.setText(`${amount}`);
+      placePills();
+    },
+    setEmblemTokens(amount: number) {
+      tokenPill?.setText(`${amount}`);
     },
     setSoulVisible(visible: boolean) {
       if (soulPill) soulPill.visible = visible;
+      if (tokenPill) tokenPill.visible = visible;
     },
   };
 }

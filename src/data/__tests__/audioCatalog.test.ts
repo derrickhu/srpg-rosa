@@ -67,6 +67,7 @@ const PACKAGED_SFX = [
   'sfx_skill_ember',
   'sfx_skill_heal_touch',
   'sfx_skill_frost_ring',
+  'sfx_skill_hex_mark',
 ];
 
 describe('技能音效族', () => {
@@ -78,9 +79,9 @@ describe('技能音效族', () => {
     }
   });
 
-  it('七个招牌技能各有一条，不走属性族', () => {
+  it('每个招牌技能各有一条，不走属性族', () => {
     const ids = mainSlotSkillIds();
-    expect(ids).toHaveLength(7);
+    expect(ids).toHaveLength(8);
     const unique = new Set(ids.map((id) => sfxForSkillCast(id)));
     expect(unique.size).toBe(ids.length);
     for (const id of ids) {

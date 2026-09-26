@@ -921,6 +921,29 @@ const EXCLUSIVE_SEEDS: readonly ModSeed[] = [
     apply: (spec) => mergeFoe(widenAoE(spec, 1), { kind: 'atkDown', subAtk: 5, rounds: 2 }),
   },
   {
+    id: 'ex_hex_blight',
+    name: '咒毒',
+    rarity: 'rare',
+    maxStacks: 1,
+    only: ['hex_mark'],
+    fits: () => true,
+    describe: () => '破甲咒：中毒加深到每回合 -12 血（3 回合）',
+    apply: (spec) => mergeFoe(spec, { kind: 'poison', dmgPerRound: 4, rounds: 3 }),
+  },
+  {
+    id: 'ex_hex_close',
+    name: '近咒',
+    rarity: 'rare',
+    maxStacks: 1,
+    only: ['hex_mark'],
+    fits: (spec) => spec.shape.type === 'neighborPickFoe',
+    describe: () => '破甲咒：2 格内都能点，贴脸也能下咒',
+    apply: (spec) => {
+      if (spec.shape.type !== 'neighborPickFoe') return spec;
+      return { ...spec, shape: { ...spec.shape, reach: 'within' } };
+    },
+  },
+  {
     id: 'ex_hex_spread',
     name: '蔓延',
     rarity: 'epic',

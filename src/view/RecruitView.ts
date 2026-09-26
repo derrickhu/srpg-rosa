@@ -1,21 +1,18 @@
 import * as PIXI from 'pixi.js';
 import { makeText } from '@/theme/typography';
 import { CHARACTER_DEFS, characterArtKey, type CharacterDef } from '@/data/characterCatalog';
-import { getDungeonDef } from '@/data/dungeonCatalog';
 import { getSkillSpec } from '@/data/skillCatalog';
 import { describeSkillRole } from '@/data/skillText';
 import { UNIT_DEFS } from '@/data/unitDefs';
 import { unlockCharacterWithMeta, type MvpGameState } from '@/game/MvpState';
 import { createHubHeader } from '@/view/hubHeader';
-import { C, PROFESSION_ACCENT, mix } from '@/view/mvpTheme';
+import { C } from '@/view/mvpTheme';
 import { isDisplayLive } from '@/view/pixiLive';
-import { createBackground, createUiIcon, createUnitToken } from '@/view/renderHelpers';
+import { createBackground, createUnitToken } from '@/view/renderHelpers';
 import { makeButton } from '@/ui/Button';
-import { makeCard } from '@/ui/Card';
 import { createScrollList } from '@/ui/ScrollList';
 import { showToast } from '@/ui/Toast';
 import { AudioManager } from '@/core/AudioManager';
-import { makeGoldPlatform } from '@/ui/chrome';
 import { createCharacterRevealOverlay } from '@/view/characterReveal';
 import { staggerPop } from '@/view/fx/celebration';
 
@@ -23,54 +20,20 @@ export interface RecruitCallbacks {
   onChanged: () => void;
 }
 
-const PAD = 16;
-const TOKEN = 96;
-const LOCK_H = 86;
-const STAGE_H = 292;
+const PAD = 14;
+const GAP = 12;
+const COLS = 2;
+/** 立绘源图大约 128px 高。再拉大，三倍屏上就会糊。 */
+const TOKEN = 78;
+const CARD_H = 188;
 
-function chipTextColor(fill: number): number {
-  const r = (fill >> 16) & 0xff;
-  const g = (fill >> 8) & 0xff;
-  const b = fill & 0xff;
-  return (r * 299 + g * 587 + b * 114) / 1000 > 160 ? C.ink : 0xffffff;
+/** 招募页货架：还没拥有、并且只能花魂晶买的人。关卡解锁的不在这页。 */
+export function recruitShelfDefs(roster: { rosterId: string }[]): CharacterDef[] {
+  const have = new Set(roster.map((m) => m.rosterId));
+  return CHARACTER_DEFS.filter((d) => !have.has(d.id) && d.unlock.kind === 'meta');
 }
 
-function makeChip(label: string, fill: number): PIXI.Container {
-  const c = new PIXI.Container();
-  const tx = makeText(label, 'ui', { fill: chipTextColor(fill), fontSize: 11 });
-  const w = Math.ceil(tx.width + 16);
-  const h = 20;
-  const g = new PIXI.Graphics();
-  g.lineStyle(1.5, C.ink, 1, 0);
-  g.beginFill(fill, 1);
-  g.drawRoundedRect(0, 0, w, h, 10);
-  g.endFill();
-  c.addChild(g);
-  tx.anchor.set(0.5);
-  tx.x = w / 2;
-  tx.y = h / 2;
-  c.addChild(tx);
-  return c;
-}
-
-/**
- * 这个角色现在怎么拿。
- *
- * 拿不到的也要写清条件，不能只列买得到的：招募页要回答的是「游戏里一共有哪些人、
- * 我该往哪儿努力」。只显示商品的话，通关解锁的角色在玩家眼里等于不存在，
- * 他也就没有理由去打那个副本。
- */
-export function acquireHint(state: MvpGameState, def: CharacterDef): string {
-  if (def.unlock.kind === 'meta') return `魂晶 ${def.unlock.cost}`;
-  if (def.unlock.kind === 'clearDungeon') {
-    const d = getDungeonDef(def.unlock.dungeonId);
-    return `通关「${d?.name ?? '前置副本'}」`;
-  }
-  if (def.unlock.kind === 'story') return '跟随冒险加入';
-  return '开局即拥有';
-}
-
-function attachIdleBob(node: PIXI.Container, amp = 3): void {
+function attachIdleBob(node: PIXI.Container, amp = 2): void {
   const base = node.y;
   let acc = 0;
   const step = (): void => {
@@ -99,6 +62,7 @@ export function createRecruitView(
     title: '招募',
     page: 'recruit',
     soul: state.meta.metaCurrency,
+    emblemTokens: state.meta.universalEmblemTokens ?? 0,
   });
   root.addChild(header.root);
 
@@ -110,13 +74,9 @@ export function createRecruitView(
   });
   root.addChild(scroll.root);
 
-  const owned = new Set(state.meta.roster.map((m) => m.rosterId));
-  const unowned = CHARACTER_DEFS.filter((d) => !owned.has(d.id));
-  const buyable = unowned.filter((d) => d.unlock.kind === 'meta');
-  const conditional = unowned.filter((d) => d.unlock.kind !== 'meta');
-
+  const buyable = recruitShelfDefs(state.meta.roster);
   const innerW = W - PAD * 2;
-  let y = 8;
+  const cardW = Math.floor((innerW - GAP * (COLS - 1)) / COLS);
   const pops: PIXI.Container[] = [];
 
   function tryRecruit(def: CharacterDef): void {
@@ -145,204 +105,119 @@ export function createRecruitView(
     }
   }
 
-  function featuredStage(def: CharacterDef): PIXI.Container {
+  function recruitCard(def: CharacterDef): PIXI.Container {
     const cost = def.unlock.kind === 'meta' ? def.unlock.cost : 0;
-    const stage = new PIXI.Container();
-    const h = STAGE_H;
-    stage.hitArea = new PIXI.Rectangle(0, 0, innerW, h);
+    const card = new PIXI.Container();
+    const radius = 18;
+    const shadow = new PIXI.Graphics();
+    shadow.beginFill(0x000000, 0.22);
+    shadow.drawRoundedRect(2, 5, cardW, CARD_H, radius);
+    shadow.endFill();
+    card.addChild(shadow);
 
-    const cx = innerW / 2;
-    const tokenWrap = new PIXI.Container();
-    tokenWrap.x = cx;
-    tokenWrap.y = 72;
-    const platform = makeGoldPlatform(Math.min(176, innerW * 0.52));
-    if (platform) {
-      platform.y = TOKEN * 0.38;
-      tokenWrap.addChild(platform);
-    } else {
-      const disc = new PIXI.Graphics();
-      disc.beginFill(C.ink, 0.28);
-      disc.drawCircle(0, TOKEN * 0.34, TOKEN * 0.55);
-      disc.endFill();
-      tokenWrap.addChild(disc);
-    }
+    const plate = new PIXI.Graphics();
+    plate.lineStyle(2.5, C.ink, 1, 0);
+    plate.beginFill(0x31445f, 1);
+    plate.drawRoundedRect(0, 0, cardW, CARD_H, radius);
+    plate.endFill();
+    plate.lineStyle(1.5, 0x8eabcf, 0.85, 0);
+    plate.drawRoundedRect(4, 4, cardW - 8, CARD_H - 8, radius - 4);
+    card.addChild(plate);
+
+    const winX = 10;
+    const winY = 10;
+    const winW = cardW - 20;
+    const winH = 96;
+    const well = new PIXI.Graphics();
+    well.lineStyle(2, C.ink, 0.85, 0);
+    well.beginFill(0xf4efe4, 1);
+    well.drawRoundedRect(winX, winY, winW, winH, 14);
+    well.endFill();
+    card.addChild(well);
+
+    const ground = new PIXI.Graphics();
+    ground.beginFill(0x1a1410, 0.12);
+    ground.drawEllipse(cardW / 2, winY + winH - 16, 22, 6);
+    ground.endFill();
+    card.addChild(ground);
+
     const token = createUnitToken(
       characterArtKey({ rosterId: def.id, profession: def.profession }),
       'player',
-      TOKEN,
+      Math.min(TOKEN, winW - 8),
     );
-    token.y = -TOKEN * 0.08;
-    tokenWrap.addChild(token);
-    stage.addChild(tokenWrap);
-    attachIdleBob(token, 3);
+    token.x = cardW / 2;
+    token.y = winY + winH * 0.58;
+    card.addChild(token);
+    attachIdleBob(token, 1.5);
 
-    const nameTx = makeText(def.name, 'heading', {
-      fill: C.paper,
-      fontSize: 26,
-      stroke: C.ink,
-      strokeThickness: 5,
-      letterSpacing: 1,
+    const nameTx = makeText(def.name, 'uiStrong', {
+      fill: 0xfff6e8,
+      fontSize: 15,
     });
     nameTx.anchor.set(0.5, 0);
-    nameTx.x = cx;
-    nameTx.y = 138;
-    stage.addChild(nameTx);
+    nameTx.x = cardW / 2;
+    nameTx.y = winY + winH + 6;
+    card.addChild(nameTx);
 
     const spec = getSkillSpec(def.defaultSkillId);
-    const chips = new PIXI.Container();
-    const job = makeChip(UNIT_DEFS[def.profession].name, PROFESSION_ACCENT[def.profession]);
-    const role = makeChip(describeSkillRole(def.skillRoute), C.panel);
-    chips.addChild(job);
-    role.x = job.width + 6;
-    chips.addChild(role);
-    chips.x = cx - chips.width / 2;
-    chips.y = 170;
-    stage.addChild(chips);
+    const job = UNIT_DEFS[def.profession].name;
+    const line = spec ? `${job} · ${spec.name}` : `${job} · ${describeSkillRole(def.skillRoute)}`;
+    const metaTx = makeText(line, 'caption', {
+      fill: 0xd5deea,
+      fontSize: 11,
+    });
+    metaTx.anchor.set(0.5, 0);
+    metaTx.x = cardW / 2;
+    metaTx.y = nameTx.y + nameTx.height + 1;
+    card.addChild(metaTx);
 
-    if (spec) {
-      const skillTx = makeText(spec.name, 'caption', {
-        fill: C.paper,
-        fontSize: 12,
-        stroke: C.ink,
-        strokeThickness: 3,
-      });
-      skillTx.anchor.set(0.5, 0);
-      skillTx.x = cx;
-      skillTx.y = 194;
-      stage.addChild(skillTx);
-    }
-
-    const btnW = Math.min(200, innerW - 48);
-    const btn = makeButton('招  募', () => {
+    const btnW = cardW - 20;
+    const btn = makeButton(`招募 ${cost}`, () => {
       tryRecruit(def);
     }, {
       variant: 'primary',
       width: btnW,
-      height: 46,
-      fontSize: 17,
-      radius: 14,
-    });
-    btn.x = cx - btnW / 2;
-    btn.y = h - 50;
-    stage.addChild(btn);
-
-    const costRow = new PIXI.Container();
-    const soul = createUiIcon('icon_soul', 16);
-    const costTx = makeText(`${cost}`, 'uiStrong', {
-      fill: C.paper,
+      height: 28,
       fontSize: 13,
-      stroke: C.ink,
-      strokeThickness: 3,
+      radius: 10,
+      iconKey: 'icon_soul',
+      iconSize: 14,
     });
-    let costX = 0;
-    if (soul) {
-      soul.x = 0;
-      soul.y = 0;
-      costRow.addChild(soul);
-      costX = 20;
-    }
-    costTx.x = costX;
-    costTx.y = 0;
-    costRow.addChild(costTx);
-    costRow.x = cx - (costX + costTx.width) / 2;
-    costRow.y = btn.y - 22;
-    stage.addChild(costRow);
+    btn.x = 10;
+    btn.y = CARD_H - 36;
+    card.addChild(btn);
 
-    pops.push(stage);
-    return stage;
+    pops.push(card);
+    return card;
   }
 
-  function lockedStrip(defs: CharacterDef[]): PIXI.Container {
-    const wrap = new PIXI.Container();
-    const title = makeText('战绩解锁', 'title', {
-      fill: C.paper,
-      fontSize: 15,
-      stroke: C.ink,
-      strokeThickness: 3,
-    });
-    title.x = 4;
-    title.y = 0;
-    wrap.addChild(title);
-
-    const gap = 8;
-    const colW = Math.floor((innerW - gap * (defs.length - 1)) / Math.max(1, defs.length));
-    defs.forEach((def, i) => {
-      const card = makeCard({
-        width: colW,
-        height: LOCK_H,
-        tone: 'locked',
-        accent: mix(PROFESSION_ACCENT[def.profession], C.panel, 0.35),
-      });
-      card.x = i * (colW + gap);
-      card.y = 26;
-
-      const tok = createUnitToken(
-        characterArtKey({ rosterId: def.id, profession: def.profession }),
-        'player',
-        36,
-      );
-      tok.alpha = 0.5;
-      tok.x = colW / 2;
-      tok.y = 22;
-      card.addChild(tok);
-
-      const nm = makeText(def.name, 'caption', { fill: C.paper, fontSize: 12 });
-      nm.anchor.set(0.5, 0);
-      nm.x = colW / 2;
-      nm.y = 40;
-      card.addChild(nm);
-
-      const hint = makeText(acquireHint(state, def), 'micro', {
-        fill: C.paper,
-        fontSize: 9,
-        wordWrap: true,
-        wordWrapWidth: colW - 10,
-        align: 'center',
-      });
-      hint.anchor.set(0.5, 0);
-      hint.x = colW / 2;
-      hint.y = 58;
-      card.addChild(hint);
-      wrap.addChild(card);
-      pops.push(card);
-    });
-
-    wrap.hitArea = new PIXI.Rectangle(0, 0, innerW, 26 + LOCK_H);
-    return wrap;
-  }
-
+  let bottom = 12;
   if (buyable.length > 0) {
-    for (const def of buyable) {
-      const stage = featuredStage(def);
-      stage.x = PAD;
-      stage.y = y;
-      scroll.content.addChild(stage);
-      y += STAGE_H + 14;
-    }
-  }
-
-  if (conditional.length > 0) {
-    const strip = lockedStrip(conditional);
-    strip.x = PAD;
-    strip.y = y;
-    scroll.content.addChild(strip);
-    y += 26 + LOCK_H + 16;
-  }
-
-  if (unowned.length === 0) {
-    const done = makeText('现有角色已全部招募', 'body', {
+    buyable.forEach((def, i) => {
+      const card = recruitCard(def);
+      const col = i % COLS;
+      const row = Math.floor(i / COLS);
+      card.x = PAD + col * (cardW + GAP);
+      card.y = 10 + row * (CARD_H + GAP);
+      scroll.content.addChild(card);
+    });
+    const rows = Math.ceil(buyable.length / COLS);
+    bottom = 10 + rows * (CARD_H + GAP);
+  } else {
+    const done = makeText('魂晶角色已全部招募', 'body', {
       fill: C.paper,
       stroke: C.ink,
       strokeThickness: 3,
     });
     done.anchor.set(0.5, 0);
     done.x = W / 2;
-    done.y = y + 12;
+    done.y = 24;
     scroll.content.addChild(done);
-    y += 48;
+    bottom = 72;
   }
 
-  scroll.refresh(y + 48);
-  staggerPop(pops.slice(0, 6), 50);
+  scroll.refresh(bottom + 16);
+  staggerPop(pops.slice(0, 4), 40);
   return root;
 }

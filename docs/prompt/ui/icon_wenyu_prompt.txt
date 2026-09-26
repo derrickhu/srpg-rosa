@@ -1,0 +1,10 @@
+A single 1:1 GAME UI ICON. Subject centered, about 72% of the frame.
+
+CRITICAL BACKGROUND: 100% solid flat MAGENTA #FF00FF. No shadows on the background.
+
+One chubby polished jade stone, the color of Hetian celadon: pale blue-green like the inside of a fresh cucumber, with a spinach-green shadow facet on the lower right and a small steamed-bun-white highlight facet on the upper left. Thick even outline the color of dark soy sauce. Flat color blocks only. The stone is a rounded hexagon, wider than it is tall, with soft corners, like a river pebble cut into a gem.
+
+In the middle, one carved spiral the color of deep moss, drawn as a single thick stroke, large enough to read at 32 pixels.
+
+ART STYLE: 2D sticker, coloring-book outlines, flat saturated fills, a handful of bold shapes, the same line weight as a casual mobile strategy game item icon.
+NO TEXT, no labels, no captions, no writing anywhere in the image, no numbers, no watermark.

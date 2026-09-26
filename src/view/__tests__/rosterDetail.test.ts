@@ -8,13 +8,17 @@ import {
 import { getSkillSpec } from '@/data/skillCatalog';
 import { exclusiveChainForSkill } from '@/data/skillModCatalog';
 import { getSafeAreaInsets } from '@/core/safeArea';
+import { createInitialState } from '@/game/state/GameState';
 import { ROSTER_NAV_BTN } from '@/ui/Button';
 import { modalPanelRestY } from '@/ui/Modal';
 import {
   HUB_SOUL_PILL_H,
   HUB_SOUL_TOP_GAP,
+  HUB_CURRENCY_GAP,
+  hubEmblemPillOrigin,
   hubSoulBarBottom,
   hubSoulIconCenter,
+  hubSoulPillOrigin,
 } from '@/view/hubHeader';
 import {
   ROSTER_ACTION_BTN_H,
@@ -27,6 +31,7 @@ import {
   rosterDetailPanelWidth,
   rosterFlipLockUntil,
   rosterStatTotals,
+  rosterDetailTabAlerts,
   rosterUpgradeCostItems,
 } from '@/view/RosterView';
 
@@ -67,6 +72,23 @@ describe('角色详情升级页', () => {
     expect(rosterDetailActionH(false)).toBe(ROSTER_ACTION_BTN_H + 10);
     expect(ROSTER_DETAIL_FOOTER_H).toBeGreaterThan(36);
     expect(ROSTER_DETAIL_TITLE_H).toBeGreaterThan(64);
+  });
+
+  it('魂晶够升级、纹玉够铭刻时，对应分页亮红点', () => {
+    const state = createInitialState();
+    const ray = state.meta.roster.find((m) => m.rosterId === 'hero_sword_ray')!;
+    state.meta.metaCurrency = 0;
+    state.meta.universalEmblemTokens = 0;
+    expect(rosterDetailTabAlerts(state.meta, ray)).toEqual({ upgrade: false, emblem: false });
+
+    state.meta.metaCurrency = levelUpCost(ray.level);
+    expect(rosterDetailTabAlerts(state.meta, ray).upgrade).toBe(true);
+
+    state.meta.universalEmblemTokens = 1;
+    expect(rosterDetailTabAlerts(state.meta, ray).emblem).toBe(true);
+
+    state.meta.personalEmblemLevelById = { pe_ray_grassland: 2, pe_ray_mist: 2 };
+    expect(rosterDetailTabAlerts(state.meta, ray).emblem).toBe(false);
   });
 
   it('底栏是升级、技能详情和永久纹章，升级效果用完整纹章链', () => {
@@ -124,5 +146,12 @@ describe('角色详情升级页', () => {
     const p = hubSoulIconCenter();
     expect(p.y).toBe(inset.top + HUB_SOUL_TOP_GAP + HUB_SOUL_PILL_H / 2);
     expect(CHARACTER_DEFS.length).toBeGreaterThan(0);
+  });
+
+  it('纹玉贴在魂晶右边，同一行', () => {
+    const soul = hubSoulPillOrigin();
+    const emblem = hubEmblemPillOrigin(72);
+    expect(emblem.y).toBe(soul.y);
+    expect(emblem.x).toBe(soul.x + 72 + HUB_CURRENCY_GAP);
   });
 });

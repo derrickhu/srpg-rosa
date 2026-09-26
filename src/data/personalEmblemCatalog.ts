@@ -1,6 +1,6 @@
 import { getCharacterDef } from '@/data/characterCatalog';
 import { DUNGEON_DEFS, getDungeonDef } from '@/data/dungeonCatalog';
-import { isEliteDungeon, officialDungeonIdOfElite } from '@/data/eliteCatalog';
+import { eliteIdOf, isEliteDungeon, officialDungeonIdOfElite } from '@/data/eliteCatalog';
 import type { CharacterBaseStats } from '@/game/characterTypes';
 
 /**
@@ -10,8 +10,12 @@ import type { CharacterBaseStats } from '@/game/characterTypes';
  * - 局内纹章挂技能、改 `SkillSpec`、出副本即弃，还要考虑「这枚能不能装在这招上」；
  * - 这里每一枚在表里就写死给谁，效果是这个人的永久被动，不进技能兼容层。
  *
- * 一个人可以有多枚。投放是「每章同一枚」：主线首通 1 级，同章精英首通升到 2 级。
- * 领过的 id / 等级记在 meta 上，不写在角色实例上——人还没入队也能先记账。
+ * 每个人两枚，和角色一起设计。等级现在封顶 2，改 `PERSONAL_EMBLEM_MAX_LEVEL` 就能再打开。
+ * 2 级曲线写死在 2 这一档（固定值 ×2，百分比 ×1.6），不跟封顶绑在一起，
+ * 免得以后把封顶调高时，2 级反而算回 1 级的数。再往上要另补曲线。
+ * 前六章各送第一枚：主线首通 1 级，同章精英首通升到 2 级。还没通关前不能花纹玉提前买。
+ * 第七章起改送纹玉，在已拥有角色的页面上花掉，用来激活还没有的一枚，或把已有的升 1 级。
+ * 看完广告可以把任意一枚已激活的收回：1 级退 1 枚，2 级退 2 枚。收回后精英不再补送。
  */
 
 export const PERSONAL_EMBLEM_MAX_LEVEL = 2;
@@ -25,7 +29,9 @@ export type PersonalEmblemEffect =
   | { kind: 'skillDealtMul'; mul: number }
   | { kind: 'basicDealtMul'; mul: number }
   | { kind: 'takenMul'; mul: number }
-  | { kind: 'healGivenMul'; mul: number };
+  | { kind: 'healGivenMul'; mul: number }
+  /** 这个人施加的中毒，每回合再多扣这么多。2 级按固定值翻倍。 */
+  | { kind: 'poisonTick'; add: number };
 
 export interface PersonalEmblemDef {
   id: string;
@@ -33,8 +39,11 @@ export interface PersonalEmblemDef {
   /** 一句身份，不写数字；数字由 `describePersonalEmblem` 从效果现算 */
   blurb: string;
   rosterId: string;
-  /** 绑定的主线章。精英首通升同一枚，不另开 id */
-  dungeonId: string;
+  /**
+   * 绑定的主线章。精英首通升同一枚，不另开 id。
+   * 没有这栏的是第二枚，或魂晶角色的两枚：只靠纹玉激活。
+   */
+  dungeonId?: string;
   icon: string;
   effects: readonly PersonalEmblemEffect[];
 }
@@ -117,10 +126,105 @@ const DEFS: readonly PersonalEmblemDef[] = [
     name: '雾行',
     blurb: '走过浓雾的人，脚步不再被雾拖住。',
     rosterId: 'hero_sword_ray',
-    dungeonId: 'dungeon_mist',
     icon: 'emblem_pe_mist',
     effects: [
       { kind: 'stat', spd: 1, maxHp: 8 },
+      { kind: 'takenMul', mul: 0.95 },
+    ],
+  },
+  {
+    id: 'pe_hill_shade',
+    name: '背林',
+    blurb: '站在林子后面，挨打也轻一些。',
+    rosterId: 'hero_bow_hill',
+    icon: 'emblem_pe_shade',
+    effects: [
+      { kind: 'stat', maxHp: 8 },
+      { kind: 'takenMul', mul: 0.95 },
+    ],
+  },
+  {
+    id: 'pe_gron_gate',
+    name: '镇门',
+    blurb: '守门的那一击，离开城墙也还在。',
+    rosterId: 'hero_shield_gron',
+    icon: 'emblem_pe_gate',
+    effects: [
+      { kind: 'stat', atk: 2 },
+      { kind: 'skillDealtMul', mul: 1.05 },
+    ],
+  },
+  {
+    id: 'pe_aoli_ember',
+    name: '余烬',
+    blurb: '火还没灭的时候，人先站得住。',
+    rosterId: 'hero_mage_aoli',
+    icon: 'emblem_pe_ember',
+    effects: [
+      { kind: 'stat', maxHp: 10 },
+      { kind: 'takenMul', mul: 0.95 },
+    ],
+  },
+  {
+    id: 'pe_floe_mail',
+    name: '寒甲',
+    blurb: '霜结在身上，打出去也更沉。',
+    rosterId: 'hero_mage_floe',
+    icon: 'emblem_pe_mail',
+    effects: [
+      { kind: 'stat', atk: 2 },
+      { kind: 'takenMul', mul: 0.95 },
+    ],
+  },
+  {
+    id: 'pe_mir_aegis',
+    name: '庇佑',
+    blurb: '先把自己护住，才救得了别人。',
+    rosterId: 'hero_healer_mir',
+    icon: 'emblem_pe_aegis',
+    effects: [
+      { kind: 'stat', maxHp: 8 },
+      { kind: 'takenMul', mul: 0.95 },
+    ],
+  },
+  {
+    id: 'pe_lance_drive',
+    name: '长驱',
+    blurb: '这一枪穿过人墙。',
+    rosterId: 'hero_cav_lance',
+    icon: 'emblem_pe_drive',
+    effects: [
+      { kind: 'stat', atk: 2 },
+      { kind: 'skillDealtMul', mul: 1.05 },
+    ],
+  },
+  {
+    id: 'pe_lance_flank',
+    name: '绕后',
+    blurb: '绕到背后还能站得住。',
+    rosterId: 'hero_cav_lance',
+    icon: 'emblem_pe_flank',
+    effects: [
+      { kind: 'stat', maxHp: 10 },
+      { kind: 'takenMul', mul: 0.95 },
+    ],
+  },
+  {
+    id: 'pe_luoling_blight',
+    name: '咒毒',
+    blurb: '咒上的毒再深一截。',
+    rosterId: 'hero_bow_luoling',
+    icon: 'emblem_pe_blight',
+    effects: [{ kind: 'poisonTick', add: 2 }],
+  },
+  {
+    id: 'pe_luoling_ward',
+    name: '护铃',
+    blurb: '下咒的人自己也得留在场上。',
+    rosterId: 'hero_bow_luoling',
+    icon: 'emblem_pe_ward',
+    effects: [
+      { kind: 'stat', maxHp: 8 },
       { kind: 'takenMul', mul: 0.95 },
     ],
   },
@@ -141,10 +245,27 @@ export function personalEmblemsForRoster(rosterId: string): PersonalEmblemDef[] 
 }
 
 export type PersonalEmblemSave = {
-  claimedPersonalEmblemIds?: string[];
+  claimedPersonalEmblemIds?: readonly string[];
   personalEmblemLevelById?: Record<string, number>;
   clearedDungeonIds?: readonly string[];
+  /** 看广告收回过的纹章。精英和读档补领都不再把这一枚送回来。 */
+  personalEmblemReleasedIds?: readonly string[];
+  universalEmblemTokens?: number;
+  /** 已经发过纹玉的章节 id（普通和精英分开记） */
+  universalEmblemPaidDungeonIds?: readonly string[];
+  roster?: readonly { rosterId: string }[];
 };
+
+/** 玩家看见的名字。存档字段仍是 `universalEmblemTokens`。 */
+export const UNIVERSAL_EMBLEM_NAME = '纹玉';
+export const UNIVERSAL_EMBLEM_ICON = 'icon_universal_emblem';
+/** 激活或升级一次花掉的枚数。 */
+export const UNIVERSAL_EMBLEM_SPEND = 1;
+
+/** 目录里从第 7 章（下标 6）起，首通改发纹玉，不再送某一个人。 */
+export const UNIVERSAL_EMBLEM_FROM_CHAPTER = 6;
+export const UNIVERSAL_EMBLEM_CLEAR_COUNT = 2;
+export const UNIVERSAL_EMBLEM_ELITE_COUNT = 1;
 
 export interface PersonalEmblemGrant {
   def: PersonalEmblemDef;
@@ -156,8 +277,51 @@ export function officialDungeonIdForEmblem(dungeonId: string): string {
   return (isEliteDungeon(dungeonId) ? officialDungeonIdOfElite(dungeonId) : undefined) ?? dungeonId;
 }
 
+/** 精英首通升到的等级。封顶再抬高时，这一档仍是 2，不跟着跳。 */
+const PERSONAL_EMBLEM_ELITE_LEVEL = 2;
+
 export function targetPersonalEmblemLevel(dungeonId: string): number {
-  return isEliteDungeon(dungeonId) ? PERSONAL_EMBLEM_MAX_LEVEL : 1;
+  const eliteLevel = Math.min(PERSONAL_EMBLEM_MAX_LEVEL, PERSONAL_EMBLEM_ELITE_LEVEL);
+  return isEliteDungeon(dungeonId) ? eliteLevel : 1;
+}
+
+/**
+ * 这一枚还会被章节白送。收回过的不再算：精英和主线都不会再补，只能花纹玉买回来。
+ */
+export function personalEmblemChapterGiftPending(
+  meta: PersonalEmblemSave,
+  emblemId: string,
+): boolean {
+  const def = getPersonalEmblem(emblemId);
+  if (!def?.dungeonId) return false;
+  if ((meta.personalEmblemReleasedIds ?? []).includes(emblemId)) return false;
+  if (personalEmblemLevel(meta, emblemId) > 0) return false;
+  return !(meta.clearedDungeonIds ?? []).includes(def.dungeonId);
+}
+
+export function personalEmblemChapterGiftLabel(
+  meta: PersonalEmblemSave,
+  emblemId: string,
+): string | null {
+  if (!personalEmblemChapterGiftPending(meta, emblemId)) return null;
+  const def = getPersonalEmblem(emblemId);
+  const name = def?.dungeonId ? getDungeonDef(def.dungeonId)?.name : undefined;
+  return `通关「${name ?? '这一章'}」后获得`;
+}
+
+/** 1 级还在，精英还没打过，也没收回过：下一场精英首通会免费升到 2 级。 */
+export function personalEmblemEliteUpgradePending(
+  meta: PersonalEmblemSave,
+  emblemId: string,
+): boolean {
+  const def = getPersonalEmblem(emblemId);
+  if (!def?.dungeonId) return false;
+  if ((meta.personalEmblemReleasedIds ?? []).includes(emblemId)) return false;
+  const level = personalEmblemLevel(meta, emblemId);
+  if (level <= 0 || level >= PERSONAL_EMBLEM_MAX_LEVEL) return false;
+  const eliteId = eliteIdOf(def.dungeonId);
+  if (!eliteId) return false;
+  return !(meta.clearedDungeonIds ?? []).includes(eliteId);
 }
 
 export function personalEmblemsForDungeon(dungeonId: string): PersonalEmblemDef[] {
@@ -213,8 +377,9 @@ export function previewPersonalEmblemsForDungeon(
   dungeonId: string,
 ): PersonalEmblemGrant[] {
   const target = targetPersonalEmblemLevel(dungeonId);
+  const released = new Set(meta.personalEmblemReleasedIds ?? []);
   return personalEmblemsForDungeon(dungeonId)
-    .filter((d) => personalEmblemLevel(meta, d.id) < target)
+    .filter((d) => !released.has(d.id) && personalEmblemLevel(meta, d.id) < target)
     .map((def) => ({ def, level: target }));
 }
 
@@ -229,24 +394,153 @@ export function claimPersonalEmblemsForDungeon(
 
 /**
  * 老档已通关的章补领：主线 → 1 级，对应精英 → 2 级。不升档。
+ * 收回过的不补。第七章及以后已通关的，按首通数量补纹玉，只补一次。
  */
 export function hydratePersonalEmblems(meta: PersonalEmblemSave & {
   clearedDungeonIds: readonly string[];
 }): void {
+  const released = new Set(meta.personalEmblemReleasedIds ?? []);
   const levels = { ...(meta.personalEmblemLevelById ?? {}) };
   for (const id of meta.claimedPersonalEmblemIds ?? []) {
+    if (released.has(id)) continue;
     if ((levels[id] ?? 0) < 1) levels[id] = 1;
   }
   for (const id of meta.clearedDungeonIds ?? []) {
     const target = targetPersonalEmblemLevel(id);
     for (const e of personalEmblemsForDungeon(id)) {
+      if (released.has(e.id)) continue;
       if ((levels[e.id] ?? 0) < target) levels[e.id] = target;
     }
+    claimUniversalEmblemsForDungeon(meta, id);
   }
   meta.personalEmblemLevelById = levels;
   meta.claimedPersonalEmblemIds = Object.entries(levels)
     .filter(([, lv]) => (lv ?? 0) > 0)
     .map(([id]) => id);
+}
+
+export function universalEmblemGrantForClear(dungeonId: string): number {
+  const official = officialDungeonIdForEmblem(dungeonId);
+  const idx = DUNGEON_DEFS.findIndex((d) => d.id === official);
+  if (idx < UNIVERSAL_EMBLEM_FROM_CHAPTER) return 0;
+  return isEliteDungeon(dungeonId) ? UNIVERSAL_EMBLEM_ELITE_COUNT : UNIVERSAL_EMBLEM_CLEAR_COUNT;
+}
+
+/** 这一章若还没发过纹玉，就入账并记成已发。重复调用是 0。 */
+export function claimUniversalEmblemsForDungeon(meta: PersonalEmblemSave, dungeonId: string): number {
+  const n = universalEmblemGrantForClear(dungeonId);
+  if (n <= 0) return 0;
+  const paid = new Set(meta.universalEmblemPaidDungeonIds ?? []);
+  if (paid.has(dungeonId)) return 0;
+  paid.add(dungeonId);
+  meta.universalEmblemPaidDungeonIds = [...paid];
+  meta.universalEmblemTokens = (meta.universalEmblemTokens ?? 0) + n;
+  return n;
+}
+
+/** 结算预览。已经通关或已经入账过的章是 0，避免和入账各算一次。 */
+export function previewUniversalEmblemGrant(meta: PersonalEmblemSave, dungeonId: string): number {
+  if ((meta.universalEmblemPaidDungeonIds ?? []).includes(dungeonId)) return 0;
+  if ((meta.clearedDungeonIds ?? []).includes(dungeonId)) return 0;
+  return universalEmblemGrantForClear(dungeonId);
+}
+
+function rosterOwns(meta: PersonalEmblemSave, rosterId: string): boolean {
+  return (meta.roster ?? []).some((m) => m.rosterId === rosterId);
+}
+
+export function universalEmblemRefundForLevel(level: number): number {
+  return Math.max(0, Math.floor(level));
+}
+
+/**
+ * 这个人还有能花纹玉的纹章：没激活且不是待赠送的，或已激活但没到顶。
+ * 纹玉不够时是 false。
+ */
+export function personalEmblemSpendAvailable(meta: PersonalEmblemSave, rosterId: string): boolean {
+  if ((meta.universalEmblemTokens ?? 0) < UNIVERSAL_EMBLEM_SPEND) return false;
+  return personalEmblemsForRoster(rosterId).some((def) => {
+    const level = personalEmblemLevel(meta, def.id);
+    if (level <= 0) return !personalEmblemChapterGiftPending(meta, def.id);
+    return level < PERSONAL_EMBLEM_MAX_LEVEL;
+  });
+}
+
+/** 花 1 枚纹玉激活这个人还没有的一枚，得到 1 级。人必须已经在名册里。 */
+export function activatePersonalEmblem(
+  meta: PersonalEmblemSave,
+  rosterId: string,
+  emblemId: string,
+): boolean {
+  const def = getPersonalEmblem(emblemId);
+  if (!def || def.rosterId !== rosterId) return false;
+  if (!rosterOwns(meta, rosterId)) return false;
+  if (personalEmblemLevel(meta, emblemId) > 0) return false;
+  if (personalEmblemChapterGiftPending(meta, emblemId)) return false;
+  if ((meta.universalEmblemTokens ?? 0) < UNIVERSAL_EMBLEM_SPEND) return false;
+  meta.universalEmblemTokens = (meta.universalEmblemTokens ?? 0) - UNIVERSAL_EMBLEM_SPEND;
+  writeEmblemLevel(meta, emblemId, 1);
+  return true;
+}
+
+/** 花 1 枚纹玉把已激活的升 1 级。封顶之后返回 false，不扣。 */
+export function upgradePersonalEmblem(
+  meta: PersonalEmblemSave,
+  rosterId: string,
+  emblemId: string,
+): boolean {
+  const def = getPersonalEmblem(emblemId);
+  if (!def || def.rosterId !== rosterId) return false;
+  if (!rosterOwns(meta, rosterId)) return false;
+  const level = personalEmblemLevel(meta, emblemId);
+  if (level <= 0 || level >= PERSONAL_EMBLEM_MAX_LEVEL) return false;
+  if ((meta.universalEmblemTokens ?? 0) < UNIVERSAL_EMBLEM_SPEND) return false;
+  meta.universalEmblemTokens = (meta.universalEmblemTokens ?? 0) - UNIVERSAL_EMBLEM_SPEND;
+  writeEmblemLevel(meta, emblemId, level + 1);
+  return true;
+}
+
+export interface PersonalEmblemReleasePrompt {
+  title: string;
+  body: string;
+  cancelLabel: string;
+  confirmLabel: string;
+}
+
+/**
+ * 看广告收回前的一句。没激活的返回 null。
+ * 只说退回几枚，以及这几枚可以拿去给别人铭刻。
+ */
+export function personalEmblemReleasePrompt(
+  meta: PersonalEmblemSave,
+  emblemId: string,
+): PersonalEmblemReleasePrompt | null {
+  const def = getPersonalEmblem(emblemId);
+  const level = personalEmblemLevel(meta, emblemId);
+  if (!def || level <= 0) return null;
+  const refund = universalEmblemRefundForLevel(level);
+  return {
+    title: '收回纹章',
+    body: `收回「${def.name}」，退回 ${refund} 枚${UNIVERSAL_EMBLEM_NAME}。可用于其他角色的永久纹章铭刻。`,
+    cancelLabel: '取消',
+    confirmLabel: '看广告',
+  };
+}
+
+/**
+ * 收回这一枚，按等级退纹玉，并记成「精英不再补送」。
+ * 返回退回的枚数。没激活的是 0，不改存档。
+ */
+export function releasePersonalEmblem(meta: PersonalEmblemSave, emblemId: string): number {
+  const level = personalEmblemLevel(meta, emblemId);
+  if (level <= 0) return 0;
+  const refund = universalEmblemRefundForLevel(level);
+  writeEmblemLevel(meta, emblemId, 0);
+  const released = new Set(meta.personalEmblemReleasedIds ?? []);
+  released.add(emblemId);
+  meta.personalEmblemReleasedIds = [...released];
+  meta.universalEmblemTokens = (meta.universalEmblemTokens ?? 0) + refund;
+  return refund;
 }
 
 export interface PersonalEmblemCombatMods {
@@ -255,6 +549,7 @@ export interface PersonalEmblemCombatMods {
   basicDealtMul: number;
   takenMul: number;
   healGivenMul: number;
+  poisonTickAdd: number;
 }
 
 const ZERO_STATS: CharacterBaseStats = { maxHp: 0, atk: 0, spd: 0, move: 0 };
@@ -266,6 +561,7 @@ export function emptyPersonalEmblemCombatMods(): PersonalEmblemCombatMods {
     basicDealtMul: 1,
     takenMul: 1,
     healGivenMul: 1,
+    poisonTickAdd: 0,
   };
 }
 
@@ -284,12 +580,12 @@ export function addCharacterStats(
 function scaleStat(n: number | undefined, level: number): number | undefined {
   if (!n) return undefined;
   const lv = Math.max(1, clampPersonalEmblemLevel(level));
-  return lv >= PERSONAL_EMBLEM_MAX_LEVEL ? n * LEVEL2_STAT_MUL : n;
+  return lv >= PERSONAL_EMBLEM_ELITE_LEVEL ? n * LEVEL2_STAT_MUL : n;
 }
 
 function scaleMul(mul: number, level: number): number {
   const lv = Math.max(1, clampPersonalEmblemLevel(level));
-  if (lv < PERSONAL_EMBLEM_MAX_LEVEL) return mul;
+  if (lv < PERSONAL_EMBLEM_ELITE_LEVEL) return mul;
   return Math.round((1 + (mul - 1) * LEVEL2_BONUS_MUL) * 100) / 100;
 }
 
@@ -309,6 +605,9 @@ export function personalEmblemEffectsAtLevel(
         move: scaleStat(e.move, lv),
       };
     }
+    if (e.kind === 'poisonTick') {
+      return { kind: 'poisonTick', add: scaleStat(e.add, lv) ?? e.add };
+    }
     return { ...e, mul: scaleMul(e.mul, lv) };
   });
 }
@@ -325,7 +624,8 @@ function addEffects(out: PersonalEmblemCombatMods, effects: readonly PersonalEmb
     if (e.kind === 'skillDealtMul') out.skillDealtMul *= e.mul;
     else if (e.kind === 'basicDealtMul') out.basicDealtMul *= e.mul;
     else if (e.kind === 'takenMul') out.takenMul *= e.mul;
-    else out.healGivenMul *= e.mul;
+    else if (e.kind === 'healGivenMul') out.healGivenMul *= e.mul;
+    else out.poisonTickAdd += e.add;
   }
 }
 
@@ -368,7 +668,8 @@ export function personalEmblemEffectLines(def: PersonalEmblemDef, level = 1): st
     if (e.kind === 'skillDealtMul') parts.push(`技能伤害 ${fmtMul(e.mul)}`);
     else if (e.kind === 'basicDealtMul') parts.push(`普攻伤害 ${fmtMul(e.mul)}`);
     else if (e.kind === 'takenMul') parts.push(`受到伤害 ${fmtMul(e.mul)}`);
-    else parts.push(`技能治疗 ${fmtMul(e.mul)}`);
+    else if (e.kind === 'healGivenMul') parts.push(`技能治疗 ${fmtMul(e.mul)}`);
+    else parts.push(`中毒每回合 +${e.add}`);
   }
   return parts;
 }
@@ -380,8 +681,9 @@ export function describePersonalEmblem(def: PersonalEmblemDef, level = 1): strin
 }
 
 export function personalEmblemSourceLabel(def: PersonalEmblemDef, level = 1): string {
-  const dungeon = getDungeonDef(def.dungeonId);
+  const dungeon = def.dungeonId ? getDungeonDef(def.dungeonId) : undefined;
   const who = getCharacterDef(def.rosterId);
+  if (!def.dungeonId) return who?.name ?? def.rosterId;
   const chapter = dungeon?.name ?? def.dungeonId;
   const name = who?.name ?? def.rosterId;
   if (level >= PERSONAL_EMBLEM_MAX_LEVEL) {
@@ -390,9 +692,11 @@ export function personalEmblemSourceLabel(def: PersonalEmblemDef, level = 1): st
   return `首次通关「${chapter}」· ${name}`;
 }
 
-/** 给测试和投放守卫用：主线章是否都配了一枚 */
+/** 前六章里还没配白送纹章的。第七章起本来就没有。 */
 export function officialChaptersMissingEmblem(): string[] {
-  return DUNGEON_DEFS.filter((d) => personalEmblemsForDungeon(d.id).length === 0).map((d) => d.id);
+  return DUNGEON_DEFS
+    .filter((d, i) => i < UNIVERSAL_EMBLEM_FROM_CHAPTER && personalEmblemsForDungeon(d.id).length === 0)
+    .map((d) => d.id);
 }
 
 export interface PersonalEmblemCardCopy {

@@ -2,12 +2,10 @@ import * as PIXI from 'pixi.js';
 import { makeText } from '@/theme/typography';
 import { UNIT_DEFS } from '@/data/unitDefs';
 import {
-  CHARACTER_DEFS,
   characterStatsAtLevel,
   characterArtKey,
   getCharacterDef,
   levelUpCost,
-  type CharacterDef,
 } from '@/data/characterCatalog';
 import { getSkillSpec, type SkillSpec } from '@/data/skillCatalog';
 import {
@@ -19,11 +17,26 @@ import {
 import { describeSkillRole } from '@/data/skillText';
 import { characterEffectiveStats } from '@/game/characterFactory';
 import {
+  activatePersonalEmblem,
   addCharacterStats,
+  describePersonalEmblem,
+  PERSONAL_EMBLEM_MAX_LEVEL,
+  personalEmblemChapterGiftLabel,
+  personalEmblemEliteUpgradePending,
+  personalEmblemLevel,
   personalEmblemModsFor,
-  personalEmblemRosterCards,
+  personalEmblemReleasePrompt,
+  personalEmblemSpendAvailable,
+  personalEmblemsForRoster,
+  UNIVERSAL_EMBLEM_ICON,
+  UNIVERSAL_EMBLEM_NAME,
+  UNIVERSAL_EMBLEM_SPEND,
+  releasePersonalEmblem,
+  upgradePersonalEmblem,
   type PersonalEmblemCardCopy,
+  type PersonalEmblemDef,
 } from '@/data/personalEmblemCatalog';
+import { AdManager } from '@/platform/AdManager';
 import type { Character, CharacterBaseStats } from '@/game/characterTypes';
 import { resolveBattleSkillIdForCharacter } from '@/game/state/DeployManager';
 import {
@@ -33,9 +46,9 @@ import {
   type MvpGameState,
 } from '@/game/MvpState';
 import { isDisplayLive } from '@/view/pixiLive';
-import { getDungeonDef } from '@/data/dungeonCatalog';
 import {
   createHubHeader,
+  hubEmblemPillOrigin,
   hubSoulBarBottom,
   hubSoulPillOrigin,
 } from '@/view/hubHeader';
@@ -52,11 +65,12 @@ import { createUnitInfoPanel } from '@/view/unitInfoPanel';
 import { makeButton, makeChevronButton, ROSTER_NAV_BTN, ROSTER_NAV_GAP } from '@/ui/Button';
 import { makeRosterCardFace } from '@/ui/chrome';
 import { createModal, modalPanelRestY, type ModalHandle } from '@/ui/Modal';
+import { makePanel } from '@/ui/Panel';
 import { attachPress } from '@/ui/press';
 import { createScrollList, type ScrollListHandle } from '@/ui/ScrollList';
 import { showToast } from '@/ui/Toast';
 import { AudioManager } from '@/core/AudioManager';
-import { animateCurrencySpend, flashPop, staggerPop } from '@/view/fx/celebration';
+import { animateCurrencySpend, createScrim, flashPop, staggerPop } from '@/view/fx/celebration';
 import type { EmblemAwakenInfo } from '@/view/emblemAwaken';
 import {
   HUB_GUIDE_RAYEN_ID,
@@ -83,6 +97,8 @@ export interface RosterCallbacks {
   onGuideRefresh?: () => void;
   /** 这次升级新开了专属纹章 */
   onExclusiveAwaken?: (info: EmblemAwakenInfo) => void;
+  /** 花纹玉激活或升级了永久纹章，要播和章节首杀一样的铭刻页 */
+  onPersonalEmblemInscribed?: (emblemId: string, level: number) => void;
 }
 
 export interface RosterViewHandle {
@@ -189,6 +205,17 @@ export const ROSTER_DETAIL_TABS = [
 
 export type RosterDetailTab = (typeof ROSTER_DETAIL_TABS)[number]['id'];
 
+/** 魂晶够升级、纹玉够铭刻时，对应分页亮红点。技能详情不亮。 */
+export function rosterDetailTabAlerts(
+  meta: MvpGameState['meta'],
+  m: Character,
+): { upgrade: boolean; emblem: boolean } {
+  return {
+    upgrade: canAffordCharacterLevelUp(meta, m),
+    emblem: personalEmblemSpendAvailable(meta, m.rosterId),
+  };
+}
+
 export const ROSTER_DETAIL_TITLE_H = 76;
 export const ROSTER_DETAIL_FOOTER_H = 40;
 export const ROSTER_STAT_ROW_H = 24;
@@ -246,20 +273,9 @@ const MOD_COLOR: Record<SkillModRarity, number> = {
   epic: 0xa5561f,
 };
 
-export function rosterUnlockHint(def: CharacterDef): string {
-  if (def.unlock.kind === 'meta') return `魂晶 ${def.unlock.cost}`;
-  if (def.unlock.kind === 'clearDungeon') {
-    const d = getDungeonDef(def.unlock.dungeonId);
-    return d ? `通关${d.name}` : '通关解锁';
-  }
-  if (def.unlock.kind === 'story') return '跟随冒险加入';
-  return '开局拥有';
-}
-
 /**
- * 角色页：图鉴网格 + 已拥有的养成。
- *
- * 未拥有的人画成灰卡、点进去招募页，不在这里花魂晶——避免和招募页各开一个入口。
+ * 角色页：已拥有的人，点开养成。
+ * 还没加入的不排在这里。花魂晶的去招募页，通关送的打完那章再出现。
  * 卡直接压在厅堂上，不再套一层空白大面板。
  */
 export function createRosterView(
@@ -277,6 +293,7 @@ export function createRosterView(
     title: '角色',
     page: 'roster',
     soul: state.meta.metaCurrency,
+    emblemTokens: state.meta.universalEmblemTokens ?? 0,
   });
   root.addChild(header.root);
 
@@ -292,8 +309,6 @@ export function createRosterView(
   const { cols, cardW, cardH } = rosterGridMetrics(W);
 
   const owned = state.meta.roster;
-  const ownedIds = new Set(owned.map((m) => m.rosterId));
-  const lockedDefs = CHARACTER_DEFS.filter((d) => !ownedIds.has(d.id));
 
   const heading = makeText('我的角色', 'title', {
     fill: 0xfff8e8,
@@ -304,10 +319,6 @@ export function createRosterView(
   heading.x = PAD;
   heading.y = 6;
   scroll.content.addChild(heading);
-  const countTx = makeText(`${owned.length}/${CHARACTER_DEFS.length}`, 'caption', { fill: 0xf0e0c8 });
-  countTx.x = PAD + heading.width + 10;
-  countTx.y = 10;
-  scroll.content.addChild(countTx);
 
   const pops: PIXI.Container[] = [];
   const gridY = heading.y + heading.height + 10;
@@ -315,7 +326,6 @@ export function createRosterView(
   const cardById = new Map<string, { card: PIXI.Container; w: number; h: number }>();
 
   owned.forEach((m) => cards.push(buildOwnedCard(m, cardW, cardH)));
-  lockedDefs.forEach((def) => cards.push(buildLockedCard(def, cardW, cardH)));
 
   if (cards.length === 0) {
     const empty = makeText('还没有角色。去招募页看看谁能加入。', 'caption', {
@@ -472,47 +482,6 @@ export function createRosterView(
     return card;
   }
 
-  function buildLockedCard(def: CharacterDef, w: number, h: number): PIXI.Container {
-    const card = paintCardShell(w, h, true);
-    const token = createUnitToken(
-      characterArtKey({ rosterId: def.id, profession: def.profession }),
-      'player',
-      Math.min(w - 6, h - ROSTER_FOOTER_H + 8),
-    );
-    token.x = w / 2;
-    token.y = (h - ROSTER_FOOTER_H) * 0.56;
-    token.alpha = 0.4;
-    card.addChild(token);
-
-    paintSkillBadge(card, def.defaultSkillId, 0x8a8a90);
-
-    const hint = makeText(rosterUnlockHint(def), 'micro', {
-      fill: 0xffffff,
-      fontSize: 11,
-      stroke: 0x1a1410,
-      strokeThickness: 4,
-      wordWrap: true,
-      wordWrapWidth: w - 12,
-      align: 'center',
-    });
-    hint.anchor.set(0.5, 0.5);
-    hint.x = w / 2;
-    hint.y = (h - ROSTER_FOOTER_H) * 0.72;
-    card.addChild(hint);
-
-    paintFooter(card, w, h, def.name, '未加入');
-
-    card.eventMode = 'static';
-    card.cursor = 'pointer';
-    card.hitArea = new PIXI.Rectangle(0, 0, w, h);
-    attachPress(card, { guard: scroll.wasDragging });
-    card.on('pointertap', () => {
-      if (scroll.wasDragging()) return;
-      cb.onGoRecruit?.();
-    });
-    return card;
-  }
-
   // ---------------- 详情 + 养成弹窗 ----------------
 
   let modal: ModalHandle | null = null;
@@ -526,16 +495,30 @@ export function createRosterView(
   let levelUpBtnSize = { w: 0, h: 38 };
   const detailTabHits = new Map<RosterDetailTab, { node: PIXI.Container; w: number; h: number }>();
   let soulHud: CurrencyPill | null = null;
+  let tokenHud: CurrencyPill | null = null;
   let listScroll: ScrollListHandle | null = null;
   let flipLockUntil = 0;
 
   function mountForegroundSoul(md: ModalHandle): void {
     header.setSoulVisible(false);
     soulHud = createCurrencyPill('icon_soul', `${state.meta.metaCurrency}`);
+    tokenHud = createCurrencyPill(UNIVERSAL_EMBLEM_ICON, `${state.meta.universalEmblemTokens ?? 0}`);
     const origin = hubSoulPillOrigin();
     soulHud.x = origin.x;
     soulHud.y = origin.y;
+    const tokenAt = hubEmblemPillOrigin(soulHud.width);
+    tokenHud.x = tokenAt.x;
+    tokenHud.y = tokenAt.y;
     md.overlay.addChild(soulHud);
+    md.overlay.addChild(tokenHud);
+  }
+
+  function refreshTokenHud(): void {
+    if (!tokenHud || !soulHud) return;
+    tokenHud.setText(`${state.meta.universalEmblemTokens ?? 0}`);
+    const tokenAt = hubEmblemPillOrigin(soulHud.width);
+    tokenHud.x = tokenAt.x;
+    tokenHud.y = tokenAt.y;
   }
 
   function closeDetail(): void {
@@ -545,9 +528,11 @@ export function createRosterView(
     detailOpenId = null;
     levelUpBtn = null;
     soulHud = null;
+    tokenHud = null;
     listScroll = null;
-    header.setSoulVisible(true);
     header.setSoul(state.meta.metaCurrency);
+    header.setEmblemTokens(state.meta.universalEmblemTokens ?? 0);
+    header.setSoulVisible(true);
     if (readHubUpgradeGuideStep(state.meta) === HubUpgradeGuideStep.TAP_LEVELUP) {
       setHubUpgradeGuideStep(state.meta, HubUpgradeGuideStep.TAP_RAYEN);
       cb.onPersist();
@@ -697,6 +682,16 @@ export function createRosterView(
 
   function listDragging(): boolean {
     return listScroll?.wasDragging() ?? false;
+  }
+
+  function toast(msg: string, deny = false): void {
+    const parent = modal?.root ?? root;
+    if (!isDisplayLive(parent)) return;
+    showToast(parent, msg, {
+      screenWidth: W,
+      deny,
+      color: deny ? C.soulText : C.paper,
+    });
   }
 
   /** 这一局带的招牌技能（含本局纹章前的原始规格） */
@@ -901,6 +896,7 @@ export function createRosterView(
     back.endFill();
     md.footer.addChild(back);
 
+    const alerts = rosterDetailTabAlerts(state.meta, m);
     for (const [i, t] of ROSTER_DETAIL_TABS.entries()) {
       const on = t.id === detailTab;
       const tab = new PIXI.Container();
@@ -921,6 +917,19 @@ export function createRosterView(
       label.x = tw / 2;
       label.y = h / 2;
       tab.addChild(label);
+      if (t.id !== 'skill' && alerts[t.id]) {
+        const dot = new PIXI.Graphics();
+        dot.beginFill(0xfff8e8, 1);
+        dot.drawCircle(0, 0, 5.5);
+        dot.endFill();
+        dot.beginFill(0xe23c3c, 1);
+        dot.drawCircle(0, 0, 4);
+        dot.endFill();
+        dot.x = tw - 12;
+        dot.y = 9;
+        dot.eventMode = 'none';
+        tab.addChild(dot);
+      }
       tab.eventMode = 'static';
       tab.cursor = 'pointer';
       tab.hitArea = new PIXI.Rectangle(0, 0, tw, h);
@@ -996,25 +1005,229 @@ export function createRosterView(
   }
 
   /**
-   * 跟人的永久被动。没拿到整页留空，不写占位也不剧透。
+   * 已拥有角色的两枚永久纹章。没激活的也写出来，因为要在这里花纹玉。
+   * 还没买到的人不进角色页，所以这里不会给陌生人开纹章。
+   * 余额在顶栏，跟魂晶排在一起，这里不再重复写一排数字。
    */
   function addPersonalEmblemBlock(parent: PIXI.Container, m: Character, w: number, top: number): number {
-    const cards = personalEmblemRosterCards(state.meta, m.rosterId);
-    if (cards.length === 0) return top;
-
+    const defs = personalEmblemsForRoster(m.rosterId);
     const box = new PIXI.Container();
     box.y = top;
     parent.addChild(box);
 
     let y = addSectionTitle(box, '永久纹章', w, 0);
-    for (const card of cards) {
-      y += addPersonalEmblemCard(box, w, y, card.copy, {
-        icon: card.def.icon,
-        owned: true,
-      });
+
+    if (defs.length === 0) {
+      const empty = makeText('这个角色还没有永久纹章。', 'caption', { fill: C.muted });
+      empty.y = y;
+      box.addChild(empty);
+      return y + empty.height + 8;
+    }
+
+    for (const def of defs) {
+      y += addOwnedEmblemCard(box, m, def, w, y);
       y += 4;
     }
     return y + 2;
+  }
+
+  function addOwnedEmblemCard(
+    box: PIXI.Container,
+    m: Character,
+    def: PersonalEmblemDef,
+    w: number,
+    top: number,
+  ): number {
+    const level = personalEmblemLevel(state.meta, def.id);
+    const owned = level > 0;
+    const tokens = state.meta.universalEmblemTokens ?? 0;
+    const showLevel = owned ? level : 1;
+    const giftLabel = owned ? null : personalEmblemChapterGiftLabel(state.meta, def.id);
+    const eliteFree = owned && personalEmblemEliteUpgradePending(state.meta, def.id);
+    const effect = `${def.blurb}${describePersonalEmblem(def, showLevel)}`;
+    const copy: PersonalEmblemCardCopy = {
+      title: owned && level >= PERSONAL_EMBLEM_MAX_LEVEL ? `${def.name} · ${level}级` : def.name,
+      source: owned ? `已铭刻 · ${level}级` : '未激活',
+      desc: !owned && giftLabel
+        ? `${giftLabel}。${effect}`
+        : eliteFree
+          ? `${effect}精英首通可免费升到 2 级。`
+          : effect,
+    };
+    const cardH = addPersonalEmblemCard(box, w, top, copy, { icon: def.icon, owned });
+    const actions: PIXI.Container[] = [];
+    const gap = 6;
+    const btnH = 32;
+    const spendLabel = `消耗 ${UNIVERSAL_EMBLEM_SPEND}`;
+    const spendOpts = {
+      variant: 'primary' as const,
+      height: btnH,
+      fontSize: 13,
+      iconKey: UNIVERSAL_EMBLEM_ICON,
+      iconSize: 16,
+      disabled: tokens < UNIVERSAL_EMBLEM_SPEND,
+    };
+    if (!owned) {
+      if (giftLabel) return cardH;
+      actions.push(makeButton(spendLabel, () => {
+        if (listDragging()) return;
+        if ((state.meta.universalEmblemTokens ?? 0) < UNIVERSAL_EMBLEM_SPEND) {
+          toast(`${UNIVERSAL_EMBLEM_NAME}不足`, true);
+          return;
+        }
+        if (!activatePersonalEmblem(state.meta, m.rosterId, def.id)) return;
+        dirty = true;
+        cb.onPersist();
+        refreshTokenHud();
+        refillDetail(m);
+        cb.onPersonalEmblemInscribed?.(def.id, personalEmblemLevel(state.meta, def.id));
+      }, {
+        ...spendOpts,
+        width: w - 12,
+      }));
+    } else {
+      const canUpgrade = level < PERSONAL_EMBLEM_MAX_LEVEL;
+      const releaseW = canUpgrade ? Math.floor((w - 12 - gap) / 2) : w - 12;
+      if (canUpgrade) {
+        actions.push(makeButton(spendLabel, () => {
+          if (listDragging()) return;
+          if ((state.meta.universalEmblemTokens ?? 0) < UNIVERSAL_EMBLEM_SPEND) {
+            toast(`${UNIVERSAL_EMBLEM_NAME}不足`, true);
+            return;
+          }
+          if (!upgradePersonalEmblem(state.meta, m.rosterId, def.id)) return;
+          dirty = true;
+          cb.onPersist();
+          refreshTokenHud();
+          refillDetail(m);
+          cb.onPersonalEmblemInscribed?.(def.id, personalEmblemLevel(state.meta, def.id));
+        }, {
+          ...spendOpts,
+          width: releaseW,
+        }));
+      }
+      actions.push(makeButton('看广告收回', () => {
+        if (listDragging()) return;
+        openReleaseConfirm(m, def);
+      }, {
+        variant: 'ad',
+        width: releaseW,
+        height: btnH,
+        fontSize: 12,
+        iconKey: 'icon_ad',
+        iconSize: 14,
+      }));
+    }
+    let x = 6;
+    for (const btn of actions) {
+      btn.x = x;
+      btn.y = top + cardH + 4;
+      box.addChild(btn);
+      x += btn.width + gap;
+    }
+    return cardH + (actions.length > 0 ? btnH + 8 : 0);
+  }
+
+  let reclaiming = false;
+
+  function openReleaseConfirm(m: Character, def: PersonalEmblemDef): void {
+    if (reclaiming || listDragging()) return;
+    if (root.getChildByName('emblemReleaseConfirm')) return;
+    const copy = personalEmblemReleasePrompt(state.meta, def.id);
+    if (!copy) return;
+
+    const layer = new PIXI.Container();
+    layer.name = 'emblemReleaseConfirm';
+    const scrim = createScrim(W, H, 0.55);
+    layer.addChild(scrim);
+
+    const panelW = Math.min(320, W - 40);
+    const pad = 16;
+    const title = makeText(copy.title, 'heading', { fill: C.text, fontSize: 17 });
+    const body = makeText(copy.body, 'body', {
+      fill: C.text,
+      fontSize: 13,
+      wordWrap: true,
+      wordWrapWidth: panelW - pad * 2,
+      breakWords: true,
+      lineHeight: 20,
+    });
+    const btnH = 42;
+    const panelH = pad + title.height + 10 + body.height + 18 + btnH + pad;
+    const panel = makePanel({ width: panelW, height: panelH, light: true, radius: 14 });
+    panel.eventMode = 'static';
+    panel.hitArea = new PIXI.Rectangle(0, 0, panelW, panelH);
+    panel.x = (W - panelW) / 2;
+    panel.y = Math.max(36, (H - panelH) / 2 - 12);
+    layer.addChild(panel);
+
+    title.x = pad;
+    title.y = pad;
+    panel.addChild(title);
+    body.x = pad;
+    body.y = pad + title.height + 10;
+    panel.addChild(body);
+
+    let settled = false;
+    const close = (): void => {
+      if (settled) return;
+      settled = true;
+      if (layer.parent) layer.parent.removeChild(layer);
+      if (!layer.destroyed) layer.destroy({ children: true });
+    };
+    scrim.on('pointertap', (e: PIXI.FederatedPointerEvent) => {
+      if (e.target === scrim) close();
+    });
+
+    const gap = 8;
+    const btnW = (panelW - pad * 2 - gap) / 2;
+    const by = pad + title.height + 10 + body.height + 18;
+    const cancel = makeButton(copy.cancelLabel, close, {
+      variant: 'ghost', width: btnW, height: btnH, fontSize: 15, radius: 12,
+    });
+    cancel.x = pad;
+    cancel.y = by;
+    panel.addChild(cancel);
+    const confirm = makeButton(copy.confirmLabel, () => {
+      close();
+      void reclaimEmblem(m, def);
+    }, {
+      variant: 'ad',
+      width: btnW,
+      height: btnH,
+      fontSize: 15,
+      radius: 12,
+      iconKey: 'icon_ad',
+      iconSize: 16,
+    });
+    confirm.x = pad + btnW + gap;
+    confirm.y = by;
+    panel.addChild(confirm);
+
+    root.addChild(layer);
+  }
+
+  async function reclaimEmblem(m: Character, def: PersonalEmblemDef): Promise<void> {
+    if (reclaiming || listDragging()) return;
+    if (personalEmblemLevel(state.meta, def.id) <= 0) return;
+    reclaiming = true;
+    try {
+      const ok = await AdManager.showRewarded('emblemRelease');
+      if (!ok) {
+        toast('广告未播完，纹章还在', true);
+        return;
+      }
+      const refund = releasePersonalEmblem(state.meta, def.id);
+      if (refund <= 0) return;
+      dirty = true;
+      cb.onPersist();
+      toast(`收回 ${def.name}，${UNIVERSAL_EMBLEM_NAME} +${refund}`);
+      refreshTokenHud();
+      if (modal && detailOpenId === m.rosterId) refillDetail(m);
+      else cb.onChanged();
+    } finally {
+      reclaiming = false;
+    }
   }
 
   function addPersonalEmblemCard(

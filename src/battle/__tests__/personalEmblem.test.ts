@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { skillDefForId } from '@/data/skillCatalog';
+import { UNIT_DEFS } from '@/data/unitDefs';
+import { createBattleSim } from '../engine';
 import { castSkillManual, setHitRng } from '../skills';
 import { computeDamage } from '../damage';
 import { applyBasicDealtMul } from '../damage';
 import { effectiveUnitDef } from '../effectiveUnit';
-import { UNIT_DEFS } from '@/data/unitDefs';
-import type { TerrainGrid } from '../grid';
+import { emptyTerrain, type TerrainGrid } from '../grid';
 import type { BattleEvent, SkillHit, UnitState, Vec2 } from '../types';
 
 const FLAT: TerrainGrid = Array.from({ length: 5 }, () => Array.from({ length: 5 }, () => 'plain' as const));
@@ -127,5 +129,41 @@ describe('跟人纹章进战斗', () => {
     if (heal?.type === 'heal') {
       expect(heal.amount).toBe(Math.floor(28 * 1.2));
     }
+  });
+
+  it('咒毒经过开战拷贝后仍加在破甲咒的中毒上', () => {
+    const hero: UnitState = {
+      uid: 'luoling',
+      defId: 'bow',
+      faction: 'player',
+      hp: 62,
+      pos: { x: 0, y: 0 },
+      skillCd: 0,
+      movedInTurn: false,
+      battleSkill: skillDefForId('hex_mark') ?? undefined,
+      mercSpd: 30,
+      personalPoisonTickAdd: 2,
+    };
+    const foe: UnitState = {
+      uid: 'e1',
+      defId: 'shield',
+      faction: 'enemy',
+      hp: 80,
+      pos: { x: 2, y: 0 },
+      skillCd: 0,
+      movedInTurn: false,
+      mercSpd: 1,
+    };
+    const sim = createBattleSim([hero, foe], emptyTerrain(5, 5), UNIT_DEFS, {
+      mode: 'manual',
+      battleRng: () => 1,
+    });
+    for (let i = 0; i < 8 && !sim.pending(); i += 1) sim.stepTurn();
+    expect(sim.pending()?.uid).toBe('luoling');
+    expect(sim.getUnit('luoling')?.personalPoisonTickAdd).toBe(2);
+    const step = sim.commandSkill('luoling', 'e1');
+    expect(step.events.some((e) => e.type === 'skillCast')).toBe(true);
+    const poisoned = sim.getUnit('e1')?.timedBattleEffects?.find((e) => e.kind === 'poison');
+    expect(poisoned).toMatchObject({ kind: 'poison', dmgPerRound: 10, roundsLeft: 3 });
   });
 });

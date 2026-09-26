@@ -212,7 +212,7 @@ export interface SkillSpec {
    * 已实现但**当前没有角色能学**：在等这条 `role` 路线的角色上线。
    *
    * 需要这个标记，是因为「技能没主人」和「技能配错了」在数据上长得一模一样。
-   * 破甲咒 / 盾墙震慑 / 战场祝福都是完整可用的招，只是第一章六个角色全是输出路线，
+   * 盾墙震慑 / 战场祝福都是完整可用的招，只是还没有对应路线的角色，
    * 给他们塞一招控制或辅助会让换主技能跨定位、词条批量休眠（见 `CharacterDef.skillRoute`）。
    *
    * 标出来之后两件事都守得住：可学列表里出现预留技能是**错误**（`characterCatalog.test.ts`），
@@ -592,8 +592,10 @@ const SPECS: Record<string, SkillSpec> = {
     onCastFoeEffects: [{ kind: 'atkDown', subAtk: 3, rounds: 2 }],
   },
   /**
-   * 弓系：环上选一敌，纯 debuff。
-   * `reserved`：等一个控制路线的弓手角色。希尔是输出路线（穿透箭 / 速射）。
+   * 洛铃招牌：正好 2 格点一个敌人。即时伤害是 0，但咒本身会掉血：
+   * 攻击 -5，再中毒每回合 -8，都是 3 回合。毒无视护甲，所以削的是那个
+   * 最疼的人，而不是靠她的 14 点攻击去换血。
+   * 贴脸打不到，所以她站在前排身后一格。希尔走穿透箭，两条弓不撞打法。
    */
   hex_mark: {
     id: 'hex_mark',
@@ -602,12 +604,14 @@ const SPECS: Record<string, SkillSpec> = {
     exclusiveProfession: 'bow',
     timing: 'beforeMove',
     role: 'control',
-    reserved: true,
     displayKind: 'lineShot',
     shape: { type: 'neighborPickFoe', manhattan: 2 },
     damage: { kind: 'none' },
     shopPrice: 7,
-    onCastFoeEffects: [{ kind: 'atkDown', subAtk: 5, rounds: 3 }],
+    onCastFoeEffects: [
+      { kind: 'atkDown', subAtk: 5, rounds: 3 },
+      { kind: 'poison', dmgPerRound: 8, rounds: 3 },
+    ],
   },
   /**
    * ── 草原战线专属临时技能（`temp_gl_*`）────────────────────────────

@@ -124,9 +124,18 @@ export interface MetaState {
    */
   claimedPersonalEmblemIds?: string[];
   /**
-   * 纹章等级。1 = 主线首通，2 = 同章精英首通。可选：老档只有 id 列表时按 1 算。
+   * 纹章等级。1 = 主线首通或花纹玉激活，2 = 精英首通或再花一枚升级。
+   * 可选：老档只有 id 列表时按 1 算。
    */
   personalEmblemLevelById?: Record<string, number>;
+  /**
+   * 看广告收回过的纹章。读档补领和精英首通都不再把这一枚送回来。
+   */
+  personalEmblemReleasedIds?: string[];
+  /** 手里的纹玉。第七章起首通发放，用来激活或升级已拥有角色的永久纹章。 */
+  universalEmblemTokens?: number;
+  /** 已经发过纹玉的章节。普通和精英各记一次，避免读档重复发。 */
+  universalEmblemPaidDungeonIds?: string[];
 }
 
 /** 单副本一局的临时状态（roguelike 构筑都在这里，结束即弃） */
@@ -335,6 +344,9 @@ export function createInitialMeta(): MetaState {
     tutorialStep: 0,
     claimedPersonalEmblemIds: [],
     personalEmblemLevelById: {},
+    personalEmblemReleasedIds: [],
+    universalEmblemTokens: 0,
+    universalEmblemPaidDungeonIds: [],
   };
 }
 

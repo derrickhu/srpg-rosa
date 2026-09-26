@@ -13,6 +13,8 @@ export const AdConfigKeys = {
   rewardExtraDeploy: 'adunit-d38d1888866177c1',
   /** 局内复活指定队员 */
   rewardRevive: 'adunit-75d725546bf4aacd',
+  // 收回永久纹章。公众平台还没单开广告位，先和三选一刷新共用，看完才发奖。
+  rewardEmblemRelease: 'adunit-e4b32e99968edcea',
 } as const;
 
 export function hasWx(): boolean {

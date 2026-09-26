@@ -38,7 +38,9 @@ import {
 } from './DeployManager';
 import {
   claimPersonalEmblemsForDungeon,
+  claimUniversalEmblemsForDungeon,
   previewPersonalEmblemsForDungeon,
+  previewUniversalEmblemGrant,
 } from '@/data/personalEmblemCatalog';
 import { instantiateCharacter } from '@/game/characterFactory';
 import type { Character } from '@/game/characterTypes';
@@ -165,6 +167,8 @@ export interface ChapterClearPreview {
   grantedEmblemIds: string[];
   /** 这次发到的等级（主线 1 / 精英 2） */
   grantedEmblemLevelById: Record<string, number>;
+  /** 这次首通发的纹玉。第七章起才有，重复通关是 0 */
+  grantedUniversalEmblems: number;
   unlockedDungeonIds: string[];
 }
 
@@ -172,6 +176,7 @@ const EMPTY_UNLOCKS = {
   unlockedRosterIds: [] as string[],
   grantedEmblemIds: [] as string[],
   grantedEmblemLevelById: {} as Record<string, number>,
+  grantedUniversalEmblems: 0,
   unlockedDungeonIds: [] as string[],
 };
 
@@ -257,6 +262,7 @@ function attachClearUnlocks(
     ...preview,
     unlockedRosterIds: previewRosterUnlocks(meta, dungeonId),
     ...emblemGrantFields(previewPersonalEmblemsForDungeon(meta, dungeonId)),
+    grantedUniversalEmblems: previewUniversalEmblemGrant(meta, dungeonId),
     unlockedDungeonIds: previewDungeonUnlocks(meta, dungeonId),
   };
 }
@@ -752,6 +758,7 @@ export interface FinishRunResult {
   starMask: number;
   grantedEmblemIds: string[];
   grantedEmblemLevelById: Record<string, number>;
+  grantedUniversalEmblems: number;
   unlockedDungeonIds: string[];
 }
 
@@ -762,6 +769,7 @@ const EMPTY_FINISH: FinishRunResult = {
   starMask: 0,
   grantedEmblemIds: [],
   grantedEmblemLevelById: {},
+  grantedUniversalEmblems: 0,
   unlockedDungeonIds: [],
 };
 
@@ -783,6 +791,7 @@ export function finishRunVictory(state: MvpGameState): FinishRunResult {
   const preview = previewChapterClear(state, d.id);
   const unlockedRosterIds = applyDungeonClearUnlocks(state.meta, d.id);
   const granted = claimPersonalEmblemsForDungeon(state.meta, d.id);
+  const grantedUniversalEmblems = claimUniversalEmblemsForDungeon(state.meta, d.id);
   const map = state.meta.chapterStarsByDungeonId ?? {};
   map[d.id] = preview.starMask;
   state.meta.chapterStarsByDungeonId = map;
@@ -795,6 +804,7 @@ export function finishRunVictory(state: MvpGameState): FinishRunResult {
     newStars: preview.newStars,
     starMask: preview.starMask,
     ...emblemGrantFields(granted),
+    grantedUniversalEmblems,
     unlockedDungeonIds: preview.unlockedDungeonIds,
   };
 }

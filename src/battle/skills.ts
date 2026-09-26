@@ -502,8 +502,17 @@ function stampFoeHitFlags(hits: SkillHit[], uid: string, flags: AppliedFoeFlags)
   if (flags.frozen) h.frozen = true;
 }
 
-function applyFoeEffectsAndStamp(target: UnitState, spec: SkillSpec, hits: SkillHit[]): void {
-  stampFoeHitFlags(hits, target.uid, applySkillCastFoeEffects(target, spec, hitRng));
+function applyFoeEffectsAndStamp(
+  self: UnitState,
+  target: UnitState,
+  spec: SkillSpec,
+  hits: SkillHit[],
+): void {
+  stampFoeHitFlags(
+    hits,
+    target.uid,
+    applySkillCastFoeEffects(target, spec, hitRng, self.personalPoisonTickAdd ?? 0),
+  );
 }
 
 /**
@@ -632,7 +641,7 @@ function castAreaAoE(
     if (spec.damage.kind !== 'none') {
       hits.push(resolveHit(self, def, spec, t, terrain, defs));
     }
-    applyFoeEffectsAndStamp(t, spec, hits);
+    applyFoeEffectsAndStamp(self, t, spec, hits);
   }
   const events: BattleEvent[] = [
     {
@@ -683,7 +692,7 @@ function castGroundPickAoE(
     if (spec.damage.kind !== 'none') {
       hits.push(resolveHit(self, def, spec, t, terrain, defs));
     }
-    applyFoeEffectsAndStamp(t, spec, hits);
+    applyFoeEffectsAndStamp(self, t, spec, hits);
   }
   const events: BattleEvent[] = [
     {
@@ -803,7 +812,7 @@ function castNeighborPickFoe(
     },
   ];
   pushHitDeaths(events, units, hits);
-  applyFoeEffectsAndStamp(tgt, spec, hits);
+  applyFoeEffectsAndStamp(self, tgt, spec, hits);
   applySkillCastSelfEffects(self, spec);
   pushAttrNotes(events, spec, { self, foes: [tgt] });
   pushLifesteal(self, spec, hits, defs, events);
@@ -1009,7 +1018,7 @@ function castLineBestRay(
   for (const t of line) {
     if (t.hp <= 0) continue;
     hits.push(resolveHit(self, def, spec, t, terrain, defs));
-    applyFoeEffectsAndStamp(t, spec, hits);
+    applyFoeEffectsAndStamp(self, t, spec, hits);
   }
   if (hits.length === 0) return [];
   const events: BattleEvent[] = [

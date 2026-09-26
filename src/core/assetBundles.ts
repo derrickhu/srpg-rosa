@@ -41,6 +41,7 @@ export const UNIT_BUNDLE: AssetBundleDef = {
     mage: 'images/units/mage.png',
     healer: 'images/units/healer.png',
     floe: 'images/units/floe.png',
+    luoling: 'images/units/luoling.png',
     // 杂兵 / 精英·Boss 专属外观，key = spawn 的 animSet（见 src/data/stagesMvp.ts）。
     // 每章一批，图鉴见 docs/敌人图鉴.md。漏登记的表现是布阵格里那只怪只剩一个阵营色圆圈。
     // 第一章 · 草原野地魔物
@@ -145,6 +146,7 @@ export const UI_BUNDLE: AssetBundleDef = {
     icon_potion_slow: 'images/ui/icon_potion_slow.png',
     // 魂晶：唯一的永久货币。金币是局内的，两者的图标和颜色不许混用
     icon_soul: 'images/ui/icon_soul.png',
+    icon_universal_emblem: 'images/ui/icon_universal_emblem.png',
     icon_lock: 'images/ui/icon_lock.png',
     // 节点进度条上的补给点与 Boss 点，直径只有 20px
     node_supply: 'images/ui/node_supply.png',
@@ -169,6 +171,15 @@ export const UI_BUNDLE: AssetBundleDef = {
     emblem_pe_dragon: 'images/ui/emblem_pe_dragon.png',
     emblem_pe_altar: 'images/ui/emblem_pe_altar.png',
     emblem_pe_mist: 'images/ui/emblem_pe_mist.png',
+    emblem_pe_shade: 'images/ui/emblem_pe_shade.png',
+    emblem_pe_gate: 'images/ui/emblem_pe_gate.png',
+    emblem_pe_ember: 'images/ui/emblem_pe_ember.png',
+    emblem_pe_mail: 'images/ui/emblem_pe_mail.png',
+    emblem_pe_aegis: 'images/ui/emblem_pe_aegis.png',
+    emblem_pe_drive: 'images/ui/emblem_pe_drive.png',
+    emblem_pe_flank: 'images/ui/emblem_pe_flank.png',
+    emblem_pe_blight: 'images/ui/emblem_pe_blight.png',
+    emblem_pe_ward: 'images/ui/emblem_pe_ward.png',
     emblem_pe_sealed: 'images/ui/emblem_pe_sealed.png',
     // 战斗胜利弹窗的标题横幅。图里刻意留空——「胜利」两个字用游戏字体在代码里画，
     // 烧进贴图的话既换不了文案，字形也和界面其余部分对不上。

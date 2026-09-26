@@ -89,6 +89,32 @@ describe('章节首通发跟人纹章', () => {
     expect(atkL2).toBe(atkL1 + 2);
 
     winThrough(s, 'elite_grassland');
-    expect(finishRunVictory(s).grantedEmblemIds).toEqual([]);
+    const again = finishRunVictory(s);
+    expect(again.grantedEmblemIds).toEqual([]);
+    expect(again.grantedUniversalEmblems).toBe(0);
+  });
+
+  it('雾钟首通发 2 枚万能纹章，不送雾行；精英再发 1 枚；重复不发', () => {
+    const s = createInitialState();
+    winThrough(s, 'dungeon_mist');
+    const preview = previewChapterClear(s, 'dungeon_mist');
+    expect(preview.grantedEmblemIds).toEqual([]);
+    expect(preview.grantedUniversalEmblems).toBe(2);
+    const r = finishRunVictory(s);
+    expect(r.grantedUniversalEmblems).toBe(2);
+    expect(r.grantedEmblemIds).toEqual([]);
+    expect(s.meta.universalEmblemTokens).toBe(2);
+    expect(s.meta.claimedPersonalEmblemIds ?? []).not.toContain('pe_ray_mist');
+
+    winThrough(s, 'dungeon_mist');
+    expect(finishRunVictory(s).grantedUniversalEmblems).toBe(0);
+    expect(s.meta.universalEmblemTokens).toBe(2);
+
+    winThrough(s, 'elite_mist');
+    expect(finishRunVictory(s).grantedUniversalEmblems).toBe(1);
+    expect(s.meta.universalEmblemTokens).toBe(3);
+    winThrough(s, 'elite_mist');
+    expect(finishRunVictory(s).grantedUniversalEmblems).toBe(0);
+    expect(s.meta.universalEmblemTokens).toBe(3);
   });
 });

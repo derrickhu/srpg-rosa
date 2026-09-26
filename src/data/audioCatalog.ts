@@ -26,7 +26,7 @@ const FAMILY_SFX: Record<SkillSfxFamily, SfxId> = {
   boss: 'sfx_skill_boss',
 };
 
-/** 现役七个角色的招牌技能，各一条。漏登记的走族。 */
+/** 现役角色的招牌技能，各一条。漏登记的走族。 */
 const SIGNATURE_SKILL_SFX: Record<string, SfxId> = {
   whirl: 'sfx_skill_whirl',
   pierce: 'sfx_skill_pierce',
@@ -35,6 +35,7 @@ const SIGNATURE_SKILL_SFX: Record<string, SfxId> = {
   ember: 'sfx_skill_ember',
   heal_touch: 'sfx_skill_heal_touch',
   frost_ring: 'sfx_skill_frost_ring',
+  hex_mark: 'sfx_skill_hex_mark',
 };
 
 /** 玩家/敌方技能 id → 族。漏登记的走 `inferSkillFamily`，测试会锁玩家技能都能落到一族。 */

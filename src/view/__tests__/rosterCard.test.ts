@@ -1,23 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { CHARACTER_DEFS } from '@/data/characterCatalog';
 import {
   ROSTER_FOOTER_H,
   ROSTER_GRID_COLS,
   rosterCardFooterLayout,
   rosterGridMetrics,
-  rosterUnlockHint,
 } from '@/view/RosterView';
 
-describe('角色网格灰卡文案', () => {
-  it('魂晶解锁写价格，通关解锁写章节名，不写空话', () => {
-    const buy = CHARACTER_DEFS.find((d) => d.unlock.kind === 'meta');
-    const clear = CHARACTER_DEFS.find((d) => d.unlock.kind === 'clearDungeon');
-    expect(buy).toBeDefined();
-    expect(clear).toBeDefined();
-    expect(rosterUnlockHint(buy!)).toMatch(/^魂晶 \d+$/);
-    expect(rosterUnlockHint(clear!)).toMatch(/^通关/);
-  });
-
+describe('角色网格', () => {
   it('一行四个，卡宽比三列矮一截，少把 128px 棋子放大', () => {
     expect(ROSTER_GRID_COLS).toBe(4);
     const four = rosterGridMetrics(375);

@@ -495,6 +495,7 @@ export function buildBattleUnits(state: MvpGameState): UnitState[] {
       personalBasicDealtMul: emblem.basicDealtMul,
       personalTakenMul: emblem.takenMul,
       personalHealGivenMul: emblem.healGivenMul,
+      personalPoisonTickAdd: emblem.poisonTickAdd,
     });
   }
   return units;

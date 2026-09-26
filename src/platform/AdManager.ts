@@ -3,13 +3,14 @@ import { hasWx, AdConfigKeys } from './wxPlatform';
 
 declare const wx: any;
 
-export type AdScenario = 'lootRefresh' | 'shopRefresh' | 'extraDeploy' | 'revive';
+export type AdScenario = 'lootRefresh' | 'shopRefresh' | 'extraDeploy' | 'revive' | 'emblemRelease';
 
 const SCENARIO_AD_UNIT: Record<AdScenario, string> = {
   lootRefresh: AdConfigKeys.rewardLootRefresh,
   shopRefresh: AdConfigKeys.rewardShopRefresh,
   extraDeploy: AdConfigKeys.rewardExtraDeploy,
   revive: AdConfigKeys.rewardRevive,
+  emblemRelease: AdConfigKeys.rewardEmblemRelease,
 };
 
 let rewardedCache: Map<string, any> = new Map();

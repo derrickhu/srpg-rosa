@@ -327,6 +327,14 @@
       "notes": "芙洛 霜环"
     },
     {
+      "name": "sfx_skill_hex_mark",
+      "text": "short dry paper-charm snap, a soft muted glass tick, then a low violet hum that fades within half a second, compact curse mark, dry room, no voice, no music",
+      "duration": 0.6,
+      "prompt_influence": 0.55,
+      "output": "../../../game_assets/srpg-rosa/audio/sfx/sfx_skill_hex_mark.mp3",
+      "notes": "洛铃 破甲咒"
+    },
+    {
       "name": "sfx_emblem_inscribe",
       "text": "a wax seal stamp slammed onto thick parchment: low wooden thud, brief metallic clack, short ink-press rustle that decays naturally over half a second, dry room, no choir, no voice, no music",
       "duration": 0.7,

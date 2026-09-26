@@ -186,6 +186,8 @@ export interface UnitState {
   personalTakenMul?: number;
   /** 跟人永久纹章：技能治疗倍率，缺省 1 */
   personalHealGivenMul?: number;
+  /** 跟人永久纹章：这个人挂上的中毒，每回合再多扣这么多 */
+  personalPoisonTickAdd?: number;
 }
 
 export type TerrainId =

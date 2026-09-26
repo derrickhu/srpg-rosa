@@ -173,6 +173,7 @@ describe('整章通关奖励', () => {
       starMask: 0,
       grantedEmblemIds: [],
       grantedEmblemLevelById: {},
+      grantedUniversalEmblems: 0,
       unlockedDungeonIds: [],
     });
     expect(s.meta.metaCurrency).toBeGreaterThanOrEqual(soul);

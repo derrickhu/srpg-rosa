@@ -178,6 +178,9 @@ function normalizeMeta(meta: MetaState): MetaState {
     tutorialStep: meta.tutorialStep,
     claimedPersonalEmblemIds: meta.claimedPersonalEmblemIds ?? [],
     personalEmblemLevelById: meta.personalEmblemLevelById ?? {},
+    personalEmblemReleasedIds: meta.personalEmblemReleasedIds ?? [],
+    universalEmblemTokens: meta.universalEmblemTokens ?? 0,
+    universalEmblemPaidDungeonIds: meta.universalEmblemPaidDungeonIds ?? [],
   };
   hydrateChapterProgress(next);
   hydrateTutorial(next);
@@ -267,7 +270,15 @@ export const SaveManager = {
       const payload: MetaPayload = JSON.parse(raw);
       if (payload.version !== META_VERSION || !payload.meta) return null;
       if (!Array.isArray(payload.meta.roster)) return null;
-      return normalizeMeta(payload.meta);
+      const tokenBefore = payload.meta.universalEmblemTokens ?? 0;
+      const paidBefore = [...(payload.meta.universalEmblemPaidDungeonIds ?? [])].sort().join(',');
+      const next = normalizeMeta(payload.meta);
+      const paidAfter = [...(next.universalEmblemPaidDungeonIds ?? [])].sort().join(',');
+      // 老档补发的纹玉必须写回，否则每次读档都会再发一笔
+      if ((next.universalEmblemTokens ?? 0) !== tokenBefore || paidAfter !== paidBefore) {
+        SaveManager.saveMeta(next);
+      }
+      return next;
     } catch (e) {
       console.warn('[SaveManager] loadMeta failed:', e);
       return null;

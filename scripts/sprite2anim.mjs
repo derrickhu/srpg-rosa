@@ -122,6 +122,17 @@ const SETS = [
       { dir: 'mage/attack_up', preset: 'attack', facing: 'up', fps: 12 },
     ],
   },
+  // 洛铃：浅紫兜帽咒弓。prompt 见 docs/prompt/unit_luoling_walk_sheet_prompt.txt。
+  // 只有行走表，出手用代码突刺。右向由左向镜像。
+  {
+    id: 'luoling',
+    blend: 'normal',
+    downscale: 1,
+    runs: [
+      { dir: 'luoling/walk', preset: 'player_sheet', fps: 10, mirrorRight: true },
+      { dir: 'luoling/walk', preset: 'idle_from_walk', mirrorRight: true },
+    ],
+  },
   // 芙洛：冰蓝袍 + 单手浮书。prompt 见 docs/prompt/unit_floe_*.txt。右向由左向镜像。
   {
     id: 'floe',

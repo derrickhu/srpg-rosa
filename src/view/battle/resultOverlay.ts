@@ -765,6 +765,8 @@ export interface BossFirstKillOverlayOpts {
   screenH: number;
   entries: RewardEntry[];
   onConfirm: () => void;
+  /** 横幅。章节首杀用「首领首杀」，花纹玉铭刻另传。 */
+  bannerTitle?: string;
 }
 
 const EFFECT_BODY = 0xffe3a8;
@@ -908,8 +910,8 @@ function makeFirstKillTitle(badge: string, name: string): PIXI.Container {
 }
 
 /**
- * Boss 首杀专页：标题落下 → 人亮相 → 纹章飞到身侧 → 效果弹出。
- * 不画白框。盖在战场上，点收下后再出普通通关页。
+ * 永久纹章铭刻页：标题落下 → 人亮相 → 纹章飞到身侧 → 盖「铭刻」印 → 效果弹出。
+ * 章节首杀横幅是「首领首杀」；花纹玉时另传横幅。点收下后由调用方决定下一步。
  */
 export function createBossFirstKillOverlay(opts: BossFirstKillOverlayOpts): PIXI.Container {
   const { screenW: W, screenH: H } = opts;
@@ -921,7 +923,7 @@ export function createBossFirstKillOverlay(opts: BossFirstKillOverlayOpts): PIXI
   const cx = W / 2;
   const bannerW = Math.min(300, W - 40);
   const bannerY = Math.max(36, H * 0.08);
-  const { height: bannerH } = placeBanner(root, cx, bannerY, '首领首杀', bannerW);
+  const { height: bannerH } = placeBanner(root, cx, bannerY, opts.bannerTitle ?? '首领首杀', bannerW);
 
   const first = entries[0];
   let bodyY = bannerY + Math.max(bannerH, 60) + 10;

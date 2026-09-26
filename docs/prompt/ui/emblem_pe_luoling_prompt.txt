@@ -1,0 +1,25 @@
+洛铃两枚永久纹章：咒毒、护铃
+画法只跟参考图：一个粗描边大色块，平涂，图标就是物件本身。
+产出 → images/ui/emblem_pe_blight.png、images/ui/emblem_pe_ward.png
+
+---
+
+Two game UI icons side by side for a cartoon fantasy tactics mobile game. Shown at about 24 pixels. Each icon is ONE bold chess-piece shape.
+
+The attached picture is DRAWING METHOD ONLY: one chunky filled object, a very thick near-black outline, flat saturated color. The object itself is the entire icon.
+
+CRITICAL BACKGROUND: everything that is not the object, including the gap between the two icons, is 100% solid flat MAGENTA, hex #FF00FF. Chroma key. Flat, no gradient, no shadow on the magenta.
+
+Shared drawing:
+- Outline as thick as the reference, color of dark soy sauce #1A1410, wrapped all the way around the object
+- Flat fills, one lighter patch, toy-like, straight-on, centered
+- Each object fills about 75% of its half of the picture
+- Same outline weight on both
+
+LEFT icon: one huge poison droplet standing point-up, belly round and fat. Fill is the green of a lime soda bottle #7CB342, with a lighter lime patch #C6E27A on the upper left of the drop.
+
+RIGHT icon: one huge round jingle bell, the yellow of a gold coin #E2B043. Fat dome, a wide dark bronze band across the lower third, a round dark bronze clapper under the band. The bell is one solid chunky shape.
+
+LAYOUT: exactly two icons, left and right, equal size, a wide magenta gap between them, magenta margin on all outer sides. No grid lines, no frames, no cards, no plates behind the objects.
+
+NO TEXT, no letters, no numbers, no captions, no watermark.

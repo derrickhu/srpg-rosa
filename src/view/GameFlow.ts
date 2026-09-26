@@ -33,7 +33,7 @@ import {
   previewBossFirstKillDrops,
   shouldPresentBossFirstKill,
 } from '@/view/battle/bossFirstKill';
-import { previewPersonalEmblemsForDungeon } from '@/data/personalEmblemCatalog';
+import { previewPersonalEmblemsForDungeon, UNIVERSAL_EMBLEM_NAME } from '@/data/personalEmblemCatalog';
 import { createSweepRewardOverlay } from '@/view/sweepRewardOverlay';
 import {
   abandonRun,
@@ -558,6 +558,12 @@ export class GameFlow {
               if (this.shellRoot && !this.shellRoot.destroyed) {
                 this.attachHubUpgradeGuide(this.shellRoot);
               }
+            },
+            onPersonalEmblemInscribed: (emblemId, level) => {
+              persist();
+              const entry = personalEmblemRewardEntry(emblemId, level);
+              if (!entry) return;
+              this.showBossFirstKillOverlay([entry], () => undefined, `${UNIVERSAL_EMBLEM_NAME}铭刻`);
             },
             onExclusiveAwaken: (info) => {
               persist();
@@ -1085,13 +1091,18 @@ export class GameFlow {
     }
   }
 
-  private showBossFirstKillOverlay(entries: RewardEntry[], then: () => void): void {
+  private showBossFirstKillOverlay(
+    entries: RewardEntry[],
+    then: () => void,
+    bannerTitle?: string,
+  ): void {
     let close = (): void => undefined;
     close = this.pushOverlay(
       createBossFirstKillOverlay({
         screenW: this.app.screen.width,
         screenH: this.app.screen.height,
         entries,
+        bannerTitle,
         onConfirm: () => {
           close();
           then();
@@ -1213,7 +1224,11 @@ export class GameFlow {
                 this.trackRunEnd('clear');
                 const result = finishRunVictory(this.state);
                 SaveManager.save(this.state);
-                this.showToast(`通关「${dungeon.name}」，魂晶 +${result.soul}`);
+                const bits = [`魂晶 +${result.soul}`];
+                if (result.grantedUniversalEmblems > 0) {
+                  bits.push(`${UNIVERSAL_EMBLEM_NAME} +${result.grantedUniversalEmblems}`);
+                }
+                this.showToast(`通关「${dungeon.name}」，${bits.join('，')}`);
                 this.markAdventureAfterChapterClear(dungeon.id, firstClear);
                 this.presentUnlocksThen(result.unlockedRosterIds, () => {
                   if (isHubUpgradeGuideClear(dungeon.id)) {

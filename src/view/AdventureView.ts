@@ -665,6 +665,7 @@ export function createAdventureView(
     title: '冒险',
     page: 'adventure',
     soul: state.meta.metaCurrency,
+    emblemTokens: state.meta.universalEmblemTokens ?? 0,
   });
   root.addChild(header.root);
   const cardY = Math.max(66, header.height + 10);

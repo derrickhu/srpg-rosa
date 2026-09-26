@@ -1,4 +1,5 @@
 import { getCharacterDef } from '@/data/characterCatalog';
+import { UNIVERSAL_EMBLEM_ICON, UNIVERSAL_EMBLEM_NAME } from '@/data/personalEmblemCatalog';
 import {
   describePersonalEmblem,
   getPersonalEmblem,
@@ -41,6 +42,17 @@ export function chapterClearRewardEntries(
   dungeonName: string,
 ): RewardEntry[] {
   const entries: RewardEntry[] = [];
+  if (preview.grantedUniversalEmblems > 0) {
+    entries.push({
+      iconKey: UNIVERSAL_EMBLEM_ICON,
+      name: UNIVERSAL_EMBLEM_NAME,
+      amount: preview.grantedUniversalEmblems,
+      quality: '永久',
+      desc: `通关「${dungeonName}」。用来激活或升级已拥有角色的永久纹章。`,
+      sources: ['章节首通'],
+      tint: C.primary,
+    });
+  }
   if (preview.soul > 0) {
     entries.push({
       iconKey: 'icon_soul',

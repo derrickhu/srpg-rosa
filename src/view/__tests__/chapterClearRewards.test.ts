@@ -12,6 +12,7 @@ const EMPTY: ChapterClearPreview = {
   unlockedRosterIds: [],
   grantedEmblemIds: [],
   grantedEmblemLevelById: {},
+  grantedUniversalEmblems: 0,
   unlockedDungeonIds: [],
 };
 
@@ -49,6 +50,21 @@ describe('通关奖励格拆开', () => {
     expect(tile?.quality).toContain('2级');
     expect(tile?.whoRosterId).toBe('hero_sword_ray');
     expect(tile?.desc).toContain('攻击 +4');
+  });
+
+  it('第七章起首通把万能纹章摆进通关格', () => {
+    const entries = chapterClearRewardEntries({
+      ...EMPTY,
+      soul: 10,
+      firstClear: true,
+      grantedUniversalEmblems: 2,
+    }, '雾钟回廊');
+    expect(entries.map((e) => e.name)).toEqual(['纹玉', '魂晶']);
+    expect(entries[0]).toMatchObject({
+      iconKey: 'icon_universal_emblem',
+      amount: 2,
+    });
+    expect(entries[0]?.badge).toBeUndefined();
   });
 
   it('重复通关只剩魂晶，不再冒已经拿过的人', () => {

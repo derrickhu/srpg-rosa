@@ -1,0 +1,346 @@
+{
+  "id": "luoling",
+  "source": "art/sprite-runs/luoling",
+  "blend": "normal",
+  "image": "images/anim/luoling.png",
+  "meta": {
+    "size": {
+      "w": 1024,
+      "h": 512
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 209,
+    "baselineY": 235,
+    "ref": "luoling-walk/down-1.png"
+  },
+  "frames": {
+    "luoling-walk/down-1.png": {
+      "frame": {
+        "x": 469,
+        "y": 2,
+        "w": 164,
+        "h": 211
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 46,
+        "y": 26,
+        "w": 164,
+        "h": 211
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "luoling-walk/down-2.png": {
+      "frame": {
+        "x": 635,
+        "y": 2,
+        "w": 166,
+        "h": 211
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 45,
+        "y": 26,
+        "w": 166,
+        "h": 211
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "luoling-walk/down-4.png": {
+      "frame": {
+        "x": 163,
+        "y": 221,
+        "w": 171,
+        "h": 208
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 42,
+        "y": 29,
+        "w": 171,
+        "h": 208
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "luoling-walk/left-1.png": {
+      "frame": {
+        "x": 336,
+        "y": 221,
+        "w": 148,
+        "h": 208
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 54,
+        "y": 29,
+        "w": 148,
+        "h": 208
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "luoling-walk/left-2.png": {
+      "frame": {
+        "x": 803,
+        "y": 2,
+        "w": 159,
+        "h": 210
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 48,
+        "y": 27,
+        "w": 159,
+        "h": 210
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "luoling-walk/left-4.png": {
+      "frame": {
+        "x": 636,
+        "y": 221,
+        "w": 156,
+        "h": 207
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 50,
+        "y": 30,
+        "w": 156,
+        "h": 207
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "luoling-walk/left-1-mirror.png": {
+      "frame": {
+        "x": 486,
+        "y": 221,
+        "w": 148,
+        "h": 208
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 54,
+        "y": 29,
+        "w": 148,
+        "h": 208
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "luoling-walk/left-2-mirror.png": {
+      "frame": {
+        "x": 2,
+        "y": 221,
+        "w": 159,
+        "h": 210
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 49,
+        "y": 27,
+        "w": 159,
+        "h": 210
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "luoling-walk/left-4-mirror.png": {
+      "frame": {
+        "x": 794,
+        "y": 221,
+        "w": 156,
+        "h": 207
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 50,
+        "y": 30,
+        "w": 156,
+        "h": 207
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "luoling-walk/up-1.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 154,
+        "h": 217
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 51,
+        "y": 20,
+        "w": 154,
+        "h": 217
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "luoling-walk/up-2.png": {
+      "frame": {
+        "x": 158,
+        "y": 2,
+        "w": 154,
+        "h": 213
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 51,
+        "y": 24,
+        "w": 154,
+        "h": 213
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "luoling-walk/up-4.png": {
+      "frame": {
+        "x": 314,
+        "y": 2,
+        "w": 153,
+        "h": 213
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 51,
+        "y": 24,
+        "w": 153,
+        "h": 213
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "walk_down": {
+      "loop": true,
+      "fps": 10,
+      "frames": [
+        "luoling-walk/down-1.png",
+        "luoling-walk/down-2.png",
+        "luoling-walk/down-1.png",
+        "luoling-walk/down-4.png"
+      ]
+    },
+    "walk_left": {
+      "loop": true,
+      "fps": 10,
+      "frames": [
+        "luoling-walk/left-1.png",
+        "luoling-walk/left-2.png",
+        "luoling-walk/left-1.png",
+        "luoling-walk/left-4.png"
+      ]
+    },
+    "walk_right": {
+      "loop": true,
+      "fps": 10,
+      "frames": [
+        "luoling-walk/left-1-mirror.png",
+        "luoling-walk/left-2-mirror.png",
+        "luoling-walk/left-1-mirror.png",
+        "luoling-walk/left-4-mirror.png"
+      ]
+    },
+    "walk_up": {
+      "loop": true,
+      "fps": 10,
+      "frames": [
+        "luoling-walk/up-1.png",
+        "luoling-walk/up-2.png",
+        "luoling-walk/up-1.png",
+        "luoling-walk/up-4.png"
+      ]
+    },
+    "idle": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "luoling-walk/up-1.png"
+      ]
+    },
+    "default": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "luoling-walk/down-1.png"
+      ]
+    },
+    "idle_up": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "luoling-walk/up-1.png"
+      ]
+    },
+    "idle_down": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "luoling-walk/down-1.png"
+      ]
+    },
+    "idle_left": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "luoling-walk/left-1.png"
+      ]
+    },
+    "idle_right": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "luoling-walk/left-1-mirror.png"
+      ]
+    }
+  }
+}

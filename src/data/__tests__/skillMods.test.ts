@@ -336,8 +336,9 @@ describe('专属词条', () => {
   });
 
   /**
-   * 允许挂在**预留**技能上（`SkillSpec.reserved`）：破甲咒 / 盾墙震慑 / 战吼
+   * 允许挂在**预留**技能上（`SkillSpec.reserved`）：盾墙震慑 / 战吼
    * 现在没角色能学，但对应路线的角色一上线就用得上，那批专属词条不算死牌。
+   * 破甲咒已由洛铃学进主槽，不再算预留。
    * 挡的是另一种：挂在只进临时槽的 `temp_gl_*` 上——词条只强化主技能，
    * 那种内容永远进不了候选池。战场祝福已由祭司弥尔学，不再算预留。
    */
@@ -371,6 +372,13 @@ describe('专属词条', () => {
     const s = effectiveSkillSpec(hex(), ['ex_hex_spread']);
     expect(s.shape).toEqual({ type: 'discAoE', radius: 2 });
     expect(s.onCastFoeEffects).toEqual(hex().onCastFoeEffects);
+  });
+
+  it('破甲咒施放就挂咒伤，咒毒只加深每回合伤害', () => {
+    expect(hex().onCastFoeEffects).toContainEqual({ kind: 'poison', dmgPerRound: 8, rounds: 3 });
+    const s = effectiveSkillSpec(hex(), ['ex_hex_blight']);
+    expect(s.onCastFoeEffects).toContainEqual({ kind: 'atkDown', subAtk: 5, rounds: 3 });
+    expect(s.onCastFoeEffects).toContainEqual({ kind: 'poison', dmgPerRound: 12, rounds: 3 });
   });
 });
 
