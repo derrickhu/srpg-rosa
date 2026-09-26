@@ -53,9 +53,13 @@ describe('跟人专属纹章目录', () => {
     expect(personalEmblemEffectLines(e, 2)).toEqual(['攻击 +4', '技能伤害 +8%']);
   });
 
-  it('魂晶角色的两枚不绑章节', () => {
-    const bought = CHARACTER_DEFS.filter((c) => c.unlock.kind === 'meta');
-    expect(bought.map((c) => c.id)).toEqual(['hero_cav_lance', 'hero_bow_luoling']);
+  it('不靠通关获得的角色，纹章不绑章节', () => {
+    const bought = CHARACTER_DEFS.filter((c) => c.unlock.kind === 'meta' || c.unlock.kind === 'ads');
+    expect(bought.map((c) => c.id)).toEqual([
+      'hero_cav_lance',
+      'hero_bow_luoling',
+      'hero_shield_kelan',
+    ]);
     for (const c of bought) {
       const list = personalEmblemsForRoster(c.id);
       expect(list, c.name).toHaveLength(2);

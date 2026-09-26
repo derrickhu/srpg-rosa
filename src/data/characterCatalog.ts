@@ -23,6 +23,8 @@ export type CharacterUnlock =
   | { kind: 'starter' }
   /** 在大厅用 meta 货币（魂晶）解锁 */
   | { kind: 'meta'; cost: number }
+  /** 招募页看完这么多次激励广告后解锁 */
+  | { kind: 'ads'; watches: number }
   /** 通关指定副本后解锁 */
   | { kind: 'clearDungeon'; dungeonId: string }
   /** 新手流程里入队，不出现在开局名册 */
@@ -49,7 +51,7 @@ export interface CharacterDef {
    * **路线属于角色，不属于职业。** 同职业的两个角色可以是两条路线——
    * 「另一个战士，走的是控制」是合法且期待中的扩展方式，玩家玩的是角色。
    * 输出路线占大多数，弥尔走 `support`。
-   * 洛铃已经走控制（破甲咒）。还空着的是盾墙震慑和战吼。
+   * 洛铃走控制（破甲咒），珂兰走控制（盾墙震慑）。还空着的是战吼。
    */
   skillRoute: SkillRole;
   /**
@@ -158,6 +160,17 @@ export const CHARACTER_DEFS: CharacterDef[] = [
     defaultSkillId: 'hex_mark',
     unlock: { kind: 'meta', cost: 12 },
     animSet: 'luoling',
+  },
+  {
+    id: 'hero_shield_kelan',
+    name: '珂兰',
+    profession: 'shield',
+    skillRoute: 'control',
+    base: { maxHp: 168, atk: 8, spd: 3, move: 2 },
+    growth: { maxHp: 14, atk: 1, spd: 0, move: 0 },
+    defaultSkillId: 'shield_wall',
+    unlock: { kind: 'ads', watches: 2 },
+    animSet: 'kelan',
   },
 ];
 

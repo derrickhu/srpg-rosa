@@ -464,8 +464,7 @@ const SPECS: Record<string, SkillSpec> = {
   /**
    * 盾卫进阶：邻格 AoE 群体削攻，纯坦装。
    * 自嘲讽和 `bash` / `hammer` 一样删掉——盾卫专属技能给自己加嘲讽是死效果。
-   * `reserved`：等一个控制路线的盾卫角色。格隆是输出路线（震击 / 铁锤），
-   * 塞给他会让换主技能跨定位。
+   * 珂兰的招牌。格隆是输出路线，塞给他会跨定位。
    */
   shield_wall: {
     id: 'shield_wall',
@@ -474,7 +473,6 @@ const SPECS: Record<string, SkillSpec> = {
     exclusiveProfession: 'shield',
     timing: 'beforeMove',
     role: 'control',
-    reserved: true,
     displayKind: 'whirlwind',
     shape: { type: 'neighborAoE', manhattan: 1 },
     damage: { kind: 'scaledAtk', atkMul: 0.4 },

@@ -133,6 +133,17 @@ const SETS = [
       { dir: 'luoling/walk', preset: 'idle_from_walk', mirrorRight: true },
     ],
   },
+  // 珂兰：铜绿甲、圆铜盾。prompt 见 docs/prompt/unit_kelan_walk_sheet_prompt.txt。
+  // 只有行走表，出手用代码突刺。右向由左向镜像。
+  {
+    id: 'kelan',
+    blend: 'normal',
+    downscale: 1,
+    runs: [
+      { dir: 'kelan/walk', preset: 'player_sheet', fps: 10, mirrorRight: true },
+      { dir: 'kelan/walk', preset: 'idle_from_walk', mirrorRight: true },
+    ],
+  },
   // 芙洛：冰蓝袍 + 单手浮书。prompt 见 docs/prompt/unit_floe_*.txt。右向由左向镜像。
   {
     id: 'floe',

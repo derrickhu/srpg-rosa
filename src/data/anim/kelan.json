@@ -1,0 +1,346 @@
+{
+  "id": "kelan",
+  "source": "art/sprite-runs/kelan",
+  "blend": "normal",
+  "image": "images/anim/kelan.png",
+  "meta": {
+    "size": {
+      "w": 1024,
+      "h": 512
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 216,
+    "baselineY": 237,
+    "ref": "kelan-walk/down-1.png"
+  },
+  "frames": {
+    "kelan-walk/down-1.png": {
+      "frame": {
+        "x": 141,
+        "y": 2,
+        "w": 136,
+        "h": 216
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 60,
+        "y": 21,
+        "w": 136,
+        "h": 216
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "kelan-walk/down-2.png": {
+      "frame": {
+        "x": 279,
+        "y": 2,
+        "w": 136,
+        "h": 216
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 60,
+        "y": 21,
+        "w": 136,
+        "h": 216
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "kelan-walk/down-4.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 137,
+        "h": 217
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 59,
+        "y": 20,
+        "w": 137,
+        "h": 217
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "kelan-walk/left-1.png": {
+      "frame": {
+        "x": 2,
+        "y": 221,
+        "w": 129,
+        "h": 210
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 63,
+        "y": 27,
+        "w": 129,
+        "h": 210
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "kelan-walk/left-2.png": {
+      "frame": {
+        "x": 417,
+        "y": 2,
+        "w": 128,
+        "h": 211
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 64,
+        "y": 26,
+        "w": 128,
+        "h": 211
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "kelan-walk/left-4.png": {
+      "frame": {
+        "x": 547,
+        "y": 2,
+        "w": 124,
+        "h": 211
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 66,
+        "y": 26,
+        "w": 124,
+        "h": 211
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "kelan-walk/left-1-mirror.png": {
+      "frame": {
+        "x": 133,
+        "y": 221,
+        "w": 129,
+        "h": 210
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 64,
+        "y": 27,
+        "w": 129,
+        "h": 210
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "kelan-walk/left-2-mirror.png": {
+      "frame": {
+        "x": 673,
+        "y": 2,
+        "w": 128,
+        "h": 211
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 64,
+        "y": 26,
+        "w": 128,
+        "h": 211
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "kelan-walk/left-4-mirror.png": {
+      "frame": {
+        "x": 803,
+        "y": 2,
+        "w": 124,
+        "h": 211
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 66,
+        "y": 26,
+        "w": 124,
+        "h": 211
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "kelan-walk/up-1.png": {
+      "frame": {
+        "x": 397,
+        "y": 221,
+        "w": 134,
+        "h": 207
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 61,
+        "y": 30,
+        "w": 134,
+        "h": 207
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "kelan-walk/up-2.png": {
+      "frame": {
+        "x": 533,
+        "y": 221,
+        "w": 133,
+        "h": 207
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 61,
+        "y": 30,
+        "w": 133,
+        "h": 207
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "kelan-walk/up-4.png": {
+      "frame": {
+        "x": 264,
+        "y": 221,
+        "w": 131,
+        "h": 208
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 62,
+        "y": 29,
+        "w": 131,
+        "h": 208
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "walk_down": {
+      "loop": true,
+      "fps": 10,
+      "frames": [
+        "kelan-walk/down-1.png",
+        "kelan-walk/down-2.png",
+        "kelan-walk/down-1.png",
+        "kelan-walk/down-4.png"
+      ]
+    },
+    "walk_left": {
+      "loop": true,
+      "fps": 10,
+      "frames": [
+        "kelan-walk/left-1.png",
+        "kelan-walk/left-2.png",
+        "kelan-walk/left-1.png",
+        "kelan-walk/left-4.png"
+      ]
+    },
+    "walk_right": {
+      "loop": true,
+      "fps": 10,
+      "frames": [
+        "kelan-walk/left-1-mirror.png",
+        "kelan-walk/left-2-mirror.png",
+        "kelan-walk/left-1-mirror.png",
+        "kelan-walk/left-4-mirror.png"
+      ]
+    },
+    "walk_up": {
+      "loop": true,
+      "fps": 10,
+      "frames": [
+        "kelan-walk/up-1.png",
+        "kelan-walk/up-2.png",
+        "kelan-walk/up-1.png",
+        "kelan-walk/up-4.png"
+      ]
+    },
+    "idle": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "kelan-walk/up-1.png"
+      ]
+    },
+    "default": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "kelan-walk/down-1.png"
+      ]
+    },
+    "idle_up": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "kelan-walk/up-1.png"
+      ]
+    },
+    "idle_down": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "kelan-walk/down-1.png"
+      ]
+    },
+    "idle_left": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "kelan-walk/left-1.png"
+      ]
+    },
+    "idle_right": {
+      "loop": true,
+      "fps": 5,
+      "frames": [
+        "kelan-walk/left-1-mirror.png"
+      ]
+    }
+  }
+}

@@ -889,6 +889,26 @@ const EXCLUSIVE_SEEDS: readonly ModSeed[] = [
         rounds: 2,
       }),
   },
+  {
+    id: 'ex_shield_wall_tempo',
+    name: '连压',
+    rarity: 'rare',
+    maxStacks: 1,
+    only: ['shield_wall'],
+    fits: () => true,
+    describe: () => '盾墙震慑：冷却缩短 1 回合',
+    apply: (spec) => cutCooldown(spec, 1),
+  },
+  {
+    id: 'ex_shield_wall_root',
+    name: '镇脚',
+    rarity: 'epic',
+    maxStacks: 1,
+    only: ['shield_wall'],
+    fits: () => true,
+    describe: () => '盾墙震慑：额外使目标减速 -3（2 回合）',
+    apply: (spec) => mergeFoe(spec, { kind: 'spdDown', subSpd: 3, rounds: 2 }),
+  },
   /**
    * 原本挂在「铁锤」上。铁锤转给敌方重装之后搬到震击上，方向一致——
    * 盾卫打不死人，但能让被他盯上的那个既打不疼人也追不上人。

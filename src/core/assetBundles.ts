@@ -42,6 +42,7 @@ export const UNIT_BUNDLE: AssetBundleDef = {
     healer: 'images/units/healer.png',
     floe: 'images/units/floe.png',
     luoling: 'images/units/luoling.png',
+    kelan: 'images/units/kelan.png',
     // 杂兵 / 精英·Boss 专属外观，key = spawn 的 animSet（见 src/data/stagesMvp.ts）。
     // 每章一批，图鉴见 docs/敌人图鉴.md。漏登记的表现是布阵格里那只怪只剩一个阵营色圆圈。
     // 第一章 · 草原野地魔物
@@ -180,6 +181,8 @@ export const UI_BUNDLE: AssetBundleDef = {
     emblem_pe_flank: 'images/ui/emblem_pe_flank.png',
     emblem_pe_blight: 'images/ui/emblem_pe_blight.png',
     emblem_pe_ward: 'images/ui/emblem_pe_ward.png',
+    emblem_pe_rampart: 'images/ui/emblem_pe_rampart.png',
+    emblem_pe_press: 'images/ui/emblem_pe_press.png',
     emblem_pe_sealed: 'images/ui/emblem_pe_sealed.png',
     // 战斗胜利弹窗的标题横幅。图里刻意留空——「胜利」两个字用游戏字体在代码里画，
     // 烧进贴图的话既换不了文案，字形也和界面其余部分对不上。

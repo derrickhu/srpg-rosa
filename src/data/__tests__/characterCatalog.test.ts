@@ -178,7 +178,9 @@ describe('带得动这一招吗（canCharacterUseSkill）', () => {
     expect(canCharacterUseSkill(gron, 'field_bless')).toBe(false);
   });
 
-  it('挡掉预留技能：盾墙震慑在等控制路线的盾卫，破阵斩在等第二个剑士', () => {
+  it('盾墙震慑是珂兰的招牌，格隆的输出路线带不上', () => {
+    const kelan = CHARACTER_DEFS.find((c) => c.id === 'hero_shield_kelan')!;
+    expect(canCharacterUseSkill(kelan, 'shield_wall')).toBe(true);
     expect(canProfessionEquipSkill(gron.profession, 'shield_wall')).toBe(true);
     expect(canCharacterUseSkill(gron, 'shield_wall')).toBe(false);
     expect(canCharacterUseSkill(rein, 'blade_rush')).toBe(false);

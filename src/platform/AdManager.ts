@@ -3,7 +3,13 @@ import { hasWx, AdConfigKeys } from './wxPlatform';
 
 declare const wx: any;
 
-export type AdScenario = 'lootRefresh' | 'shopRefresh' | 'extraDeploy' | 'revive' | 'emblemRelease';
+export type AdScenario =
+  | 'lootRefresh'
+  | 'shopRefresh'
+  | 'extraDeploy'
+  | 'revive'
+  | 'emblemRelease'
+  | 'recruitCharacter';
 
 const SCENARIO_AD_UNIT: Record<AdScenario, string> = {
   lootRefresh: AdConfigKeys.rewardLootRefresh,
@@ -11,6 +17,8 @@ const SCENARIO_AD_UNIT: Record<AdScenario, string> = {
   extraDeploy: AdConfigKeys.rewardExtraDeploy,
   revive: AdConfigKeys.rewardRevive,
   emblemRelease: AdConfigKeys.rewardEmblemRelease,
+  // 公众平台还没单开招募位，先和收回纹章共用，看完才记一次。
+  recruitCharacter: AdConfigKeys.rewardEmblemRelease,
 };
 
 let rewardedCache: Map<string, any> = new Map();

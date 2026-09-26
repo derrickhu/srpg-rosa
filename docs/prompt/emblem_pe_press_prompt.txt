@@ -1,0 +1,5 @@
+A single game UI emblem icon, square, centered.
+Three thick downward chevrons stacked, oxidized bronze green, pressing downward, on a dark circular field with a thick gold rim, like a wax-seal medal.
+Flat cel fills, thick near-black outline, one highlight, one shadow. No gradients, no texture.
+NO TEXT, no letters, no numbers, no watermark.
+Background outside the round medal is solid magenta #FF00FF. The medal stays fully inside the frame.

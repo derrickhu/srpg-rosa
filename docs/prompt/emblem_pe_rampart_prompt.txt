@@ -1,0 +1,6 @@
+A single game UI emblem icon, square, centered.
+A round disc shield, the orange-brown of a new copper coin, with one dark ring boss in the center.
+The badge sits on a dark circular field with a thick gold rim, like a wax-seal medal.
+Flat cel fills, thick near-black outline, one highlight, one shadow. No gradients, no texture.
+NO TEXT, no letters, no numbers, no cross, no watermark.
+Background outside the round medal is fully transparent... if transparency is unavailable, use solid magenta #FF00FF and keep the medal fully inside the frame.

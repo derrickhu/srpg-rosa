@@ -143,6 +143,8 @@ export {
   rosterHasAffordableLevelUp,
   levelUpCharacter,
   unlockCharacterWithMeta,
+  recruitAdSeen,
+  recordRecruitAdWatch,
   unlockDungeonWithMeta,
   isDungeonUnlocked,
 } from './state/MetaManager';

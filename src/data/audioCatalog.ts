@@ -36,6 +36,7 @@ const SIGNATURE_SKILL_SFX: Record<string, SfxId> = {
   heal_touch: 'sfx_skill_heal_touch',
   frost_ring: 'sfx_skill_frost_ring',
   hex_mark: 'sfx_skill_hex_mark',
+  shield_wall: 'sfx_skill_shield_wall',
 };
 
 /** 玩家/敌方技能 id → 族。漏登记的走 `inferSkillFamily`，测试会锁玩家技能都能落到一族。 */

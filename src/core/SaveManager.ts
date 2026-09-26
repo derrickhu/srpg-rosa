@@ -11,7 +11,7 @@ import { hydrateTutorial } from '@/game/tutorial/TutorialManager';
 import { getDungeonDef } from '@/data/dungeonCatalog';
 import { isEndlessDungeon } from '@/data/endlessCatalog';
 import { isBossRushDungeon, isEventDungeon } from '@/data/eventCatalog';
-import { LEGACY_CHARACTER_IDS, remapLegacyCharacterId } from '@/data/characterCatalog';
+import { getCharacterDef, LEGACY_CHARACTER_IDS, remapLegacyCharacterId } from '@/data/characterCatalog';
 import { remapLegacyRoster } from '@/game/characterFactory';
 import { remapLegacySkillId } from '@/data/skillCatalog';
 
@@ -189,6 +189,19 @@ function clampRunNodeIndex(run: Pick<RunState, 'dungeonId' | 'nodeIndex'>): numb
   return Math.max(0, Math.min(run.nodeIndex, d.nodes.length - 1));
 }
 
+function sanitizeRecruitAdWatches(meta: MetaState): Record<string, number> {
+  const owned = new Set(meta.roster.map((m) => m.rosterId));
+  const out: Record<string, number> = {};
+  for (const [id, raw] of Object.entries(meta.recruitAdWatches ?? {})) {
+    const def = getCharacterDef(id);
+    if (!def || def.unlock.kind !== 'ads' || owned.has(id)) continue;
+    const seen = Math.max(0, Math.floor(Number(raw) || 0));
+    if (seen <= 0) continue;
+    out[id] = Math.min(seen, def.unlock.watches);
+  }
+  return out;
+}
+
 /**
  * 同上，meta 侧的新增字段补默认值。
  *
@@ -213,6 +226,7 @@ function normalizeMeta(meta: MetaState): MetaState {
     universalEmblemTokens: meta.universalEmblemTokens ?? 0,
     universalEmblemPaidDungeonIds: meta.universalEmblemPaidDungeonIds ?? [],
     eventClaims: meta.eventClaims ?? {},
+    recruitAdWatches: sanitizeRecruitAdWatches(meta),
   };
   hydrateChapterProgress(next);
   hydrateTutorial(next);

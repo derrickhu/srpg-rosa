@@ -619,7 +619,10 @@ export class GameFlow {
         return this.rosterHandle.root;
       }
       case 'recruit':
-        return createRecruitView(this.state, { onChanged: persistAndRedraw }, screen);
+        return createRecruitView(this.state, {
+          onChanged: persistAndRedraw,
+          onPersist: persist,
+        }, screen);
       case 'challenge':
         return createChallengeView(
           this.state,

@@ -9,6 +9,7 @@ import cavalryManifest from '@/data/anim/cavalry.json';
 import mageManifest from '@/data/anim/mage.json';
 import floeManifest from '@/data/anim/floe.json';
 import luolingManifest from '@/data/anim/luoling.json';
+import kelanManifest from '@/data/anim/kelan.json';
 import healerManifest from '@/data/anim/healer.json';
 import bloodfangManifest from '@/data/anim/bloodfang.json';
 import slimeManifest from '@/data/anim/slime.json';
@@ -182,6 +183,7 @@ const MANIFESTS: Record<string, AnimManifest> = {
   mage: mageManifest as AnimManifest,
   floe: floeManifest as AnimManifest,
   luoling: luolingManifest as AnimManifest,
+  kelan: kelanManifest as AnimManifest,
   healer: healerManifest as AnimManifest,
   bloodfang: bloodfangManifest as AnimManifest,
   // 第一章杂兵，单帧静止怪：只有 idle，呼吸和出手位移由 AnimatedUnit 用代码做

@@ -55,6 +55,34 @@ export function unlockCharacterWithMeta(state: MvpGameState, characterId: string
   return true;
 }
 
+export function recruitAdSeen(meta: MetaState, characterId: string): number {
+  const n = meta.recruitAdWatches?.[characterId] ?? 0;
+  return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+}
+
+export type RecruitAdWatchResult = 'unlocked' | 'progress' | 'rejected';
+
+/**
+ * 记一次已经看完的招募广告。凑满 `unlock.watches` 就入队，并清掉进度。
+ * 调用方须先确认广告播完。
+ */
+export function recordRecruitAdWatch(state: MvpGameState, characterId: string): RecruitAdWatchResult {
+  const def = getCharacterDef(characterId);
+  if (!def || def.unlock.kind !== 'ads') return 'rejected';
+  if (state.meta.roster.some((m) => m.rosterId === characterId)) return 'rejected';
+  const need = Math.max(1, def.unlock.watches);
+  const seen = Math.min(need, recruitAdSeen(state.meta, characterId) + 1);
+  if (seen >= need) {
+    const watches = { ...(state.meta.recruitAdWatches ?? {}) };
+    delete watches[characterId];
+    state.meta.recruitAdWatches = watches;
+    state.meta.roster.push(instantiateCharacter(def));
+    return 'unlocked';
+  }
+  state.meta.recruitAdWatches = { ...(state.meta.recruitAdWatches ?? {}), [characterId]: seen };
+  return 'progress';
+}
+
 /** 用 meta 货币解锁一个副本（unlock.kind==='meta'） */
 export function unlockDungeonWithMeta(state: MvpGameState, dungeonId: string): boolean {
   const d = getDungeonDef(dungeonId);

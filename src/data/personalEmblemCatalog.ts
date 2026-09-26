@@ -228,6 +228,28 @@ const DEFS: readonly PersonalEmblemDef[] = [
       { kind: 'takenMul', mul: 0.95 },
     ],
   },
+  {
+    id: 'pe_kelan_wall',
+    name: '城盾',
+    blurb: '盾比人先到。站在前面更不容易被推开。',
+    rosterId: 'hero_shield_kelan',
+    icon: 'emblem_pe_rampart',
+    effects: [
+      { kind: 'stat', maxHp: 12 },
+      { kind: 'takenMul', mul: 0.95 },
+    ],
+  },
+  {
+    id: 'pe_kelan_press',
+    name: '压阵',
+    blurb: '震慑打出去更沉。',
+    rosterId: 'hero_shield_kelan',
+    icon: 'emblem_pe_press',
+    effects: [
+      { kind: 'stat', atk: 2 },
+      { kind: 'skillDealtMul', mul: 1.08 },
+    ],
+  },
 ];
 
 const BY_ID = new Map(DEFS.map((d) => [d.id, d]));

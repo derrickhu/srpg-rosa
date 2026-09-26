@@ -23,11 +23,12 @@ describe('大厅 tab 职责', () => {
     }
   });
 
-  it('招募页只列花魂晶买的人，关卡解锁的不在这页', () => {
+  it('招募页列出魂晶角色和看广告角色，关卡解锁的不在这页', () => {
     const meta = createInitialMeta();
     const shown = recruitShelfDefs(meta.roster);
     expect(shown.length).toBeGreaterThan(0);
-    expect(shown.every((d) => d.unlock.kind === 'meta')).toBe(true);
+    expect(shown.every((d) => d.unlock.kind === 'meta' || d.unlock.kind === 'ads')).toBe(true);
+    expect(shown.some((d) => d.unlock.kind === 'ads' && d.unlock.watches === 2)).toBe(true);
     expect(shown.some((d) => d.unlock.kind === 'clearDungeon')).toBe(false);
     const chapterLocked = lockedCharacterDefs(meta.roster).filter((d) => d.unlock.kind === 'clearDungeon');
     expect(chapterLocked.length).toBeGreaterThan(0);

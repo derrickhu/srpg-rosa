@@ -148,6 +148,11 @@ export interface MetaState {
    * 可选：老档没有。不升 META_VERSION。
    */
   eventClaims?: EventClaims;
+  /**
+   * 招募页广告进度。键是角色 id，值是已看完的次数。
+   * 凑满入队后删掉。可选：老档没有。不升 META_VERSION。
+   */
+  recruitAdWatches?: Record<string, number>;
 }
 
 /** 单副本一局的临时状态（roguelike 构筑都在这里，结束即弃） */
@@ -384,6 +389,7 @@ export function createInitialMeta(): MetaState {
     personalEmblemReleasedIds: [],
     universalEmblemTokens: 0,
     universalEmblemPaidDungeonIds: [],
+    recruitAdWatches: {},
   };
 }
 

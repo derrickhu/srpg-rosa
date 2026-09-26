@@ -4,12 +4,13 @@ import { CHARACTER_DEFS, characterArtKey, type CharacterDef } from '@/data/chara
 import { getSkillSpec } from '@/data/skillCatalog';
 import { describeSkillRole } from '@/data/skillText';
 import { UNIT_DEFS } from '@/data/unitDefs';
-import { unlockCharacterWithMeta, type MvpGameState } from '@/game/MvpState';
+import { recordRecruitAdWatch, recruitAdSeen, unlockCharacterWithMeta, type MvpGameState } from '@/game/MvpState';
+import { AdManager } from '@/platform/AdManager';
+import { makeAdButton, makeButton } from '@/ui/Button';
 import { createHubHeader } from '@/view/hubHeader';
 import { C } from '@/view/mvpTheme';
 import { isDisplayLive } from '@/view/pixiLive';
 import { createBackground, createUnitToken } from '@/view/renderHelpers';
-import { makeButton } from '@/ui/Button';
 import { createScrollList } from '@/ui/ScrollList';
 import { showToast } from '@/ui/Toast';
 import { AudioManager } from '@/core/AudioManager';
@@ -18,6 +19,8 @@ import { staggerPop } from '@/view/fx/celebration';
 
 export interface RecruitCallbacks {
   onChanged: () => void;
+  /** 广告看完一次、人还没入队：只存档，不整页重画，避免把提示冲掉。 */
+  onPersist?: () => void;
 }
 
 const PAD = 14;
@@ -27,10 +30,16 @@ const COLS = 2;
 const TOKEN = 78;
 const CARD_H = 188;
 
-/** 招募页货架：还没拥有、并且只能花魂晶买的人。关卡解锁的不在这页。 */
+/** 招募页货架：还没拥有、并且在这页拿的人。关卡解锁的不在这页。 */
 export function recruitShelfDefs(roster: { rosterId: string }[]): CharacterDef[] {
   const have = new Set(roster.map((m) => m.rosterId));
-  return CHARACTER_DEFS.filter((d) => !have.has(d.id) && d.unlock.kind === 'meta');
+  return CHARACTER_DEFS.filter(
+    (d) => !have.has(d.id) && (d.unlock.kind === 'meta' || d.unlock.kind === 'ads'),
+  );
+}
+
+function adButtonLabel(seen: number, need: number): string {
+  return `广告 ${seen}/${need}`;
 }
 
 function attachIdleBob(node: PIXI.Container, amp = 2): void {
@@ -79,23 +88,27 @@ export function createRecruitView(
   const cardW = Math.floor((innerW - GAP * (COLS - 1)) / COLS);
   const pops: PIXI.Container[] = [];
 
+  function revealJoined(rosterId: string): void {
+    const reveal = createCharacterRevealOverlay({
+      screenW: W,
+      screenH: H,
+      rosterId,
+      onConfirm: () => {
+        if (reveal.parent) reveal.parent.removeChild(reveal);
+        reveal.destroy({ children: true });
+        cb.onChanged();
+      },
+    });
+    root.addChild(reveal);
+  }
+
   function tryRecruit(def: CharacterDef): void {
     if (def.unlock.kind !== 'meta') return;
     if (scroll.wasDragging()) return;
     const cost = def.unlock.cost;
     if (unlockCharacterWithMeta(state, def.id)) {
       AudioManager.playSfx('sfx_soul_spend');
-      const reveal = createCharacterRevealOverlay({
-        screenW: W,
-        screenH: H,
-        rosterId: def.id,
-        onConfirm: () => {
-          if (reveal.parent) reveal.parent.removeChild(reveal);
-          reveal.destroy({ children: true });
-          cb.onChanged();
-        },
-      });
-      root.addChild(reveal);
+      revealJoined(def.id);
     } else {
       showToast(root, `魂晶不足（还差 ${cost - state.meta.metaCurrency}）`, {
         screenWidth: W,
@@ -105,8 +118,35 @@ export function createRecruitView(
     }
   }
 
+  let watchingAd = false;
+
+  function watchForRecruit(def: CharacterDef, relabel: (text: string) => void): void {
+    if (def.unlock.kind !== 'ads') return;
+    if (scroll.wasDragging() || watchingAd) return;
+    const need = def.unlock.watches;
+    watchingAd = true;
+    void AdManager.showRewarded('recruitCharacter').then((ok) => {
+      watchingAd = false;
+      if (!isDisplayLive(root)) return;
+      if (!ok) {
+        showToast(root, '广告没看完', { screenWidth: W, deny: true });
+        return;
+      }
+      const result = recordRecruitAdWatch(state, def.id);
+      if (result === 'unlocked') {
+        AudioManager.playSfx('sfx_unlock');
+        revealJoined(def.id);
+        return;
+      }
+      if (result !== 'progress') return;
+      cb.onPersist?.();
+      const seen = recruitAdSeen(state.meta, def.id);
+      relabel(adButtonLabel(seen, need));
+      showToast(root, `还要再看 ${need - seen} 次`, { screenWidth: W });
+    });
+  }
+
   function recruitCard(def: CharacterDef): PIXI.Container {
-    const cost = def.unlock.kind === 'meta' ? def.unlock.cost : 0;
     const card = new PIXI.Container();
     const radius = 18;
     const shadow = new PIXI.Graphics();
@@ -173,20 +213,43 @@ export function createRecruitView(
     card.addChild(metaTx);
 
     const btnW = cardW - 20;
-    const btn = makeButton(`招募 ${cost}`, () => {
-      tryRecruit(def);
-    }, {
-      variant: 'primary',
-      width: btnW,
-      height: 28,
-      fontSize: 13,
-      radius: 10,
-      iconKey: 'icon_soul',
-      iconSize: 14,
-    });
-    btn.x = 10;
-    btn.y = CARD_H - 36;
-    card.addChild(btn);
+    const btnY = CARD_H - 36;
+    let action = def.unlock.kind === 'ads'
+      ? makeAdButton(
+          adButtonLabel(recruitAdSeen(state.meta, def.id), def.unlock.watches),
+          () => watchForRecruit(def, (text) => replaceAction(text)),
+          { width: btnW, height: 28, fontSize: 12, radius: 10, iconSize: 14 },
+        )
+      : makeButton(`招募 ${def.unlock.kind === 'meta' ? def.unlock.cost : 0}`, () => {
+          tryRecruit(def);
+        }, {
+          variant: 'primary',
+          width: btnW,
+          height: 28,
+          fontSize: 13,
+          radius: 10,
+          iconKey: 'icon_soul',
+          iconSize: 14,
+        });
+    action.x = 10;
+    action.y = btnY;
+    card.addChild(action);
+
+    function replaceAction(text: string): void {
+      if (def.unlock.kind !== 'ads') return;
+      card.removeChild(action);
+      action.destroy({ children: true });
+      action = makeAdButton(text, () => watchForRecruit(def, replaceAction), {
+        width: btnW,
+        height: 28,
+        fontSize: 12,
+        radius: 10,
+        iconSize: 14,
+      });
+      action.x = 10;
+      action.y = btnY;
+      card.addChild(action);
+    }
 
     pops.push(card);
     return card;
@@ -205,7 +268,7 @@ export function createRecruitView(
     const rows = Math.ceil(buyable.length / COLS);
     bottom = 10 + rows * (CARD_H + GAP);
   } else {
-    const done = makeText('魂晶角色已全部招募', 'body', {
+    const done = makeText('能招募的人都到齐了', 'body', {
       fill: C.paper,
       stroke: C.ink,
       strokeThickness: 3,
