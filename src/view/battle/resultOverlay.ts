@@ -118,6 +118,12 @@ export interface LootOverlayOpts {
   onNeedPick?: () => void;
   /** 看广告刷新三选一。不传就不画这颗钮（教学局） */
   onRefresh?: () => void;
+  /** 缺省「胜利」。围猎开局词条用自己的横幅。 */
+  bannerTitle?: string;
+  /** 缺省 true。开局选词条时不播胜利音效。 */
+  fanfare?: boolean;
+  /** 缺省 true。围猎开局必须选一张，不给跳过。 */
+  allowSkip?: boolean;
 }
 
 export interface DefeatHint {
@@ -126,7 +132,7 @@ export interface DefeatHint {
   desc: string;
 }
 
-export type DefeatHintSet = 'chapter' | 'endless' | 'tutorial';
+export type DefeatHintSet = 'chapter' | 'endless' | 'tutorial' | 'event';
 
 const HINT_REDEPLOY: DefeatHint = {
   iconKey: 'icon_deploy',
@@ -147,7 +153,7 @@ const HINT_UPGRADE: DefeatHint = {
 /** 失败页「还能变强」三条。教程还不能离章，只留布阵。 */
 export function defeatHintsFor(set: DefeatHintSet): DefeatHint[] {
   if (set === 'tutorial') return [HINT_REDEPLOY];
-  if (set === 'endless') return [HINT_RECRUIT, HINT_UPGRADE];
+  if (set === 'endless' || set === 'event') return [HINT_RECRUIT, HINT_UPGRADE];
   return [HINT_REDEPLOY, HINT_RECRUIT, HINT_UPGRADE];
 }
 
@@ -1245,14 +1251,14 @@ function setConfirmLook(btn: PIXI.Container, ready: boolean): void {
 export function createLootOverlay(opts: LootOverlayOpts): PIXI.Container {
   const { screenW: W, screenH: H } = opts;
   const root = new PIXI.Container();
-  AudioManager.playSfx('sfx_victory');
+  if (opts.fanfare !== false) AudioManager.playSfx('sfx_victory');
   if ((opts.summary?.soul ?? 0) > 0) AudioManager.playSfx('sfx_soul_gain');
   root.addChild(fadeScrim(W, H));
 
   const cx = W / 2;
   const bannerW = Math.min(280, W - 48);
   const bannerY = Math.max(18, H * 0.05);
-  const { height: bannerH } = placeBanner(root, cx, bannerY, '胜  利', bannerW);
+  const { height: bannerH } = placeBanner(root, cx, bannerY, opts.bannerTitle ?? '胜  利', bannerW);
 
   const summaryBits: PIXI.Container[] = [];
   const s = opts.summary;
@@ -1372,13 +1378,15 @@ export function createLootOverlay(opts: LootOverlayOpts): PIXI.Container {
     nextY += 48;
   }
 
-  const subW = Math.min(220, W - 80);
-  const skip = makeButton('都不要，继续前进', opts.onSkip, {
-    variant: 'secondary', width: subW, height: 40, fontSize: 14, radius: 12,
-  });
-  skip.x = cx - subW / 2;
-  skip.y = nextY;
-  root.addChild(skip);
+  if (opts.allowSkip !== false) {
+    const subW = Math.min(220, W - 80);
+    const skip = makeButton('都不要，继续前进', opts.onSkip, {
+      variant: 'secondary', width: subW, height: 40, fontSize: 14, radius: 12,
+    });
+    skip.x = cx - subW / 2;
+    skip.y = nextY;
+    root.addChild(skip);
+  }
 
   return root;
 }

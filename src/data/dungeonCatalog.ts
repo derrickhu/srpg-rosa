@@ -1,6 +1,12 @@
 import type { TerrainId } from '@/battle/types';
 import { CHAPTER_STAGE_INDICES, STAGES_MVP, type StageDefMvp } from '@/data/stagesMvp';
 import { ENDLESS_DUNGEON, ENDLESS_DUNGEON_ID } from '@/data/endlessCatalog';
+import {
+  BOSS_RUSH_DUNGEON,
+  BOSS_RUSH_DUNGEON_ID,
+  GRASS_HUNT_DUNGEON,
+  GRASS_HUNT_DUNGEON_ID,
+} from '@/data/eventCatalog';
 import { assembleEliteDungeon, isEliteDungeon, officialDungeonIdOfElite } from '@/data/eliteCatalog';
 import { SANDBOX_DUNGEON, SANDBOX_DUNGEON_ID } from '@/data/sandboxLab';
 import { getSkillSpec, skillNeedsExistingMapTerrain } from '@/data/skillCatalog';
@@ -517,6 +523,8 @@ const DUNGEON_BY_ID: Record<string, DungeonDef> = Object.fromEntries(
 export function getDungeonDef(id: string): DungeonDef | undefined {
   // 无尽 / 试炼 / 精英都不进 DUNGEON_DEFS（那是冒险页正式章节表）
   if (id === ENDLESS_DUNGEON_ID) return ENDLESS_DUNGEON;
+  if (id === GRASS_HUNT_DUNGEON_ID) return GRASS_HUNT_DUNGEON;
+  if (id === BOSS_RUSH_DUNGEON_ID) return BOSS_RUSH_DUNGEON;
   if (id === SANDBOX_DUNGEON_ID) return SANDBOX_DUNGEON;
   if (isEliteDungeon(id)) {
     const officialId = officialDungeonIdOfElite(id);

@@ -1,5 +1,12 @@
 import { DUNGEON_DEFS, getDungeonDef } from '@/data/dungeonCatalog';
 import { ENDLESS_DUNGEON_ID } from '@/data/endlessCatalog';
+import {
+  BOSS_RUSH_DUNGEON_ID,
+  GRASS_HUNT_DUNGEON_ID,
+  bossRushMonthKey,
+  clearedChapterIndexes,
+  grassHuntWeekKey,
+} from '@/data/eventCatalog';
 import { DUNGEON_REPEAT_SOUL } from '@/game/state/ProgressManager';
 import type { MetaState } from '@/game/state/GameState';
 
@@ -12,8 +19,8 @@ import type { MetaState } from '@/game/state/GameState';
  * - `event`：限时活动副本。
  * - `endless`：无尽试炼。
  *
- * 活动仍是框架（点开告诉玩家还没开）。无尽试炼已经能打：点挑战走
- * `ENDLESS_DUNGEON_ID`，不进冒险页章节表。
+ * 活动按日期和解锁开放。无尽试炼点挑战走 `ENDLESS_DUNGEON_ID`，
+ * 两场限时战走各自的副本 id，都不进冒险页章节表。
  */
 export type ChallengeKind = 'chapterRepeat' | 'event' | 'endless';
 
@@ -25,7 +32,7 @@ export type ChallengeKind = 'chapterRepeat' | 'event' | 'endless';
  */
 export type ChallengeStatus =
   | { kind: 'open' }
-  | { kind: 'locked'; reason: string }
+  | { kind: 'locked'; reason: string; detail?: string }
   | { kind: 'soon' };
 
 export interface ChallengeEntry {
@@ -61,21 +68,23 @@ export const CHALLENGE_ENTRIES: readonly ChallengeEntry[] = [
     id: 'event_grass_hunt',
     kind: 'event',
     name: '草原围猎',
-    desc: '限时活动：草原魔物成群出没，全程无补给点，一口气打完五场。',
+    desc: '五群兽接连扑上。先杀头狼，同群其余会散。头狼撑过六回合会吼，下一群提前进场。没有补给点。',
     icon: 'tab_challenge',
     illust: 'illust_hunt',
-    reward: '魂晶 ×15 · 稀有纹章保底 1 次',
+    reward: '魂晶 ×10 · 开局稀有词条三选一',
     window: '每周六 · 周日',
+    dungeonId: GRASS_HUNT_DUNGEON_ID,
   },
   {
     id: 'event_boss_rush',
     kind: 'event',
     name: '首领连战',
-    desc: '限时活动：连续挑战三名章节首领，中途不回血、不换人。',
+    desc: '连续挑战三名已通关章节的首领。血量和技能冷却一直留着，中途不回血、不换人。',
     icon: 'node_boss',
     illust: 'illust_boss',
-    reward: '魂晶 ×25',
+    reward: '魂晶 ×18 · 纹玉 ×1',
     window: '每月首周',
+    dungeonId: BOSS_RUSH_DUNGEON_ID,
   },
   {
     id: 'endless_trial',
@@ -105,11 +114,41 @@ export function chapterRepeatEntries(meta: MetaState): ChallengeEntry[] {
   }));
 }
 
-export function challengeStatus(entry: ChallengeEntry, meta: MetaState): ChallengeStatus {
+export function challengeStatus(
+  entry: ChallengeEntry,
+  meta: MetaState,
+  now: Date = new Date(),
+): ChallengeStatus {
   if (entry.kind === 'endless') return { kind: 'open' };
   if (entry.kind === 'chapterRepeat') {
     const cleared = !!entry.dungeonId && meta.clearedDungeonIds.includes(entry.dungeonId);
     return cleared ? { kind: 'open' } : { kind: 'locked', reason: '尚未通关' };
+  }
+  if (entry.id === 'event_grass_hunt') {
+    if (!meta.clearedDungeonIds.includes('dungeon_grassland')) {
+      return {
+        kind: 'locked',
+        reason: '通关第一章',
+        detail: '通关草原战线后才能参加围猎',
+      };
+    }
+    if (!grassHuntWeekKey(now)) {
+      return { kind: 'locked', reason: '周六日开放', detail: '每周六、周日开放' };
+    }
+    return { kind: 'open' };
+  }
+  if (entry.id === 'event_boss_rush') {
+    if (clearedChapterIndexes(meta).length < 3) {
+      return {
+        kind: 'locked',
+        reason: '通关三章',
+        detail: '通关三章后才能参加连战',
+      };
+    }
+    if (!bossRushMonthKey(now)) {
+      return { kind: 'locked', reason: '每月首周', detail: '每月 1 日至 7 日开放' };
+    }
+    return { kind: 'open' };
   }
   return { kind: 'soon' };
 }

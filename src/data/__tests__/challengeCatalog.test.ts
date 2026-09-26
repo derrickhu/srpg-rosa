@@ -64,12 +64,22 @@ describe('副本页条目表', () => {
     expect(challengeStatus(entries[0]!, meta)).toEqual({ kind: 'open' });
   });
 
-  // 「还没做」和「你还没到」必须分开，否则玩家会去找一个不存在的解锁条件
-  it('未实装活动的状态是 soon，不是 locked', () => {
+  it('限时活动按解锁和日期开放，不再是即将开放', () => {
     const meta = createInitialMeta();
-    for (const e of CHALLENGE_ENTRIES.filter((x) => x.kind === 'event')) {
-      expect(challengeStatus(e, meta).kind).toBe('soon');
-    }
+    const hunt = CHALLENGE_ENTRIES.find((e) => e.id === 'event_grass_hunt')!;
+    const rush = CHALLENGE_ENTRIES.find((e) => e.id === 'event_boss_rush')!;
+    const saturday = new Date(2026, 8, 26);
+    const monday = new Date(2026, 8, 28);
+    expect(challengeStatus(hunt, meta, saturday)).toMatchObject({ kind: 'locked', reason: '通关第一章' });
+    meta.clearedDungeonIds.push('dungeon_grassland');
+    expect(challengeStatus(hunt, meta, saturday)).toEqual({ kind: 'open' });
+    expect(challengeStatus(hunt, meta, monday).kind).toBe('locked');
+    expect(challengeStatus(rush, meta, new Date(2026, 8, 3))).toMatchObject({ kind: 'locked', reason: '通关三章' });
+    expect(hunt.reward).toContain('魂晶 ×10');
+    expect(hunt.reward).not.toContain('保底');
+    expect(rush.reward).toContain('纹玉');
+    expect(hunt.dungeonId).toBeTruthy();
+    expect(rush.dungeonId).toBeTruthy();
   });
 
   it('无尽奖励行写明按层数和破纪录', () => {

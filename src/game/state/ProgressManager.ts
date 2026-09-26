@@ -33,7 +33,9 @@ import { describePotion } from '@/data/itemText';
 import {
   applyCarriedPlacements,
   battleSkillIdsForCharacter,
+  placeEventCarry,
   rememberBattlePlacements,
+  rememberEventCarryLayout,
   shouldSkipDeployCarry,
 } from './DeployManager';
 import {
@@ -54,6 +56,7 @@ import {
   prepareLaneForStart,
   requireRun,
   resetPid,
+  partyCharacters,
   type EndlessCarry,
   type LootOption,
   type MetaState,
@@ -65,6 +68,20 @@ import {
   endlessWaveVictorySoul,
   isEndlessDungeon,
 } from '@/data/endlessCatalog';
+import {
+  BOSS_RUSH_FIGHTS,
+  HUNT_CLEAN_SOUL,
+  HUNT_PACK_TOTAL,
+  HUNT_SOUL,
+  RUSH_JADE,
+  RUSH_SOUL,
+  bossRushMonthKey,
+  bossRushStageIndexes,
+  grassHuntWeekKey,
+  isBossRushDungeon,
+  isEventDungeon,
+  isGrassHuntDungeon,
+} from '@/data/eventCatalog';
 import { isSandboxDungeon } from '@/data/sandboxLab';
 import type { UnitState } from '@/battle/types';
 
@@ -320,7 +337,7 @@ export function splitStageGold(total: number, killCount: number): number[] {
 
 export function applyVictory(state: MvpGameState): void {
   const run = requireRun(state);
-  if (isSandboxDungeon(run.dungeonId)) return;
+  if (isSandboxDungeon(run.dungeonId) || isEventDungeon(run.dungeonId)) return;
   const node = currentNode(state);
   if (node.kind === 'shop') return;
 
@@ -403,7 +420,7 @@ export function sweepLeftToday(meta: MetaState, dungeonId: string): number {
  * 无尽 / 试炼场没有整章扫荡。
  */
 export function canSweepChapter(state: MvpGameState, dungeonId: string): boolean {
-  if (isEndlessDungeon(dungeonId) || isSandboxDungeon(dungeonId)) return false;
+  if (isEndlessDungeon(dungeonId) || isEventDungeon(dungeonId) || isSandboxDungeon(dungeonId)) return false;
   if (!state.meta.clearedDungeonIds.includes(dungeonId)) return false;
   return sweepLeftToday(state.meta, dungeonId) > 0;
 }
@@ -502,6 +519,7 @@ function lootCandidatesFor(
   m: Character,
   depth: number,
   commonMul: number,
+  rarity?: 'common' | 'rare' | 'epic',
 ): WeightedLoot[] {
   const run = state.run;
   if (!run) return [];
@@ -515,6 +533,7 @@ function lootCandidatesFor(
 
   const out: WeightedLoot[] = [];
   for (const mod of allSkillMods()) {
+    if (rarity && mod.rarity !== rarity) continue;
     if (!mod.canApply(spec)) continue;
     // 等级闸门只挡专属。通用按技能类型进池，1 级也有锋锐 / 淬毒；
     // 升级打开的是这一招自己的招牌强化（见 `SkillModDef.minLevel`）。
@@ -609,6 +628,27 @@ export function rollLoot(state: MvpGameState, rng: LootRng = Math.random): LootO
   return picks;
 }
 
+/** 围猎开局：只出稀有词条，不垫药剂，不能刷新。人还没布阵，从整队里抽。 */
+export function rollRareOpeningLoot(state: MvpGameState, rng: LootRng = Math.random): LootOption[] {
+  const byChar = shuffleWith(partyCharacters(state), rng).map((m) =>
+    lootCandidatesFor(state, m, 0, 1, 'rare'),
+  );
+  const picks: LootOption[] = [];
+  const used = new Set<string>();
+  for (let round = 0; picks.length < 3 && round < 4; round += 1) {
+    const before = picks.length;
+    for (const pool of byChar) {
+      if (picks.length >= 3) break;
+      const opt = drawFrom(pool, used, rng);
+      if (!opt) continue;
+      picks.push(opt);
+      used.add(opt.modId);
+    }
+    if (picks.length === before) break;
+  }
+  return picks;
+}
+
 /** 领取一件三选一战利品并清空待选 */
 export function claimLoot(state: MvpGameState, opt: LootOption): boolean {
   const run = requireRun(state);
@@ -643,13 +683,25 @@ export function skipLoot(state: MvpGameState): void {
 /** 是否已通关（节点走完）。无尽没有终局，打到全灭才离场。 */
 export function isRunComplete(state: MvpGameState): boolean {
   const run = requireRun(state);
-  if (isEndlessDungeon(run.dungeonId)) return false;
+  if (isEndlessDungeon(run.dungeonId) || isEventDungeon(run.dungeonId)) return false;
   const d = currentDungeon(state);
   return run.nodeIndex >= d.nodes.length - 1;
 }
 
 export function isEndlessRun(state: MvpGameState): boolean {
   return !!state.run && isEndlessDungeon(state.run.dungeonId);
+}
+
+export function isEventRun(state: MvpGameState): boolean {
+  return !!state.run && isEventDungeon(state.run.dungeonId);
+}
+
+export function isGrassHuntRun(state: MvpGameState): boolean {
+  return !!state.run && isGrassHuntDungeon(state.run.dungeonId);
+}
+
+export function isBossRushRun(state: MvpGameState): boolean {
+  return !!state.run && isBossRushDungeon(state.run.dungeonId);
 }
 
 /** 这一局已经打赢的波数（当前波还没赢就不算） */
@@ -729,6 +781,140 @@ export function finishEndlessRun(state: MvpGameState): number {
   state.run = null;
   state.phase = 'hub';
   return bonus;
+}
+
+export interface EventClearReward {
+  soul: number;
+  jade: number;
+  /** 围猎无人阵亡的额外魂晶已经算进 soul。 */
+  cleanBonus: number;
+  alreadyClaimed: boolean;
+  /** 结算时还在开放窗口里。窗口外打完不发奖。 */
+  inWindow: boolean;
+}
+
+/** 从副本页开一场限时战。冒险进度停到另一条线。 */
+export function startEventRun(state: MvpGameState, dungeonId: string): void {
+  const party = state.meta.roster.map((m) => m.rosterId);
+  startRun(state, dungeonId, party);
+  const run = requireRun(state);
+  const ev = run.event;
+  if (!ev) return;
+  if (ev.kind === 'grass_hunt') {
+    ev.rngSeed = Math.floor(Math.random() * 1_000_000_000) + 1;
+    run.pendingLoot = rollRareOpeningLoot(state);
+    ev.openingChosen = (run.pendingLoot?.length ?? 0) === 0;
+    return;
+  }
+  ev.bossStageIndices = bossRushStageIndexes(state.meta);
+  ev.openingChosen = true;
+}
+
+/** 围猎清完一群、还有下一群：血和站位留下，不回布阵。 */
+export function continueGrassHunt(state: MvpGameState, lastUnits: readonly UnitState[]): void {
+  const run = requireRun(state);
+  const ev = run.event;
+  if (!ev || ev.kind !== 'grass_hunt') return;
+  const carry = lastUnits.length > 0 ? snapshotEndlessCarry(lastUnits) : (ev.carry ?? []);
+  ev.carry = carry;
+  ev.clearedCurrent = false;
+  ev.step = ev.spawnedThrough + 1;
+  run.pendingLoot = null;
+  run.lootAdRefreshCount = 0;
+  run.lastReportWinner = null;
+  for (const c of carry) {
+    const p = run.placements.find((x) => x.rosterId === c.rosterId);
+    if (p) {
+      p.pos = { ...c.pos };
+      p.uid = c.uid;
+    }
+  }
+  state.phase = 'battle';
+}
+
+/** 连战打完一场、还有下一场：换到下一张首领图，血和冷却留下，不回布阵，药清掉。 */
+export function continueBossRush(state: MvpGameState, lastUnits: readonly UnitState[]): void {
+  const run = requireRun(state);
+  const ev = run.event;
+  if (!ev || ev.kind !== 'boss_rush') return;
+  const carry = snapshotEndlessCarry(lastUnits);
+  ev.carry = carry;
+  rememberEventCarryLayout(state, carry);
+  ev.step += 1;
+  ev.clearedCurrent = false;
+  run.terrainOverlay = [];
+  run.potions = {};
+  run.pendingLoot = null;
+  run.lootAdRefreshCount = 0;
+  run.lastReportWinner = null;
+  placeEventCarry(state, carry);
+  state.phase = 'battle';
+}
+
+function claimEventWindow(
+  state: MvpGameState,
+  kind: 'grass_hunt' | 'boss_rush',
+  now: Date,
+): { already: boolean; key: string | null } {
+  const claims = state.meta.eventClaims ?? {};
+  const key = kind === 'grass_hunt' ? grassHuntWeekKey(now) : bossRushMonthKey(now);
+  if (!key) return { already: false, key: null };
+  const taken = kind === 'grass_hunt' ? claims.grassHuntWeek === key : claims.bossRushMonth === key;
+  return { already: taken, key };
+}
+
+/**
+ * 围猎通关会发多少。不改存档。
+ * 本周末领过、或已经不是周末，魂晶是 0。无人阵亡的额外算进 soul。
+ */
+export function previewGrassHuntReward(state: MvpGameState, now: Date = new Date()): EventClearReward {
+  const deaths = state.run?.event?.allyDeaths ?? 0;
+  const { already, key } = claimEventWindow(state, 'grass_hunt', now);
+  const inWindow = !!key;
+  const cleanBonus = inWindow && !already && deaths <= 0 ? HUNT_CLEAN_SOUL : 0;
+  const soul = inWindow && !already ? HUNT_SOUL + cleanBonus : 0;
+  return { soul, jade: 0, cleanBonus, alreadyClaimed: already, inWindow };
+}
+
+export function finishGrassHunt(state: MvpGameState, now: Date = new Date()): EventClearReward {
+  const reward = previewGrassHuntReward(state, now);
+  const { key } = claimEventWindow(state, 'grass_hunt', now);
+  if (reward.soul > 0 && key) {
+    state.meta.metaCurrency += reward.soul;
+    state.meta.eventClaims = { ...(state.meta.eventClaims ?? {}), grassHuntWeek: key };
+  }
+  state.run = null;
+  state.phase = 'hub';
+  return reward;
+}
+
+/** 连战通关会发多少。不改存档。纹玉不走章节首通。 */
+export function previewBossRushReward(state: MvpGameState, now: Date = new Date()): EventClearReward {
+  const { already, key } = claimEventWindow(state, 'boss_rush', now);
+  const inWindow = !!key;
+  const soul = inWindow && !already ? RUSH_SOUL : 0;
+  const jade = inWindow && !already ? RUSH_JADE : 0;
+  return { soul, jade, cleanBonus: 0, alreadyClaimed: already, inWindow };
+}
+
+export function finishBossRush(state: MvpGameState, now: Date = new Date()): EventClearReward {
+  const reward = previewBossRushReward(state, now);
+  const { key } = claimEventWindow(state, 'boss_rush', now);
+  if (reward.inWindow && !reward.alreadyClaimed && key) {
+    state.meta.metaCurrency += reward.soul;
+    state.meta.universalEmblemTokens = (state.meta.universalEmblemTokens ?? 0) + reward.jade;
+    state.meta.eventClaims = { ...(state.meta.eventClaims ?? {}), bossRushMonth: key };
+  }
+  state.run = null;
+  state.phase = 'hub';
+  return reward;
+}
+
+export function eventFightFinal(state: MvpGameState): boolean {
+  const ev = state.run?.event;
+  if (!ev?.clearedCurrent) return false;
+  if (ev.kind === 'grass_hunt') return ev.spawnedThrough >= HUNT_PACK_TOTAL;
+  return ev.step >= BOSS_RUSH_FIGHTS - 1;
 }
 
 /** 推进到下一节点：地形券布置清掉；上阵记住，下一关默认沿用 */

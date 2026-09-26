@@ -164,6 +164,37 @@ export interface BattleSimOptions {
   sandboxFreeCast?: boolean;
   /** 指定回合开始时插入的单位（新手援军） */
   scriptedSpawns?: { round: number; unit: UnitState; auto?: boolean }[];
+  /**
+   * 草原围猎。头狼死则同群溃散并掉一瓶治疗药；
+   * 头狼活过 `howlAfterRounds` 个回合，回合开始时治疗本群并拉下一群。
+   */
+  hunt?: HuntBattleOptions;
+}
+
+/** 围猎里已经在场上的一群。引擎会改 `howled` / `scattered`，也会把吼出来的下一群推进去。 */
+export interface HuntPackState {
+  id: number;
+  alphaUid: string;
+  memberUids: string[];
+  /** 这一群是在第几回合开始时进场的。开局第一群是 1。 */
+  enteredRound: number;
+  howled: boolean;
+  scattered: boolean;
+}
+
+export interface HuntSpawnedPack {
+  id: number;
+  alphaUid: string;
+  units: UnitState[];
+}
+
+export interface HuntBattleOptions {
+  packs: HuntPackState[];
+  howlAfterRounds: number;
+  howlHealRatio: number;
+  minHowlHeal: number;
+  /** 返回 null 表示没有下一群（最后一群只治疗）。 */
+  onHowl: (packId: number, occupied: Vec2[]) => HuntSpawnedPack | null;
 }
 
 /**
@@ -304,6 +335,8 @@ export interface BattleSim {
   getRound(): number;
   /** 还在地上的药剂（无尽跨波会把这份带去下一局） */
   getDrops(): GroundDrop[];
+  /** 本场死过的我方人数。复活不减，用来判「无人阵亡」。 */
+  getPlayerDeaths(): number;
   isDone(): boolean;
   /** 中途加人；`auto` 时该玩家单位由 AI 走 */
   spawnUnit(unit: UnitState, auto?: boolean): BattleEvent[];
@@ -341,6 +374,7 @@ export function createBattleSim(
     potionId: d.potionId,
   }));
   const rolledDeaths = new Set<string>();
+  const playerDeaths = new Set<string>();
   const DROP_POTIONS = ['heal', 'heal', 'heal', 'draught', 'slow'] as const;
   const allEvents: BattleEvent[] = [];
   /**
@@ -408,8 +442,87 @@ export function createBattleSim(
     return extra;
   }
 
+  function notePlayerDeaths(events: readonly BattleEvent[]): void {
+    for (const ev of events) {
+      if (ev.type !== 'death') continue;
+      const u = units.find((x) => x.uid === ev.uid);
+      if (u?.faction === 'player') playerDeaths.add(u.uid);
+    }
+  }
+
+  /** 头狼一死，同群还活着的兽散掉，并在头狼格子上留一瓶治疗药。 */
+  function applyHuntDeaths(events: BattleEvent[]): BattleEvent[] {
+    const hunt = opts.hunt;
+    if (!hunt) return events;
+    const seen = new Set<string>();
+    for (let i = 0; i < events.length; i++) {
+      const ev = events[i]!;
+      if (ev.type !== 'death' || seen.has(ev.uid)) continue;
+      seen.add(ev.uid);
+      const pack = hunt.packs.find((p) => p.alphaUid === ev.uid);
+      if (!pack || pack.scattered) continue;
+      pack.scattered = true;
+      for (const uid of pack.memberUids) {
+        if (uid === pack.alphaUid) continue;
+        const u = units.find((x) => x.uid === uid && x.hp > 0);
+        if (!u) continue;
+        u.hp = 0;
+        events.push({ type: 'statusNote', target: uid, text: '四散', tone: 'debuff' });
+        events.push({ type: 'death', uid });
+      }
+      const alpha = units.find((x) => x.uid === pack.alphaUid);
+      if (!alpha) continue;
+      if (pickups.some((p) => p.pos.x === alpha.pos.x && p.pos.y === alpha.pos.y)) continue;
+      pickups.push({ pos: { x: alpha.pos.x, y: alpha.pos.y }, potionId: 'heal' });
+      events.push({ type: 'drop', pos: { x: alpha.pos.x, y: alpha.pos.y }, potionId: 'heal' });
+    }
+    return events;
+  }
+
+  /** 头狼活过指定回合：治疗本群，并把下一群拉进同一张图。 */
+  function huntHowl(): BattleEvent[] {
+    const hunt = opts.hunt;
+    if (!hunt) return [];
+    const events: BattleEvent[] = [];
+    const due = hunt.packs.filter((p) => {
+      if (p.howled || p.scattered) return false;
+      const alpha = units.find((u) => u.uid === p.alphaUid);
+      return !!alpha && alpha.hp > 0 && rounds >= p.enteredRound + hunt.howlAfterRounds;
+    });
+    for (const pack of due) {
+      pack.howled = true;
+      events.push({ type: 'statusNote', target: pack.alphaUid, text: '狼吼', tone: 'buff' });
+      for (const uid of pack.memberUids) {
+        const u = units.find((x) => x.uid === uid && x.hp > 0);
+        if (!u) continue;
+        const maxHp = effectiveUnitDef(u, defs).maxHp;
+        const amount = Math.max(hunt.minHowlHeal, Math.round(maxHp * hunt.howlHealRatio));
+        const healed = Math.min(amount, Math.max(0, maxHp - u.hp));
+        if (healed <= 0) continue;
+        u.hp += healed;
+        events.push({ type: 'heal', target: u.uid, amount: healed, hpLeft: u.hp });
+      }
+      const occupied = units.filter((u) => u.hp > 0).map((u) => ({ x: u.pos.x, y: u.pos.y }));
+      const next = hunt.onHowl(pack.id, occupied);
+      if (!next || next.units.length === 0) continue;
+      if (hunt.packs.some((p) => p.id === next.id)) continue;
+      hunt.packs.push({
+        id: next.id,
+        alphaUid: next.alphaUid,
+        memberUids: next.units.map((u) => u.uid),
+        enteredRound: rounds,
+        howled: false,
+        scattered: false,
+      });
+      for (const unit of next.units) events.push(...spawnUnit(unit));
+    }
+    return events;
+  }
+
   function withDropSideEffects(events: BattleEvent[]): BattleEvent[] {
-    const dropped = attachDrops(events);
+    const hunted = applyHuntDeaths(events);
+    notePlayerDeaths(hunted);
+    const dropped = attachDrops(hunted);
     const trampled = collectTramples();
     return trampled.length ? [...dropped, ...trampled] : dropped;
   }
@@ -627,6 +740,7 @@ export function createBattleSim(
     // 各烧一次人再熄。放前面的话最后一个轮首会先变成焦土，实际只烧到 1 回合。
     events.push(...terrainRt.tick());
     events.push(...checkLevers());
+    events.push(...huntHowl());
     for (const s of opts.scriptedSpawns ?? []) {
       if (s.round === rounds) events.push(...spawnUnit(s.unit, s.auto));
     }
@@ -704,6 +818,7 @@ export function createBattleSim(
 
     events.push(...drainTimingSkills(self, 'beforeMove', spent));
     resyncRoundOrder();
+    applyHuntDeaths(events);
     let w = checkWinner(units);
     if (w) return finish(w, events);
 
@@ -729,6 +844,7 @@ export function createBattleSim(
 
     events.push(...drainTimingSkills(self, 'afterMove', spent));
     resyncRoundOrder();
+    applyHuntDeaths(events);
     w = checkWinner(units);
     if (w) return finish(w, events);
 
@@ -753,6 +869,7 @@ export function createBattleSim(
       }
     }
 
+    applyHuntDeaths(events);
     w = checkWinner(units);
     if (w) return finish(w, events);
     const evs = withDropSideEffects(events);
@@ -1154,6 +1271,7 @@ export function createBattleSim(
     },
     getRound: () => rounds,
     getDrops: () => pickups.map((d) => ({ pos: { ...d.pos }, potionId: d.potionId })),
+    getPlayerDeaths: () => playerDeaths.size,
     isDone: () => done,
     spawnUnit,
     reviveUnit,

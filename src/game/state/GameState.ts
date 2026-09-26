@@ -11,6 +11,13 @@ import {
 } from '@/data/dungeonCatalog';
 import { emptyRunStarStats, type RunStarStats } from '@/data/chapterStars';
 import { ENDLESS_DUNGEON_ID, isEndlessDungeon } from '@/data/endlessCatalog';
+import {
+  GRASS_HUNT_STAGE,
+  isBossRushDungeon,
+  isEventDungeon,
+  isGrassHuntDungeon,
+  type EventClaims,
+} from '@/data/eventCatalog';
 import { mergeTerrainOverlay, type TerrainGrid } from '@/battle/grid';
 import { createStarterRoster } from '@/game/characterFactory';
 import type { Character } from '@/game/characterTypes';
@@ -136,6 +143,11 @@ export interface MetaState {
   universalEmblemTokens?: number;
   /** 已经发过纹玉的章节。普通和精英各记一次，避免读档重复发。 */
   universalEmblemPaidDungeonIds?: string[];
+  /**
+   * 限时活动本窗口已领奖。围猎记周六的日期，连战记 `YYYY-MM`。
+   * 可选：老档没有。不升 META_VERSION。
+   */
+  eventClaims?: EventClaims;
 }
 
 /** 单副本一局的临时状态（roguelike 构筑都在这里，结束即弃） */
@@ -214,6 +226,31 @@ export interface RunState {
   endless?: EndlessRunState;
   /** 本局评星累计。出副本即弃 */
   starStats: RunStarStats;
+  /**
+   * 限时活动局内状态。主线和无尽为 undefined。
+   * 围猎按群推进，连战按首领推进，都不走节点和补给点。
+   */
+  event?: EventRunState;
+}
+
+/** 限时活动这一局。围猎按群，连战按首领。 */
+export interface EventRunState {
+  kind: 'grass_hunt' | 'boss_rush';
+  /** 围猎：下一场要刷的群，从 1 起。连战：当前首领下标，从 0 起。 */
+  step: number;
+  /** 围猎：已经进过场的最高群号。吼提前拉进来的也算。 */
+  spawnedThrough: number;
+  clearedCurrent: boolean;
+  carry: EndlessCarry[] | null;
+  groundDrops?: GroundDrop[];
+  /** 围猎开局稀有词条已经选定。连战没有这一步，恒为 true。 */
+  openingChosen: boolean;
+  /** 本局我方死过的人数。复活也不抹掉，用来判围猎的无人阵亡奖。 */
+  allyDeaths: number;
+  /** 围猎刷怪用的种子，同一群重进落点不变。 */
+  rngSeed?: number;
+  /** 连战三场的关卡下标，开局定死，从弱到强。 */
+  bossStageIndices?: number[];
 }
 
 /** 无尽试炼里一名我方单位跨波带过去的状态 */
@@ -263,9 +300,9 @@ export interface MvpGameState {
   lastEventsLen: number;
 }
 
-/** 副本页那条线（无尽 / 日后的活动）；其余都算冒险 */
+/** 副本页那条线（无尽 / 限时活动）；其余都算冒险 */
 export function isChallengeLaneRun(run: RunState | null | undefined): boolean {
-  return !!run && isEndlessDungeon(run.dungeonId);
+  return !!run && (isEndlessDungeon(run.dungeonId) || isEventDungeon(run.dungeonId));
 }
 
 export function adventureRunOf(state: MvpGameState): RunState | null {
@@ -300,7 +337,7 @@ export function activateRunLane(state: MvpGameState, lane: 'adventure' | 'challe
  * 无尽 / 试炼场走另一条线，不能当成「放弃密林再开无尽」。
  */
 export function shouldConfirmAdventureSwitch(state: MvpGameState, nextDungeonId: string): boolean {
-  if (isEndlessDungeon(nextDungeonId) || isSandboxDungeon(nextDungeonId)) return false;
+  if (isEndlessDungeon(nextDungeonId) || isEventDungeon(nextDungeonId) || isSandboxDungeon(nextDungeonId)) return false;
   const current = adventureRunOf(state);
   return !!current && current.dungeonId !== nextDungeonId;
 }
@@ -385,6 +422,28 @@ export function createRunState(dungeonId: string, partyRosterIds: string[]): Run
     endless: dungeonId === ENDLESS_DUNGEON_ID
       ? { wave: 1, clearedCurrent: false, carry: null }
       : undefined,
+    event: isGrassHuntDungeon(dungeonId)
+      ? {
+          kind: 'grass_hunt',
+          step: 1,
+          spawnedThrough: 0,
+          clearedCurrent: false,
+          carry: null,
+          openingChosen: false,
+          allyDeaths: 0,
+        }
+      : isBossRushDungeon(dungeonId)
+        ? {
+            kind: 'boss_rush',
+            step: 0,
+            spawnedThrough: 0,
+            clearedCurrent: false,
+            carry: null,
+            openingChosen: true,
+            allyDeaths: 0,
+            bossStageIndices: [],
+          }
+        : undefined,
   };
 }
 
@@ -468,6 +527,11 @@ export function nodesUntilBoss(state: MvpGameState): number | null {
 export function currentStage(state: MvpGameState): StageDefMvp {
   const run = requireRun(state);
   if (isSandboxDungeon(run.dungeonId)) return SANDBOX_STAGE;
+  if (isGrassHuntDungeon(run.dungeonId)) return GRASS_HUNT_STAGE;
+  if (isBossRushDungeon(run.dungeonId)) {
+    const idx = run.event?.bossStageIndices?.[run.event.step] ?? 0;
+    return STAGES_MVP[idx] ?? STAGES_MVP[0]!;
+  }
   const node = currentNode(state);
   const si = node.stageIndex ?? 0;
   return STAGES_MVP[si]!;

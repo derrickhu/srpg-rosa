@@ -57,6 +57,7 @@ import {
 } from '@/view/renderHelpers';
 import { createRunTitleBanner } from '@/view/runTitleBanner';
 import { isEndlessDungeon } from '@/data/endlessCatalog';
+import { bossRushBattleBg, bossRushEnemyScale, isBossRushDungeon, isEventDungeon, isGrassHuntDungeon } from '@/data/eventCatalog';
 import { createNodeStrip } from '@/view/NodeStrip';
 import { AssetManager } from '@/core/AssetManager';
 import { makeAdButton, makeButton } from '@/ui/Button';
@@ -204,6 +205,9 @@ export function createDeployView(
 ): DeployViewHandle {
   const run = state.run!;
   const endless = isEndlessDungeon(run.dungeonId);
+  const hunt = isGrassHuntDungeon(run.dungeonId);
+  const rush = isBossRushDungeon(run.dungeonId);
+  const hidePresetEnemies = endless || hunt;
   const st0 = currentStage(state);
   const { w: GW, h: GH } = gridSize(st0.terrain);
   const {
@@ -221,10 +225,13 @@ export function createDeployView(
 
   const root = new PIXI.Container();
 
+  const bgKey = rush
+    ? bossRushBattleBg(run.event?.bossStageIndices?.[run.event.step] ?? 0)
+    : dungeonBattleBgKey(currentDungeon(state));
   const bgLayer = createBackground(
     screen.screenWidth,
     screen.screenHeight,
-    dungeonBattleBgKey(currentDungeon(state)),
+    bgKey,
   );
   root.addChild(bgLayer);
 
@@ -293,7 +300,11 @@ export function createDeployView(
       ? '点角色切技能'
       : endless
         ? `第 ${run.endless?.wave ?? 1} 波`
-        : undefined,
+        : hunt
+          ? '第 1/5 群'
+          : rush
+            ? `第 ${(run.event?.step ?? 0) + 1}/3 场`
+            : undefined,
     maxWidth: runCenterBannerMaxWidth(screen.screenWidth),
   });
   banner.root.x = Math.floor((screen.screenWidth - banner.width) / 2);
@@ -304,7 +315,7 @@ export function createDeployView(
 
   // 无尽波次写在牌子副行；有章节节点时，进度链跟在牌子下面
   let nodeStrip: PIXI.Container | null = null;
-  if (!endless) {
+  if (!endless && !isEventDungeon(run.dungeonId)) {
     const stripW = Math.min(screen.screenWidth - 32, 360);
     nodeStrip = createNodeStrip(dungeon0, { currentIndex: run.nodeIndex, width: stripW });
     nodeStrip.x = Math.floor((screen.screenWidth - stripW) / 2);
@@ -459,10 +470,12 @@ export function createDeployView(
 
         const placed = run.placements.find((p) => p.pos.x === x && p.pos.y === y);
         // 无尽开战才抽落点，布阵页不能画第一章那批预设敌人
-        const enemy = endless ? undefined : st.enemies.find((e) => e.x === x && e.y === y);
+        const enemy = hidePresetEnemies ? undefined : st.enemies.find((e) => e.x === x && e.y === y);
         if (enemy) {
           const d = UNIT_DEFS[enemy.defId];
-          const scale = currentEnemyScale(state);
+          const scale = rush
+            ? bossRushEnemyScale(run.event?.bossStageIndices?.[run.event.step] ?? 0)
+            : currentEnemyScale(state);
           const baseHp = enemy.stats?.maxHp ?? d.base.maxHp;
           const showHp = Math.round(baseHp * scale);
           const wrap = new PIXI.Container();

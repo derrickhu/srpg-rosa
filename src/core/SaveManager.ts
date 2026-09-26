@@ -10,6 +10,7 @@ import { hydrateHubUpgradeGuide } from '@/game/hubGuide/hubUpgradeGuide';
 import { hydrateTutorial } from '@/game/tutorial/TutorialManager';
 import { getDungeonDef } from '@/data/dungeonCatalog';
 import { isEndlessDungeon } from '@/data/endlessCatalog';
+import { isBossRushDungeon, isEventDungeon } from '@/data/eventCatalog';
 import { LEGACY_CHARACTER_IDS, remapLegacyCharacterId } from '@/data/characterCatalog';
 import { remapLegacyRoster } from '@/game/characterFactory';
 import { remapLegacySkillId } from '@/data/skillCatalog';
@@ -148,6 +149,36 @@ function normalizeRun(run: RunState): RunState {
     adExtraSlot: rest.adExtraSlot ?? 0,
     lootAdRefreshCount: rest.lootAdRefreshCount ?? 0,
     nodeIndex: clampRunNodeIndex(rest),
+    event: rest.event
+      ? {
+          ...rest.event,
+          allyDeaths: rest.event.allyDeaths ?? 0,
+          spawnedThrough: rest.event.spawnedThrough ?? 0,
+          openingChosen: rest.event.openingChosen ?? rest.event.kind !== 'grass_hunt',
+          carry: rest.event.carry
+            ? rest.event.carry.map((c) => ({
+                ...c,
+                rosterId: remapLegacyCharacterId(c.rosterId),
+              }))
+            : rest.event.carry,
+          groundDrops: rest.event.groundDrops?.map((d) => ({
+            pos: { ...d.pos },
+            potionId: d.potionId,
+          })) ?? [],
+        }
+      : (
+        isEventDungeon(rest.dungeonId)
+          ? {
+              kind: isBossRushDungeon(rest.dungeonId) ? 'boss_rush' as const : 'grass_hunt' as const,
+              step: isBossRushDungeon(rest.dungeonId) ? 0 : 1,
+              spawnedThrough: 0,
+              clearedCurrent: false,
+              carry: null,
+              openingChosen: isBossRushDungeon(rest.dungeonId),
+              allyDeaths: 0,
+            }
+          : undefined
+      ),
   };
 }
 
@@ -181,6 +212,7 @@ function normalizeMeta(meta: MetaState): MetaState {
     personalEmblemReleasedIds: meta.personalEmblemReleasedIds ?? [],
     universalEmblemTokens: meta.universalEmblemTokens ?? 0,
     universalEmblemPaidDungeonIds: meta.universalEmblemPaidDungeonIds ?? [],
+    eventClaims: meta.eventClaims ?? {},
   };
   hydrateChapterProgress(next);
   hydrateTutorial(next);

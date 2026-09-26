@@ -1,7 +1,7 @@
 import * as PIXI from 'pixi.js';
 import type { PixiHost } from '@/boot/createPixiApp';
 import type { Faction, GroundDrop, UnitState } from '@/battle/types';
-import { createBattleSim, type BattleMode } from '@/battle/engine';
+import { createBattleSim, type BattleMode, type HuntPackState } from '@/battle/engine';
 import { UNIT_DEFS } from '@/data/unitDefs';
 import { DUNGEON_DEFS, dungeonBattleBgKey, getDungeonDef } from '@/data/dungeonCatalog';
 import { isEliteDungeon, officialDungeonIdOfElite } from '@/data/eliteCatalog';
@@ -15,6 +15,14 @@ import {
   endlessWaveVictorySoul,
   isEndlessDungeon,
 } from '@/data/endlessCatalog';
+import {
+  HUNT_HOWL_AFTER_ROUNDS,
+  HUNT_HOWL_HEAL_RATIO,
+  HUNT_HOWL_MIN_HEAL,
+  HUNT_PACK_TOTAL,
+  bossRushBattleBg,
+  isEventDungeon,
+} from '@/data/eventCatalog';
 import { formatModStars, getSkillMod, isExclusiveMod, modStacks } from '@/data/skillModCatalog';
 import {
   ABANDON_RUN_CONFIRM,
@@ -33,7 +41,7 @@ import {
   previewBossFirstKillDrops,
   shouldPresentBossFirstKill,
 } from '@/view/battle/bossFirstKill';
-import { previewPersonalEmblemsForDungeon, UNIVERSAL_EMBLEM_NAME } from '@/data/personalEmblemCatalog';
+import { previewPersonalEmblemsForDungeon, UNIVERSAL_EMBLEM_ICON, UNIVERSAL_EMBLEM_NAME } from '@/data/personalEmblemCatalog';
 import { createSweepRewardOverlay } from '@/view/sweepRewardOverlay';
 import {
   abandonRun,
@@ -42,6 +50,7 @@ import {
   applyVictory,
   battleTerrain,
   buildBattleUnits,
+  buildHuntEnemyUnits,
   buyShopOffer,
   applyChapterSweep,
   canSweepChapter,
@@ -51,13 +60,22 @@ import {
   canStartEndlessAttempt,
   consumeEndlessAttempt,
   continueEndlessWave,
+  continueGrassHunt,
+  continueBossRush,
   currentDungeon,
   currentNode,
   currentStage,
   endlessWavesCleared,
   finishEndlessRun,
+  finishGrassHunt,
+  finishBossRush,
+  previewGrassHuntReward,
+  previewBossRushReward,
   finishRunVictory,
   isEndlessRun,
+  isEventRun,
+  isGrassHuntRun,
+  eventFightFinal,
   isDungeonUnlocked,
   isRunComplete,
   rosterHasAffordableLevelUp,
@@ -70,9 +88,12 @@ import {
   runWantsAutoPilot,
   skipLoot,
   startRun,
+  startEventRun,
+  rollRareOpeningLoot,
   undoDeployForRetry,
   activateRunLane,
   adventureRunOf,
+  challengeRunOf,
   shouldConfirmAdventureSwitch,
   type BuyShopContext,
   type LootOption,
@@ -222,6 +243,9 @@ export class GameFlow {
   /** 刚结束那场战斗的单位快照，无尽用来把血量和站位带进下一波 */
   private lastBattleUnits: UnitState[] = [];
   private lastBattleDrops: GroundDrop[] = [];
+  private lastPlayerDeaths = 0;
+  /** 这一场围猎引擎正在改的群列表。吼把下一群推进来之后，结算读最高群号。 */
+  private huntPacks: HuntPackState[] | null = null;
   private loading: LoadingView | null = null;
   /** 启动云同步完成、大厅已可渲染后才接受下行覆盖 */
   private started = false;
@@ -605,6 +629,10 @@ export class GameFlow {
                 this.startEndless();
                 return;
               }
+              if (isEventDungeon(d.id)) {
+                this.startEvent(d.id);
+                return;
+              }
               this.adventureChapter = Math.max(0, this.dungeonChapterIndex(d.id));
               this.renderShell('adventure');
             },
@@ -691,11 +719,7 @@ export class GameFlow {
       this.showToast('先打完这一章的教学', { deny: true });
       return;
     }
-    if (activateRunLane(this.state, 'challenge')) {
-      SaveManager.save(this.state);
-      this.renderNode();
-      return;
-    }
+    if (this.resumeChallenge(ENDLESS_DUNGEON_ID)) return;
     if (!canStartEndlessAttempt(this.state.meta)) {
       this.showToast('今日挑战已用完', { deny: true });
       return;
@@ -709,6 +733,28 @@ export class GameFlow {
     this.renderNode();
   }
 
+  /** 限时战和冒险各走一条线。同一场没打完的局点继续，不新开。 */
+  private startEvent(dungeonId: string): void {
+    if (isTutorialRun(this.state)) {
+      this.showToast('先打完这一章的教学', { deny: true });
+      return;
+    }
+    if (this.resumeChallenge(dungeonId)) return;
+    startEventRun(this.state, dungeonId);
+    this.shopOffers = null;
+    this.trackRunStart(dungeonId);
+    SaveManager.save(this.state);
+    this.renderNode();
+  }
+
+  private resumeChallenge(dungeonId: string): boolean {
+    if (challengeRunOf(this.state)?.dungeonId !== dungeonId) return false;
+    activateRunLane(this.state, 'challenge');
+    SaveManager.save(this.state);
+    this.renderNode();
+    return true;
+  }
+
   // ---------------- 副本节点路由 ----------------
 
   /** 真机不进特效试炼：清掉模拟器留下的局，避免冒险页还露「继续」。 */
@@ -720,10 +766,53 @@ export class GameFlow {
     }
   }
 
+  private renderEvent(): void {
+    const run = this.state.run;
+    const ev = run?.event;
+    if (!run || !ev) {
+      this.renderShell('challenge');
+      return;
+    }
+    if (ev.kind === 'grass_hunt' && !ev.openingChosen) {
+      if ((run.pendingLoot?.length ?? 0) === 0) {
+        run.pendingLoot = rollRareOpeningLoot(this.state);
+      }
+      if ((run.pendingLoot?.length ?? 0) === 0) {
+        ev.openingChosen = true;
+      } else {
+        this.renderEndlessBackdrop();
+        this.showHuntOpening();
+        return;
+      }
+    }
+    if (eventFightFinal(this.state)) {
+      this.renderEndlessBackdrop();
+      this.presentEventWin();
+      return;
+    }
+    const first = ev.kind === 'grass_hunt'
+      ? ev.step === 1 && !ev.carry && !ev.clearedCurrent
+      : ev.step === 0 && !ev.carry && !ev.clearedCurrent;
+    if (first) {
+      this.renderDeploy();
+      return;
+    }
+    if (ev.clearedCurrent) {
+      if (ev.kind === 'grass_hunt') continueGrassHunt(this.state, this.lastBattleUnits);
+      else continueBossRush(this.state, this.lastBattleUnits);
+      SaveManager.save(this.state);
+    }
+    void this.resolveBattle();
+  }
+
   private renderNode(): void {
     this.dropHiddenGmRun();
     if (!this.state.run) {
       this.renderShell('adventure');
+      return;
+    }
+    if (isEventRun(this.state)) {
+      this.renderEvent();
       return;
     }
     if (isEndlessRun(this.state)) {
@@ -883,18 +972,65 @@ export class GameFlow {
     // 自动模式走同一个引擎的程序决策分支，不存在两套结算规则。
     // 同一章上一战若结束在托管，这一战默认接着托管；教学局永远手操开局。
     const endless = isEndlessRun(this.state);
+    const event = isEventRun(this.state);
+    const hunt = isGrassHuntRun(this.state);
     const sandbox = isSandboxDungeon(run.dungeonId);
     const tut = isTutorialRun(this.state);
     const mode: BattleMode = runWantsAutoPilot(run, tut) ? 'auto' : 'manual';
+    this.huntPacks = null;
+    const huntOpt = hunt && run.event
+      ? (() => {
+          const packId = run.event!.step;
+          const members = units.filter(
+            (u) => u.faction === 'enemy' && u.uid.startsWith(`hunt_${packId}_`),
+          );
+          const packs: HuntPackState[] = [{
+            id: packId,
+            alphaUid: `hunt_${packId}_0`,
+            memberUids: members.map((u) => u.uid),
+            enteredRound: 1,
+            howled: false,
+            scattered: false,
+          }];
+          this.huntPacks = packs;
+          return {
+            packs,
+            howlAfterRounds: HUNT_HOWL_AFTER_ROUNDS,
+            howlHealRatio: HUNT_HOWL_HEAL_RATIO,
+            minHowlHeal: HUNT_HOWL_MIN_HEAL,
+            onHowl: (id: number, occupied: { x: number; y: number }[]) => {
+              const nextId = id + 1;
+              if (nextId > HUNT_PACK_TOTAL) return null;
+              if (packs.some((p) => p.id === nextId)) return null;
+              const built = buildHuntEnemyUnits(nextId, map, occupied, run.event?.rngSeed ?? 1);
+              if (!built.alphaUid || built.units.length === 0) return null;
+              return { id: nextId, alphaUid: built.alphaUid, units: built.units };
+            },
+          };
+        })()
+      : undefined;
     const sim = createBattleSim(units, map, UNIT_DEFS, {
       aiDifficulty: endless ? endlessAiDifficulty(run.endless?.wave ?? 1) : stage.aiDifficulty,
       mode,
       enableDrops: endless,
-      initialDrops: endless ? (run.endless?.groundDrops ?? []) : undefined,
+      initialDrops: endless
+        ? (run.endless?.groundDrops ?? [])
+        : hunt
+          ? (run.event?.groundDrops ?? [])
+          : undefined,
       sandboxFreeCast: sandbox,
       scriptedSpawns: tut ? tutorialScriptedSpawns(this.state) : undefined,
+      hunt: huntOpt,
     });
     this.state.phase = 'battle';
+    const eventMark = hunt
+      ? `第 ${run.event?.step ?? 1}/${HUNT_PACK_TOTAL} 群`
+      : `第 ${(run.event?.step ?? 0) + 1}/3 场`;
+    const battleBg = hunt
+      ? 'battle_bg'
+      : run.event?.kind === 'boss_rush'
+        ? bossRushBattleBg(run.event.bossStageIndices?.[run.event.step] ?? 0)
+        : dungeonBattleBgKey(dungeon);
     const handle = createBattlePlaybackView(
       this.app,
       sim,
@@ -909,9 +1045,10 @@ export class GameFlow {
             timedBattleEffects: u.timedBattleEffects?.map((e) => ({ ...e })),
           }));
           this.lastBattleDrops = sim.getDrops();
+          this.lastPlayerDeaths = sim.getPlayerDeaths();
           rememberBattlePilot(run, sim.isAuto(), tut);
           run.lastReportWinner = winner;
-          if (winner === 'player' && !sandbox && !endless) {
+          if (winner === 'player' && !sandbox && !endless && !event) {
             recordRunBattleStats(run, {
               rounds: sim.getRound(),
               allyDeaths: sim.getUnits().filter((u) => u.faction === 'player' && u.hp <= 0).length,
@@ -919,7 +1056,7 @@ export class GameFlow {
           }
           this.finishBattleAfterPlayback(winner);
         },
-        onHome: () => this.renderShell(),
+        onHome: () => this.renderShell(event ? 'challenge' : undefined),
         onReturnDeploy: () => {
           undoDeployForRetry(this.state);
           this.renderDeploy();
@@ -933,39 +1070,45 @@ export class GameFlow {
       {
         nodeLabel: sandbox
           ? '特效试炼 · 木桩场'
-          : endless
-            ? `${dungeon.name} 第 ${run.endless?.wave ?? 1} 波`
-            : `${dungeon.name} ${run.nodeIndex + 1}/${dungeon.nodes.length}`,
+          : event
+            ? `${dungeon.name} ${eventMark}`
+            : endless
+              ? `${dungeon.name} 第 ${run.endless?.wave ?? 1} 波`
+              : `${dungeon.name} ${run.nodeIndex + 1}/${dungeon.nodes.length}`,
         nodeTitle: sandbox ? '特效试炼' : dungeon.name,
         nodeMark: sandbox
           ? '木桩场'
-          : endless
-            ? `第 ${run.endless?.wave ?? 1} 波`
-            : `${run.nodeIndex + 1}/${dungeon.nodes.length}`,
-        battleBg: dungeonBattleBgKey(dungeon),
+          : event
+            ? eventMark
+            : endless
+              ? `第 ${run.endless?.wave ?? 1} 波`
+              : `${run.nodeIndex + 1}/${dungeon.nodes.length}`,
+        battleBg,
         sandbox,
         gold: run.gold,
-        goldReward: endless ? 0 : currentStage(this.state).goldReward,
+        goldReward: endless || event ? 0 : currentStage(this.state).goldReward,
         potions: run.potions,
-        allowReturnDeploy: !endless || (run.endless?.wave ?? 1) === 1,
+        allowReturnDeploy: event ? false : (!endless || (run.endless?.wave ?? 1) === 1),
         onConsumePotion: (potionId: string) => {
           run.potions[potionId] = Math.max(0, (run.potions[potionId] ?? 0) - 1);
           if (!sandbox) recordRunPotionUse(run);
         },
-        allowShareHeal: !sandbox && !tut && currentNode(this.state).kind === 'boss',
+        allowShareHeal: !event && !sandbox && !tut && currentNode(this.state).kind === 'boss',
         onShareHeal: () => {
           SaveManager.save(this.state);
         },
-        onPickupPotion: endless
+        onPickupPotion: endless || hunt
           ? (potionId: string) => {
               run.potions[potionId] = (run.potions[potionId] ?? 0) + 1;
             }
           : undefined,
-        emblemDrops: previewBossFirstKillDrops(
-          this.state.meta,
-          run.dungeonId,
-          currentNode(this.state).kind,
-        ),
+        emblemDrops: event
+          ? []
+          : previewBossFirstKillDrops(
+              this.state.meta,
+              run.dungeonId,
+              currentNode(this.state).kind,
+            ),
         tutorialLock: tut && (run.nodeIndex === 0 || run.nodeIndex === 1 || run.nodeIndex === 3),
         tutorialAllowPilot: tut && run.nodeIndex === 1,
         onTutorialEvent: (e) => notifyTutorial(this.state, e),
@@ -1009,6 +1152,27 @@ export class GameFlow {
     if (!win) {
       SaveManager.save(this.state);
       this.showDefeatOverlay();
+      return;
+    }
+    if (isEventRun(this.state)) {
+      const ev = this.state.run.event;
+      if (ev) {
+        ev.allyDeaths += this.lastPlayerDeaths;
+        ev.carry = snapshotEndlessCarry(this.lastBattleUnits);
+        ev.groundDrops = this.lastBattleDrops.map((d) => ({
+          pos: { ...d.pos },
+          potionId: d.potionId,
+        }));
+        ev.clearedCurrent = true;
+        if (ev.kind === 'grass_hunt') {
+          const ids = (this.huntPacks ?? []).map((p) => p.id);
+          ev.spawnedThrough = Math.max(ev.spawnedThrough, ev.step, ...ids);
+        }
+      }
+      this.state.run.lastVictory = { gold: 0, soul: 0, firstClear: false };
+      this.state.run.pendingLoot = null;
+      SaveManager.save(this.state);
+      this.presentEventWin();
       return;
     }
     if (isEndlessRun(this.state)) {
@@ -1281,6 +1445,137 @@ export class GameFlow {
     );
   }
 
+  /** 围猎开局：只出稀有词条，不能跳过，不能看广告重抽。 */
+  private showHuntOpening(): void {
+    const run = this.state.run;
+    const loot = run?.pendingLoot ?? [];
+    if (!run || loot.length === 0) {
+      if (run?.event) run.event.openingChosen = true;
+      this.renderDeploy();
+      return;
+    }
+    let close = (): void => undefined;
+    close = this.pushOverlay(
+      createLootOverlay({
+        screenW: this.app.screen.width,
+        screenH: this.app.screen.height,
+        cards: loot.map((o) => lootToCard(this.state, o)),
+        bannerTitle: '围  猎',
+        fanfare: false,
+        allowSkip: false,
+        onConfirm: (i: number) => {
+          const opt = loot[i];
+          if (!opt || !claimLoot(this.state, opt)) return;
+          if (run.event) run.event.openingChosen = true;
+          close();
+          SaveManager.save(this.state);
+          this.showToast(opt.kind === 'skillMod' ? `纹章已带上：${opt.name}` : `「${opt.name}」已放入背包`);
+          this.renderDeploy();
+        },
+        onSkip: () => undefined,
+        onNeedPick: () => this.showToast('先选一张纹章', { deny: true }),
+      }),
+    );
+  }
+
+  /** 一群或一场打完。最后一场才发窗口奖励，中途只进下一场。 */
+  private presentEventWin(): void {
+    const run = this.state.run;
+    const ev = run?.event;
+    if (!run || !ev) {
+      this.renderShell('challenge');
+      return;
+    }
+    const final = eventFightFinal(this.state);
+    const hunt = ev.kind === 'grass_hunt';
+    if (!final) {
+      const subtitle = hunt
+        ? `第 ${ev.spawnedThrough}/${HUNT_PACK_TOTAL} 群已清`
+        : `第 ${ev.step + 1}/3 场已清`;
+      let close = (): void => undefined;
+      close = this.pushOverlay(
+        createRewardOverlay({
+          screenW: this.app.screen.width,
+          screenH: this.app.screen.height,
+          title: '胜  利',
+          subtitle,
+          entries: [],
+          confirmLabel: hunt ? '下一群' : '下一场',
+          onConfirm: () => {
+            close();
+            if (hunt) continueGrassHunt(this.state, this.lastBattleUnits);
+            else continueBossRush(this.state, this.lastBattleUnits);
+            SaveManager.save(this.state);
+            this.renderNode();
+          },
+        }),
+      );
+      return;
+    }
+    const now = new Date();
+    const preview = hunt ? previewGrassHuntReward(this.state, now) : previewBossRushReward(this.state, now);
+    const entries: RewardEntry[] = [];
+    if (preview.soul > 0) {
+      entries.push({
+        iconKey: 'icon_soul',
+        name: '魂晶',
+        amount: preview.soul,
+        quality: '永久',
+        desc: preview.cleanBonus > 0
+          ? `通关 ${preview.soul - preview.cleanBonus}，无人阵亡另加 ${preview.cleanBonus}。`
+          : '带得出副本的永久货币，用来升级角色、学技能、招募同伴。',
+        sources: [hunt ? '草原围猎' : '首领连战'],
+        tint: C.soul,
+      });
+    }
+    if (preview.jade > 0) {
+      entries.push({
+        iconKey: UNIVERSAL_EMBLEM_ICON,
+        name: UNIVERSAL_EMBLEM_NAME,
+        amount: preview.jade,
+        quality: '永久',
+        desc: '用来给已拥有的角色铭刻或升级永久纹章。',
+        sources: ['首领连战'],
+        tint: 0x7ec8a3,
+      });
+    }
+    const subtitle = !preview.inWindow
+      ? '开放时间已过，这次没有奖励'
+      : preview.alreadyClaimed
+        ? (hunt ? '本周奖励已经领过' : '本月奖励已经领过')
+        : (hunt ? '草原围猎' : '首领连战');
+    let close = (): void => undefined;
+    close = this.pushOverlay(
+      createRewardOverlay({
+        screenW: this.app.screen.width,
+        screenH: this.app.screen.height,
+        title: '通  关',
+        subtitle,
+        entries,
+        confirmLabel: '返回副本',
+        onConfirm: () => {
+          close();
+          const kind = this.state.run?.event?.kind;
+          this.trackRunEnd('clear');
+          const reward = kind === 'boss_rush'
+            ? finishBossRush(this.state, now)
+            : finishGrassHunt(this.state, now);
+          SaveManager.save(this.state);
+          if (reward.soul > 0) {
+            const bits = [`魂晶 +${reward.soul}`];
+            if (reward.jade > 0) bits.push(`${UNIVERSAL_EMBLEM_NAME} +${reward.jade}`);
+            this.showToast(bits.join('，'));
+          } else if (!reward.inWindow) {
+            this.showToast('开放时间已过，这次没有奖励');
+          } else if (reward.alreadyClaimed) {
+            this.showToast(kind === 'boss_rush' ? '本月奖励已经领过' : '本周奖励已经领过');
+          }
+          this.renderShell('challenge');
+        },
+      }),
+    );
+  }
+
   /** 中途胜利 + 纹章三选一 */
   private showLootOverlay(): void {
     try {
@@ -1358,23 +1653,28 @@ export class GameFlow {
    */
   private showDefeatOverlay(): void {
     const endless = isEndlessRun(this.state);
+    const event = isEventRun(this.state);
     const tutorial = isTutorialRun(this.state);
     const waves = endlessWavesCleared(this.state);
-    const hintSet = endless ? 'endless' : tutorial ? 'tutorial' : 'chapter';
+    const hintSet = event ? 'event' : endless ? 'endless' : tutorial ? 'tutorial' : 'chapter';
     let close = (): void => undefined;
     close = this.pushOverlay(
       createDefeatOverlay({
         screenW: this.app.screen.width,
         screenH: this.app.screen.height,
-        subtitle: endless
-          ? `撑到第 ${waves} 波。已得魂晶保留，回大厅还能招募和升级。`
-          : tutorial
-            ? '这一关可以立刻再打。返回布阵会重打本节点。'
-            : '返回布阵会重打本节点，已得魂晶保留。',
+        subtitle: event
+          ? '这一场没有奖励。回副本页可以再打。'
+          : endless
+            ? `撑到第 ${waves} 波。已得魂晶保留，回大厅还能招募和升级。`
+            : tutorial
+              ? '这一关可以立刻再打。返回布阵会重打本节点。'
+              : '返回布阵会重打本节点，已得魂晶保留。',
         hints: defeatHintsFor(hintSet),
-        primaryLabel: endless
-          ? '离开试炼（保留已得魂晶）'
-          : (shouldSkipTutorialDeploy(this.state) ? '再打一次' : '返回布阵'),
+        primaryLabel: event
+          ? '返回副本'
+          : endless
+            ? '离开试炼（保留已得魂晶）'
+            : (shouldSkipTutorialDeploy(this.state) ? '再打一次' : '返回布阵'),
         onPrimary: () => {
           close();
           if (endless) {
@@ -1389,6 +1689,14 @@ export class GameFlow {
             this.renderShell('challenge');
             return;
           }
+          if (event) {
+            this.trackRunEnd('fail');
+            abandonRun(this.state);
+            SaveManager.save(this.state);
+            this.showToast('这一场没有奖励');
+            this.renderShell('challenge');
+            return;
+          }
           undoDeployForRetry(this.state);
           if (shouldSkipTutorialDeploy(this.state)) {
             applyTutorialBattle1Placement(this.state);
@@ -1397,8 +1705,8 @@ export class GameFlow {
           }
           this.renderDeploy();
         },
-        homeLabel: endless || tutorial ? undefined : '返回大厅',
-        onHome: endless || tutorial
+        homeLabel: endless || event || tutorial ? undefined : '返回大厅',
+        onHome: endless || event || tutorial
           ? undefined
           : () => {
               close();
@@ -1407,8 +1715,8 @@ export class GameFlow {
               this.showToast('已返回大厅，本章可以继续');
               this.renderShell('adventure');
             },
-        secondaryLabel: endless || tutorial ? undefined : '放弃副本',
-        onSecondary: endless || tutorial
+        secondaryLabel: endless || event || tutorial ? undefined : '放弃副本',
+        onSecondary: endless || event || tutorial
           ? undefined
           : () => {
               close();
@@ -1420,7 +1728,7 @@ export class GameFlow {
               if (leftDungeonId) this.pinAdventureToDungeon(leftDungeonId);
               this.renderShell('adventure');
             },
-        abandonConfirm: endless || tutorial ? undefined : ABANDON_RUN_CONFIRM,
+        abandonConfirm: endless || event || tutorial ? undefined : ABANDON_RUN_CONFIRM,
       }),
     );
   }
@@ -1550,14 +1858,15 @@ export class GameFlow {
       return;
     }
     const endless = isEndlessRun(this.state);
+    const event = isEventRun(this.state);
     const leftDungeonId = this.state.run?.dungeonId;
     this.trackRunEnd('abandon');
     if (endless) finishEndlessRun(this.state);
     else abandonRun(this.state);
     SaveManager.save(this.state);
-    this.showToast(endless ? '已离开试炼' : '已放弃副本');
-    if (!endless && leftDungeonId) this.pinAdventureToDungeon(leftDungeonId);
-    this.renderShell(endless ? 'challenge' : 'adventure');
+    this.showToast(endless ? '已离开试炼' : event ? '已离开' : '已放弃副本');
+    if (!endless && !event && leftDungeonId) this.pinAdventureToDungeon(leftDungeonId);
+    this.renderShell(endless || event ? 'challenge' : 'adventure');
   }
 
   private trackRunEnd(result: 'clear' | 'fail' | 'abandon'): void {

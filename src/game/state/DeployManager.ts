@@ -25,6 +25,7 @@ import {
   getCharacter,
   nextPid,
   requireRun,
+  type EndlessCarry,
   type MvpGameState,
   type PlacementEntry,
   type RunState,
@@ -35,6 +36,15 @@ import {
   endlessWaveScale,
   isEndlessDungeon,
 } from '@/data/endlessCatalog';
+import {
+  EVENT_MAX_DEPLOY,
+  bossRushEnemyScale,
+  generateHuntPackSpawns,
+  huntPackScale,
+  isBossRushDungeon,
+  isEventDungeon,
+  isGrassHuntDungeon,
+} from '@/data/eventCatalog';
 import { battleTerrain } from './GameState';
 import {
   isTutorialRun,
@@ -43,8 +53,9 @@ import {
 } from '@/game/tutorial/tutorialRules';
 
 function enemyAt(state: MvpGameState, pos: Vec2): boolean {
-  // 无尽的敌人是开战时才抽落点的，布阵阶段棋盘上没有预设敌格
-  if (isEndlessDungeon(requireRun(state).dungeonId)) return false;
+  const run = requireRun(state);
+  // 无尽和围猎的敌人是开战时才抽落点的，布阵阶段棋盘上没有预设敌格
+  if (isEndlessDungeon(run.dungeonId) || isGrassHuntDungeon(run.dungeonId)) return false;
   return currentStage(state).enemies.some((e) => e.x === pos.x && e.y === pos.y);
 }
 
@@ -59,6 +70,7 @@ export function getBaseMaxDeploy(state: MvpGameState): number {
   const run = requireRun(state);
   // 第一章第一关 maxDeploy=2，无尽复用那张地形但不能沿用 2 人上限
   if (isEndlessDungeon(run.dungeonId)) return ENDLESS_DUNGEON.maxParty;
+  if (isEventDungeon(run.dungeonId)) return EVENT_MAX_DEPLOY;
   return currentStage(state).maxDeploy ?? DEFAULT_MAX_DEPLOY;
 }
 
@@ -91,6 +103,7 @@ export function canOfferAdExtraSlot(state: MvpGameState): boolean {
   // 整章教学都藏起来又太狠：第三章节的 3/3 明明替补有人，玩家会以为功能丢了。
   if (isTutorialRun(state) && requireRun(state).nodeIndex <= 1) return false;
   const run = requireRun(state);
+  if (isEventDungeon(run.dungeonId)) return false;
   if ((run.adExtraSlot ?? 0) > 0) return false;
   if (benchCharacters(state).length === 0) return false;
   if (run.placements.length < getBaseMaxDeploy(state)) return false;
@@ -410,16 +423,83 @@ export function enemySpawnToUnitState(e: StageEnemySpawn, scale: number): UnitSt
   };
 }
 
+/** 围猎一群兽。第 0 只是头狼，数值再乘这一群的缩放。 */
+export function buildHuntEnemyUnits(
+  pack: number,
+  terrain: ReturnType<typeof battleTerrain>,
+  occupied: readonly Vec2[],
+  seed = 1,
+): { packId: number; alphaUid: string; units: UnitState[] } {
+  const scale = huntPackScale(pack);
+  const spawns = generateHuntPackSpawns(pack, terrain, occupied, seed);
+  const units = spawns.map((e) => enemySpawnToUnitState(e, scale));
+  return {
+    packId: pack,
+    alphaUid: spawns[0]?.uid ?? '',
+    units,
+  };
+}
+
+/**
+ * 记下这一场结束时的站位和地图，供下一场（可能换图）把人放回部署区。
+ * 必须在切换关卡之前调用。
+ */
+export function rememberEventCarryLayout(state: MvpGameState, carry: readonly EndlessCarry[]): void {
+  const run = requireRun(state);
+  const stage = currentStage(state);
+  const { w, h } = gridSize(stage.terrain);
+  run.lastBattleGridW = w;
+  run.lastBattleGridH = h;
+  run.lastBattleDeployZone = resolveDeployZone(stage);
+  run.lastBattlePlacements = carry.map((c) => ({
+    uid: c.uid,
+    rosterId: c.rosterId,
+    pos: { ...c.pos },
+  }));
+}
+
+/** 把还活着的人铺到当前关的部署区，并把携带坐标改成新落点。 */
+export function placeEventCarry(state: MvpGameState, carry: EndlessCarry[]): void {
+  const run = requireRun(state);
+  run.placements = [];
+  applyCarriedPlacements(state);
+  for (const p of run.placements) {
+    const c = carry.find((x) => x.rosterId === p.rosterId);
+    if (c) c.pos = { ...p.pos };
+  }
+}
+
 export function buildBattleUnits(state: MvpGameState): UnitState[] {
   const run = requireRun(state);
   const st = currentStage(state);
   const endless = isEndlessDungeon(run.dungeonId);
+  const hunt = isGrassHuntDungeon(run.dungeonId);
+  const rush = isBossRushDungeon(run.dungeonId);
   const scale = endless
     ? endlessWaveScale(run.endless?.wave ?? 1)
-    : currentEnemyScale(state) * tutorialEnemyScaleMul(state);
+    : rush
+      ? bossRushEnemyScale(run.event?.bossStageIndices?.[run.event.step] ?? 0)
+      : currentEnemyScale(state) * tutorialEnemyScaleMul(state);
   const units: UnitState[] = [];
 
-  if (endless) {
+  if (hunt) {
+    const ev = run.event;
+    const occupied = [
+      ...(ev?.carry ?? []).map((c) => c.pos),
+      ...(ev?.groundDrops ?? []).map((d) => d.pos),
+    ];
+    const fallback = [
+      ...run.placements.map((p) => p.pos),
+      ...(ev?.groundDrops ?? []).map((d) => d.pos),
+    ];
+    const built = buildHuntEnemyUnits(
+      ev?.step ?? 1,
+      battleTerrain(state),
+      occupied.length > 0 ? occupied : fallback,
+      ev?.rngSeed ?? 1,
+    );
+    for (const u of built.units) units.push(u);
+  } else if (endless) {
     const occupied = [
       ...(run.endless?.carry ?? []).map((c) => c.pos),
       ...(run.endless?.groundDrops ?? []).map((d) => d.pos),
@@ -441,9 +521,11 @@ export function buildBattleUnits(state: MvpGameState): UnitState[] {
     for (const e of enemies) units.push(enemySpawnToUnitState(e, scale));
   }
 
-  const carryByRoster = new Map((run.endless?.carry ?? []).map((c) => [c.rosterId, c]));
-  // 无尽第二波起只带还活着的人上场。死掉的不复活——「直到全队倒下」否则没有牙齿。
-  const playerSlots = endless && carryByRoster.size > 0
+  const carryList = run.event?.carry ?? run.endless?.carry ?? [];
+  const carryByRoster = new Map(carryList.map((c) => [c.rosterId, c]));
+  // 第二场起只带还活着的人。死掉的不复活。
+  const keepCarry = (endless || hunt || rush) && carryByRoster.size > 0;
+  const playerSlots = keepCarry
     ? run.placements.filter((p) => carryByRoster.has(p.rosterId))
     : run.placements;
 

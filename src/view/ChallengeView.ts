@@ -8,6 +8,7 @@ import {
   endlessBestFloor,
   type ChallengeEntry,
 } from '@/data/challengeCatalog';
+import { eventClaimLabel } from '@/data/eventCatalog';
 import type { DungeonDef } from '@/data/dungeonCatalog';
 import {
   ENDLESS_ATTEMPTS_PER_DAY,
@@ -246,6 +247,15 @@ export function createChallengeView(
         keep.x = cardW - ACTION_W / 2;
         keep.y = CARD_H / 2 + 18;
         card.addChild(keep);
+      } else if (d && entry.kind === 'event') {
+        const claimed = eventClaimLabel(entry.id, state.meta, new Date());
+        if (claimed) {
+          const keep = makeText(claimed, 'micro', { fill: C.muted, fontSize: 9 });
+          keep.anchor.set(0.5, 0);
+          keep.x = cardW - ACTION_W / 2;
+          keep.y = CARD_H / 2 + 18;
+          card.addChild(keep);
+        }
       } else if (d) {
         const left = sweepLeftToday(state.meta, d.id);
         const quota = sweepQuota(d.id);
@@ -261,13 +271,18 @@ export function createChallengeView(
         label,
         () => {
           if (scroll.wasDragging()) return;
-          showToast(
-            root,
-            status.kind === 'soon' ? '这个玩法还在做，先去推主线吧' : status.reason,
-            { screenWidth: W },
-          );
+          const msg = status.kind === 'soon'
+            ? '这个玩法还在做，先去推主线吧'
+            : (status.detail ?? status.reason);
+          showToast(root, msg, { screenWidth: W });
         },
-        { variant: 'secondary', width: ACTION_W - 10, height: 36, fontSize: 11, radius: 12 },
+        {
+          variant: 'secondary',
+          width: ACTION_W - 10,
+          height: 36,
+          fontSize: label.length > 4 ? 10 : 11,
+          radius: 12,
+        },
       );
       btn.x = cardW - ACTION_W + 2;
       btn.y = (CARD_H - 36) / 2;
@@ -289,7 +304,12 @@ export function createChallengeView(
   }
 
   const events = CHALLENGE_ENTRIES.filter((e) => e.kind === 'event');
-  addBlock('限时活动', `${events.length} 个筹备中`, events.map(entryCard));
+  const openEvents = events.filter((e) => challengeStatus(e, state.meta).kind === 'open').length;
+  addBlock(
+    '限时活动',
+    openEvents > 0 ? `${openEvents} 个开放` : '未到开放日',
+    events.map(entryCard),
+  );
 
   const endless = CHALLENGE_ENTRIES.filter((e) => e.kind === 'endless');
   const best = endlessBestFloor(state.meta);
