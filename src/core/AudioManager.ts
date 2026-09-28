@@ -51,7 +51,9 @@ export type SfxId =
   | 'sfx_skill_heal_touch'
   | 'sfx_skill_frost_ring'
   | 'sfx_skill_hex_mark'
-  | 'sfx_skill_shield_wall';
+  | 'sfx_skill_shield_wall'
+  | 'sfx_skill_encore'
+  | 'sfx_skill_swoop';
 
 export type BgmId = 'hub' | 'deploy' | 'battle' | 'boss' | 'shop';
 
@@ -129,6 +131,8 @@ const SFX_MAP: Record<SfxId, string> = {
   sfx_skill_frost_ring: 'audio/sfx/sfx_skill_frost_ring.mp3',
   sfx_skill_hex_mark: 'audio/sfx/sfx_skill_hex_mark.mp3',
   sfx_skill_shield_wall: 'audio/sfx/sfx_skill_shield_wall.mp3',
+  sfx_skill_encore: 'audio/sfx/sfx_skill_encore.mp3',
+  sfx_skill_swoop: 'audio/sfx/sfx_skill_swoop.mp3',
 };
 
 /** 走格子会连发；80ms 内只留第一下，避免 4 格变成机关枪 */

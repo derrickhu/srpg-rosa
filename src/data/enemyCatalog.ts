@@ -22,6 +22,8 @@ export const ENEMY_DEFS: Record<UnitKind, { id: UnitKind; base: EnemyStatBlock }
   // 关卡不刷法师 / 祭司；表里留空档是因为 spawn 的 defId 类型是 UnitKind
   mage: { id: 'mage', base: { maxHp: 52, atk: 24, spd: 6, move: 2 } },
   healer: { id: 'healer', base: { maxHp: 72, atk: 12, spd: 4, move: 2 } },
+  bard: { id: 'bard', base: { maxHp: 64, atk: 7, spd: 3, move: 3 } },
+  flyer: { id: 'flyer', base: { maxHp: 78, atk: 17, spd: 8, move: 4 } },
 };
 
 export function enemyBaseStats(kind: UnitKind): EnemyStatBlock {

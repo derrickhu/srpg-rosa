@@ -250,6 +250,41 @@ const DEFS: readonly PersonalEmblemDef[] = [
       { kind: 'skillDealtMul', mul: 1.08 },
     ],
   },
+  {
+    id: 'pe_qingxian_string',
+    name: '弦徽',
+    blurb: '弦先响，人后到。她自己也走得更早。',
+    rosterId: 'hero_bard_qingxian',
+    icon: 'emblem_pe_string',
+    effects: [{ kind: 'stat', spd: 1 }],
+  },
+  {
+    id: 'pe_qingxian_beat',
+    name: '拍点',
+    blurb: '拍子够得着更远的人。',
+    rosterId: 'hero_bard_qingxian',
+    icon: 'emblem_pe_beat',
+    effects: [{ kind: 'stat', move: 1 }],
+  },
+  {
+    id: 'pe_yuan_wing',
+    name: '羽缘',
+    blurb: '翅膀比步子更宽。',
+    rosterId: 'hero_flyer_yuan',
+    icon: 'emblem_pe_wing',
+    effects: [{ kind: 'stat', move: 1 }],
+  },
+  {
+    id: 'pe_yuan_dive',
+    name: '掠影',
+    blurb: '扑下去的那一下更重。',
+    rosterId: 'hero_flyer_yuan',
+    icon: 'emblem_pe_dive',
+    effects: [
+      { kind: 'stat', atk: 2 },
+      { kind: 'skillDealtMul', mul: 1.08 },
+    ],
+  },
 ];
 
 const BY_ID = new Map(DEFS.map((d) => [d.id, d]));

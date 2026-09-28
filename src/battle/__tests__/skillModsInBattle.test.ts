@@ -24,8 +24,10 @@ const DEFS: Record<UnitKind, UnitArchetypeDef> = {
   cavalry: archetype('cavalry', '骑兵', { maxHp: 110, atk: 42, spd: 7, move: 4 }, { range: 1, isRanged: false, taunt: false }),
   shield: archetype('shield', '盾卫', { maxHp: 140, atk: 26, spd: 3, move: 2 }, { range: 1, isRanged: false, taunt: true }),
   mage: archetype('mage', '法师', { maxHp: 52, atk: 40, spd: 6, move: 2 }, { range: 3, isRanged: true, taunt: false }),
-  healer: archetype('healer', '祭司', { maxHp: 80, atk: 20, spd: 4, move: 2 }, { range: 2, isRanged: true, taunt: false }),
-};
+      healer: archetype('healer', '祭司', { maxHp: 80, atk: 20, spd: 4, move: 2 }, { range: 2, isRanged: true, taunt: false }),
+      bard: archetype('bard', '伶人', { maxHp: 64, atk: 7, spd: 3, move: 3 }, { range: 1, isRanged: false, taunt: false }),
+      flyer: archetype('flyer', '飞骑', { maxHp: 78, atk: 17, spd: 8, move: 4 }, { range: 1, isRanged: false, taunt: false }),
+    };
 
 /** 全平原，避免地形倍率混进断言 */
 const FLAT: TerrainGrid = Array.from({ length: 7 }, () => Array.from({ length: 7 }, () => 'plain' as const));

@@ -284,6 +284,14 @@ function allyPickPool(
   return includeSelf ? [self, ...others] : others;
 }
 
+/** 再舞只点本轮已经出手的人。还没动过的人再动一次等于白送一个回合。 */
+function alliesForPick(spec: SkillSpec, allies: UnitState[]): UnitState[] {
+  if (spec.onCastAllyEffects?.some((e) => e.kind === 'encore')) {
+    return allies.filter((a) => a.spentAction === true);
+  }
+  return allies;
+}
+
 /**
  * 调用方没指定目标时的策略回退。点谁不是技能字段——玩家点谁打谁，
  * AI 才按这条规则选。口径和普攻 normal 对齐：敌人打最低血；
@@ -926,7 +934,7 @@ function castNeighborPickAlly(
   includeSelf?: boolean,
 ): BattleEvent[] {
   const within = reach === 'within';
-  const allies = allyPickPool(self, units, dist, reach, includeSelf);
+  const allies = alliesForPick(spec, allyPickPool(self, units, dist, reach, includeSelf));
   const tgt = resolveChoice(allies, chosenUid, () => fallbackSkillTarget(spec, allies, defs));
   if (!tgt) return [];
   // 友方治疗/buff：不要 resolveHit，否则无伤也会被当成「打了友军 0 点」
@@ -954,6 +962,9 @@ function castNeighborPickAlly(
   pushAllyHeal(spec, tgt, defs, events, def.healGivenMul ?? 1);
   applySkillCastSelfEffects(self, spec);
   pushAttrNotes(events, spec, { self, ally: tgt });
+  if (spec.onCastAllyEffects?.some((e) => e.kind === 'encore')) {
+    events.push({ type: 'encore', uid: tgt.uid });
+  }
   return events;
 }
 
@@ -1302,7 +1313,10 @@ export function skillAiming(
     case 'neighborPickAlly': {
       const within = spec.shape.reach === 'within';
       const d = spec.shape.manhattan;
-      const raw = allyPickPool(self, units, d, spec.shape.reach, spec.shape.includeSelf);
+      const raw = alliesForPick(
+        spec,
+        allyPickPool(self, units, d, spec.shape.reach, spec.shape.includeSelf),
+      );
       const heals = spec.onCastAllyEffects?.some((e) => e.kind === 'heal');
       const allies = heals
         ? raw.filter((a) => a.hp < effectiveUnitDef(a, defs).maxHp)

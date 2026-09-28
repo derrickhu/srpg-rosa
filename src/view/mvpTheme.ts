@@ -15,6 +15,8 @@ export const PROFESSION_ACCENT: Record<UnitKind, number> = {
   cavalry: 0xfcb40c,
   mage: 0x0e7a7a,
   healer: 0xf5e6c8,
+  bard: 0xe24b6a,
+  flyer: 0x3d7dff,
 };
 export const C = {
   // --- 战场 ---

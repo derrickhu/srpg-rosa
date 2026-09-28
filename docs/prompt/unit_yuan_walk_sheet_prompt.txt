@@ -1,0 +1,38 @@
+A 4x4 sprite sheet, full 4-direction walk cycle, top-down tactics RPG.
+One character only: Ayuan, a winged lancer who dives onto enemies.
+
+CHARACTER — extreme super-deformed mascot. HEAD is about HALF total height.
+Tiny stubby body. The whole body fits in a roughly square box.
+Giant round head, short limbs, mitten hands, two dark oval eyes, two brows, a tiny mouth.
+Open face. Ink-black hair in a high knot.
+
+IDENTITY COLORS, flat cel:
+- A pair of paper-kite wings, white paper with tips the blue of a clear noon sky. The wings spread wider than her body and are the silhouette.
+- A short spear the orange-brown of a new copper coin, held forward.
+- A short cape the blue of a clear noon sky.
+- Brown boots.
+Thick near-black outlines. Flat fills, one highlight, one shadow.
+
+ART STYLE: hand-drawn cartoon game sprite, thick near-black outlines, flat saturated fills with light cel shading, 3/4 top-down camera matching a tactics grid.
+
+PROPORTIONS: extreme super-deformed mascot. The HEAD INCLUDING HAIR is about HALF the character's total height. The whole character including wings fits in a wide box. 1.5-head mascot: giant head, tiny body. Wings stay inside the cell.
+
+WALK MOTION — readable from the silhouette at 44 pixels:
+  Column 1: both feet together, body at full height, wings held half-open, spear forward.
+  Column 2: LEFT foot planted far FORWARD, right foot trailing far BEHIND, a wide gap between the feet. Body squashes down about one tenth. Wings swept UP above the head.
+  Column 3: same standing pose as column 1.
+  Column 4: RIGHT foot far forward, left foot trailing, same body drop. Wings swept DOWN beside the boots.
+Wide stride. The wing position in column 2 and column 4 must read as opposite shapes.
+
+ROWS:
+  Row 1 top: facing DOWN, face visible, spear pointing down toward the viewer’s feet, wings to either side
+  Row 2: facing LEFT, left profile, spear leading left, wings seen from the side
+  Row 3: facing RIGHT, right profile, spear leading right
+  Row 4 bottom: facing UP, back of the hair knot and sky-blue cape, wings still wider than the body
+
+LAYOUT:
+1. Exactly 16 equal cells, 4 columns by 4 rows. Cells meet with no drawn borders.
+2. Every pixel that is not the character is solid flat magenta #FF00FF.
+3. Identical body scale in every cell.
+4. Body fills about 45% of cell height, centered, with a wide magenta margin on every side so wings and feet stay inside the cell. Feet sit on one baseline well above the cell edge.
+5. Face: two dark oval eyes, two brows, tiny mouth. Mitten hands. Open face.

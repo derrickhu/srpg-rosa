@@ -41,4 +41,21 @@ export const UNIT_DEFS: Record<UnitKind, UnitArchetypeDef> = {
     base: { maxHp: 72, atk: 12, spd: 4, move: 2 },
     strike: { range: 2, isRanged: true, taunt: false },
   },
+  bard: {
+    id: 'bard',
+    name: '伶人',
+    base: { maxHp: 64, atk: 7, spd: 3, move: 3 },
+    strike: { range: 1, isRanged: false, taunt: false },
+  },
+  flyer: {
+    id: 'flyer',
+    name: '飞骑',
+    base: { maxHp: 78, atk: 17, spd: 8, move: 4 },
+    strike: { range: 1, isRanged: false, taunt: false },
+  },
 };
+
+/** 飞骑：能落脚的地形都按 1 费走，城墙仍然过不去。 */
+export function unitFlies(kind: UnitKind): boolean {
+  return kind === 'flyer';
+}

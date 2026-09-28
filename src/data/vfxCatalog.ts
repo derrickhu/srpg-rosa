@@ -377,6 +377,10 @@ const FROST = [0xf7fbff, 0xa8d4ff, 0x3a7ab8] as const;
  */
 const POISON = [0xf3e8ff, 0x9b4dff, 0x4a1a8a] as const;
 const MINT = [0xf0fff4, 0x6ee7b7, 0x0d9488] as const;
+/** 伶人：红包那种红，和剑士金橙、法师赤焰错开 */
+const ROSE = [0xffe4ec, 0xe24b6a, 0x8e1d3a] as const;
+/** 飞骑：晴天那种蓝，和弓手电青、霜的淡蓝错开 */
+const SKY = [0xeaf4ff, 0x3d7dff, 0x1a3f8f] as const;
 
 // --- 章节色（只给商店卖的临时技能用）---
 //
@@ -739,6 +743,31 @@ export const ATTACK_VFX: Record<UnitKind, VfxRecipe> = {
     },
     shake: SHAKE_TAP,
   },
+  // 伶人普攻很轻：小爆点。再舞用的是友军身上的光，不和这一下共用图
+  bard: {
+    impact: {
+      set: 'snap_hit',
+      anchor: 'target',
+      cells: 1.35,
+      mode: 'burst',
+      playbackSpeed: 0.8,
+      sparks: hitSparks(ROSE),
+    },
+    shake: SHAKE_TAP,
+  },
+  // 飞骑普攻是平刺。俯冲用砸击，避免和这一下是同一张楔形
+  flyer: {
+    pathBeam: pathGlow(SKY, 'smooth', 18, 'thrust'),
+    impact: {
+      set: 'thrust',
+      anchor: 'target',
+      cells: 2.1,
+      mode: 'aimed',
+      playbackSpeed: 0.72,
+      sparks: hitSparks(SKY, 0.9),
+    },
+    shake: SHAKE_TAP,
+  },
 };
 
 /**
@@ -842,6 +871,29 @@ export const MOOK_ATTACK_VFX: Record<UnitKind, VfxRecipe> = {
       mode: 'burst',
       playbackSpeed: 0.9,
       sparks: hitSparks(FERAL),
+    },
+    shake: SHAKE_TAP,
+  },
+  bard: {
+    impact: {
+      set: 'mook_claw',
+      anchor: 'target',
+      cells: 1.35,
+      mode: 'burst',
+      playbackSpeed: 0.85,
+      sparks: hitSparks(FERAL),
+    },
+    shake: SHAKE_TAP,
+  },
+  flyer: {
+    pathBeam: pathGlow(FERAL, 'smooth', 10),
+    impact: {
+      set: 'mook_claw',
+      anchor: 'target',
+      cells: 1.5,
+      mode: 'aimed',
+      playbackSpeed: 0.85,
+      sparks: hitSparks(FERAL, 0.9),
     },
     shake: SHAKE_TAP,
   },
@@ -1126,6 +1178,20 @@ export const SKILL_VFX: Record<string, VfxRecipe> = {
       mode: 'burst',
       playbackSpeed: 0.72,
       sparks: skillSparks(MAGENTA),
+    },
+    shake: SHAKE_HEAVY,
+  },
+  /** 俯冲：走完再扑。命中用砸击，普攻已经占了楔形平刺 */
+  swoop: {
+    windup: windupGather(SKY, 1.2, 220),
+    pathBeam: pathGlow(SKY, 'smooth', 26, 'thrust', 360),
+    impact: {
+      set: 'hammer_smash',
+      anchor: 'target',
+      cells: 2.3,
+      mode: 'aimed',
+      playbackSpeed: 0.7,
+      sparks: skillSparks(SKY, 0.8),
     },
     shake: SHAKE_HEAVY,
   },
@@ -1772,6 +1838,19 @@ export const SKILL_VFX: Record<string, VfxRecipe> = {
       mode: 'burst',
       playbackSpeed: 0.7,
       sparks: skillSparks(MINT),
+    },
+  },
+  /** 再舞：光落到已经动过的友军身上。普攻是小爆点，这一下是升起来的光 */
+  encore: {
+    windup: windupGather(ROSE, 1.05, 240),
+    pathBeam: pathGlow(ROSE, 'smooth', 12, 'bless_rays'),
+    impact: {
+      set: 'bless_rays',
+      anchor: 'target',
+      cells: 2.2,
+      mode: 'burst',
+      playbackSpeed: 0.72,
+      sparks: skillSparks(ROSE),
     },
   },
   /** 守护祷言：盾轮廓连过去再撑开。不复用圣疗十字、也不复用普攻光球 */

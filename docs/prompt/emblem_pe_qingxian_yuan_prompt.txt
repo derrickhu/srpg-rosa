@@ -1,0 +1,13 @@
+Four separate medal icons, each one image, square, centered.
+Flat cel, thick near-black outline, one highlight, one shadow.
+Each medal is a dark circular field with a thick rim the yellow of a gold coin.
+Every pixel outside the round medal is solid flat magenta #FF00FF. The medal stays fully inside the frame.
+
+1. emblem_pe_string — a loop of ribbon the red of a Chinese red envelope, sitting in the medal.
+2. emblem_pe_beat — a small drum the color of undyed cotton, with two sticks the orange-brown of a new copper coin crossed on it.
+3. emblem_pe_wing — one white paper-kite feather with a tip the blue of a clear noon sky.
+4. emblem_pe_dive — a short spear the orange-brown of a new copper coin, pointing down across a chevron the blue of a clear noon sky.
+
+Skill icons, same flat language, one symbol filling the square, solid magenta #FF00FF behind it:
+5. skill_encore — a curling ribbon the red of a Chinese red envelope, forming one loop, thick outline.
+6. skill_swoop — a short spear the orange-brown of a new copper coin diving downward, with two small white kite-wing marks beside the tip.

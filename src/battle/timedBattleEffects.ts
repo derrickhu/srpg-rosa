@@ -272,6 +272,7 @@ export function consumeFreeze(u: UnitState): boolean {
 function mergeAllyCastEffect(list: TimedBattleEffect[], e: SkillCastAllyEffect): TimedBattleEffect[] {
   // heal 不是限时效果，在 `pushAllyHeal` 里当场结算，不进这张表
   if (e.kind === 'heal') return list;
+  if (e.kind === 'encore') return list;
   if (e.kind === 'guard') return mergeGuard(list, e.reduceRatio, e.rounds);
   if (e.kind === 'atkBonus') return [...list, { kind: 'atkBonus', addAtk: e.addAtk, roundsLeft: e.rounds }];
   return [...list, { kind: 'spdBonus', addSpd: e.addSpd, roundsLeft: e.rounds }];

@@ -1,6 +1,7 @@
 import type { UnitArchetypeDef, UnitDef, UnitKind, UnitState, Vec2 } from './types';
 import { effectiveUnitDef } from './effectiveUnit';
 import { approachCostField, cellsFromDist, reachableCells } from './path';
+import { unitFlies } from '@/data/unitDefs';
 import { manhattan } from './grid';
 import { applyBasicDealtMul, computeDamage, counterMultiplier } from './damage';
 import type { TerrainGrid } from './grid';
@@ -171,7 +172,7 @@ export function chooseTurnAction(
       .filter((u) => u.uid !== self.uid)
       .map((u) => key(u.pos)),
   );
-  const dist = reachableCells(self.pos, atkDef.move, blocked, terrain);
+  const dist = reachableCells(self.pos, atkDef.move, blocked, terrain, unitFlies(self.defId));
   const candidates = cellsFromDist(self.pos, dist);
 
   let bestScore = -1;
@@ -210,7 +211,7 @@ export function chooseTurnAction(
    *
    * 场里够不着（地形把两边彻底切开）时按曼哈顿兜底，行为与改动前一致。
    */
-  const field = approachCostField(enemies.map((e) => e.pos), terrain);
+  const field = approachCostField(enemies.map((e) => e.pos), terrain, unitFlies(self.defId));
   const nearest = enemies.reduce((a, b) =>
     (manhattan(self.pos, a.pos) <= manhattan(self.pos, b.pos) ? a : b));
   let bestDist = Infinity;

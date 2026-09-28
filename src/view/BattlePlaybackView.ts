@@ -2621,6 +2621,12 @@ export function createBattlePlaybackView(
         await awaitEase(dur(220), () => {});
         break;
       }
+      case 'encore': {
+        const tok = tokens.get(ev.uid);
+        if (tok) floatStatusNote(tok.x, tok.y, '再动', 'buff');
+        await awaitEase(dur(220), () => {});
+        break;
+      }
       case 'potion': {
         AudioManager.playSfx('sfx_potion');
         floatUtility(sw / 2, originY + 30, `使用 ${ev.name}`);

@@ -1,8 +1,8 @@
 /** 参与三角克制、出现在关卡刷怪表里的四兵种 */
 export type TroopKind = 'sword' | 'bow' | 'cavalry' | 'shield';
 
-/** 兵种标识。法师 / 祭司不参与三角克制，也不进关卡刷怪表 */
-export type UnitKind = TroopKind | 'mage' | 'healer';
+/** 兵种标识。法师 / 祭司 / 伶人 / 飞骑不参与三角克制，也不进关卡刷怪表 */
+export type UnitKind = TroopKind | 'mage' | 'healer' | 'bard' | 'flyer';
 
 export type Faction = 'player' | 'enemy';
 
@@ -133,6 +133,11 @@ export interface UnitState {
   skillCd: number;
   /** 本回合是否已沿路径移动过（骑兵普攻加成） */
   movedInTurn: boolean;
+  /**
+   * 这一轮已经出手过。伶人的再舞只点这种人，点完清掉并插回行动队列。
+   * 轮到他被弹出队列时置上，轮首清掉。
+   */
+  spentAction?: boolean;
   /** 本场覆盖兵种表上的主技能（布阵配置） */
   battleSkill?: SkillDef;
   /**
@@ -281,6 +286,10 @@ export type BattleEvent =
    * 单位的 `pos` 早已是终点了（自动模式先跑完整场再逐条播）。
    */
   | { type: 'displace'; uid: string; from: Vec2; to: Vec2; reason: 'dash' | 'knockback' }
+  /**
+   * 再舞：这个友军本轮再出手一次。引擎把它插回队列最前，回放飘「再动」。
+   */
+  | { type: 'encore'; uid: string }
   | {
       type: 'skillCast';
       uid: string;

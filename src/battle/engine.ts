@@ -35,6 +35,7 @@ import {
 import { consumeFreeze, tickTimedBattleEffects } from './timedBattleEffects';
 import { createTerrainRuntime } from './terrainDynamics';
 import { getTerrainSpec, isPassable } from '@/data/terrainSpec';
+import { unitFlies } from '@/data/unitDefs';
 
 function key(p: Vec2): string {
   return `${p.x},${p.y}`;
@@ -539,7 +540,9 @@ export function createBattleSim(
 
   /** 沿最短路走到 `to`，逐格发 moveStep 供回放做动画 */
   function moveAlong(self: UnitState, to: Vec2): BattleEvent[] {
-    const path = shortestPath4(self.pos, to, buildBlocked(units, self.uid), terrain);
+    const path = shortestPath4(
+      self.pos, to, buildBlocked(units, self.uid), terrain, unitFlies(self.defId),
+    );
     if (!path || path.length <= 1) return [];
     const events: BattleEvent[] = [];
     for (let i = 1; i < path.length; i++) {
@@ -560,7 +563,9 @@ export function createBattleSim(
 
   function reachFrom(u: UnitState): Vec2[] {
     const atkDef = effectiveUnitDef(u, defs);
-    const dist = reachableCells(u.pos, atkDef.move, buildBlocked(units, u.uid), terrain);
+    const dist = reachableCells(
+      u.pos, atkDef.move, buildBlocked(units, u.uid), terrain, unitFlies(u.defId),
+    );
     return cellsFromDist(u.pos, dist).filter((c) => !(c.x === u.pos.x && c.y === u.pos.y));
   }
 
@@ -705,6 +710,7 @@ export function createBattleSim(
     for (const u of units) {
       if (u.hp <= 0) continue;
       u.movedInTurn = false;
+      u.spentAction = false;
       if (u.skillCd > 0) u.skillCd -= 1;
       if ((u.tempSkillCd ?? 0) > 0) u.tempSkillCd = (u.tempSkillCd ?? 0) - 1;
       if (opts.sandboxFreeCast) {
@@ -751,6 +757,23 @@ export function createBattleSim(
     if (w) return finish(w, evs);
     allEvents.push(...evs);
     return { events: evs, done: false, winner: null };
+  }
+
+  /**
+   * 再舞：把已经出手的友军插回本轮队列最前，下一动就是他。
+   * 必须在本回合最后一次 `resyncRoundOrder` 之后做，否则速度重排会把他从队首拎走。
+   */
+  function grantEncore(events: readonly BattleEvent[]): void {
+    for (const e of events) {
+      if (e.type !== 'encore') continue;
+      const u = liveUnit(e.uid);
+      if (!u || !u.spentAction) continue;
+      u.spentAction = false;
+      u.movedInTurn = false;
+      actedThisRound.delete(u.uid);
+      order = order.filter((id) => id !== u.uid);
+      order.unshift(u.uid);
+    }
   }
 
   /**
@@ -830,7 +853,9 @@ export function createBattleSim(
     const atkDef = effectiveUnitDef(self, defs);
     if (canMove) {
       const blockedReach = buildBlocked(units, self.uid);
-      const reachDist = reachableCells(self.pos, atkDef.move, blockedReach, terrain);
+      const reachDist = reachableCells(
+        self.pos, atkDef.move, blockedReach, terrain, unitFlies(self.defId),
+      );
       events.push({
         type: 'moveRange',
         uid: self.uid,
@@ -872,6 +897,7 @@ export function createBattleSim(
     applyHuntDeaths(events);
     w = checkWinner(units);
     if (w) return finish(w, events);
+    grantEncore(events);
     const evs = withDropSideEffects(events);
     // 托管没有「点待机」，回合收尾等于待机：还站在掉落格上就捡。
     // 只看落点，路过中间格不捡（和手动「走过去再待机」同一条）。
@@ -953,6 +979,7 @@ export function createBattleSim(
       const self = units.find((u) => u.uid === uid);
       if (!self || self.hp <= 0) continue;
       actedThisRound.add(self.uid);
+      self.spentAction = true;
       const turnStart: BattleEvent = { type: 'turnStart', uid: self.uid, faction: self.faction };
       if (consumeFreeze(self)) {
         const frozen: BattleEvent[] = [
@@ -1130,6 +1157,7 @@ export function createBattleSim(
       cur.p.usedSkillSlots.clear();
     }
     resyncRoundOrder();
+    grantEncore(events);
     return settleAfterAction(events);
   }
 

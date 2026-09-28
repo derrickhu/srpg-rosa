@@ -326,6 +326,12 @@ function widenAoE(spec: SkillSpec, plus: number): SkillSpec {
   return spec;
 }
 
+/** 友方点名的距离改成 `manhattan`。再舞的「远歌」用这个，不是把环摊成圆。 */
+function setAllyPickRange(spec: SkillSpec, manhattan: number): SkillSpec {
+  if (spec.shape.type !== 'neighborPickAlly') return spec;
+  return { ...spec, shape: { ...spec.shape, manhattan } };
+}
+
 function cutCooldown(spec: SkillSpec, n: number): SkillSpec {
   return { ...spec, cooldown: Math.max(1, spec.cooldown - n) };
 }
@@ -907,6 +913,66 @@ const EXCLUSIVE_SEEDS: readonly ModSeed[] = [
     only: ['shield_wall'],
     fits: () => true,
     describe: () => '盾墙震慑：额外使目标减速 -3（2 回合）',
+    apply: (spec) => mergeFoe(spec, { kind: 'spdDown', subSpd: 3, rounds: 2 }),
+  },
+  {
+    id: 'ex_encore_tempo',
+    name: '连拍',
+    rarity: 'rare',
+    maxStacks: 1,
+    only: ['encore'],
+    fits: () => true,
+    describe: () => '再舞：冷却缩短 1 回合',
+    apply: (spec) => cutCooldown(spec, 1),
+  },
+  {
+    id: 'ex_encore_drum',
+    name: '鼓点',
+    rarity: 'epic',
+    maxStacks: 1,
+    only: ['encore'],
+    fits: () => true,
+    describe: () => '再舞：被点的人攻击 +4（2 回合）',
+    apply: (spec) => mergeAlly(spec, { kind: 'atkBonus', addAtk: 4, rounds: 2 }),
+  },
+  {
+    id: 'ex_encore_reach',
+    name: '远歌',
+    rarity: 'rare',
+    maxStacks: 1,
+    only: ['encore'],
+    fits: () => true,
+    describe: () => '再舞：点名距离改为 3 格',
+    apply: (spec) => setAllyPickRange(spec, 3),
+  },
+  {
+    id: 'ex_swoop_haste',
+    name: '急掠',
+    rarity: 'rare',
+    maxStacks: 1,
+    only: ['swoop'],
+    fits: () => true,
+    describe: () => '俯冲：冷却缩短 1 回合',
+    apply: (spec) => cutCooldown(spec, 1),
+  },
+  {
+    id: 'ex_swoop_edge',
+    name: '贯翼',
+    rarity: 'epic',
+    maxStacks: 1,
+    only: ['swoop'],
+    fits: () => true,
+    describe: () => '俯冲：伤害提升 25%',
+    apply: (spec) => scaleDamage(spec, 1.25),
+  },
+  {
+    id: 'ex_swoop_pin',
+    name: '压翼',
+    rarity: 'rare',
+    maxStacks: 1,
+    only: ['swoop'],
+    fits: () => true,
+    describe: () => '俯冲：额外使目标减速 -3（2 回合）',
     apply: (spec) => mergeFoe(spec, { kind: 'spdDown', subSpd: 3, rounds: 2 }),
   },
   /**

@@ -43,6 +43,8 @@ export const UNIT_BUNDLE: AssetBundleDef = {
     floe: 'images/units/floe.png',
     luoling: 'images/units/luoling.png',
     kelan: 'images/units/kelan.png',
+    qingxian: 'images/units/qingxian.png',
+    yuan: 'images/units/yuan.png',
     // 杂兵 / 精英·Boss 专属外观，key = spawn 的 animSet（见 src/data/stagesMvp.ts）。
     // 每章一批，图鉴见 docs/敌人图鉴.md。漏登记的表现是布阵格里那只怪只剩一个阵营色圆圈。
     // 第一章 · 草原野地魔物
@@ -183,6 +185,10 @@ export const UI_BUNDLE: AssetBundleDef = {
     emblem_pe_ward: 'images/ui/emblem_pe_ward.png',
     emblem_pe_rampart: 'images/ui/emblem_pe_rampart.png',
     emblem_pe_press: 'images/ui/emblem_pe_press.png',
+    emblem_pe_string: 'images/ui/emblem_pe_string.png',
+    emblem_pe_beat: 'images/ui/emblem_pe_beat.png',
+    emblem_pe_wing: 'images/ui/emblem_pe_wing.png',
+    emblem_pe_dive: 'images/ui/emblem_pe_dive.png',
     emblem_pe_sealed: 'images/ui/emblem_pe_sealed.png',
     // 战斗胜利弹窗的标题横幅。图里刻意留空——「胜利」两个字用游戏字体在代码里画，
     // 烧进贴图的话既换不了文案，字形也和界面其余部分对不上。
@@ -227,6 +233,8 @@ export const UI_BUNDLE: AssetBundleDef = {
     skill_hex_mark: 'images/ui/skill_hex_mark.png',
     skill_hammer: 'images/ui/skill_hammer.png',
     skill_shield_wall: 'images/ui/skill_shield_wall.png',
+    skill_encore: 'images/ui/skill_encore.png',
+    skill_swoop: 'images/ui/skill_swoop.png',
     skill_war_shout: 'images/ui/skill_war_shout.png',
     skill_field_bless: 'images/ui/skill_field_bless.png',
     skill_ember: 'images/ui/skill_ember.png',

@@ -2,6 +2,7 @@ import type { Faction, UnitArchetypeDef, UnitKind, UnitState, Vec2 } from './typ
 import { effectiveUnitDef } from './effectiveUnit';
 import { canAttackCell } from './ai';
 import { cellsFromDist, reachableCells } from './path';
+import { unitFlies } from '@/data/unitDefs';
 import { gridSize, inBounds, type TerrainGrid } from './grid';
 
 function key(p: Vec2): string {
@@ -65,7 +66,7 @@ export function cellsThreatenedByEnemies(
     const def = effectiveUnitDef(e, defs);
     const reach = cellsFromDist(
       e.pos,
-      reachableCells(e.pos, def.move, blockedExcept(units, e.uid), terrain),
+      reachableCells(e.pos, def.move, blockedExcept(units, e.uid), terrain, unitFlies(e.defId)),
     );
     for (const from of reach) {
       for (const cell of attackableCellsFrom(def, from, terrain)) {
@@ -93,7 +94,7 @@ export function enemiesThreateningCell(
     const def = effectiveUnitDef(e, defs);
     const reach = cellsFromDist(
       e.pos,
-      reachableCells(e.pos, def.move, blockedExcept(units, e.uid), terrain),
+      reachableCells(e.pos, def.move, blockedExcept(units, e.uid), terrain, unitFlies(e.defId)),
     );
     for (const from of reach) {
       if (canAttackCell(def, from, cell, terrain)) {

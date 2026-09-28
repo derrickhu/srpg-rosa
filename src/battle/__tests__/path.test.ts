@@ -39,6 +39,17 @@ describe('reachableCells', () => {
     expect(dist1.has('1,0')).toBe(false);
   });
 
+  it('飞骑进森林只花 1 点移动力，城墙仍然过不去', () => {
+    const terrain: TerrainGrid = [
+      ['plain', 'forest', 'wall'],
+    ];
+    const fly = reachableCells({ x: 0, y: 0 }, 1, new Set(), terrain, true);
+    expect(fly.get('1,0')).toBe(1);
+    expect(fly.has('2,0')).toBe(false);
+    const grounded = reachableCells({ x: 0, y: 0 }, 1, new Set(), terrain, false);
+    expect(grounded.has('1,0')).toBe(false);
+  });
+
   it('wall terrain is impassable', () => {
     const terrain: TerrainGrid = [
       ['plain', 'wall', 'plain'],

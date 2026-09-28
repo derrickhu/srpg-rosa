@@ -59,6 +59,8 @@ describe('跟人专属纹章目录', () => {
       'hero_cav_lance',
       'hero_bow_luoling',
       'hero_shield_kelan',
+      'hero_bard_qingxian',
+      'hero_flyer_yuan',
     ]);
     for (const c of bought) {
       const list = personalEmblemsForRoster(c.id);

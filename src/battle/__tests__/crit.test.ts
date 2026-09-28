@@ -144,6 +144,18 @@ describe('会心词条', () => {
         base: { maxHp: 80, atk: 20, spd: 4, move: 2 },
         strike: { range: 2, isRanged: true, taunt: false },
       },
+      bard: {
+        id: 'bard' as const,
+        name: '伶人',
+        base: { maxHp: 64, atk: 7, spd: 3, move: 3 },
+        strike: { range: 1, isRanged: false, taunt: false },
+      },
+      flyer: {
+        id: 'flyer' as const,
+        name: '飞骑',
+        base: { maxHp: 78, atk: 17, spd: 8, move: 4 },
+        strike: { range: 1, isRanged: false, taunt: false },
+      },
     } satisfies Record<UnitKind, UnitArchetypeDef>;
 
     const events = castSkillManual(self, DEFS, [self, foe], FLAT, 'e1');

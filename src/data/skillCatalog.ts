@@ -153,7 +153,12 @@ export type SkillCastAllyEffect =
   /** 即时回血（不是限时效果，命中当场结算，见 `pushAllyHeal`） */
   | { kind: 'heal'; amount: number }
   /** 减伤，同 `SkillCastSelfEffect` 的 `guard`：护人和护自己走同一套结算 */
-  | { kind: 'guard'; reduceRatio: number; rounds: number };
+  | { kind: 'guard'; reduceRatio: number; rounds: number }
+  /**
+   * 再动：目标本轮已经出手过，则立刻再获得一次完整行动。
+   * 结算在引擎里（插回队列），这里只标记；没出手过的人点了等于没放。
+   */
+  | { kind: 'encore' };
 
 /**
  * 技能对**格子**做的事，作用于技能范围内的每一格。
@@ -441,6 +446,22 @@ const SPECS: Record<string, SkillSpec> = {
     displayKind: 'singleBash',
     shape: { type: 'neighborPickFoe', manhattan: 2, reach: 'within', axisOnly: true },
     damage: { kind: 'scaledAtk', atkMul: 1.25 },
+    onHitDisplace: { who: 'self', cells: 2 },
+  },
+  /**
+   * 飞骑招牌：直线上 3 格内点一名敌人，扑到他身边再打。
+   * 和长驱突刺分开的是距离（3 对 2）和时机（走完再扑，先用飞行走位）。
+   */
+  swoop: {
+    id: 'swoop',
+    name: '俯冲',
+    cooldown: 3,
+    exclusiveProfession: 'flyer',
+    timing: 'afterMove',
+    role: 'damage',
+    displayKind: 'singleBash',
+    shape: { type: 'neighborPickFoe', manhattan: 3, reach: 'within', axisOnly: true },
+    damage: { kind: 'scaledAtk', atkMul: 1.35 },
     onHitDisplace: { who: 'self', cells: 2 },
   },
   /**
@@ -1470,6 +1491,22 @@ const SPECS: Record<string, SkillSpec> = {
       { kind: 'spdBonus', addSpd: 1, rounds: 2 },
     ],
   },
+  /**
+   * 伶人招牌：点一名本轮已经行动过的友军，让他马上再动一次。
+   * 治疗是把血抬回来，这一招是把回合还回去。速度要低，队友先动她才点得到人。
+   */
+  encore: {
+    id: 'encore',
+    name: '再舞',
+    cooldown: 3,
+    exclusiveProfession: 'bard',
+    timing: 'beforeMove',
+    role: 'support',
+    displayKind: 'whirlwind',
+    shape: { type: 'neighborPickAlly', manhattan: 2, reach: 'within' },
+    damage: { kind: 'none' },
+    onCastAllyEffects: [{ kind: 'encore' }],
+  },
 };
 
 const DEFAULT_SKILL_ID_BY_KIND: Record<UnitKind, string> = {
@@ -1479,6 +1516,8 @@ const DEFAULT_SKILL_ID_BY_KIND: Record<UnitKind, string> = {
   shield: 'bash',
   mage: 'ember',
   healer: 'heal_touch',
+  bard: 'encore',
+  flyer: 'swoop',
 };
 
 /**

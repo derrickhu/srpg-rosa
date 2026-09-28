@@ -144,6 +144,26 @@ const SETS = [
       { dir: 'kelan/walk', preset: 'idle_from_walk', mirrorRight: true },
     ],
   },
+  // 青弦：红绸伶人。prompt 见 docs/prompt/unit_qingxian_walk_sheet_prompt.txt。
+  {
+    id: 'qingxian',
+    blend: 'normal',
+    downscale: 1,
+    runs: [
+      { dir: 'qingxian/walk', preset: 'player_sheet', fps: 10, mirrorRight: true },
+      { dir: 'qingxian/walk', preset: 'idle_from_walk', mirrorRight: true },
+    ],
+  },
+  // 阿鸢：纸鸢翼飞骑。prompt 见 docs/prompt/unit_yuan_walk_sheet_prompt.txt。
+  {
+    id: 'yuan',
+    blend: 'normal',
+    downscale: 1,
+    runs: [
+      { dir: 'yuan/walk', preset: 'player_sheet', fps: 10, mirrorRight: true },
+      { dir: 'yuan/walk', preset: 'idle_from_walk', mirrorRight: true },
+    ],
+  },
   // 芙洛：冰蓝袍 + 单手浮书。prompt 见 docs/prompt/unit_floe_*.txt。右向由左向镜像。
   {
     id: 'floe',

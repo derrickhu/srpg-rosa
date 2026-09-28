@@ -37,6 +37,8 @@ const SIGNATURE_SKILL_SFX: Record<string, SfxId> = {
   frost_ring: 'sfx_skill_frost_ring',
   hex_mark: 'sfx_skill_hex_mark',
   shield_wall: 'sfx_skill_shield_wall',
+  encore: 'sfx_skill_encore',
+  swoop: 'sfx_skill_swoop',
 };
 
 /** 玩家/敌方技能 id → 族。漏登记的走 `inferSkillFamily`，测试会锁玩家技能都能落到一族。 */
@@ -48,6 +50,8 @@ const SKILL_FAMILY: Record<string, SkillSfxFamily> = {
   lance_thrust: 'physical',
   trample: 'physical',
   shield_wall: 'physical',
+  encore: 'holy',
+  swoop: 'physical',
   cleave: 'physical',
   snap: 'physical',
   hammer: 'physical',

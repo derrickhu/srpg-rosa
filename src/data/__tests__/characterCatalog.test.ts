@@ -186,6 +186,16 @@ describe('带得动这一招吗（canCharacterUseSkill）', () => {
     expect(canCharacterUseSkill(rein, 'blade_rush')).toBe(false);
   });
 
+  it('再舞是青弦的招牌，俯冲是阿鸢的招牌', () => {
+    const qingxian = CHARACTER_DEFS.find((c) => c.id === 'hero_bard_qingxian')!;
+    const yuan = CHARACTER_DEFS.find((c) => c.id === 'hero_flyer_yuan')!;
+    expect(canCharacterUseSkill(qingxian, 'encore')).toBe(true);
+    expect(canCharacterUseSkill(yuan, 'swoop')).toBe(true);
+    expect(canCharacterUseSkill(qingxian, 'swoop')).toBe(false);
+    expect(canCharacterUseSkill(yuan, 'encore')).toBe(false);
+    expect(canCharacterUseSkill(mir, 'encore')).toBe(false);
+  });
+
   it('挡掉已经转给敌人的那几招：老档里格隆的铁锤带不上场了', () => {
     expect(canProfessionEquipSkill(gron.profession, 'hammer')).toBe(true);
     expect(canCharacterUseSkill(gron, 'hammer')).toBe(false);

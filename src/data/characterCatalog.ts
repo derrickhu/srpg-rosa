@@ -50,8 +50,9 @@ export interface CharacterDef {
    *
    * **路线属于角色，不属于职业。** 同职业的两个角色可以是两条路线——
    * 「另一个战士，走的是控制」是合法且期待中的扩展方式，玩家玩的是角色。
-   * 输出路线占大多数，弥尔走 `support`。
+   * 输出路线占大多数，弥尔和青弦走 `support`。
    * 洛铃走控制（破甲咒），珂兰走控制（盾墙震慑）。还空着的是战吼。
+   * 青弦是伶人（再舞），阿鸢是飞骑（俯冲）。这两个职业不进克制三角。
    */
   skillRoute: SkillRole;
   /**
@@ -171,6 +172,28 @@ export const CHARACTER_DEFS: CharacterDef[] = [
     defaultSkillId: 'shield_wall',
     unlock: { kind: 'ads', watches: 2 },
     animSet: 'kelan',
+  },
+  {
+    id: 'hero_bard_qingxian',
+    name: '青弦',
+    profession: 'bard',
+    skillRoute: 'support',
+    base: { maxHp: 64, atk: 7, spd: 3, move: 3 },
+    growth: { maxHp: 6, atk: 1, spd: 0, move: 0 },
+    defaultSkillId: 'encore',
+    unlock: { kind: 'ads', watches: 2 },
+    animSet: 'qingxian',
+  },
+  {
+    id: 'hero_flyer_yuan',
+    name: '阿鸢',
+    profession: 'flyer',
+    skillRoute: 'damage',
+    base: { maxHp: 78, atk: 17, spd: 8, move: 4 },
+    growth: { maxHp: 7, atk: 2, spd: 0, move: 0 },
+    defaultSkillId: 'swoop',
+    unlock: { kind: 'ads', watches: 2 },
+    animSet: 'yuan',
   },
 ];
 

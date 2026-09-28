@@ -3,7 +3,7 @@ import { COUNTER_STRONG, COUNTER_WEAK } from './constants';
 import { getTerrainAt, type TerrainGrid } from './grid';
 import { getTerrainSpec } from '@/data/terrainSpec';
 
-/** 骑 → 剑 → 弓 → 骑；盾卫 / 法师 / 祭司不参与 */
+/** 骑 → 剑 → 弓 → 骑；盾卫 / 法师 / 祭司 / 伶人 / 飞骑不参与 */
 function inTriangle(kind: UnitKind): boolean {
   return kind === 'sword' || kind === 'bow' || kind === 'cavalry';
 }
