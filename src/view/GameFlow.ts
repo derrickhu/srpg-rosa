@@ -91,6 +91,7 @@ import {
   startEventRun,
   rollRareOpeningLoot,
   undoDeployForRetry,
+  adoptAdventureRecruits,
   activateRunLane,
   adventureRunOf,
   challengeRunOf,
@@ -814,6 +815,7 @@ export class GameFlow {
       this.renderShell('adventure');
       return;
     }
+    if (adoptAdventureRecruits(this.state)) SaveManager.save(this.state);
     if (isEventRun(this.state)) {
       this.renderEvent();
       return;

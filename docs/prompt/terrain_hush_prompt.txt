@@ -1,0 +1,11 @@
+第八章地形贴纸「静域」
+地形贴纸不描黑边。参考贴纸的体积和留白，主体换成一块冷银井沿。
+
+One single terrain STICKER, centered, for a tactics grid cell.
+The attached reference shows the sticker language: a small centered prop with a soft cream rim and a soft contact shadow, sitting alone. Match that sticker construction. The subject is a hush tile.
+
+The entire background is 100% solid flat MAGENTA #FF00FF. The sticker floats in the middle with a wide magenta margin.
+
+SUBJECT: one low oval slab of cold silver, the color of a new silver coin. Main body #D7E0EA, a deeper shadow lobe #8E9EB0, a bright spoon highlight #F4F7FB on the upper face. A thin ink-blue crescent (#2C3A52) along the near rim, matte, so it reads as a well lip. Soft rounded edge, a thin pale rim so it reads on green grass. A very soft darker contact shadow tucked under the slab. Flat cartoon, 3 tones, toy-like volume like the reference sticker.
+
+The slab fills about 55% of the square, centered. The picture has this one sticker and the magenta field.

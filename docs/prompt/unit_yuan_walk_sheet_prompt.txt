@@ -1,38 +1,34 @@
+# 阿鸢 —— 身份锁 art/sprite-runs/yuan/identity.png
+# 头身对齐剑士 / 芙洛：大头、短方身体、粗黑描边。翅膀是两片平涂纸鸢，不要羽毛写实。
+
 A 4x4 sprite sheet, full 4-direction walk cycle, top-down tactics RPG.
-One character only: Ayuan, a winged lancer who dives onto enemies.
 
-CHARACTER — extreme super-deformed mascot. HEAD is about HALF total height.
-Tiny stubby body. The whole body fits in a roughly square box.
-Giant round head, short limbs, mitten hands, two dark oval eyes, two brows, a tiny mouth.
-Open face. Ink-black hair in a high knot.
+The attached image is the EXACT character identity. Copy her: giant round head, ink-black
+hair in a high round knot with a noon-sky-blue band, stubby square body, a short cape the
+blue of a clear noon sky, two flat paper-kite wings that are white with noon-sky-blue tips,
+a short spear the orange-brown of a new copper coin, brown boots, thick pure-black outlines,
+flat cel fills, mitten hands, two dark oval eyes, a tiny mouth line.
+Keep this same head size and this same stubby body in every cell.
+Only facing and walk pose change.
 
-IDENTITY COLORS, flat cel:
-- A pair of paper-kite wings, white paper with tips the blue of a clear noon sky. The wings spread wider than her body and are the silhouette.
-- A short spear the orange-brown of a new copper coin, held forward.
-- A short cape the blue of a clear noon sky.
-- Brown boots.
-Thick near-black outlines. Flat fills, one highlight, one shadow.
-
-ART STYLE: hand-drawn cartoon game sprite, thick near-black outlines, flat saturated fills with light cel shading, 3/4 top-down camera matching a tactics grid.
-
-PROPORTIONS: extreme super-deformed mascot. The HEAD INCLUDING HAIR is about HALF the character's total height. The whole character including wings fits in a wide box. 1.5-head mascot: giant head, tiny body. Wings stay inside the cell.
+ART STYLE: hand-drawn cartoon game sprite, thick pure-black outlines, flat saturated fills
+with one highlight and one shadow, 3/4 top-down camera matching a tactics grid.
+1.5-head mascot. Head including the hair knot is about half the height from hair to boots.
+Wings are two simple flat kite shapes beside the shoulders.
 
 WALK MOTION — readable from the silhouette at 44 pixels:
-  Column 1: both feet together, body at full height, wings held half-open, spear forward.
-  Column 2: LEFT foot planted far FORWARD, right foot trailing far BEHIND, a wide gap between the feet. Body squashes down about one tenth. Wings swept UP above the head.
-  Column 3: same standing pose as column 1.
-  Column 4: RIGHT foot far forward, left foot trailing, same body drop. Wings swept DOWN beside the boots.
-Wide stride. The wing position in column 2 and column 4 must read as opposite shapes.
+  Column 1 and 3: both feet together, full height, wings half open, spear forward.
+  Column 2: left foot far forward, right foot far behind, wide gap, wings swept up.
+  Column 4: right foot far forward, left foot far behind, wings swept down beside the boots.
 
-ROWS:
-  Row 1 top: facing DOWN, face visible, spear pointing down toward the viewer’s feet, wings to either side
-  Row 2: facing LEFT, left profile, spear leading left, wings seen from the side
+ROWS — every cell in a row faces the same way:
+  Row 1 top: facing DOWN, face visible, spear on the viewer's left
+  Row 2: facing LEFT, left profile, spear leading left
   Row 3: facing RIGHT, right profile, spear leading right
-  Row 4 bottom: facing UP, back of the hair knot and sky-blue cape, wings still wider than the body
+  Row 4 bottom: facing UP, back of the topknot and the sky-blue cape
 
 LAYOUT:
 1. Exactly 16 equal cells, 4 columns by 4 rows. Cells meet with no drawn borders.
 2. Every pixel that is not the character is solid flat magenta #FF00FF.
-3. Identical body scale in every cell.
-4. Body fills about 45% of cell height, centered, with a wide magenta margin on every side so wings and feet stay inside the cell. Feet sit on one baseline well above the cell edge.
-5. Face: two dark oval eyes, two brows, tiny mouth. Mitten hands. Open face.
+3. Identical body scale in every cell. Body fills about half the cell height.
+4. Wings, spear, and feet stay inside the cell. Feet sit on one baseline.

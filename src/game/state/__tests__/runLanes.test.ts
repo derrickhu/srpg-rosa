@@ -1,15 +1,19 @@
 import { describe, expect, it } from 'vitest';
+import { getCharacterDef } from '@/data/characterCatalog';
 import { DUNGEON_DEFS } from '@/data/dungeonCatalog';
 import { ENDLESS_DUNGEON_ID } from '@/data/endlessCatalog';
 import { SANDBOX_DUNGEON_ID } from '@/data/sandboxLab';
+import { instantiateCharacter } from '@/game/characterFactory';
+import { TutorialStep } from '@/game/tutorial/tutorialSteps';
 import {
   activateRunLane,
   adventureRunOf,
+  benchCharacters,
   challengeRunOf,
   createInitialState,
   shouldConfirmAdventureSwitch,
 } from '../GameState';
-import { abandonRun, canSweepChapter, finishEndlessRun, startRun } from '../ProgressManager';
+import { abandonRun, adoptAdventureRecruits, canSweepChapter, finishEndlessRun, startRun } from '../ProgressManager';
 
 const CHAPTER = DUNGEON_DEFS[0]!;
 
@@ -103,5 +107,50 @@ describe('冒险 / 副本两条线互不覆盖', () => {
     expect(challengeRunOf(s)?.endless?.wave).toBe(3);
     expect(activateRunLane(s, 'challenge')).toBe(true);
     expect(s.run?.dungeonId).toBe(ENDLESS_DUNGEON_ID);
+  });
+});
+
+describe('继续冒险补上新招募', () => {
+  function recruit(s: ReturnType<typeof createInitialState>, id: string): void {
+    const def = getCharacterDef(id);
+    if (!def) throw new Error(id);
+    s.meta.roster.push(instantiateCharacter(def));
+  }
+
+  it('开局后招募的人，继续时排在替补席末尾', () => {
+    const s = createInitialState();
+    s.meta.tutorialStep = TutorialStep.COMPLETED;
+    const original = party(s);
+    startRun(s, CHAPTER.id, original);
+    recruit(s, 'hero_bard_qingxian');
+    expect(s.run!.partyRosterIds).toEqual(original);
+    expect(adoptAdventureRecruits(s)).toBe(true);
+    expect(s.run!.partyRosterIds).toEqual([...original, 'hero_bard_qingxian']);
+    expect(benchCharacters(s).at(-1)?.rosterId).toBe('hero_bard_qingxian');
+    expect(adoptAdventureRecruits(s)).toBe(false);
+  });
+
+  it('教学局不把后来招募的人塞进剧本阵容', () => {
+    const s = createInitialState();
+    s.meta.tutorialStep = TutorialStep.DEPLOY2_INTRO;
+    const original = [s.meta.roster[0]!.rosterId];
+    startRun(s, CHAPTER.id, original);
+    recruit(s, 'hero_bard_qingxian');
+    expect(adoptAdventureRecruits(s)).toBe(false);
+    expect(s.run!.partyRosterIds).toEqual(original);
+  });
+
+  it('无尽进行中不改当前局，切回冒险才补人', () => {
+    const s = createInitialState();
+    s.meta.tutorialStep = TutorialStep.COMPLETED;
+    const original = party(s);
+    startRun(s, CHAPTER.id, original);
+    recruit(s, 'hero_flyer_yuan');
+    startRun(s, ENDLESS_DUNGEON_ID, original);
+    expect(adoptAdventureRecruits(s)).toBe(false);
+    expect(s.parkedRun!.partyRosterIds).toEqual(original);
+    activateRunLane(s, 'adventure');
+    expect(adoptAdventureRecruits(s)).toBe(true);
+    expect(s.run!.partyRosterIds).toEqual([...original, 'hero_flyer_yuan']);
   });
 });

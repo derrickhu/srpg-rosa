@@ -1,0 +1,86 @@
+{
+  "id": "hushshell",
+  "source": "art/sprite-runs/mobs-ch8",
+  "blend": "normal",
+  "image": "images/anim/hushshell.png",
+  "meta": {
+    "size": {
+      "w": 256,
+      "h": 256
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 158,
+    "baselineY": 234,
+    "ref": "mobs-ch8-idle/mob-4.png"
+  },
+  "frames": {
+    "mobs-ch8-idle/mob-4.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 217,
+        "h": 160
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 19,
+        "y": 76,
+        "w": 217,
+        "h": 160
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "idle": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch8-idle/mob-4.png"
+      ]
+    },
+    "default": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch8-idle/mob-4.png"
+      ]
+    },
+    "idle_up": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch8-idle/mob-4.png"
+      ]
+    },
+    "idle_down": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch8-idle/mob-4.png"
+      ]
+    },
+    "idle_left": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch8-idle/mob-4.png"
+      ]
+    },
+    "idle_right": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch8-idle/mob-4.png"
+      ]
+    }
+  }
+}

@@ -473,6 +473,22 @@ export function getCharacter(state: MvpGameState, rosterId: string): Character |
   return state.meta.roster.find((m) => m.rosterId === rosterId);
 }
 
+/**
+ * 把名册里还没进这一局的人补到队尾。
+ * 开局时 `partyRosterIds` 是当时的快照，中途招募的人要靠这里才能出现在替补席。
+ */
+export function appendMissingRosterToParty(run: RunState, rosterIds: readonly string[]): boolean {
+  const have = new Set(run.partyRosterIds);
+  let changed = false;
+  for (const id of rosterIds) {
+    if (have.has(id)) continue;
+    run.partyRosterIds.push(id);
+    have.add(id);
+    changed = true;
+  }
+  return changed;
+}
+
 /** 带入本局的角色（按 party 顺序） */
 export function partyCharacters(state: MvpGameState): Character[] {
   const run = state.run;

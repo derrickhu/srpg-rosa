@@ -8,7 +8,7 @@ describe('激励视频广告位', () => {
     expect(adUnitIdFor('extraDeploy')).toBe('adunit-d38d1888866177c1');
     expect(adUnitIdFor('revive')).toBe('adunit-75d725546bf4aacd');
     expect(adUnitIdFor('emblemRelease')).toBe('adunit-e4b32e99968edcea');
-    expect(adUnitIdFor('recruitCharacter')).toBe('adunit-e4b32e99968edcea');
+    expect(adUnitIdFor('recruitCharacter')).toBe('adunit-fef31ada9aa01c07');
   });
 
   it('非微信环境直接发奖，方便浏览器把整条链路跑通', async () => {

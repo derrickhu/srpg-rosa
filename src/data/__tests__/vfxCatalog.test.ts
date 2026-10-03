@@ -261,6 +261,8 @@ describe('特效登记表', () => {
     expect(SKILL_VFX.heal_touch!.impact!.set).toBe('heal_flash');
     expect(SKILL_VFX.ward_prayer!.impact!.set).toBe('ward_aegis');
     expect(SKILL_VFX.field_bless!.impact!.set).toBe('bless_rays');
+    expect(SKILL_VFX.encore!.impact!.set).toBe('encore_ribbon');
+    expect(SKILL_VFX.encore!.pathBeam!.set).toBeUndefined();
   });
 
   it('命中闪光不能拿弹体素材充当——弹体有朝向，炸开没有', () => {
@@ -534,6 +536,8 @@ describe('特效登记表', () => {
       'rite_chant',
       'mist_chime',
       'bell_toll',
+      'peal_store',
+      'well_ram',
     ];
     const leaked: string[] = [];
     for (const [k, r] of Object.entries(MOOK_ATTACK_VFX)) {

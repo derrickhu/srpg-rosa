@@ -53,6 +53,7 @@ export type SfxId =
   | 'sfx_skill_hex_mark'
   | 'sfx_skill_shield_wall'
   | 'sfx_skill_encore'
+  | 'sfx_skill_after_shock'
   | 'sfx_skill_swoop';
 
 export type BgmId = 'hub' | 'deploy' | 'battle' | 'boss' | 'shop';
@@ -132,6 +133,7 @@ const SFX_MAP: Record<SfxId, string> = {
   sfx_skill_hex_mark: 'audio/sfx/sfx_skill_hex_mark.mp3',
   sfx_skill_shield_wall: 'audio/sfx/sfx_skill_shield_wall.mp3',
   sfx_skill_encore: 'audio/sfx/sfx_skill_encore.mp3',
+  sfx_skill_after_shock: 'audio/sfx/sfx_skill_after_shock.mp3',
   sfx_skill_swoop: 'audio/sfx/sfx_skill_swoop.mp3',
 };
 

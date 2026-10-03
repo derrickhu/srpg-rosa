@@ -1,0 +1,70 @@
+{
+  "source": "scripts/vfx-sheet.py",
+  "input": "/Users/rosa/.cursor/projects/Users-rosa-rosa-games-srpg-rosa/assets/temp_hw_lay_sheet.jpg",
+  "target": "vfx",
+  "mode": "vfx_sheet",
+  "rows": 3,
+  "cols": 3,
+  "cell_size": 256,
+  "threshold": 22,
+  "frame_labels": [
+    "temp_hw_lay-1",
+    "temp_hw_lay-2",
+    "temp_hw_lay-3",
+    "temp_hw_lay-4",
+    "temp_hw_lay-5",
+    "temp_hw_lay-6",
+    "temp_hw_lay-7",
+    "temp_hw_lay-8",
+    "temp_hw_lay-9"
+  ],
+  "align": "center",
+  "key": "black",
+  "alpha_gamma": 2.0,
+  "shared_crop_side": 214,
+  "crop_offsets": [
+    {
+      "x": 63,
+      "y": 63
+    },
+    {
+      "x": 63,
+      "y": 63
+    },
+    {
+      "x": 63,
+      "y": 63
+    },
+    {
+      "x": 63,
+      "y": 63
+    },
+    {
+      "x": 63,
+      "y": 63
+    },
+    {
+      "x": 63,
+      "y": 63
+    },
+    {
+      "x": 63,
+      "y": 63
+    },
+    {
+      "x": 63,
+      "y": 63
+    },
+    {
+      "x": 63,
+      "y": 63
+    }
+  ],
+  "empty_frames": [
+    "temp_hw_lay-9"
+  ],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}

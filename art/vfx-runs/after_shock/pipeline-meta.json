@@ -1,0 +1,70 @@
+{
+  "source": "scripts/vfx-sheet.py",
+  "input": "art/sprite-runs/_tmp/after_shock.jpg",
+  "target": "vfx",
+  "mode": "vfx_sheet",
+  "rows": 3,
+  "cols": 3,
+  "cell_size": 256,
+  "threshold": 22,
+  "frame_labels": [
+    "after_shock-1",
+    "after_shock-2",
+    "after_shock-3",
+    "after_shock-4",
+    "after_shock-5",
+    "after_shock-6",
+    "after_shock-7",
+    "after_shock-8",
+    "after_shock-9"
+  ],
+  "align": "center",
+  "key": "black",
+  "alpha_gamma": 2.0,
+  "shared_crop_side": 244,
+  "crop_offsets": [
+    {
+      "x": 48,
+      "y": 48
+    },
+    {
+      "x": 48,
+      "y": 48
+    },
+    {
+      "x": 48,
+      "y": 48
+    },
+    {
+      "x": 48,
+      "y": 48
+    },
+    {
+      "x": 48,
+      "y": 48
+    },
+    {
+      "x": 48,
+      "y": 48
+    },
+    {
+      "x": 48,
+      "y": 48
+    },
+    {
+      "x": 48,
+      "y": 48
+    },
+    {
+      "x": 48,
+      "y": 48
+    }
+  ],
+  "empty_frames": [
+    "after_shock-9"
+  ],
+  "qc_summary": {
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0
+  }
+}

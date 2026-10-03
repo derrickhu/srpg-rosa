@@ -31,6 +31,11 @@ describe('选点爆炸的说明必须读出范围', () => {
     expect(describeSkillShape(spec)).toContain('贴脸打不到');
   });
 
+  it('再舞的说明写明只能点已经行动过的人', () => {
+    const lines = describeSkillSpec(getSkillSpec('encore')!);
+    expect(lines.some((l) => l.includes('已经行动过'))).toBe(true);
+  });
+
   it('改地形写成地形名，不留空行', () => {
     const veil = describeSkillSpec(getSkillSpec('temp_ms_veil')!);
     const clear = describeSkillSpec(getSkillSpec('temp_ms_clear')!);

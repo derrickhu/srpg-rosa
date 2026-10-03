@@ -1,6 +1,7 @@
 import * as PIXI from 'pixi.js';
 import { makeText } from '@/theme/typography';
 import { UNIT_DEFS } from '@/data/unitDefs';
+import { characterArtKey } from '@/data/characterCatalog';
 import { getSkillSpec } from '@/data/skillCatalog';
 import { isEliteDungeon } from '@/data/eliteCatalog';
 import { describeShopOfferLines } from '@/data/itemText';
@@ -16,6 +17,7 @@ import {
   createBackground,
   createCurrencyPill,
   createUiIcon,
+  createUnitToken,
   RUN_GOLD_X,
   runHudRowY,
 } from '@/view/renderHelpers';
@@ -27,6 +29,8 @@ import { attachPress } from '@/ui/press';
 import { makeSpeechBubble } from '@/ui/SpeechBubble';
 import { makeStatDescBlock } from '@/ui/statDescText';
 import { C } from '@/view/mvpTheme';
+import { characterInfoModel } from '@/view/unitInfoModel';
+import { createUnitInfoOverlay } from '@/view/unitInfoPanel';
 
 const PAD = 16;
 
@@ -479,8 +483,16 @@ export function createShopView(
   }
 
   let picker: ModalHandle | null = null;
+  let info: { view: PIXI.Container; stop(): void } | null = null;
+
+  function closeInfo(): void {
+    info?.stop();
+    info?.view.destroy({ children: true });
+    info = null;
+  }
 
   function closePicker(): void {
+    closeInfo();
     picker?.close();
     picker = null;
   }
@@ -488,32 +500,53 @@ export function createShopView(
   function openTempSkillPicker(offer: Extract<ShopOffer, { type: 'tempSkill' }>): void {
     closePicker();
     const mercs = rosterEligibleForTempSkill(state, offer.skillId);
-    const rowH = 44;
-    const ph = Math.min(H - 80, 100 + mercs.length * 52);
+    const rowH = 56;
+    const ph = Math.min(H - 80, 132 + mercs.length * (rowH + 8));
     picker = createModal({
       screenWidth: W,
       screenHeight: H,
       panelWidth: W - 40,
-      panelHeight: Math.max(180, ph),
+      panelHeight: Math.max(200, ph),
       light: true,
       title: `将「${offer.name}」交给谁？`,
       showClose: true,
       scrollable: true,
-      onClose: () => { picker = null; },
+      onClose: () => {
+        picker = null;
+        closeInfo();
+      },
     });
     const note = makeGoldCostRow(offer.price);
     picker.body.addChild(note);
-    let py = note.height + 10;
+    const hint = makeText('点头像查看属性，点这一行把技能交给他', 'caption', { fill: C.muted });
+    hint.y = note.height + 6;
+    picker.body.addChild(hint);
+    let py = hint.y + hint.height + 8;
     for (const m of mercs) {
       const row = makeCard({
         width: picker.bodySize.width,
         height: rowH,
         onTap: () => {
+          if (picker?.wasDragging()) return;
           callbacks.onBuy(offer, { tempSkillTargetRosterId: m.rosterId });
           closePicker();
         },
       });
       row.y = py;
+      const portrait = createUnitToken(characterArtKey(m), 'player', 44);
+      portrait.x = 28;
+      portrait.y = rowH / 2;
+      portrait.eventMode = 'static';
+      portrait.cursor = 'pointer';
+      portrait.hitArea = new PIXI.Rectangle(-20, -22, 40, 44);
+      portrait.on('pointertap', (ev) => {
+        ev.stopPropagation();
+        if (picker?.wasDragging()) return;
+        closeInfo();
+        info = createUnitInfoOverlay(characterInfoModel(state, m), W, H, closeInfo);
+        root.addChild(info.view);
+      });
+      row.addChild(portrait);
       const cur = state.run?.runTempSkill[m.rosterId];
       const curName = cur ? getSkillSpec(cur)?.name : undefined;
       const rlab = makeText(
@@ -521,7 +554,7 @@ export function createShopView(
         'ui',
         { fill: C.text, fontSize: 13 },
       );
-      rlab.x = 12;
+      rlab.x = 52;
       rlab.y = (rowH - rlab.height) / 2;
       row.addChild(rlab);
       picker.body.addChild(row);

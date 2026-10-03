@@ -1,0 +1,86 @@
+{
+  "id": "pealshard",
+  "source": "art/sprite-runs/mobs-ch8",
+  "blend": "normal",
+  "image": "images/anim/pealshard.png",
+  "meta": {
+    "size": {
+      "w": 256,
+      "h": 256
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 158,
+    "baselineY": 237,
+    "ref": "mobs-ch8-idle/mob-1.png"
+  },
+  "frames": {
+    "mobs-ch8-idle/mob-1.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 192,
+        "h": 158
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 32,
+        "y": 79,
+        "w": 192,
+        "h": 158
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "idle": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch8-idle/mob-1.png"
+      ]
+    },
+    "default": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch8-idle/mob-1.png"
+      ]
+    },
+    "idle_up": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch8-idle/mob-1.png"
+      ]
+    },
+    "idle_down": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch8-idle/mob-1.png"
+      ]
+    },
+    "idle_left": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch8-idle/mob-1.png"
+      ]
+    },
+    "idle_right": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "mobs-ch8-idle/mob-1.png"
+      ]
+    }
+  }
+}

@@ -1,0 +1,219 @@
+{
+  "id": "temp_hw_lay",
+  "source": "art/vfx-runs/temp_hw_lay",
+  "blend": "add",
+  "image": "images/anim/temp_hw_lay.png",
+  "meta": {
+    "size": {
+      "w": 512,
+      "h": 1024
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 25,
+    "baselineY": 134,
+    "ref": "temp_hw_lay/temp_hw_lay-1.png"
+  },
+  "frames": {
+    "temp_hw_lay/temp_hw_lay-1.png": {
+      "frame": {
+        "x": 341,
+        "y": 400,
+        "w": 26,
+        "h": 25
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 114,
+        "y": 109,
+        "w": 26,
+        "h": 25
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_hw_lay/temp_hw_lay-2.png": {
+      "frame": {
+        "x": 192,
+        "y": 400,
+        "w": 115,
+        "h": 97
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 73,
+        "y": 73,
+        "w": 115,
+        "h": 97
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_hw_lay/temp_hw_lay-3.png": {
+      "frame": {
+        "x": 241,
+        "y": 201,
+        "w": 237,
+        "h": 196
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 15,
+        "y": 24,
+        "w": 237,
+        "h": 196
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_hw_lay/temp_hw_lay-4.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 237,
+        "h": 197
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 8,
+        "y": 26,
+        "w": 237,
+        "h": 197
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_hw_lay/temp_hw_lay-5.png": {
+      "frame": {
+        "x": 241,
+        "y": 2,
+        "w": 235,
+        "h": 197
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 13,
+        "y": 26,
+        "w": 235,
+        "h": 197
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_hw_lay/temp_hw_lay-6.png": {
+      "frame": {
+        "x": 2,
+        "y": 201,
+        "w": 237,
+        "h": 197
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 15,
+        "y": 26,
+        "w": 237,
+        "h": 197
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_hw_lay/temp_hw_lay-7.png": {
+      "frame": {
+        "x": 2,
+        "y": 400,
+        "w": 188,
+        "h": 159
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 33,
+        "y": 46,
+        "w": 188,
+        "h": 159
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_hw_lay/temp_hw_lay-8.png": {
+      "frame": {
+        "x": 309,
+        "y": 400,
+        "w": 30,
+        "h": 30
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 116,
+        "y": 111,
+        "w": 30,
+        "h": 30
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_hw_lay/temp_hw_lay-9.png": {
+      "frame": {
+        "x": 369,
+        "y": 400,
+        "w": 8,
+        "h": 7
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 130,
+        "y": 123,
+        "w": 8,
+        "h": 7
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "temp_hw_lay": {
+      "loop": false,
+      "fps": 18,
+      "frames": [
+        "temp_hw_lay/temp_hw_lay-1.png",
+        "temp_hw_lay/temp_hw_lay-2.png",
+        "temp_hw_lay/temp_hw_lay-3.png",
+        "temp_hw_lay/temp_hw_lay-4.png",
+        "temp_hw_lay/temp_hw_lay-5.png",
+        "temp_hw_lay/temp_hw_lay-6.png",
+        "temp_hw_lay/temp_hw_lay-7.png",
+        "temp_hw_lay/temp_hw_lay-8.png",
+        "temp_hw_lay/temp_hw_lay-9.png"
+      ]
+    }
+  }
+}

@@ -1,0 +1,219 @@
+{
+  "id": "temp_hw_clear",
+  "source": "art/vfx-runs/temp_hw_clear",
+  "blend": "add",
+  "image": "images/anim/temp_hw_clear.png",
+  "meta": {
+    "size": {
+      "w": 1024,
+      "h": 512
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 229,
+    "baselineY": 247,
+    "ref": "temp_hw_clear/temp_hw_clear-1.png"
+  },
+  "frames": {
+    "temp_hw_clear/temp_hw_clear-1.png": {
+      "frame": {
+        "x": 239,
+        "y": 242,
+        "w": 203,
+        "h": 236
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 32,
+        "y": 15,
+        "w": 203,
+        "h": 236
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_hw_clear/temp_hw_clear-2.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 235,
+        "h": 238
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 12,
+        "y": 14,
+        "w": 235,
+        "h": 238
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_hw_clear/temp_hw_clear-3.png": {
+      "frame": {
+        "x": 239,
+        "y": 2,
+        "w": 234,
+        "h": 238
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 12,
+        "y": 14,
+        "w": 234,
+        "h": 238
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_hw_clear/temp_hw_clear-4.png": {
+      "frame": {
+        "x": 475,
+        "y": 2,
+        "w": 234,
+        "h": 237
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 16,
+        "y": 0,
+        "w": 234,
+        "h": 237
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_hw_clear/temp_hw_clear-5.png": {
+      "frame": {
+        "x": 711,
+        "y": 2,
+        "w": 234,
+        "h": 237
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 13,
+        "y": 0,
+        "w": 234,
+        "h": 237
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_hw_clear/temp_hw_clear-6.png": {
+      "frame": {
+        "x": 2,
+        "y": 242,
+        "w": 235,
+        "h": 237
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 12,
+        "y": 0,
+        "w": 235,
+        "h": 237
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_hw_clear/temp_hw_clear-7.png": {
+      "frame": {
+        "x": 444,
+        "y": 242,
+        "w": 221,
+        "h": 129
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 23,
+        "y": 33,
+        "w": 221,
+        "h": 129
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_hw_clear/temp_hw_clear-8.png": {
+      "frame": {
+        "x": 667,
+        "y": 242,
+        "w": 140,
+        "h": 14
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 60,
+        "y": 105,
+        "w": 140,
+        "h": 14
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_hw_clear/temp_hw_clear-9.png": {
+      "frame": {
+        "x": 809,
+        "y": 242,
+        "w": 139,
+        "h": 12
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 63,
+        "y": 102,
+        "w": 139,
+        "h": 12
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "temp_hw_clear": {
+      "loop": false,
+      "fps": 18,
+      "frames": [
+        "temp_hw_clear/temp_hw_clear-1.png",
+        "temp_hw_clear/temp_hw_clear-2.png",
+        "temp_hw_clear/temp_hw_clear-3.png",
+        "temp_hw_clear/temp_hw_clear-4.png",
+        "temp_hw_clear/temp_hw_clear-5.png",
+        "temp_hw_clear/temp_hw_clear-6.png",
+        "temp_hw_clear/temp_hw_clear-7.png",
+        "temp_hw_clear/temp_hw_clear-8.png",
+        "temp_hw_clear/temp_hw_clear-9.png"
+      ]
+    }
+  }
+}

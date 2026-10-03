@@ -22,7 +22,7 @@ export type ManualInput =
 export type ManualPhase = 'act' | 'aim' | 'attackAim';
 
 /**
- * 技能按钮的四种状态。**点不动的三种也要画出来**，而且要能点：
+ * 技能按钮的五种状态。**点不动的也要画出来**，而且要能点：
  * 灰按钮不说明理由的话，玩家只会反复戳它，然后认为是 bug。
  */
 export type SkillButtonState =
@@ -30,6 +30,8 @@ export type SkillButtonState =
   | 'ready'
   /** 冷却好了、额度也在，但范围里一个目标都没有 */
   | 'noTarget'
+  /** 脚下是禁招地形。和没目标不同：走下去之前这一下就是放不了 */
+  | 'hush'
   /** 冷却中 */
   | 'cooldown'
   /** 这回合放过的是这一槽 */
@@ -42,8 +44,12 @@ export interface SkillButtonSpec {
   /** 只在点不动时弹提示用，正常态不显示 */
   name: string;
   state: SkillButtonState;
+  /** `state === 'hush'` 时脚下地形的名字 */
+  blockTerrain?: string;
   /** `state === 'cooldown'` 时还差几回合 */
   cooldown: number;
+  /** `state === 'noTarget'` 时换成更具体的原因，例如再舞还没有人行动过 */
+  noTargetDetail?: string;
 }
 
 /** 普攻按钮状态（和技能按钮同套视觉语义） */
@@ -782,7 +788,11 @@ export function createManualTurnUi(opts: ManualTurnUiOptions): ManualTurnUi {
   /** 点不动的按钮点下去时，把「为什么不能点」说清楚 */
   function blockedReason(sb: SkillButtonSpec): string {
     switch (sb.state) {
-      case 'noTarget': return `${sb.name}：范围内没有目标`;
+      case 'noTarget':
+        return sb.noTargetDetail
+          ? `${sb.name}：${sb.noTargetDetail}`
+          : `${sb.name}：范围内没有目标`;
+      case 'hush': return `${sb.name}：站在${sb.blockTerrain ?? '禁招地形'}上放不了`;
       case 'cooldown': return `${sb.name}：冷却中，还要 ${sb.cooldown} 回合`;
       case 'spent': return `${sb.name}：这回合已经放过了`;
       default: return '这回合的技能已经放过了';
@@ -816,7 +826,7 @@ export function createManualTurnUi(opts: ManualTurnUiOptions): ManualTurnUi {
           tone: sb.slot === 'temp' ? TEMP_TONE : MAIN_TONE,
           // 「没目标」不压暗：它和冷却是两回事——冷却是这几回合都别想了，
           // 没目标只差走两步就能放。压成一样的灰会让玩家放弃这一招。
-          dim: sb.state === 'cooldown' || sb.state === 'spent',
+          dim: sb.state === 'cooldown' || sb.state === 'spent' || sb.state === 'hush',
           badge: sb.state === 'cooldown' ? sb.cooldown : undefined,
           check: sb.state === 'spent',
           onTap: () => {

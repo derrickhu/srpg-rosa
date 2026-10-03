@@ -105,6 +105,15 @@ describe('副本商店池', () => {
     expect(mist!.roguelikePool.some((r) => r.category === 'terrain' && r.terrainId === 'mist')).toBe(true);
     expect(bloodfang!.roguelikePool.some((r) => r.category === 'terrain' && r.terrainId === 'mist')).toBe(false);
 
+    const hush = DUNGEON_DEFS.find((d) => d.id === 'dungeon_hush');
+    const hushSkills = hush!.roguelikePool.filter((r) => r.category === 'tempSkill').map((r) => r.skillId);
+    expect(hushSkills, '静钟井卖铺静、破静、推开和静铃').toEqual(
+      expect.arrayContaining(['temp_hw_lay', 'temp_hw_clear', 'temp_hw_shove', 'temp_ms_bell']),
+    );
+    expect(hushSkills, '这一章没有够格的浓雾，驱雾不进店').not.toContain('temp_ms_clear');
+    expect(hush!.roguelikePool.some((r) => r.category === 'terrain' && r.terrainId === 'hush')).toBe(true);
+    expect(hush!.roguelikePool.find((r) => r.category === 'potion' && r.potionId === 'heal')?.price).toBe(28);
+
     for (const d of DUNGEON_DEFS) {
       const stageIndices = d.nodes
         .filter((n) => n.stageIndex !== undefined)

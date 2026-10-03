@@ -35,6 +35,25 @@ describe('再舞', () => {
     expect(events.some((e) => e.type === 'encore')).toBe(false);
   });
 
+  it('托管时本回合还没有人行动过，再舞不放', () => {
+    const units = [
+      make('sword', 'sword', { x: 1, y: 1 }, { mercSpd: 1 }),
+      make('bard', 'bard', { x: 1, y: 2 }, {
+        mercSpd: 30,
+        battleSkill: skillDefForId('encore'),
+      }),
+      make('e1', 'shield', { x: 1, y: 0 }, { mercSpd: 1 }),
+    ];
+    const sim = createBattleSim(units, emptyTerrain(3, 4), UNIT_DEFS, { mode: 'auto' });
+    const events = [];
+    for (let i = 0; i < 6 && !sim.isDone(); i += 1) {
+      events.push(...sim.stepTurn().events);
+    }
+    const secondRound = events.findIndex((e, i) => i > 0 && e.type === 'round');
+    const firstRound = secondRound < 0 ? events : events.slice(0, secondRound);
+    expect(firstRound.some((e) => e.type === 'skillCast' && e.skillId === 'encore')).toBe(false);
+  });
+
   it('已经动过的友军会在伶人之后立刻再动一次', () => {
     const units = [
       make('sword', 'sword', { x: 1, y: 1 }),

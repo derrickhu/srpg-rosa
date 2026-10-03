@@ -403,6 +403,8 @@ const SIEGE = [0xffeccc, 0xd98a34, 0x8a4a12] as const;
 const DRAKEFIRE = [0xfff6e0, 0xff7a18, 0xb3200c] as const;
 const RITE = [0xffe8dc, 0xb42a22, 0x5a1410] as const;
 const MIST = [0xe8eef4, 0x8aa0b4, 0x3a4a58] as const;
+/** 静钟井：冷银芯、墨蓝边。比浓雾更亮，不往紫、血红、旧铜靠。 */
+const HUSH = [0xf4f7fb, 0xc5d0dc, 0x2c3a52] as const;
 /**
  * 毒沼章瘟疫脓黄绿。
  *
@@ -1639,6 +1641,83 @@ export const SKILL_VFX: Record<string, VfxRecipe> = {
       sparks: skillSparks(MIST),
     },
   },
+  /** 第八章 · 鸣渣「蓄鸣」：自己亮一下银芯。 */
+  peal_store: {
+    windup: windupGather(HUSH, 1.0, 200),
+    impact: {
+      set: 'mook_thud',
+      anchor: 'caster',
+      cells: 1.6,
+      mode: 'burst',
+      playbackSpeed: 0.9,
+      sparks: skillSparks(HUSH),
+    },
+  },
+  /** 第八章 · 井碾「推井」：短推，落在被推的人身上。 */
+  well_ram: {
+    windup: windupGather(HUSH, 0.8, 160),
+    pathBeam: pathGlow(HUSH, 'smooth', 8),
+    impact: {
+      set: 'mook_thud',
+      anchor: 'target',
+      cells: 1.7,
+      mode: 'burst',
+      playbackSpeed: 0.85,
+      sparks: skillSparks(HUSH),
+    },
+    shake: SHAKE_HEAVY,
+  },
+  /**
+   * 第八章 Boss「余震」：短而厚的钝板，朝目标推一截就停。
+   * 不是长贯穿线，不是同心环。
+   */
+  after_shock: {
+    windup: windupGather(HUSH, 0.55, 140),
+    shake: SHAKE_HEAVY,
+    impact: {
+      set: 'after_shock',
+      anchor: 'target',
+      cells: 1.7,
+      mode: 'aimed',
+      playbackSpeed: 0.9,
+      sparks: skillSparks(HUSH),
+    },
+  },
+  temp_hw_lay: {
+    windup: windupGather(HUSH, 1.0, 200),
+    impact: {
+      set: 'temp_hw_lay',
+      anchor: 'caster',
+      cells: 2.2,
+      mode: 'burst',
+      playbackSpeed: 0.8,
+      sparks: skillSparks(HUSH),
+    },
+  },
+  temp_hw_clear: {
+    windup: windupImplode(HUSH, 1.1, 220),
+    pathBeam: pathGlow(HUSH, 'smooth', 7),
+    impact: {
+      set: 'temp_hw_clear',
+      anchor: 'caster',
+      cells: 2.2,
+      mode: 'burst',
+      playbackSpeed: 0.8,
+      sparks: skillSparks(HUSH),
+    },
+  },
+  temp_hw_shove: {
+    windup: windupGather(HUSH, 0.7, 150),
+    pathBeam: pathGlow(HUSH, 'smooth', 6),
+    impact: {
+      set: 'temp_hw_shove',
+      anchor: 'target',
+      cells: 1.5,
+      mode: 'aimed',
+      playbackSpeed: 0.9,
+      sparks: skillSparks(HUSH),
+    },
+  },
 
   // ── 草原战线临时技能：四种完全不同的「零件」语言，禁止再做成同质环光 ──
   /**
@@ -1840,16 +1919,16 @@ export const SKILL_VFX: Record<string, VfxRecipe> = {
       sparks: skillSparks(MINT),
     },
   },
-  /** 再舞：光落到已经动过的友军身上。普攻是小爆点，这一下是升起来的光 */
+  /** 再舞：一条红绸绕到已经动过的友军身上。环只要刚好套住一个人 */
   encore: {
-    windup: windupGather(ROSE, 1.05, 240),
-    pathBeam: pathGlow(ROSE, 'smooth', 12, 'bless_rays'),
+    windup: windupGather(ROSE, 0.8, 220),
+    pathBeam: pathGlow(ROSE, 'smooth', 9),
     impact: {
-      set: 'bless_rays',
+      set: 'encore_ribbon',
       anchor: 'target',
-      cells: 2.2,
+      cells: 1.65,
       mode: 'burst',
-      playbackSpeed: 0.72,
+      playbackSpeed: 0.68,
       sparks: skillSparks(ROSE),
     },
   },

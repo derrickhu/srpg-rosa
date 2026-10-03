@@ -1,0 +1,219 @@
+{
+  "id": "encore_ribbon",
+  "source": "art/vfx-runs/encore_ribbon",
+  "blend": "add",
+  "image": "images/anim/encore_ribbon.png",
+  "meta": {
+    "size": {
+      "w": 1024,
+      "h": 512
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 141,
+    "baselineY": 218,
+    "ref": "encore_ribbon/encore_ribbon-1.png"
+  },
+  "frames": {
+    "encore_ribbon/encore_ribbon-1.png": {
+      "frame": {
+        "x": 625,
+        "y": 239,
+        "w": 130,
+        "h": 144
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 52,
+        "y": 76,
+        "w": 130,
+        "h": 144
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "encore_ribbon/encore_ribbon-2.png": {
+      "frame": {
+        "x": 2,
+        "y": 239,
+        "w": 165,
+        "h": 212
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 29,
+        "y": 20,
+        "w": 165,
+        "h": 212
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "encore_ribbon/encore_ribbon-3.png": {
+      "frame": {
+        "x": 672,
+        "y": 2,
+        "w": 239,
+        "h": 228
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 10,
+        "y": 14,
+        "w": 239,
+        "h": 228
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "encore_ribbon/encore_ribbon-4.png": {
+      "frame": {
+        "x": 438,
+        "y": 2,
+        "w": 232,
+        "h": 232
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 11,
+        "y": 5,
+        "w": 232,
+        "h": 232
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "encore_ribbon/encore_ribbon-5.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 226,
+        "h": 235
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 10,
+        "y": 4,
+        "w": 226,
+        "h": 235
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "encore_ribbon/encore_ribbon-6.png": {
+      "frame": {
+        "x": 230,
+        "y": 2,
+        "w": 206,
+        "h": 233
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 14,
+        "y": 9,
+        "w": 206,
+        "h": 233
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "encore_ribbon/encore_ribbon-7.png": {
+      "frame": {
+        "x": 169,
+        "y": 239,
+        "w": 164,
+        "h": 196
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 44,
+        "y": 0,
+        "w": 164,
+        "h": 196
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "encore_ribbon/encore_ribbon-8.png": {
+      "frame": {
+        "x": 472,
+        "y": 239,
+        "w": 151,
+        "h": 174
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 43,
+        "y": 32,
+        "w": 151,
+        "h": 174
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "encore_ribbon/encore_ribbon-9.png": {
+      "frame": {
+        "x": 335,
+        "y": 239,
+        "w": 135,
+        "h": 182
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 52,
+        "y": 42,
+        "w": 135,
+        "h": 182
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "encore_ribbon": {
+      "loop": false,
+      "fps": 20,
+      "frames": [
+        "encore_ribbon/encore_ribbon-1.png",
+        "encore_ribbon/encore_ribbon-2.png",
+        "encore_ribbon/encore_ribbon-3.png",
+        "encore_ribbon/encore_ribbon-4.png",
+        "encore_ribbon/encore_ribbon-5.png",
+        "encore_ribbon/encore_ribbon-6.png",
+        "encore_ribbon/encore_ribbon-7.png",
+        "encore_ribbon/encore_ribbon-8.png",
+        "encore_ribbon/encore_ribbon-9.png"
+      ]
+    }
+  }
+}

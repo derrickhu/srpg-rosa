@@ -21,6 +21,7 @@ export const TERRAIN_BUNDLE: AssetBundleDef = {
     swamp: 'images/terrain/swamp.png',
     blood: 'images/terrain/blood.png',
     mist: 'images/terrain/mist.png',
+    hush: 'images/terrain/hush.png',
     wall: 'images/terrain/wall.png',
     abyss: 'images/terrain/abyss.png',
     burning: 'images/terrain/burning.png',
@@ -82,13 +83,19 @@ export const UNIT_BUNDLE: AssetBundleDef = {
     bronzewl: 'images/units/bronzewl.png',
     misthoof: 'images/units/misthoof.png',
     bellshell: 'images/units/bellshell.png',
-    // 第二至六章精英（第一章精英沿用 bloodfang）。
+    // 第八章 · 静钟井
+    pealshard: 'images/units/pealshard.png',
+    silverheron: 'images/units/silverheron.png',
+    wellram: 'images/units/wellram.png',
+    hushshell: 'images/units/hushshell.png',
+    // 第二至八章精英（第一章精英沿用 bloodfang）。
     torun: 'images/units/torun.png',
     castellan: 'images/units/castellan.png',
     mirespeaker: 'images/units/mirespeaker.png',
     drakekin: 'images/units/drakekin.png',
     altarwarden: 'images/units/altarwarden.png',
     bellringer: 'images/units/bellringer.png',
+    wellwarden: 'images/units/wellwarden.png',
     // Boss
     bloodfang: 'images/units/bloodfang.png',
     bloodshaman: 'images/units/bloodshaman.png',
@@ -97,6 +104,7 @@ export const UNIT_BUNDLE: AssetBundleDef = {
     drakelord: 'images/units/drakelord.png',
     ritespeaker: 'images/units/ritespeaker.png',
     mistlord: 'images/units/mistlord.png',
+    afterbell: 'images/units/afterbell.png',
   },
 };
 
@@ -283,6 +291,12 @@ export const UI_BUNDLE: AssetBundleDef = {
     skill_rite_chant: 'images/ui/skill_rite_chant.png',
     skill_mist_chime: 'images/ui/skill_mist_chime.png',
     skill_bell_toll: 'images/ui/skill_bell_toll.png',
+    skill_peal_store: 'images/ui/skill_peal_store.png',
+    skill_well_ram: 'images/ui/skill_well_ram.png',
+    skill_after_shock: 'images/ui/skill_after_shock.png',
+    skill_temp_hw_lay: 'images/ui/skill_temp_hw_lay.png',
+    skill_temp_hw_clear: 'images/ui/skill_temp_hw_clear.png',
+    skill_temp_hw_shove: 'images/ui/skill_temp_hw_shove.png',
     // 战斗操作条的动作图标。压在深色圆按钮上，所以这批是**浅色填充**，
     // 和压在米白卡上的那两批（mod_* / skill_*）配色相反，不要互相借用。
     act_wait: 'images/ui/act_wait.png',
@@ -356,6 +370,7 @@ const HUB_BG_ASSETS: Record<string, string> = {
   chapter_dragon: 'images/bg/chapter_dragon.png',
   chapter_altar: 'images/bg/chapter_altar.png',
   chapter_mist: 'images/bg/chapter_mist.png',
+  chapter_hush: 'images/bg/chapter_hush.png',
 };
 
 /** 战斗底图。`images/bg` 走 CDN，绝不能算进「进大厅」门槛。 */
@@ -367,6 +382,7 @@ const BATTLE_BG_ASSETS: Record<string, string> = {
   battle_bg_dragon: 'images/bg/battle_bg_dragon.png',
   battle_bg_altar: 'images/bg/battle_bg_altar.png',
   battle_bg_mist: 'images/bg/battle_bg_mist.png',
+  battle_bg_hush: 'images/bg/battle_bg_hush.png',
 };
 
 export const HUB_BG_BUNDLE: AssetBundleDef = {

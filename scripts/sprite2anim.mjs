@@ -397,6 +397,19 @@ const SETS = [
     downscale: 1,
     runs: [{ dir: 'mobs-ch7/idle', preset: 'single', label }],
   })),
+  // 第八章杂兵：静钟构装。剪影四槽：冷银裂片 / 细长银鹭 / 低伏碾头 / 墨蓝穹顶。
+  ...[
+    { id: 'pealshard', label: 'mob-1' },
+    { id: 'silverheron', label: 'mob-2' },
+    { id: 'wellram', label: 'mob-3' },
+    { id: 'hushshell', label: 'mob-4' },
+  ].map(({ id, label }) => ({
+    id,
+    source: `${RUNS_DIR}/mobs-ch8`,
+    blend: 'normal',
+    downscale: 1,
+    runs: [{ dir: 'mobs-ch8/idle', preset: 'single', label }],
+  })),
   // 第二至五章精英：血牙部族的人形兽人，四只一张 2x2（art/sprite-runs/elites/raw-2x2.png）。
   //
   // 精英和 Boss 是血牙部族、杂兵是当地野物——这条读图规矩第一章就立下了，剪影本身就是
@@ -433,6 +446,21 @@ const SETS = [
     blend: 'normal',
     downscale: 1,
     runs: [{ dir: 'mistlord/idle', preset: 'four_facing' }],
+  },
+  // 第八章精英守井人：英雄身高，单帧。第八章 Boss 余钟：四朝向各一帧。
+  {
+    id: 'wellwarden',
+    source: `${RUNS_DIR}/elites-ch8`,
+    blend: 'normal',
+    downscale: 1,
+    runs: [{ dir: 'elites-ch8/idle', preset: 'single', label: 'elite-1' }],
+  },
+  {
+    id: 'afterbell',
+    source: `${RUNS_DIR}/afterbell`,
+    blend: 'normal',
+    downscale: 1,
+    runs: [{ dir: 'afterbell/idle', preset: 'four_facing' }],
   },
   // 黑底 additive 技能/命中特效，取用见 src/data/vfxCatalog.ts。
   //
@@ -485,6 +513,14 @@ const SETS = [
     { id: 'heal_flash', frames: 9, fps: 20 },
     { id: 'ward_aegis', frames: 9, fps: 20 },
     { id: 'bless_rays', frames: 9, fps: 20 },
+    // 青弦再舞：红绸绕成松开的环。和 bless_rays 的四向升光分开，也和伶人普攻的小爆点分开。
+    { id: 'encore_ribbon', frames: 9, fps: 20 },
+    // 余钟余震：短而厚的钝板，朝右推一截就停。
+    { id: 'after_shock', frames: 9, fps: 20 },
+    // 第八章临时技能：实心银币 / 竖裂两半 / 两条朝右细线。三套形态分开，也不借杂兵的图。
+    { id: 'temp_hw_lay', frames: 9, fps: 18 },
+    { id: 'temp_hw_clear', frames: 9, fps: 18 },
+    { id: 'temp_hw_shove', frames: 9, fps: 18 },
     // 补齐原先「没有配方、退回静态贴图」的六招。形态各自唯一，见 docs/特效圣经 §7：
     // 重劈=垂直劈裂、破阵斩=交叉双斩、速射=前向穿刺、铁锤=扁平砸地波、
     // 长驱突刺=螺旋钻刺、践踏=离散蹄印环（全库唯一一个不是环的 AoE）

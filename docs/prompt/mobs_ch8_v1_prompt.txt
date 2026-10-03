@@ -1,0 +1,36 @@
+第八章杂兵 v1 —— 四只静钟构装一张 2x2
+#
+# 剪影四槽：无腿银块 / 宽翼银鹭 / 低伏碾头 / 墨蓝穹顶。
+# 配色：新银币那种冷银 + 墨蓝 + 一处亮银芯。厚近黑描边。
+# 参考图只提供画法。
+
+A 2-column x 2-row grid of 4 CARTOON MONSTER CHARACTERS for a tactics game, drawn as game sprites.
+The attached reference is DRAWING METHOD ONLY: thick near-black outline, flat cel fills, extreme super-deformed mascot.
+
+The entire background, including all space between and around the four creatures, is 100% solid flat MAGENTA, hex #FF00FF. It is a chroma key and will be deleted. The field is flat magenta, one value, with the four creatures floating on it.
+
+CAMERA: a 3/4 top-down view. Every creature faces the viewer. Same eye level, same angle.
+
+CRITICAL SIZE: displayed at only about 40 pixels tall. ONE bold chunky readable silhouette each. Low-tier trash mobs. Head or main mass is about half the height. The whole body fits a roughly square box.
+
+CRITICAL CONTAINMENT: each creature INCLUDING wings and feet stays inside the central 60–68% of its own cell. Wide magenta gutter. Tips finish inside the cell.
+
+STYLE: chunky rounded toy-like cartoon. THICK near-black outline (#1A1410) all the way around every silhouette. FLAT fills, 4 to 6 colours. One bright silver core (#F4F7FB) on the silver creatures, about 10–15% of the body. Flat fills. The image contains only these four creatures and the magenta field.
+
+PALETTE, anchored to real objects:
+- Cold silver: a new silver coin, #D7E0EA, shadow #8E9EB0.
+- Bright core: polished spoon highlight #F4F7FB.
+- Ink blue dome: matte fountain-pen ink #2C3A52, slightly lighter ink edge #3E5270.
+The silver reads bright. The ink dome reads dull and matte.
+
+Per-cell contents:
+
+TOP-LEFT — PEAL SHARD (sword). A fat rounded lump of cold silver sitting on the ground with NO legs. A jagged crack across the front, and inside the crack one bright silver core. Two big round black eyes. Memory point: legless silver lump with a bright crack.
+
+TOP-RIGHT — SILVER HERON (bow). A round bird. Body is cold silver, neck is a short thick silver column. Wings are SHORT rounded fans, wider than the body, tips finished and inside the cell. A small bright silver beak. Two stubby feet. Memory point: wide short wings.
+
+BOTTOM-LEFT — WELL RAM (cavalry). A low four-legged beast, body close to the ground, longer than it is tall. Cold silver body. The head is one blunt silver ram block, bright core on the forehead. Four short legs. Memory point: low and wide, blunt head.
+
+BOTTOM-RIGHT — HUSH SHELL (shield). A heavy squat DOME walker. The dome is matte fountain-pen ink blue, dull, with a darker ink shadow. Four stubby feet fully visible under the rim. A small flat oval on the front, the same ink, so the face stays dark. Memory point: dull ink dome, the only creature that is not silver.
+
+LAYOUT: EXACTLY 4 creatures in a clean 2x2. Each fills about 60–68% of its cell with magenta margin. Same outline thickness, same camera. The picture has the four creatures and the magenta field.

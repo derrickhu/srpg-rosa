@@ -1,0 +1,219 @@
+{
+  "id": "temp_hw_shove",
+  "source": "art/vfx-runs/temp_hw_shove",
+  "blend": "add",
+  "image": "images/anim/temp_hw_shove.png",
+  "meta": {
+    "size": {
+      "w": 512,
+      "h": 256
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 47,
+    "baselineY": 150,
+    "ref": "temp_hw_shove/temp_hw_shove-1.png"
+  },
+  "frames": {
+    "temp_hw_shove/temp_hw_shove-1.png": {
+      "frame": {
+        "x": 478,
+        "y": 2,
+        "w": 9,
+        "h": 47
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 124,
+        "y": 103,
+        "w": 9,
+        "h": 47
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_hw_shove/temp_hw_shove-2.png": {
+      "frame": {
+        "x": 199,
+        "y": 106,
+        "w": 195,
+        "h": 40
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 34,
+        "y": 108,
+        "w": 195,
+        "h": 40
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_hw_shove/temp_hw_shove-3.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 232,
+        "h": 56
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 21,
+        "y": 100,
+        "w": 232,
+        "h": 56
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_hw_shove/temp_hw_shove-4.png": {
+      "frame": {
+        "x": 2,
+        "y": 60,
+        "w": 213,
+        "h": 44
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 21,
+        "y": 104,
+        "w": 213,
+        "h": 44
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_hw_shove/temp_hw_shove-5.png": {
+      "frame": {
+        "x": 2,
+        "y": 106,
+        "w": 195,
+        "h": 42
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 34,
+        "y": 105,
+        "w": 195,
+        "h": 42
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_hw_shove/temp_hw_shove-6.png": {
+      "frame": {
+        "x": 236,
+        "y": 2,
+        "w": 230,
+        "h": 56
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 22,
+        "y": 98,
+        "w": 230,
+        "h": 56
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_hw_shove/temp_hw_shove-7.png": {
+      "frame": {
+        "x": 217,
+        "y": 60,
+        "w": 159,
+        "h": 44
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 47,
+        "y": 104,
+        "w": 159,
+        "h": 44
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_hw_shove/temp_hw_shove-8.png": {
+      "frame": {
+        "x": 468,
+        "y": 2,
+        "w": 8,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 127,
+        "y": 88,
+        "w": 8,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "temp_hw_shove/temp_hw_shove-9.png": {
+      "frame": {
+        "x": 396,
+        "y": 106,
+        "w": 1,
+        "h": 1
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1,
+        "h": 1
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "temp_hw_shove": {
+      "loop": false,
+      "fps": 18,
+      "frames": [
+        "temp_hw_shove/temp_hw_shove-1.png",
+        "temp_hw_shove/temp_hw_shove-2.png",
+        "temp_hw_shove/temp_hw_shove-3.png",
+        "temp_hw_shove/temp_hw_shove-4.png",
+        "temp_hw_shove/temp_hw_shove-5.png",
+        "temp_hw_shove/temp_hw_shove-6.png",
+        "temp_hw_shove/temp_hw_shove-7.png",
+        "temp_hw_shove/temp_hw_shove-8.png",
+        "temp_hw_shove/temp_hw_shove-9.png"
+      ]
+    }
+  }
+}

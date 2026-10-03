@@ -80,12 +80,15 @@ export function textStyle(role: TextRole, overrides: TextStyleOverrides = {}): P
   const { fontFamily: _ignored, fontWeight: ow, ...rest } = overrides as TextStyleOverrides & {
     fontFamily?: string;
   };
-  return {
+  const style: Partial<PIXI.ITextStyle> = {
     fontSize: def.fontSize,
     fontWeight: ow ?? def.fontWeight,
     ...rest,
     fontFamily: def.showcase ? showcaseFamily : SYSTEM_STACK,
   };
+  // 中文没有空格，只开 wordWrap 时整句会被当成一个词，从卡片右边溢出去。
+  if (style.wordWrap && style.breakWords == null) style.breakWords = true;
+  return style;
 }
 
 export function makeText(

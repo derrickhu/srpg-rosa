@@ -1,0 +1,25 @@
+余震（after_shock）—— 黑底 additive 钝板 9 帧（3x3）
+
+一条短而厚的钝板，朝右推一截就停。冷银芯、墨蓝边。
+素材朝右，播放时按攻击者到目标旋转。
+
+2D game VFX sprite sheet, 3 columns by 3 rows, 9 equal cells, cells meet with no drawn borders.
+Every pixel that is not the effect is pure black #000000.
+
+One short thick blunt slab, seen from the side, pointing to the RIGHT in every cell.
+The slab is a solid bar: a bright silver core the color of a polished spoon (#F4F7FB), a cold-silver body the color of a new coin (#D7E0EA), and a matte ink-blue rim the color of fountain-pen ink (#2C3A52).
+The bar is short. Its length is about one third of the cell. It stays thick, like a ram head, with a flat blunt front.
+
+Frame order, left to right, then top to bottom. The bar's tail stays near the cell center. Only the blunt front travels a short way to the right, then stops:
+  Frame 1: a small silver nub at the cell center.
+  Frame 2: the nub thickens into a short bar, front just right of center.
+  Frame 3: PEAK. The thickest bar, front a short step to the right, ink rim clear, silver core brightest.
+  Frame 4: the same short bar, held still, still bright.
+  Frame 5: the bar a little dimmer, still the same length, still pointing right.
+  Frame 6: the ink rim fades, the silver core remains.
+  Frame 7: a shorter dim silver dash.
+  Frame 8: a small silver speck right of center.
+  Frame 9: a few dim specks. Almost black.
+
+The bar stays inside the central 60% of each cell, with black margin on every side.
+The tail of the bar stays on the cell center so the shove reads as forward motion when the cell is rotated.

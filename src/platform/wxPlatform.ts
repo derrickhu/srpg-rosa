@@ -15,6 +15,8 @@ export const AdConfigKeys = {
   rewardRevive: 'adunit-75d725546bf4aacd',
   // 收回永久纹章。公众平台还没单开广告位，先和三选一刷新共用，看完才发奖。
   rewardEmblemRelease: 'adunit-e4b32e99968edcea',
+  /** 招募页看广告解锁角色 */
+  rewardRecruitCharacter: 'adunit-fef31ada9aa01c07',
 } as const;
 
 export function hasWx(): boolean {

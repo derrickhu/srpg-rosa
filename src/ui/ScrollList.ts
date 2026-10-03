@@ -104,15 +104,29 @@ export function measureStackedBottom(
   return bottom;
 }
 
+/** 按子节点的 x + 宽度取最右边。横向列表用，同样优先 hitArea */
+export function measureStackedRight(
+  children: readonly { x: number; width: number; hitArea?: unknown }[],
+): number {
+  let right = 0;
+  for (const child of children) {
+    const ha = child.hitArea as { x?: number; width?: number } | undefined;
+    const w = typeof ha?.width === 'number' ? (ha.x ?? 0) + ha.width : child.width;
+    right = Math.max(right, child.x + w);
+  }
+  return right;
+}
+
 export interface ScrollListHandle {
   root: PIXI.Container;
   /** 把列表项加到这里；超出可视区会被裁掉 */
   content: PIXI.Container;
   /**
-   * 内容高度变了之后调一次，用来重新夹紧滚动位置并更新滚动条。
-   * 能提供排版算出来的高度就传进来，避免再去读带 mask 的包围盒。
+   * 内容尺寸变了之后调一次，用来重新夹紧滚动位置并更新滚动条。
+   * 传的是滚动方向上的长度（纵向是高，横向是宽）。
+   * 能提供排版算出来的尺寸就传进来，避免再去读带 mask 的包围盒。
    */
-  refresh(contentHeight?: number): void;
+  refresh(contentSize?: number): void;
   /**
    * 刚才那一下是拖动而不是点击。
    *
@@ -123,7 +137,7 @@ export interface ScrollListHandle {
 }
 
 /**
- * 纵向滚动容器（mask 裁剪 + 拖拽）。
+ * 滚动容器（mask 裁剪 + 拖拽）。默认纵向；`axis: 'x'` 时横向，手指往左滑看到右边的内容。
  *
  * 上一版用 `e.pressure <= 0` 判断有没有按住，而 touch 事件不保证提供 pressure，
  * 这个判断在真机上随时可能整个失效；也没有 pointerup 收尾，手指离开后继续移动仍会滚。
@@ -137,6 +151,8 @@ export function createScrollList(opts: {
   y?: number;
   /** 画滚动条（内容超出时才出现）。列表很短时没必要 */
   showBar?: boolean;
+  /** 默认纵向。横向用于部署替补席 */
+  axis?: 'x' | 'y';
 }): ScrollListHandle {
   const root = new PIXI.Container();
   root.x = opts.x ?? 0;
@@ -154,46 +170,67 @@ export function createScrollList(opts: {
 
   const bar = new PIXI.Graphics();
   bar.visible = false;
+  bar.eventMode = 'none';
   root.addChild(bar);
+
+  const axis = opts.axis ?? 'y';
+  const viewSize = axis === 'x' ? opts.width : opts.height;
 
   let dragging = false;
   let moved = false;
-  let startY = 0;
-  let contentStartY = 0;
-  let laidOutHeight = 0;
+  let startPos = 0;
+  let contentStart = 0;
+  let laidOutSize = 0;
 
   function contentSpan(): number {
-    if (laidOutHeight > 0) return laidOutHeight;
-    return measureStackedBottom(content.children);
+    if (laidOutSize > 0) return laidOutSize;
+    return axis === 'x'
+      ? measureStackedRight(content.children)
+      : measureStackedBottom(content.children);
   }
 
   function maxScroll(): number {
-    return scrollOverflow(opts.height, contentSpan());
+    return scrollOverflow(viewSize, contentSpan());
+  }
+
+  function contentOffset(): number {
+    return axis === 'x' ? content.x : content.y;
+  }
+
+  function setContentOffset(v: number): void {
+    const next = Math.max(maxScroll(), Math.min(0, v));
+    if (axis === 'x') content.x = next;
+    else content.y = next;
   }
 
   function clamp(): void {
-    content.y = Math.max(maxScroll(), Math.min(0, content.y));
+    setContentOffset(contentOffset());
   }
 
   function drawBar(): void {
     const span = contentSpan();
-    if (!opts.showBar || span <= opts.height) {
+    if (!opts.showBar || span <= viewSize) {
       bar.visible = false;
       return;
     }
-    const trackH = opts.height;
-    const thumbH = Math.max(24, Math.round((opts.height / span) * trackH));
-    const progress = maxScroll() === 0 ? 0 : content.y / maxScroll();
-    const thumbY = Math.round(progress * (trackH - thumbH));
+    const progress = maxScroll() === 0 ? 0 : contentOffset() / maxScroll();
     bar.clear();
-    bar.beginFill(0x000000, 0.22);
-    bar.drawRoundedRect(opts.width - 4, thumbY, 3, thumbH, 1.5);
+    bar.beginFill(axis === 'x' ? 0xffffff : 0x000000, axis === 'x' ? 0.55 : 0.22);
+    if (axis === 'x') {
+      const thumbW = Math.max(24, Math.round((opts.width / span) * opts.width));
+      const thumbX = Math.round(progress * (opts.width - thumbW));
+      bar.drawRoundedRect(thumbX, opts.height - 4, thumbW, 3, 1.5);
+    } else {
+      const thumbH = Math.max(24, Math.round((opts.height / span) * opts.height));
+      const thumbY = Math.round(progress * (opts.height - thumbH));
+      bar.drawRoundedRect(opts.width - 4, thumbY, 3, thumbH, 1.5);
+    }
     bar.endFill();
     bar.visible = true;
   }
 
-  function refresh(contentHeight?: number): void {
-    if (contentHeight != null && contentHeight > 0) laidOutHeight = contentHeight;
+  function refresh(contentSize?: number): void {
+    if (contentSize != null && contentSize > 0) laidOutSize = contentSize;
     clamp();
     drawBar();
   }
@@ -201,20 +238,20 @@ export function createScrollList(opts: {
   root.eventMode = 'static';
   root.hitArea = new PIXI.Rectangle(0, 0, opts.width, opts.height);
 
-  const applyDragY = (globalY: number): void => {
+  const applyDrag = (global: number): void => {
     if (!dragging) return;
-    const dy = globalY - startY;
-    if (!moved && Math.abs(dy) < DRAG_THRESHOLD) return;
+    const delta = global - startPos;
+    if (!moved && Math.abs(delta) < DRAG_THRESHOLD) return;
     moved = true;
-    content.y = Math.max(maxScroll(), Math.min(0, contentStartY + dy));
+    setContentOffset(contentStart + delta);
     drawBar();
   };
 
-  function beginDrag(globalY: number): void {
+  function beginDrag(global: number): void {
     dragging = true;
     moved = false;
-    startY = globalY;
-    contentStartY = content.y;
+    startPos = global;
+    contentStart = contentOffset();
   }
 
   function endDrag(): void {
@@ -228,7 +265,8 @@ export function createScrollList(opts: {
 
   root.on('wheel', (e: PIXI.FederatedWheelEvent) => {
     if (maxScroll() === 0) return;
-    content.y = Math.max(maxScroll(), Math.min(0, content.y - e.deltaY));
+    const delta = axis === 'x' ? (e.deltaX !== 0 ? e.deltaX : e.deltaY) : e.deltaY;
+    setContentOffset(contentOffset() - delta);
     drawBar();
   });
 
@@ -252,12 +290,12 @@ export function createScrollList(opts: {
     const onNativeStart = (ev: unknown): void => {
       const pt = readNativeTouchPoint(ev, frame);
       if (!pt || !rectContains(listRect(), pt.x, pt.y)) return;
-      beginDrag(pt.y);
+      beginDrag(axis === 'x' ? pt.x : pt.y);
     };
     const onNativeMove = (ev: unknown): void => {
       const pt = readNativeTouchPoint(ev, frame);
       if (!pt) return;
-      applyDragY(pt.y);
+      applyDrag(axis === 'x' ? pt.x : pt.y);
     };
     api.onTouchStart(onNativeStart);
     api.onTouchMove(onNativeMove);
@@ -274,10 +312,10 @@ export function createScrollList(opts: {
   } else {
     // 浏览器调试：Pixi 指针事件够用。用 globalpointermove 防止滑出边界就丢手势。
     root.on('pointerdown', (e: PIXI.FederatedPointerEvent) => {
-      beginDrag(e.globalY);
+      beginDrag(axis === 'x' ? e.globalX : e.globalY);
     });
     const onDragMove = (e: PIXI.FederatedPointerEvent): void => {
-      applyDragY(e.globalY);
+      applyDrag(axis === 'x' ? e.globalX : e.globalY);
     };
     root.on('pointermove', onDragMove);
     root.on('globalpointermove', onDragMove);

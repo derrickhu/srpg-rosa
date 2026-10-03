@@ -41,6 +41,13 @@ export interface TerrainSpec {
    */
   blocksSight?: boolean;
   /**
+   * 站在这一格上放不了技能（主槽和临时槽都算）。普攻、已经挂上的增益和持续伤害照常。
+   *
+   * 看的是施法者脚下，不是目标脚下：井外的人仍能给井里的人治疗。
+   * 结算时站在哪一格，就查哪一格——走出去之后可以再放。
+   */
+  blocksCast?: true;
+  /**
    * 机关：**玩家**单位站在这一格上，轮首会把全场闸门永久打开（见 `TerrainRuntime.openGates`）。
    *
    * 和 `ignitesTo` 同样的写法——设了这个字段就等于「是机关」，不另立 `isLever` 标记。
@@ -277,6 +284,20 @@ const SPECS: Record<TerrainId, TerrainSpec> = {
     dotPerRound: 0,
     color: 0xb8c4d0,
     blocksSight: true,
+  },
+  /**
+   * 静域：走得过，箭也射得穿，站上去打得着、放不了招。
+   * 兜底色取亮一档的冷银，和浓雾的雾灰、血池的血红、祭坛的旧铜分开。
+   */
+  hush: {
+    id: 'hush',
+    name: '静域',
+    moveCost: 1,
+    atkMul: 1,
+    defMul: 1,
+    dotPerRound: 0,
+    color: 0xd7e0ea,
+    blocksCast: true,
   },
 };
 

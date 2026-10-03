@@ -1,58 +1,34 @@
+# 珂兰 —— 身份锁 art/sprite-runs/kelan/identity.png
+# 头身对齐剑士 / 芙洛：大头、短方身体、粗黑描边。不要再出细高写实比例。
+
 A 4x4 sprite sheet, full 4-direction walk cycle, top-down tactics RPG.
-One character only: Kelan, a shield warden who suppresses enemies.
 
-CHARACTER — extreme super-deformed mascot. HEAD is about HALF total height.
-Tiny stubby body. The whole body fits in a roughly square box.
-Giant round head, short limbs, mitten hands, two dark oval eyes, two brows, a tiny mouth.
-Open face, no helmet visor. Short black hair with a cream cloth headband.
+The attached image is the EXACT character identity. Copy her: giant round head about half
+the height, short black hair, cream undyed-cotton headband, cream scarf, one solid tunic
+the green of old copper patina, a solid round shield the orange-brown of a new copper coin
+with a darker copper center, brown boots, thick pure-black outlines, flat cel fills,
+mitten hands, two dark oval eyes, a tiny mouth line.
+Keep this same head size and this same stubby square body in every cell.
+Only facing and walk pose change.
 
-IDENTITY COLORS, 6 flat colors plus near-black outline:
-- Chunky armor plates in oxidized bronze, the green of old copper patina, covering the torso and arms.
-- A round disc shield almost as tall as the torso, the orange-brown of a new copper coin, with one dark ring boss in the center. The shield is a circle, held out as one bold shape.
-- Cream cloth headband and a short cream scarf at the neck, about one sixth of the body, the bright lock.
-- Warm skin on the face. Brown boots.
-Thick near-black outlines. Flat cel fills, one highlight, one shadow. No gradients.
+ART STYLE: hand-drawn cartoon game sprite, thick pure-black outlines, flat saturated fills
+with one highlight and one shadow, 3/4 top-down camera matching a tactics grid.
+1.5-head mascot. Head including hair is about half the height from hair to boots.
+The body is a chunky square.
 
-ART STYLE (project style bible — do not deviate):
-hand-drawn cartoon game sprite, thick near-black outlines (pure black or very dark warm
-brown — never a mid-tone or colorful outline), flat saturated fills with light cel shading
-(one highlight tone, one shadow tone), no gradients, no texture noise, no painterly
-rendering, no photographic detail, 3/4 top-down camera matching a tactics grid.
+WALK MOTION — readable from the silhouette at 44 pixels:
+  Column 1 and 3: both feet together, full standing height.
+  Column 2: left foot far forward, right foot far behind, wide gap, body a little shorter.
+  Column 4: right foot far forward, left foot far behind, same short body.
 
-PROPORTIONS — check against this, drawing them too tall is the most common failure:
-- Extreme super-deformed mascot. The HEAD INCLUDING HAIR is about HALF the
-  character's total height. Body, arms and legs together are the other half: short,
-  stubby, chunky.
-- The whole character fits in a roughly SQUARE box — total width is about 0.9 to 1.0
-  times total height. If it looks like a slim standing person, it is wrong.
-- This is NOT a 2-head or 2.5-head chibi. Think 1.5-head mascot: giant head, tiny body.
+ROWS — every cell in a row faces the same way:
+  Row 1 top: facing DOWN, face visible, shield on the viewer's left
+  Row 2: facing LEFT, left profile, shield leading left
+  Row 3: facing RIGHT, right profile, shield leading right
+  Row 4 bottom: facing UP, back of the hair and cream headband
 
-WALK MOTION — the walk must be readable from the SILHOUETTE ALONE at 44 pixels tall.
-Columns 1 and 3 must look obviously different from columns 2 and 4 even with all interior
-detail removed. Understating this is the single most common failure:
-  Column 1: neutral. Both feet together directly under the body, legs straight, body at its
-            FULL standing height. Round shield held forward.
-  Column 2: LEFT foot planted far FORWARD, right foot trailing far BEHIND, with a clearly
-            VISIBLE GAP between the two feet — the stride is wide, not a shuffle. The whole
-            body drops noticeably, squashing down about one tenth of its height. Arms swing
-            opposite to the legs. The round shield stays in the shield hand.
-  Column 3: neutral again, identical to column 1.
-  Column 4: mirror of column 2 — RIGHT foot far forward, left foot trailing behind, same
-            heavy body drop, arms swung the other way.
-Exaggerate far past realism. A subtle, realistic walk reads as a statue sliding across the
-board. If in doubt, make the stride wider and the body drop deeper.
-
-ROWS:
-  Row 1 top:    facing DOWN, face visible, round copper shield on the viewer's left
-  Row 2:        facing LEFT, left profile, round shield leading toward the left
-  Row 3:        facing RIGHT, right profile, round shield leading toward the right
-  Row 4 bottom: facing UP, back of the black hair and cream headband, round shield still visible beside the body
-
-RULES:
-1. EXACTLY 16 equal cells, 4 columns by 4 rows. No borders, no lines between cells.
-2. Background 100% solid flat magenta #FF00FF. No shadow, no gradient, no floor.
-3. Identical body scale and camera in every cell. Body never zooms.
-4. Body fills about 50% of cell height, centered. Generous magenta margin on every side.
-5. Nothing crosses a cell edge. Feet share one baseline inside each cell.
-6. Face: two dark oval eyes, two brows, tiny mouth. Mitten hands. Open face.
-7. NO TEXT, no labels, no numbers, no letters, no cross, no watermark.
+LAYOUT:
+1. Exactly 16 equal cells, 4 columns by 4 rows. Cells meet with no drawn borders.
+2. Every pixel that is not the character is solid flat magenta #FF00FF.
+3. Identical body scale in every cell. Body fills about half the cell height.
+4. Shield and feet stay inside the cell. Feet sit on one baseline.

@@ -1,0 +1,202 @@
+{
+  "id": "afterbell",
+  "source": "art/sprite-runs/afterbell",
+  "blend": "normal",
+  "image": "images/anim/afterbell.png",
+  "meta": {
+    "size": {
+      "w": 512,
+      "h": 512
+    },
+    "scale": "1",
+    "format": "RGBA8888"
+  },
+  "metrics": {
+    "frameSize": 256,
+    "subjectHeight": 208,
+    "baselineY": 235,
+    "ref": "afterbell-idle/face-1.png"
+  },
+  "frames": {
+    "afterbell-idle/face-1.png": {
+      "frame": {
+        "x": 211,
+        "y": 221,
+        "w": 207,
+        "h": 211
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 24,
+        "y": 26,
+        "w": 207,
+        "h": 211
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "afterbell-idle/face-2.png": {
+      "frame": {
+        "x": 171,
+        "y": 2,
+        "w": 168,
+        "h": 216
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 44,
+        "y": 21,
+        "w": 168,
+        "h": 216
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "afterbell-idle/face-3.png": {
+      "frame": {
+        "x": 2,
+        "y": 221,
+        "w": 207,
+        "h": 214
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 24,
+        "y": 23,
+        "w": 207,
+        "h": 214
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    },
+    "afterbell-idle/face-4.png": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 167,
+        "h": 217
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 44,
+        "y": 20,
+        "w": 167,
+        "h": 217
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      }
+    }
+  },
+  "animations": {
+    "idle_down": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "afterbell-idle/face-1.png"
+      ]
+    },
+    "walk_down": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "afterbell-idle/face-1.png"
+      ]
+    },
+    "attack_down": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "afterbell-idle/face-1.png"
+      ]
+    },
+    "idle_right": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "afterbell-idle/face-2.png"
+      ]
+    },
+    "walk_right": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "afterbell-idle/face-2.png"
+      ]
+    },
+    "attack_right": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "afterbell-idle/face-2.png"
+      ]
+    },
+    "idle_up": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "afterbell-idle/face-3.png"
+      ]
+    },
+    "walk_up": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "afterbell-idle/face-3.png"
+      ]
+    },
+    "attack_up": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "afterbell-idle/face-3.png"
+      ]
+    },
+    "idle_left": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "afterbell-idle/face-4.png"
+      ]
+    },
+    "walk_left": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "afterbell-idle/face-4.png"
+      ]
+    },
+    "attack_left": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "afterbell-idle/face-4.png"
+      ]
+    },
+    "idle": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "afterbell-idle/face-1.png"
+      ]
+    },
+    "default": {
+      "loop": true,
+      "fps": 1,
+      "frames": [
+        "afterbell-idle/face-1.png"
+      ]
+    }
+  }
+}

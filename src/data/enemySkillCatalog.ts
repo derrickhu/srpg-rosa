@@ -144,6 +144,17 @@ export const ENEMY_SKILL_SKINS: Record<string, EnemySkillSkin> = {
     iconKey: 'skill_bell_peal',
     vfxId: 'bell_peal',
   },
+  /**
+   * 第八章 Boss · 余钟。底层 after_shock：贴身八格，站在静域上才冻。
+   * 形态是短钝板往前推一截，不和雾钟的同心环共用。
+   */
+  after_shock: {
+    id: 'after_shock',
+    implementsId: 'after_shock',
+    name: '余震',
+    iconKey: 'skill_after_shock',
+    vfxId: 'after_shock',
+  },
 };
 
 export function getEnemySkillSkin(id: string): EnemySkillSkin | undefined {

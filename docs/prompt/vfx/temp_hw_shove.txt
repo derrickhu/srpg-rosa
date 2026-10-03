@@ -1,0 +1,25 @@
+推开（temp_hw_shove）—— 黑底 additive 双细条 9 帧（3x3）
+
+两条又细又短的平行银线，一起朝右滑一小段就停。
+两条线，每条都细。不是一条又厚又钝的板。
+
+2D game VFX sprite sheet, 3 columns by 3 rows, 9 equal cells, cells meet with no drawn borders.
+Every pixel that is not the effect is pure black #000000.
+Both lines point to the RIGHT in every cell.
+
+Two thin parallel strokes, stacked one above the other with a black gap between them.
+Each stroke has a bright silver core the color of a polished spoon (#F4F7FB) and a matte ink-blue edge the color of fountain-pen ink (#2C3A52).
+Each stroke is thin, like a pencil line, and short, about one quarter of the cell.
+
+Frame order, left to right, then top to bottom. The tails stay near the cell center. Only the tips travel a short way to the right:
+  Frame 1: two tiny silver dots, one above the other, at the cell center.
+  Frame 2: two short thin lines, tips just right of center.
+  Frame 3: PEAK. Two clear thin parallel lines, tips a short step to the right, ink edges visible.
+  Frame 4: the same two lines, held still, still bright.
+  Frame 5: the same length, a little dimmer.
+  Frame 6: the ink edges fade, the silver lines remain.
+  Frame 7: two shorter dim dashes.
+  Frame 8: two small specks right of center.
+  Frame 9: a few dim specks. Almost black.
+
+The pair stays inside the central 60% of each cell, with black margin on every side.

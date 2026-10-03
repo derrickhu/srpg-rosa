@@ -39,6 +39,7 @@ const SIGNATURE_SKILL_SFX: Record<string, SfxId> = {
   shield_wall: 'sfx_skill_shield_wall',
   encore: 'sfx_skill_encore',
   swoop: 'sfx_skill_swoop',
+  after_shock: 'sfx_skill_after_shock',
 };
 
 /** 玩家/敌方技能 id → 族。漏登记的走 `inferSkillFamily`，测试会锁玩家技能都能落到一族。 */
@@ -74,6 +75,11 @@ const SKILL_FAMILY: Record<string, SkillSfxFamily> = {
   temp_ms_bell: 'physical',
   mist_chime: 'physical',
   bell_toll: 'physical',
+  peal_store: 'physical',
+  well_ram: 'physical',
+  temp_hw_lay: 'physical',
+  temp_hw_clear: 'physical',
+  temp_hw_shove: 'physical',
 
   ember: 'fire',
   flame_ring: 'fire',
@@ -105,6 +111,7 @@ const SKILL_FAMILY: Record<string, SkillSfxFamily> = {
   dragon_breath: 'boss',
   blood_rite: 'boss',
   bell_peal: 'boss',
+  after_shock: 'boss',
 };
 
 /** 词条改过的特效键、Boss 皮肤 vfxId。回放层优先读事件上的 vfxId。 */
@@ -117,6 +124,7 @@ const VFX_FAMILY: Record<string, SkillSfxFamily> = {
   drake_cataclysm: 'boss',
   ritespeaker_drain: 'boss',
   bell_peal: 'boss',
+  after_shock: 'boss',
 };
 
 const BOSS_SKILL_IDS = new Set([
@@ -127,6 +135,7 @@ const BOSS_SKILL_IDS = new Set([
   'dragon_breath',
   'blood_rite',
   'bell_peal',
+  'after_shock',
 ]);
 
 function inferSkillFamily(spec: SkillSpec): SkillSfxFamily {

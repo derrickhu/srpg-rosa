@@ -17,8 +17,7 @@ const SCENARIO_AD_UNIT: Record<AdScenario, string> = {
   extraDeploy: AdConfigKeys.rewardExtraDeploy,
   revive: AdConfigKeys.rewardRevive,
   emblemRelease: AdConfigKeys.rewardEmblemRelease,
-  // 公众平台还没单开招募位，先和收回纹章共用，看完才记一次。
-  recruitCharacter: AdConfigKeys.rewardEmblemRelease,
+  recruitCharacter: AdConfigKeys.rewardRecruitCharacter,
 };
 
 let rewardedCache: Map<string, any> = new Map();

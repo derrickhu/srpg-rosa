@@ -10,7 +10,7 @@ import type {
 /**
  * 精英难度：通关对应主线章后，用**同一张图、同一串节点**再打一遍，只把敌人打厚。
  *
- * 不进 `DUNGEON_DEFS`，避免冒险页多滑出七张卡。关卡蓝图也不另开——
+ * 不进 `DUNGEON_DEFS`，避免冒险页多滑出一张精英卡。关卡蓝图也不另开——
  * 上一版每章一场再战图里的 Boss 全是主线已有角色（卡格 / 图伦 / 城卫长 /
  * 塔玛 / 卡尔萨 / 酋长），没有需要留给后面章节的新单位。
  */
@@ -62,6 +62,11 @@ export const ELITE_CHAPTERS: readonly EliteChapterMeta[] = [
     id: 'elite_mist',
     officialId: 'dungeon_mist',
     desc: '同一条回廊，钟声更沉。通关雾钟后可挑战。',
+  },
+  {
+    id: 'elite_hush',
+    officialId: 'dungeon_hush',
+    desc: '同一口井，静域更沉。通关静钟井后可挑战。',
   },
 ];
 

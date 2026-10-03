@@ -82,6 +82,7 @@ export {
   BOSS_FIRST_CLEAR_SOUL,
   DUNGEON_REPEAT_SOUL,
   ELITE_REPEAT_SOUL,
+  adoptAdventureRecruits,
   startRun,
   applyVictory,
   SWEEP_ROUNDS_PER_DAY,

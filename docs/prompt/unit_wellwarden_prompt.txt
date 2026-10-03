@@ -1,0 +1,9 @@
+第八章精英「守井人」单帧
+人形，英雄身高。参考图只提供画法。
+
+One cartoon elite character, centered, for a tactics game sprite.
+The attached reference is DRAWING METHOD ONLY: thick near-black outline, flat cel fills, super-deformed mascot with a big head.
+
+The entire background is 100% solid flat MAGENTA #FF00FF.
+
+CHARACTER: a short stout well warden facing the viewer. The coat is matte fountain-pen ink blue (#2C3A52). A cold-silver coin rim (#D7E0EA) runs along the shoulders and the hem. A bright silver clasp (#F4F7FB) sits on the chest. Big head, about half the height. Two dark eyes. A short staff of cold silver held across the body, blunt, one piece. Thick outline #1A1410. Flat fills, 4–6 colours. The figure stays inside the central 60% of the square, wide magenta margin. The picture has this one warden and the magenta field.

@@ -6,7 +6,7 @@
   "meta": {
     "size": {
       "w": 1024,
-      "h": 512
+      "h": 1024
     },
     "scale": "1",
     "format": "RGBA8888"
@@ -20,17 +20,17 @@
   "frames": {
     "kelan-walk/down-1.png": {
       "frame": {
-        "x": 141,
+        "x": 197,
         "y": 2,
-        "w": 136,
+        "w": 205,
         "h": 216
       },
       "rotated": false,
       "trimmed": true,
       "spriteSourceSize": {
-        "x": 60,
+        "x": 25,
         "y": 21,
-        "w": 136,
+        "w": 205,
         "h": 216
       },
       "sourceSize": {
@@ -40,17 +40,17 @@
     },
     "kelan-walk/down-2.png": {
       "frame": {
-        "x": 279,
+        "x": 404,
         "y": 2,
-        "w": 136,
+        "w": 201,
         "h": 216
       },
       "rotated": false,
       "trimmed": true,
       "spriteSourceSize": {
-        "x": 60,
+        "x": 27,
         "y": 21,
-        "w": 136,
+        "w": 201,
         "h": 216
       },
       "sourceSize": {
@@ -62,15 +62,15 @@
       "frame": {
         "x": 2,
         "y": 2,
-        "w": 137,
+        "w": 193,
         "h": 217
       },
       "rotated": false,
       "trimmed": true,
       "spriteSourceSize": {
-        "x": 59,
+        "x": 31,
         "y": 20,
-        "w": 137,
+        "w": 193,
         "h": 217
       },
       "sourceSize": {
@@ -80,18 +80,18 @@
     },
     "kelan-walk/left-1.png": {
       "frame": {
-        "x": 2,
-        "y": 221,
-        "w": 129,
-        "h": 210
+        "x": 607,
+        "y": 2,
+        "w": 191,
+        "h": 214
       },
       "rotated": false,
       "trimmed": true,
       "spriteSourceSize": {
-        "x": 63,
-        "y": 27,
-        "w": 129,
-        "h": 210
+        "x": 32,
+        "y": 23,
+        "w": 191,
+        "h": 214
       },
       "sourceSize": {
         "w": 256,
@@ -100,18 +100,18 @@
     },
     "kelan-walk/left-2.png": {
       "frame": {
-        "x": 417,
+        "x": 800,
         "y": 2,
-        "w": 128,
-        "h": 211
+        "w": 188,
+        "h": 214
       },
       "rotated": false,
       "trimmed": true,
       "spriteSourceSize": {
-        "x": 64,
-        "y": 26,
-        "w": 128,
-        "h": 211
+        "x": 34,
+        "y": 23,
+        "w": 188,
+        "h": 214
       },
       "sourceSize": {
         "w": 256,
@@ -120,18 +120,18 @@
     },
     "kelan-walk/left-4.png": {
       "frame": {
-        "x": 547,
-        "y": 2,
-        "w": 124,
-        "h": 211
+        "x": 2,
+        "y": 221,
+        "w": 183,
+        "h": 214
       },
       "rotated": false,
       "trimmed": true,
       "spriteSourceSize": {
-        "x": 66,
-        "y": 26,
-        "w": 124,
-        "h": 211
+        "x": 36,
+        "y": 23,
+        "w": 183,
+        "h": 214
       },
       "sourceSize": {
         "w": 256,
@@ -140,18 +140,18 @@
     },
     "kelan-walk/left-1-mirror.png": {
       "frame": {
-        "x": 133,
+        "x": 187,
         "y": 221,
-        "w": 129,
-        "h": 210
+        "w": 191,
+        "h": 214
       },
       "rotated": false,
       "trimmed": true,
       "spriteSourceSize": {
-        "x": 64,
-        "y": 27,
-        "w": 129,
-        "h": 210
+        "x": 33,
+        "y": 23,
+        "w": 191,
+        "h": 214
       },
       "sourceSize": {
         "w": 256,
@@ -160,18 +160,18 @@
     },
     "kelan-walk/left-2-mirror.png": {
       "frame": {
-        "x": 673,
-        "y": 2,
-        "w": 128,
-        "h": 211
+        "x": 380,
+        "y": 221,
+        "w": 188,
+        "h": 214
       },
       "rotated": false,
       "trimmed": true,
       "spriteSourceSize": {
-        "x": 64,
-        "y": 26,
-        "w": 128,
-        "h": 211
+        "x": 34,
+        "y": 23,
+        "w": 188,
+        "h": 214
       },
       "sourceSize": {
         "w": 256,
@@ -180,18 +180,18 @@
     },
     "kelan-walk/left-4-mirror.png": {
       "frame": {
-        "x": 803,
-        "y": 2,
-        "w": 124,
-        "h": 211
+        "x": 570,
+        "y": 221,
+        "w": 183,
+        "h": 214
       },
       "rotated": false,
       "trimmed": true,
       "spriteSourceSize": {
-        "x": 66,
-        "y": 26,
-        "w": 124,
-        "h": 211
+        "x": 37,
+        "y": 23,
+        "w": 183,
+        "h": 214
       },
       "sourceSize": {
         "w": 256,
@@ -200,18 +200,18 @@
     },
     "kelan-walk/up-1.png": {
       "frame": {
-        "x": 397,
-        "y": 221,
-        "w": 134,
-        "h": 207
+        "x": 174,
+        "y": 437,
+        "w": 166,
+        "h": 200
       },
       "rotated": false,
       "trimmed": true,
       "spriteSourceSize": {
-        "x": 61,
-        "y": 30,
-        "w": 134,
-        "h": 207
+        "x": 45,
+        "y": 37,
+        "w": 166,
+        "h": 200
       },
       "sourceSize": {
         "w": 256,
@@ -220,18 +220,18 @@
     },
     "kelan-walk/up-2.png": {
       "frame": {
-        "x": 533,
-        "y": 221,
-        "w": 133,
-        "h": 207
+        "x": 2,
+        "y": 437,
+        "w": 170,
+        "h": 203
       },
       "rotated": false,
       "trimmed": true,
       "spriteSourceSize": {
-        "x": 61,
-        "y": 30,
-        "w": 133,
-        "h": 207
+        "x": 43,
+        "y": 34,
+        "w": 170,
+        "h": 203
       },
       "sourceSize": {
         "w": 256,
@@ -240,18 +240,18 @@
     },
     "kelan-walk/up-4.png": {
       "frame": {
-        "x": 264,
+        "x": 755,
         "y": 221,
-        "w": 131,
-        "h": 208
+        "w": 169,
+        "h": 204
       },
       "rotated": false,
       "trimmed": true,
       "spriteSourceSize": {
-        "x": 62,
-        "y": 29,
-        "w": 131,
-        "h": 208
+        "x": 43,
+        "y": 33,
+        "w": 169,
+        "h": 204
       },
       "sourceSize": {
         "w": 256,

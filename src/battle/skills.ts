@@ -29,6 +29,7 @@ import { canProfessionEquipSkill, getSkillSpec, type SkillSpec } from '@/data/sk
 import { applyEliteTempSkillBoost } from '@/data/eliteCatalog';
 import { effectiveSkillSpec } from '@/data/skillModCatalog';
 import { getTerrainAt, gridSize, inBounds, manhattan, neighbors4, type TerrainGrid } from './grid';
+import { getTerrainSpec } from '@/data/terrainSpec';
 import { hasLineOfSight, rayCellsUntilBlocked } from './sight';
 import { axisDirection, displaceLanding, displaceUnit } from './displace';
 import type { TerrainRuntime } from './terrainDynamics';
@@ -515,12 +516,25 @@ function applyFoeEffectsAndStamp(
   target: UnitState,
   spec: SkillSpec,
   hits: SkillHit[],
+  terrain: TerrainGrid,
 ): void {
   stampFoeHitFlags(
     hits,
     target.uid,
-    applySkillCastFoeEffects(target, spec, hitRng, self.personalPoisonTickAdd ?? 0),
+    applySkillCastFoeEffects(
+      target,
+      spec,
+      hitRng,
+      self.personalPoisonTickAdd ?? 0,
+      getTerrainAt(terrain, target.pos),
+    ),
   );
+}
+
+/** 这一下结算时施法者脚下禁招。主槽、临时槽都算；普攻不走这里。 */
+export function castBlockTerrainName(self: UnitState, terrain: TerrainGrid): string | null {
+  const spec = getTerrainSpec(getTerrainAt(terrain, self.pos));
+  return spec.blocksCast ? spec.name : null;
 }
 
 /**
@@ -649,7 +663,7 @@ function castAreaAoE(
     if (spec.damage.kind !== 'none') {
       hits.push(resolveHit(self, def, spec, t, terrain, defs));
     }
-    applyFoeEffectsAndStamp(self, t, spec, hits);
+    applyFoeEffectsAndStamp(self, t, spec, hits, terrain);
   }
   const events: BattleEvent[] = [
     {
@@ -700,7 +714,7 @@ function castGroundPickAoE(
     if (spec.damage.kind !== 'none') {
       hits.push(resolveHit(self, def, spec, t, terrain, defs));
     }
-    applyFoeEffectsAndStamp(self, t, spec, hits);
+    applyFoeEffectsAndStamp(self, t, spec, hits, terrain);
   }
   const events: BattleEvent[] = [
     {
@@ -820,7 +834,7 @@ function castNeighborPickFoe(
     },
   ];
   pushHitDeaths(events, units, hits);
-  applyFoeEffectsAndStamp(self, tgt, spec, hits);
+  applyFoeEffectsAndStamp(self, tgt, spec, hits, terrain);
   applySkillCastSelfEffects(self, spec);
   pushAttrNotes(events, spec, { self, foes: [tgt] });
   pushLifesteal(self, spec, hits, defs, events);
@@ -1029,7 +1043,7 @@ function castLineBestRay(
   for (const t of line) {
     if (t.hp <= 0) continue;
     hits.push(resolveHit(self, def, spec, t, terrain, defs));
-    applyFoeEffectsAndStamp(self, t, spec, hits);
+    applyFoeEffectsAndStamp(self, t, spec, hits, terrain);
   }
   if (hits.length === 0) return [];
   const events: BattleEvent[] = [
@@ -1152,6 +1166,7 @@ export function trySkillBeforeMove(
   tr?: TerrainRuntime,
   spentSlots?: ReadonlySet<SkillSlot>,
 ): BattleEvent[] {
+  if (castBlockTerrainName(self, terrain)) return [];
   const def = effectiveUnitDef(self, defs);
   for (const slot of CAST_ORDER) {
     if (spentSlots?.has(slot)) continue;
@@ -1173,6 +1188,7 @@ export function trySkillAfterMove(
   tr?: TerrainRuntime,
   spentSlots?: ReadonlySet<SkillSlot>,
 ): BattleEvent[] {
+  if (castBlockTerrainName(self, terrain)) return [];
   const def = effectiveUnitDef(self, defs);
   for (const slot of CAST_ORDER) {
     if (spentSlots?.has(slot)) continue;
@@ -1234,6 +1250,9 @@ export function groundAimTap(prev: Vec2 | null, tapped: Vec2): 'preview' | 'conf
  * 「范围内没目标就返回 null」是有意的：技能按钮的可点状态必须和真实结算一致。
  * 允许点一个放不出东西的按钮，玩家会以为自己把机会用掉了（毕竟冷却条是他唯一的凭据），
  * 而实际上什么都没发生。
+ *
+ * 站在禁招地形上同样返回 null。按钮文案不能写成「没目标」——
+ * 视图先查 `castBlockTerrainName`，再决定是「禁招」还是「没目标」。
  */
 export function skillAiming(
   self: UnitState,
@@ -1245,6 +1264,7 @@ export function skillAiming(
   const def = effectiveUnitDef(self, defs);
   const spec = readySlotSpec(self, def, slot);
   if (!spec || spec.timing === 'passive') return null;
+  if (castBlockTerrainName(self, terrain)) return null;
 
   const base = {
     slot,
@@ -1404,6 +1424,7 @@ export function castSkillManual(
   const def = effectiveUnitDef(self, defs);
   const spec = readySlotSpec(self, def, slot);
   if (!spec || spec.timing === 'passive') return [];
+  if (castBlockTerrainName(self, terrain)) return [];
   return commitCast(
     self,
     slot,

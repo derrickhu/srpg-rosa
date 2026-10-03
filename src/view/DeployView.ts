@@ -65,7 +65,34 @@ import { AudioManager } from '@/core/AudioManager';
 import { sfxForTerrainPlace } from '@/data/audioCatalog';
 import { ABANDON_RUN_CONFIRM, attachAbandonConfirm } from '@/view/battle/resultOverlay';
 import { attachPress } from '@/ui/press';
+import { createScrollList, rectContains, type ScrollListHandle } from '@/ui/ScrollList';
 import { attachGlowRing } from '@/view/fx/celebration';
+
+/** 替补席卡宽。人多时不把卡压窄，改成横向滑动 */
+export const BENCH_CARD_W = 72;
+const BENCH_CARD_GAP = 6;
+const BENCH_CARD_PAD = 8;
+
+/** 替补席排版：放得下就居中，放不下保持卡宽，靠横向滚动看到后面的人 */
+export function benchHandMetrics(screenW: number, count: number): {
+  slotW: number;
+  gap: number;
+  pad: number;
+  /** 含左右留白，滚动内容的总宽 */
+  contentW: number;
+  scrollable: boolean;
+  /** 第一张卡的 x：放得下就整排居中，放不下就从左侧留白开始 */
+  originX: number;
+} {
+  const slotW = BENCH_CARD_W;
+  const gap = BENCH_CARD_GAP;
+  const pad = BENCH_CARD_PAD;
+  const cardsW = count <= 0 ? 0 : count * slotW + Math.max(0, count - 1) * gap;
+  const contentW = cardsW + pad * 2;
+  const scrollable = count > 0 && contentW > screenW;
+  const originX = scrollable ? pad : Math.floor((screenW - cardsW) / 2);
+  return { slotW, gap, pad, contentW, scrollable, originX };
+}
 export interface DeployLayoutScreen {
   screenWidth: number;
   screenHeight: number;
@@ -423,7 +450,28 @@ export function createDeployView(
   const handLayer = new PIXI.Container();
   handLayer.y = handY;
   root.addChild(handLayer);
-  const benchRects = new Map<string, { x: number; y: number; w: number; h: number }>();
+  /** 卡在滚动内容里的坐标。屏幕位置要再加上当前滚动量 */
+  const benchLocals = new Map<string, { x: number; y: number; w: number; h: number }>();
+  let unitScroll: ScrollListHandle | null = null;
+
+  /** 点卡回调里重绘会拆掉事件目标，立刻 destroy 会把这次点击的传播打断 */
+  function destroyLater(nodes: PIXI.DisplayObject[]): void {
+    if (nodes.length === 0) return;
+    queueMicrotask(() => {
+      for (const node of nodes) {
+        const doomed = node as PIXI.DisplayObject & { destroyed?: boolean };
+        if (doomed.destroyed) continue;
+        node.destroy({ children: true });
+      }
+    });
+  }
+
+  function benchScreenRect(rosterId: string): { x: number; y: number; w: number; h: number } | null {
+    const local = benchLocals.get(rosterId);
+    if (!local) return null;
+    const shift = unitScroll?.content.x ?? 0;
+    return { x: local.x + shift, y: local.y, w: local.w, h: local.h };
+  }
 
   function isDeployCell(x: number, y: number): boolean {
     return isPlayerDeployCell(currentStage(state), { x, y });
@@ -885,11 +933,96 @@ export function createDeployView(
     }
   }
 
+  function pointerInUnitHand(e: PIXI.FederatedPointerEvent): boolean {
+    if (!unitScroll) return true;
+    const p = unitScroll.root.getGlobalPosition();
+    return rectContains(
+      { x: p.x, y: p.y, width: screen.screenWidth, height: 80 },
+      e.global.x,
+      e.global.y,
+    );
+  }
+
+  function makeBenchCard(m: Character, slotW: number, slotH: number): PIXI.Container {
+    const c = new PIXI.Container();
+    const isSelected = selectedRosterId === m.rosterId;
+    const g = new PIXI.Graphics();
+    if (isSelected) {
+      g.lineStyle(2, C.accent, 1);
+    }
+    g.beginFill(isSelected ? C.accent : 0xffffff, isSelected ? 0.45 : 0.2);
+    g.drawRoundedRect(0, 0, slotW, slotH, 6);
+    g.endFill();
+    c.addChild(g);
+
+    const imgSize = Math.min(48, slotW - 8);
+    const token = createUnitToken(characterArtKey(m), 'player', imgSize);
+    token.x = slotW / 2;
+    token.y = slotH * 0.38;
+    c.addChild(token);
+
+    const nameTx = makeText(m.name, 'caption', {
+      fill: 0xffffff,
+      fontSize: 10,
+      fontWeight: 'bold',
+    });
+    nameTx.anchor.set(0.5, 0);
+    nameTx.x = slotW / 2;
+    nameTx.y = slotH - 20;
+    c.addChild(nameTx);
+
+    c.eventMode = 'static';
+    c.cursor = 'pointer';
+    c.hitArea = new PIXI.Rectangle(0, 0, slotW, slotH);
+    attachPress(c);
+    if (isSelected) attachGlowRing(c, slotW, slotH).setActive(true);
+    c.on('pointertap', (e: PIXI.FederatedPointerEvent) => {
+      if (unitScroll?.wasDragging() || !pointerInUnitHand(e)) return;
+      selectedRosterId = m.rosterId;
+      deployTool = 'unit';
+      terrainPickId = null;
+      redrawToolbar();
+      redrawHand();
+      callbacks.onSelectRoster?.(m.rosterId);
+    });
+
+    const infoSize = 16;
+    const infoBtn = new PIXI.Container();
+    const infoBg = new PIXI.Graphics();
+    infoBg.beginFill(0x000000, 0.5);
+    infoBg.drawCircle(infoSize / 2, infoSize / 2, infoSize / 2);
+    infoBg.endFill();
+    infoBtn.addChild(infoBg);
+    const infoTx = makeText('i', 'caption', { fill: 0xffffff, fontSize: 10, fontWeight: 'bold' });
+    infoTx.anchor.set(0.5);
+    infoTx.x = infoSize / 2;
+    infoTx.y = infoSize / 2;
+    infoBtn.addChild(infoTx);
+    infoBtn.x = slotW - infoSize - 2;
+    infoBtn.y = 2;
+    infoBtn.eventMode = 'static';
+    infoBtn.cursor = 'pointer';
+    infoBtn.hitArea = new PIXI.Circle(infoSize / 2, infoSize / 2, infoSize / 2 + 4);
+    infoBtn.on('pointertap', (e: PIXI.FederatedPointerEvent) => {
+      e.stopPropagation();
+      if (unitScroll?.wasDragging() || !pointerInUnitHand(e)) return;
+      showMercDetail(m);
+    });
+    c.addChild(infoBtn);
+    return c;
+  }
+
   function redrawHand(): void {
-    handLayer.removeChildren();
     const bench = benchCharacters(state);
     const sw = screen.screenWidth;
     const slotH = 80;
+    const metrics = benchHandMetrics(sw, bench.length);
+    const keepScroll = deployTool === 'unit' && bench.length > 0 && metrics.scrollable;
+    if (!keepScroll) unitScroll = null;
+    const keepRoot = keepScroll ? unitScroll?.root : null;
+
+    const leftover = handLayer.removeChildren();
+    destroyLater(leftover.filter((child) => child !== keepRoot));
 
     const bgBar = new PIXI.Graphics();
     bgBar.beginFill(0x3a2a1a, 0.75);
@@ -898,11 +1031,13 @@ export function createDeployView(
     handLayer.addChild(bgBar);
 
     if (deployTool === 'terrain') {
+      benchLocals.clear();
       redrawTerrainHand(sw, slotH);
       return;
     }
 
     if (bench.length === 0) {
+      benchLocals.clear();
       const tx = makeText('全部角色已上阵', 'caption', { fill: 0xcccccc });
       tx.anchor.set(0.5, 0.5);
       tx.x = sw / 2;
@@ -911,83 +1046,31 @@ export function createDeployView(
       return;
     }
 
-    benchRects.clear();
-    const slotW = Math.min(72, Math.floor((sw - 16) / Math.max(1, bench.length)) - 6);
-    const imgSize = Math.min(48, slotW - 8);
-    const totalW = bench.length * slotW + (bench.length - 1) * 6;
-    let hx = Math.floor((sw - totalW) / 2);
-
-    for (const m of bench) {
-      const c = new PIXI.Container();
-      c.x = hx;
-
-      const isSelected = selectedRosterId === m.rosterId;
-      const g = new PIXI.Graphics();
-      if (isSelected) {
-        g.lineStyle(2, C.accent, 1);
-      }
-      g.beginFill(isSelected ? C.accent : 0xffffff, isSelected ? 0.45 : 0.2);
-      g.drawRoundedRect(0, 0, slotW, slotH, 6);
-      g.endFill();
-      c.addChild(g);
-
-      const token = createUnitToken(characterArtKey(m), 'player', imgSize);
-      token.x = slotW / 2;
-      token.y = slotH * 0.38;
-      c.addChild(token);
-
-      const nameTx = makeText(m.name, 'caption', {
-        fill: 0xffffff,
-        fontSize: 10,
-        fontWeight: 'bold',
-      });
-      nameTx.anchor.set(0.5, 0);
-      nameTx.x = slotW / 2;
-      nameTx.y = slotH - 20;
-      c.addChild(nameTx);
-
-      c.eventMode = 'static';
-      c.cursor = 'pointer';
-      c.hitArea = new PIXI.Rectangle(0, 0, slotW, slotH);
-      attachPress(c);
-      if (isSelected) attachGlowRing(c, slotW, slotH).setActive(true);
-      c.on('pointertap', () => {
-        selectedRosterId = m.rosterId;
-        deployTool = 'unit';
-        terrainPickId = null;
-        redrawToolbar();
-        redrawHand();
-        callbacks.onSelectRoster?.(m.rosterId);
-      });
-
-      // 详情按钮（右上角小圆）
-      const infoSize = 16;
-      const infoBtn = new PIXI.Container();
-      const infoBg = new PIXI.Graphics();
-      infoBg.beginFill(0x000000, 0.5);
-      infoBg.drawCircle(infoSize / 2, infoSize / 2, infoSize / 2);
-      infoBg.endFill();
-      infoBtn.addChild(infoBg);
-      const infoTx = makeText('i', 'caption', { fill: 0xffffff, fontSize: 10, fontWeight: 'bold' });
-      infoTx.anchor.set(0.5);
-      infoTx.x = infoSize / 2;
-      infoTx.y = infoSize / 2;
-      infoBtn.addChild(infoTx);
-      infoBtn.x = slotW - infoSize - 2;
-      infoBtn.y = 2;
-      infoBtn.eventMode = 'static';
-      infoBtn.cursor = 'pointer';
-      infoBtn.hitArea = new PIXI.Circle(infoSize / 2, infoSize / 2, infoSize / 2 + 4);
-      infoBtn.on('pointertap', (e: PIXI.FederatedPointerEvent) => {
-        e.stopPropagation();
-        showMercDetail(m);
-      });
-      c.addChild(infoBtn);
-
-      handLayer.addChild(c);
-      benchRects.set(m.rosterId, { x: hx, y: handY, w: slotW, h: slotH });
-      hx += slotW + 6;
+    benchLocals.clear();
+    const parent = keepScroll
+      ? (unitScroll ?? (unitScroll = createScrollList({
+        width: sw,
+        height: slotH,
+        axis: 'x',
+        showBar: true,
+      }))).content
+      : handLayer;
+    if (keepScroll && unitScroll && unitScroll.root.parent !== handLayer) {
+      handLayer.addChild(unitScroll.root);
     }
+    if (keepScroll && unitScroll) {
+      destroyLater(unitScroll.content.removeChildren());
+    }
+
+    let hx = metrics.originX;
+    for (const m of bench) {
+      const c = makeBenchCard(m, metrics.slotW, slotH);
+      c.x = hx;
+      parent.addChild(c);
+      benchLocals.set(m.rosterId, { x: hx, y: handY, w: metrics.slotW, h: slotH });
+      hx += metrics.slotW + metrics.gap;
+    }
+    if (keepScroll) unitScroll?.refresh(metrics.contentW);
   }
 
   redrawToolbar();
@@ -1060,7 +1143,7 @@ export function createDeployView(
       w: CELL - 2,
       h: CELL - 2,
     }),
-    benchRect: (rosterId) => benchRects.get(rosterId) ?? null,
+    benchRect: (rosterId) => benchScreenRect(rosterId),
     fightRect: () => startRect,
     selectedRosterId: () => selectedRosterId,
   };

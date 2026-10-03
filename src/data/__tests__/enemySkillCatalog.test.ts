@@ -52,6 +52,22 @@ describe('敌方技能皮肤', () => {
     expect(getSkillSpec('mist_chime')?.requiresSight).toBe(true);
   });
 
+  it('第八章 Boss 挂余震皮肤，站在静域上才冻', () => {
+    const ch8 = CHAPTER_STAGE_INDICES[7]!;
+    const boss = STAGES_MVP[ch8[ch8.length - 1]!]!.enemies.find((e) => e.boss)!;
+    expect(boss.skillSkin).toBe('after_shock');
+    const u = enemySpawnToUnitState(boss, 1.1);
+    expect(u.battleSkill?.id).toBe('after_shock');
+    expect(u.battleSkill?.name).toBe('余震');
+    expect(u.battleSkill?.vfxId).toBe('after_shock');
+    const spec = getSkillSpec('after_shock');
+    expect(spec?.shape).toEqual({ type: 'squareAoE', radius: 1 });
+    expect(spec?.onCastFoeEffects).toEqual([
+      { kind: 'freeze', rounds: 1, onlyOnTerrain: 'hush' },
+    ]);
+    expect(spec?.requiresSight).toBeUndefined();
+  });
+
   it('皮肤表每条都能 resolve，implementsId 真实存在', () => {
     for (const skin of Object.values(ENEMY_SKILL_SKINS)) {
       const sk = resolveEnemyBattleSkill({ skillSkin: skin.id });

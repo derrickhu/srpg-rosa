@@ -45,10 +45,13 @@ import {
   previewUniversalEmblemGrant,
 } from '@/data/personalEmblemCatalog';
 import { instantiateCharacter } from '@/game/characterFactory';
+import { isTutorialRun } from '@/game/tutorial/tutorialRules';
 import type { Character } from '@/game/characterTypes';
 import {
   adventureRunOf,
+  appendMissingRosterToParty,
   createRunState,
+  isChallengeLaneRun,
   deployedCharacters,
   currentDungeon,
   currentNode,
@@ -306,6 +309,16 @@ export function previewChapterClear(state: MvpGameState, dungeonId: string): Cha
     ? previewFrom(undefined, stats, claimed, firstClear, repeat)
     : previewFrom(d.stars, stats, claimed, firstClear, repeat);
   return attachClearUnlocks(base, state.meta, dungeonId);
+}
+
+/**
+ * 继续冒险时，把开局之后才招募的人补进这一局。
+ * 教学局的人由剧本发放；无尽和限时战不在这条路上补。
+ */
+export function adoptAdventureRecruits(state: MvpGameState): boolean {
+  const run = state.run;
+  if (!run || isChallengeLaneRun(run) || isTutorialRun(state)) return false;
+  return appendMissingRosterToParty(run, state.meta.roster.map((m) => m.rosterId));
 }
 
 /** 进入副本：建立 run，定位首节点 */

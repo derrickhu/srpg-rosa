@@ -99,6 +99,7 @@ export function terrainBadge(terrainId: TerrainId): TerrainBadge | null {
   if ((spec.healPerRound ?? 0) > 0) return { text: `血+${spec.healPerRound}`, color: C.gold };
   // 浓雾走得过，不能靠「过不去」自己说明挡箭。城墙不可通行，不走这条。
   if (spec.blocksSight) return { text: '挡箭', color: C.warnText };
+  if (spec.blocksCast) return { text: '禁招', color: C.warnText };
   return null;
 }
 
@@ -126,6 +127,9 @@ export function terrainInfoLines(terrainId: TerrainId): string[] {
     out.push('阻挡远程攻击的视线');
   } else if (spec.moveCost === Infinity) {
     out.push('不阻挡远程攻击');
+  }
+  if (spec.blocksCast) {
+    out.push('站在此处放不了技能，普攻可以');
   }
   if (spec.atkMul !== 1) {
     out.push(`站在此处造成的伤害 ${pct(spec.atkMul)}`);

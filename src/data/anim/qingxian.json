@@ -6,15 +6,15 @@
   "meta": {
     "size": {
       "w": 1024,
-      "h": 512
+      "h": 1024
     },
     "scale": "1",
     "format": "RGBA8888"
   },
   "metrics": {
     "frameSize": 256,
-    "subjectHeight": 214,
-    "baselineY": 234,
+    "subjectHeight": 213,
+    "baselineY": 237,
     "ref": "qingxian-walk/down-1.png"
   },
   "frames": {
@@ -22,15 +22,15 @@
       "frame": {
         "x": 2,
         "y": 2,
-        "w": 169,
+        "w": 188,
         "h": 217
       },
       "rotated": false,
       "trimmed": true,
       "spriteSourceSize": {
-        "x": 43,
+        "x": 34,
         "y": 20,
-        "w": 169,
+        "w": 188,
         "h": 217
       },
       "sourceSize": {
@@ -40,17 +40,17 @@
     },
     "qingxian-walk/down-2.png": {
       "frame": {
-        "x": 173,
+        "x": 192,
         "y": 2,
-        "w": 168,
+        "w": 188,
         "h": 217
       },
       "rotated": false,
       "trimmed": true,
       "spriteSourceSize": {
-        "x": 44,
+        "x": 34,
         "y": 20,
-        "w": 168,
+        "w": 188,
         "h": 217
       },
       "sourceSize": {
@@ -60,18 +60,18 @@
     },
     "qingxian-walk/down-4.png": {
       "frame": {
-        "x": 343,
+        "x": 382,
         "y": 2,
-        "w": 169,
-        "h": 217
+        "w": 186,
+        "h": 214
       },
       "rotated": false,
       "trimmed": true,
       "spriteSourceSize": {
-        "x": 43,
-        "y": 20,
-        "w": 169,
-        "h": 217
+        "x": 35,
+        "y": 23,
+        "w": 186,
+        "h": 214
       },
       "sourceSize": {
         "w": 256,
@@ -80,18 +80,18 @@
     },
     "qingxian-walk/left-1.png": {
       "frame": {
-        "x": 328,
-        "y": 221,
-        "w": 162,
-        "h": 207
+        "x": 570,
+        "y": 2,
+        "w": 176,
+        "h": 213
       },
       "rotated": false,
       "trimmed": true,
       "spriteSourceSize": {
-        "x": 47,
-        "y": 30,
-        "w": 162,
-        "h": 207
+        "x": 40,
+        "y": 24,
+        "w": 176,
+        "h": 213
       },
       "sourceSize": {
         "w": 256,
@@ -100,18 +100,18 @@
     },
     "qingxian-walk/left-2.png": {
       "frame": {
-        "x": 492,
+        "x": 2,
         "y": 221,
-        "w": 167,
-        "h": 207
+        "w": 176,
+        "h": 212
       },
       "rotated": false,
       "trimmed": true,
       "spriteSourceSize": {
-        "x": 44,
-        "y": 30,
-        "w": 167,
-        "h": 207
+        "x": 40,
+        "y": 25,
+        "w": 176,
+        "h": 212
       },
       "sourceSize": {
         "w": 256,
@@ -120,18 +120,18 @@
     },
     "qingxian-walk/left-4.png": {
       "frame": {
-        "x": 2,
+        "x": 180,
         "y": 221,
-        "w": 161,
-        "h": 208
+        "w": 170,
+        "h": 212
       },
       "rotated": false,
       "trimmed": true,
       "spriteSourceSize": {
-        "x": 47,
-        "y": 29,
-        "w": 161,
-        "h": 208
+        "x": 43,
+        "y": 25,
+        "w": 170,
+        "h": 212
       },
       "sourceSize": {
         "w": 256,
@@ -140,18 +140,18 @@
     },
     "qingxian-walk/left-1-mirror.png": {
       "frame": {
-        "x": 661,
-        "y": 221,
-        "w": 162,
-        "h": 207
+        "x": 748,
+        "y": 2,
+        "w": 176,
+        "h": 213
       },
       "rotated": false,
       "trimmed": true,
       "spriteSourceSize": {
-        "x": 47,
-        "y": 30,
-        "w": 162,
-        "h": 207
+        "x": 40,
+        "y": 24,
+        "w": 176,
+        "h": 213
       },
       "sourceSize": {
         "w": 256,
@@ -160,18 +160,18 @@
     },
     "qingxian-walk/left-2-mirror.png": {
       "frame": {
-        "x": 825,
+        "x": 352,
         "y": 221,
-        "w": 167,
-        "h": 207
+        "w": 176,
+        "h": 212
       },
       "rotated": false,
       "trimmed": true,
       "spriteSourceSize": {
-        "x": 45,
-        "y": 30,
-        "w": 167,
-        "h": 207
+        "x": 40,
+        "y": 25,
+        "w": 176,
+        "h": 212
       },
       "sourceSize": {
         "w": 256,
@@ -180,18 +180,18 @@
     },
     "qingxian-walk/left-4-mirror.png": {
       "frame": {
-        "x": 165,
+        "x": 530,
         "y": 221,
-        "w": 161,
-        "h": 208
+        "w": 170,
+        "h": 212
       },
       "rotated": false,
       "trimmed": true,
       "spriteSourceSize": {
-        "x": 48,
-        "y": 29,
-        "w": 161,
-        "h": 208
+        "x": 43,
+        "y": 25,
+        "w": 170,
+        "h": 212
       },
       "sourceSize": {
         "w": 256,
@@ -200,17 +200,17 @@
     },
     "qingxian-walk/up-1.png": {
       "frame": {
-        "x": 683,
-        "y": 2,
-        "w": 166,
+        "x": 702,
+        "y": 221,
+        "w": 122,
         "h": 212
       },
       "rotated": false,
       "trimmed": true,
       "spriteSourceSize": {
-        "x": 45,
+        "x": 67,
         "y": 25,
-        "w": 166,
+        "w": 122,
         "h": 212
       },
       "sourceSize": {
@@ -220,17 +220,17 @@
     },
     "qingxian-walk/up-2.png": {
       "frame": {
-        "x": 851,
-        "y": 2,
-        "w": 167,
+        "x": 826,
+        "y": 221,
+        "w": 164,
         "h": 212
       },
       "rotated": false,
       "trimmed": true,
       "spriteSourceSize": {
-        "x": 44,
+        "x": 46,
         "y": 25,
-        "w": 167,
+        "w": 164,
         "h": 212
       },
       "sourceSize": {
@@ -240,18 +240,18 @@
     },
     "qingxian-walk/up-4.png": {
       "frame": {
-        "x": 514,
-        "y": 2,
-        "w": 167,
-        "h": 213
+        "x": 2,
+        "y": 435,
+        "w": 136,
+        "h": 211
       },
       "rotated": false,
       "trimmed": true,
       "spriteSourceSize": {
-        "x": 44,
-        "y": 24,
-        "w": 167,
-        "h": 213
+        "x": 60,
+        "y": 26,
+        "w": 136,
+        "h": 211
       },
       "sourceSize": {
         "w": 256,

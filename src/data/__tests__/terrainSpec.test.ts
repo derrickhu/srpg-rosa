@@ -81,7 +81,8 @@ describe('地形文案', () => {
       if (!isPassable(id)) continue;
       const hasVerb = spec.atkMul !== 1 || spec.defMul !== 1
         || spec.dotPerRound > 0 || (spec.healPerRound ?? 0) > 0
-        || spec.blocksSight === true;
+        || spec.blocksSight === true
+        || spec.blocksCast === true;
       if (!hasVerb) continue;
       expect(terrainBadge(id), `${spec.name} 有效果却不出角标`).not.toBeNull();
     }
@@ -98,6 +99,15 @@ describe('地形文案', () => {
    * 两种不可通行地形在棋盘上都只是「过不去」的样子，而一个挡箭一个不挡。
    * 这条差别在界面上没有别的地方能读到，说明卡漏了它就等于是隐藏规则。
    */
+  it('静域走得过，角标写禁招，说明里写普攻还可以放', () => {
+    expect(isPassable('hush')).toBe(true);
+    expect(terrainBadge('hush')?.text).toBe('禁招');
+    const lines = terrainInfoLines('hush').join(' ');
+    expect(lines).toContain('放不了技能');
+    expect(lines).toContain('普攻可以');
+    expect(getTerrainSpec('hush').blocksSight).toBeUndefined();
+  });
+
   it('浓雾走得过，角标写挡箭；城墙不可通行，不出角标', () => {
     expect(terrainBadge('mist')?.text).toBe('挡箭');
     expect(terrainInfoLines('mist').join(' ')).toContain('阻挡远程');

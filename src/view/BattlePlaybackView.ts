@@ -11,6 +11,7 @@ import { UNIT_DEFS } from '@/data/unitDefs';
 import { POTION_DEFS } from '@/data/potionCatalog';
 import { getSkillSpec } from '@/data/skillCatalog';
 import {
+  castBlockTerrainName,
   groundAimTap,
   groundBlastCells,
   specAppliesFreeze,
@@ -2112,12 +2113,25 @@ export function createBattlePlaybackView(
     for (const { slot, def, cd } of slots) {
       const spec = def ? getSkillSpec(def.id) : undefined;
       if (!spec || spec.timing === 'passive') continue;
+      const blockTerrain = castBlockTerrainName(u, sim.getTerrain());
+      const aiming = sim.skillAiming(uid, slot);
       const state: SkillButtonState = pending.spentSkillSlots.includes(slot)
         ? 'spent'
         : cd > 0 ? 'cooldown'
-          : !sim.skillAiming(uid, slot) ? 'noTarget'
-            : 'ready';
-      out.push({ slot, iconKey: `skill_${spec.id}`, name: spec.name, state, cooldown: cd });
+          : blockTerrain ? 'hush'
+            : !aiming ? 'noTarget'
+              : 'ready';
+      const encoreWaiting = state === 'noTarget'
+        && spec.onCastAllyEffects?.some((e) => e.kind === 'encore');
+      out.push({
+        slot,
+        iconKey: `skill_${spec.id}`,
+        name: spec.name,
+        state,
+        cooldown: cd,
+        ...(blockTerrain ? { blockTerrain } : {}),
+        ...(encoreWaiting ? { noTargetDetail: '只能点本回合已经行动过、并且在范围内的友军' } : {}),
+      });
     }
     return out;
   }

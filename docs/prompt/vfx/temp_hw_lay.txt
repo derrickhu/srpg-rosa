@@ -1,0 +1,24 @@
+铺静（temp_hw_lay）—— 黑底 additive 银币圆盘 9 帧（3x3）
+
+一枚实心的银币圆盘，在格子正中胀开，停住，再暗下去。
+不是环，不是雾团，不是朝右的板。
+
+2D game VFX sprite sheet, 3 columns by 3 rows, 9 equal cells, cells meet with no drawn borders.
+Every pixel that is not the effect is pure black #000000.
+The disc stays centered in every cell.
+
+One solid oval coin, flat, filled, with a bright silver core the color of a polished spoon (#F4F7FB), a cold-silver body the color of a new coin (#D7E0EA), and a matte ink-blue rim the color of fountain-pen ink (#2C3A52).
+The coin is filled. The middle is bright silver, the rim is ink blue.
+
+Frame order, left to right, then top to bottom:
+  Frame 1: a tiny silver dot at the cell center.
+  Frame 2: a small solid coin.
+  Frame 3: PEAK. A wide solid coin, about half the cell wide, ink rim clear, silver core brightest.
+  Frame 4: the same coin, held still.
+  Frame 5: the same size, a little dimmer.
+  Frame 6: the rim fades, the silver body remains.
+  Frame 7: a smaller dim coin.
+  Frame 8: a small silver speck at the center.
+  Frame 9: a few dim specks. Almost black.
+
+The coin stays inside the central 60% of each cell, with black margin on every side.

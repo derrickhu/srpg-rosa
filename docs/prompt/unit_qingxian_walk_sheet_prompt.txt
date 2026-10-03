@@ -1,37 +1,34 @@
+# 青弦 —— 身份锁 art/sprite-runs/qingxian/identity.png
+# 头身对齐剑士 / 芙洛：大头、短方身体、粗黑描边。不要再出细高写实比例。
+
 A 4x4 sprite sheet, full 4-direction walk cycle, top-down tactics RPG.
-One character only: Qingxian, a battle dancer who sends an ally back into action.
 
-CHARACTER — extreme super-deformed mascot. HEAD is about HALF total height.
-Tiny stubby body. The whole body fits in a roughly square box.
-Giant round head, short limbs, mitten hands, two dark oval eyes, two brows, a tiny mouth.
-Open face. Short ink-black hair with one hairpin the yellow of a gold coin.
+The attached image is the EXACT character identity. Copy her: giant round head about half
+the height, short ink-black hair, one plain hairpin the yellow of a gold coin, a short robe
+the color of undyed cotton, a sash and a long ribbon the red of a Chinese red envelope,
+brown cloth shoes, thick pure-black outlines, flat cel fills, mitten hands, two dark oval
+eyes, a tiny mouth line.
+Keep this same head size and this same stubby square body in every cell.
+Only facing and walk pose change.
 
-IDENTITY COLORS, flat cel:
-- A long ribbon the red of a Chinese red envelope, twice as tall as her torso, held in both hands and streaming beside her. The ribbon is one bold shape and the brightest thing in the cell.
-- A short robe the color of undyed cotton, with a sash the same red-envelope red.
-- Brown cloth shoes.
-Thick near-black outlines. Flat fills, one highlight, one shadow.
+ART STYLE: hand-drawn cartoon game sprite, thick pure-black outlines, flat saturated fills
+with one highlight and one shadow, 3/4 top-down camera matching a tactics grid.
+1.5-head mascot. Head including hair is about half the height from hair to shoes.
+The body is a chunky square. The red ribbon is one thick bold shape.
 
-ART STYLE: hand-drawn cartoon game sprite, thick near-black outlines, flat saturated fills with light cel shading, 3/4 top-down camera matching a tactics grid.
+WALK MOTION — readable from the silhouette at 44 pixels:
+  Column 1 and 3: both feet together, full standing height, ribbon hanging.
+  Column 2: left foot far forward, right foot far behind, wide gap, ribbon swings aside.
+  Column 4: right foot far forward, left foot far behind, ribbon swings the other way.
 
-PROPORTIONS: extreme super-deformed mascot. The HEAD INCLUDING HAIR is about HALF the character's total height. Body, arms and legs together are the other half. The whole character fits in a roughly SQUARE box. 1.5-head mascot: giant head, tiny body.
-
-WALK MOTION — readable from the silhouette at 44 pixels. Columns 2 and 4 must look obviously different from columns 1 and 3:
-  Column 1: both feet together, body at full standing height, ribbon hanging in a long curve beside her.
-  Column 2: LEFT foot planted far FORWARD, right foot trailing far BEHIND, a wide visible gap between the feet. The body squashes down about one tenth of its height. The red ribbon swings far to the other side, a wide arc.
-  Column 3: same standing pose as column 1.
-  Column 4: RIGHT foot far forward, left foot trailing, same body drop. The ribbon swings the opposite way from column 2.
-Wide stride, deep body drop, ribbon arc large enough to read with the interior detail removed.
-
-ROWS:
-  Row 1 top: facing DOWN, face visible, ribbon on the viewer's left
-  Row 2: facing LEFT, left profile, ribbon leading toward the left
-  Row 3: facing RIGHT, right profile, ribbon leading toward the right
-  Row 4 bottom: facing UP, back of the ink-black hair and gold hairpin, ribbon still visible beside the body
+ROWS — every cell in a row faces the same way:
+  Row 1 top: facing DOWN, face visible, ribbon held in front
+  Row 2: facing LEFT, left profile, ribbon leading left
+  Row 3: facing RIGHT, right profile, ribbon leading right
+  Row 4 bottom: facing UP, back of the hair and gold hairpin, ribbon still beside the body
 
 LAYOUT:
 1. Exactly 16 equal cells, 4 columns by 4 rows. Cells meet with no drawn borders.
 2. Every pixel that is not the character is solid flat magenta #FF00FF.
-3. Identical body scale in every cell.
-4. Body fills about 45% of cell height, centered, with a wide magenta margin on every side. Feet sit on one baseline inside the cell, well above the cell edge.
-5. Face: two dark oval eyes, two brows, tiny mouth. Mitten hands. Open face.
+3. Identical body scale in every cell. Body fills about half the cell height.
+4. Ribbon and feet stay inside the cell. Feet sit on one baseline.

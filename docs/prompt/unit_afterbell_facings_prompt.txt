@@ -1,0 +1,18 @@
+第八章 Boss「余钟」四朝向 2x2
+同一只角色，四个朝向。参考图只提供画法。
+
+A 2-column x 2-row grid of the SAME cartoon boss character in four facings.
+The attached reference is DRAWING METHOD ONLY: thick near-black outline, flat cel fills, extreme super-deformed mascot.
+
+The entire background is 100% solid flat MAGENTA #FF00FF. The figure floats on that flat field.
+
+CHARACTER — AFTERBELL, the same design in every cell:
+The body IS a tall cracked bell of cold silver, the color of a new silver coin (#D7E0EA), with a bright spoon-highlight core (#F4F7FB) in the crack. A matte fountain-pen ink rim (#2C3A52) runs around the bell mouth. Two stubby arms. Two big dark eyes sit in the bell mouth. The bell is taller than it is wide, so it reads as a standing bell, distinct from a squat ink dome. Head-mass is about half the height. Chunky, readable at 40 pixels. Thick outline #1A1410. Flat fills. 4–6 colours.
+
+FACINGS, each figure in the central 60% of its cell, wide magenta gutter:
+TOP-LEFT — facing the viewer (front). Eyes and the bright crack visible.
+TOP-RIGHT — facing screen-right, 3/4 side. Bell profile, one eye.
+BOTTOM-LEFT — facing away, the back of the silver bell, ink rim, the crack hidden.
+BOTTOM-RIGHT — facing screen-left, 3/4 side, mirror of the right-facing cell.
+
+Same size, same colours, same outline in all four cells. The picture has this one character four times and the magenta field.

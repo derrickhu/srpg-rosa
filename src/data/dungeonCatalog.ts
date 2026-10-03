@@ -169,6 +169,12 @@ const TEMP_NEW_BY_CHAPTER: ShopPoolRow[][] = [
     { category: 'tempSkill', skillId: 'temp_ms_clear', price: 24 },
     { category: 'tempSkill', skillId: 'temp_ms_bell', price: 22 },
   ]),
+  // 章 8 静钟井：铺静 / 破静 / 推开
+  r([
+    { category: 'tempSkill', skillId: 'temp_hw_lay', price: 26 },
+    { category: 'tempSkill', skillId: 'temp_hw_clear', price: 26 },
+    { category: 'tempSkill', skillId: 'temp_hw_shove', price: 24 },
+  ]),
 ];
 
 /** 一场战斗里这种地形至少这么多格，才算「能玩」而不是边角装饰。 */
@@ -325,6 +331,21 @@ const POOL_MIST = r([
 ]);
 
 /**
+ * 章 8 静钟井：静域券是这一章的关键一格。
+ * 治疗药更贵——答案不是续航。这一章没有两关够格的浓雾，起雾和驱雾不进店。
+ */
+const POOL_HUSH = r([
+  { category: 'terrain', terrainId: 'high', price: 26 },
+  { category: 'terrain', terrainId: 'forest', price: 26 },
+  { category: 'terrain', terrainId: 'wall', price: 26 },
+  { category: 'terrain', terrainId: 'hush', price: 26 },
+  { category: 'potion', potionId: 'heal', price: 28 },
+  { category: 'potion', potionId: 'draught', price: 26 },
+  { category: 'potion', potionId: 'slow', price: 26 },
+  ...tempSkillPool(8),
+]);
+
+/**
  * 把一段连续战斗关卡按「打几场插一个商店、Boss 关收尾」编排为节点序列。
  *
  * Boss 由关卡自己的 `StageDefMvp.isBoss` 决定，不再按「数组最后一个」推。
@@ -379,6 +400,7 @@ const NODES_SWAMP = buildNodes(chapterStages(4));
 const NODES_DRAGON = buildNodes(chapterStages(5));
 const NODES_BLOODFANG = buildNodes(chapterStages(6));
 const NODES_MIST = buildNodes(chapterStages(7));
+const NODES_HUSH = buildNodes(chapterStages(8));
 
 export const DUNGEON_DEFS: DungeonDef[] = [
   {
@@ -513,6 +535,25 @@ export const DUNGEON_DEFS: DungeonDef[] = [
     themeColor: 0x6a7a8a,
     art: 'chapter_mist',
     battleBg: 'battle_bg_mist',
+  },
+  {
+    id: 'dungeon_hush',
+    name: '静钟井',
+    desc: '雾钟敲完，井沿还在响。踏上去打得着，放不了招。',
+    nodes: NODES_HUSH,
+    roguelikePool: POOL_HUSH,
+    metaReward: 27,
+    stars: [
+      { cond: { kind: 'clear' }, soul: 9 },
+      { cond: { kind: 'maxDeaths', max: 1 }, soul: 9 },
+      { cond: { kind: 'maxRounds', max: roundCap(NODES_HUSH) }, soul: 9 },
+    ],
+    enemyScaleBase: 1.45,
+    maxParty: 5,
+    unlock: { kind: 'clearDungeon', dungeonId: 'dungeon_mist' },
+    themeColor: 0x8e9eb0,
+    art: 'chapter_hush',
+    battleBg: 'battle_bg_hush',
   },
 ];
 

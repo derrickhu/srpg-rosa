@@ -144,7 +144,11 @@ export type SkillCastFoeEffect =
    * 冰冻：目标下一次行动整回合跳过（不能移动、放技能、普攻）。
    * 不在轮首递减，轮到他出手时消耗一层——否则 `rounds: 1` 会在他行动前就被 tick 掉。
    */
-  | { kind: 'freeze'; rounds: number; chance?: number };
+  /**
+   * `onlyOnTerrain`：只有目标**正站在**这种地形上才挂。
+   * 和 `terrainHitBonus` 同一类——结算时读目标脚下，不改伤害公式。
+   */
+  | { kind: 'freeze'; rounds: number; chance?: number; onlyOnTerrain?: TerrainId };
 
 /** 对选中友方单位施加的限时 buff（成功施放且命中目标后） */
 export type SkillCastAllyEffect =
@@ -1378,6 +1382,102 @@ const SPECS: Record<string, SkillSpec> = {
     damage: { kind: 'none' },
     shopPrice: 22,
     onCastFoeEffects: [{ kind: 'spdDown', subSpd: 3, rounds: 2 }],
+  },
+  /**
+   * 第八章 · 鸣渣。自身加攻，没有伤害。
+   * 必须从平地起手：脚在静域上这一下放不出去，先蓄再踏进去。
+   */
+  peal_store: {
+    id: 'peal_store',
+    name: '蓄鸣',
+    cooldown: 3,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'support',
+    enemyOnly: true,
+    displayKind: 'whirlwind',
+    shape: { type: 'selfCast' },
+    damage: { kind: 'none' },
+    onCastSelfEffects: [{ kind: 'atkBonus', addAtk: 4, rounds: 2 }],
+  },
+  /**
+   * 第八章 · 井碾。正好 2 格、只打同行同列，把人沿这一下的方向再推 1 格。
+   * 倍率低于 0.5。斜向没有唯一的「背后」，所以必须 `axisOnly`。
+   */
+  well_ram: {
+    id: 'well_ram',
+    name: '推井',
+    cooldown: 2,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'control',
+    enemyOnly: true,
+    displayKind: 'singleBash',
+    shape: { type: 'neighborPickFoe', manhattan: 2, axisOnly: true },
+    damage: { kind: 'scaledAtk', atkMul: 0.45 },
+    onHitDisplace: { who: 'target', cells: 1 },
+  },
+  /**
+   * 第八章 Boss · 余钟。贴身一圈八格（含斜角）。
+   *
+   * 曼哈顿半径 1 打不到这张图上的静域：Boss 在 (4,1)，静域从 y=2 起，
+   * 唯一贴到的 (4,2) 是平地缺口。斜角 (3,2)、(5,2) 才在静域上，所以用方形半径 1。
+   * 缺口上的人只受伤；站在静域上的人再冻住下一动。
+   */
+  after_shock: {
+    id: 'after_shock',
+    name: '余震',
+    cooldown: 3,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'control',
+    enemyOnly: true,
+    displayKind: 'whirlwind',
+    shape: { type: 'squareAoE', radius: 1 },
+    damage: { kind: 'scaledAtk', atkMul: 0.45 },
+    onCastFoeEffects: [{ kind: 'freeze', rounds: 1, onlyOnTerrain: 'hush' }],
+  },
+  /** 第八章临时技能。邻格一圈铺静域，带一点固定伤，和起雾同一类。 */
+  temp_hw_lay: {
+    id: 'temp_hw_lay',
+    name: '铺静',
+    cooldown: 3,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'control',
+    displayKind: 'whirlwind',
+    shape: { type: 'neighborAoE', manhattan: 1 },
+    damage: { kind: 'flat', amount: 6, applyCounter: false, applyTerrain: false },
+    shopPrice: 26,
+    onCastTerrainEffects: [{ kind: 'transmute', to: 'hush' }],
+  },
+  /** 只把已有静域揭开。没静域的章不进池。 */
+  temp_hw_clear: {
+    id: 'temp_hw_clear',
+    name: '破静',
+    cooldown: 3,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'control',
+    displayKind: 'whirlwind',
+    shape: { type: 'neighborAoE', manhattan: 1 },
+    damage: { kind: 'none' },
+    shopPrice: 26,
+    onCastTerrainEffects: [{ kind: 'transmute', to: 'plain', from: 'hush' }],
+  },
+  /** 邻格点一人，不造成伤害，沿十字推开 1 格。用来把人推进静域或推出缺口。 */
+  temp_hw_shove: {
+    id: 'temp_hw_shove',
+    name: '推开',
+    cooldown: 2,
+    exclusiveProfession: null,
+    timing: 'beforeMove',
+    role: 'control',
+    displayKind: 'singleBash',
+    shape: { type: 'neighborPickFoe', manhattan: 1, axisOnly: true },
+    damage: { kind: 'none' },
+    shopPrice: 24,
+    onHitDisplace: { who: 'target', cells: 1 },
   },
   /**
    * 法师默认：3 格内点杀。和弓手「速射」同形，差在两个职业和倍率；

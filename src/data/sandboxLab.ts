@@ -8,6 +8,7 @@ import {
   CHAPTER5_DRAKE,
   CHAPTER6_RITE,
   CHAPTER7_MIST,
+  CHAPTER8_HUSH,
   type StageDefMvp,
   type StageEnemySpawn,
 } from '@/data/stagesMvp';
@@ -57,11 +58,12 @@ const MOOK_SKILL_DUMMIES: StageEnemySpawn[] = [
   CHAPTER5_DRAKE,
   CHAPTER6_RITE,
   CHAPTER7_MIST,
+  CHAPTER8_HUSH,
 ]
   .flatMap((chapter) => Object.values(chapter).filter((t) => t.skillId))
   .map((t, i) =>
     // 都用 sword 底板：这个场只验特效，`defId` 决定的数值和克制在木桩上没有意义
-    dummy('sword', (i % 4) * 2 + 1, i < 4 ? 3 : i < 8 ? 4 : 5, t.name, {
+    dummy('sword', (i % 4) * 2 + 1, 3 + Math.floor(i / 4), t.name, {
       skillId: t.skillId,
       animSet: t.animSet,
       stats: { maxHp: 2400, atk: 1, spd: 4, move: 2 },
@@ -72,8 +74,8 @@ const MOOK_SKILL_DUMMIES: StageEnemySpawn[] = [
  * 木桩场：中排各职业木桩（看普攻/命中），最北一排五只 Boss 皮（看敌方技能）。
  * 血厚攻低，方便同一场里把技能连着放完。
  *
- * Boss 那排**按章号从左到右排**，七个各带自己的 `animSet` 与专属特效，
- * 一屏之内就能比出形态（环 / 柱 / 线 / 沉雾 / 锥 / 向心漩 / 雾钟环）有没有撞车——
+ * Boss 那排**按章号从左到右排**，八个各带自己的 `animSet` 与专属特效，
+ * 一屏之内就能比出形态（环 / 柱 / 线 / 沉雾 / 锥 / 向心漩 / 雾钟环 / 钝板）有没有撞车——
  * 这是形态区分唯一靠得住的验收方式，靠隔着几关回忆判断不了。
  * 棋盘宽 10 让前五个隔格站开；祭主站在最右，特效往里收，不往外扩。
  */
@@ -126,6 +128,12 @@ export const SANDBOX_STAGE: StageDefMvp = {
     dummy('sword', 9, 3, '雾钟主', {
       skillSkin: 'bell_peal',
       animSet: 'mistlord',
+      boss: true,
+      stats: { maxHp: 2400, atk: 1, spd: 4, move: 2 },
+    }),
+    dummy('sword', 9, 6, '余钟', {
+      skillSkin: 'after_shock',
+      animSet: 'afterbell',
       boss: true,
       stats: { maxHp: 2400, atk: 1, spd: 4, move: 2 },
     }),

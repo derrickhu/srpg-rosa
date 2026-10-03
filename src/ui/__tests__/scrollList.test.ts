@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   measureStackedBottom,
+  measureStackedRight,
   nativeTouchApi,
   readNativeTouchPoint,
   rectContains,
@@ -25,6 +26,15 @@ describe('列表滚动距离', () => {
         { y: 172, height: 132 },
       ]),
     ).toBe(304);
+  });
+
+  it('横向按子节点 x+宽取右缘', () => {
+    expect(
+      measureStackedRight([
+        { x: 8, width: 72, hitArea: { x: 0, width: 72 } },
+        { x: 86, width: 0, hitArea: { x: 0, width: 72 } },
+      ]),
+    ).toBe(158);
   });
 
   it('有 hitArea 时用它，避免卡面 mask 把 height 算成 0', () => {

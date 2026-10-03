@@ -42,6 +42,7 @@ const MOOK_SETS = new Set([
   'magmacore', 'emberbat', 'scalewyrm', 'ashshell',
   'bonepup', 'gorecrow', 'ritehorn', 'slabward',
   'mistpuppet', 'bronzewl', 'misthoof', 'bellshell',
+  'pealshard', 'silverheron', 'wellram', 'hushshell',
 ]);
 
 /**
@@ -68,11 +69,13 @@ const TOKEN_SETS = [
   'bonepup', 'gorecrow', 'ritehorn', 'slabward',
   // 第七章杂兵：雾钟构装，进 MOOK_SETS
   'mistpuppet', 'bronzewl', 'misthoof', 'bellshell',
-  // 第二至六章精英：人形，**不在 MOOK_SETS 里**（按英雄身高）
-  'torun', 'castellan', 'mirespeaker', 'drakekin', 'altarwarden', 'bellringer',
+  // 第八章杂兵：静钟构装，进 MOOK_SETS
+  'pealshard', 'silverheron', 'wellram', 'hushshell',
+  // 第二至八章精英：人形，**不在 MOOK_SETS 里**（按英雄身高）
+  'torun', 'castellan', 'mirespeaker', 'drakekin', 'altarwarden', 'bellringer', 'wellwarden',
   // Boss：完整图集档位，token 从行走的第一帧派生
   'bloodfang', 'bloodshaman', 'bloodcastellan', 'mirequeen', 'drakelord', 'ritespeaker',
-  'mistlord',
+  'mistlord', 'afterbell',
 ];
 
 function loadSet(id) {

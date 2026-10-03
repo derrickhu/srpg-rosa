@@ -82,6 +82,7 @@ export function describeTerrainTicketLines(terrainId: TerrainId): string[] {
   if (t.dotPerRound > 0) lines.push(`站上每回合 -${t.dotPerRound} HP`);
   if ((t.healPerRound ?? 0) > 0) lines.push(`站上每回合 +${t.healPerRound} HP`);
   if (t.blocksSight && t.moveCost < Infinity) lines.push('阻挡远程攻击的视线');
+  if (t.blocksCast) lines.push('站上放不了技能，普攻可以');
   return lines;
 }
 

@@ -1,0 +1,23 @@
+破静（temp_hw_clear）—— 黑底 additive 裂开的银币 9 帧（3x3）
+
+一枚实心银币从正中竖着裂开，左右两半分开，再暗掉。
+两半是硬的硬币，不是两团雾。
+
+2D game VFX sprite sheet, 3 columns by 3 rows, 9 equal cells, cells meet with no drawn borders.
+Every pixel that is not the effect is pure black #000000.
+
+One solid oval coin, filled, bright silver core the color of a polished spoon (#F4F7FB), cold-silver body the color of a new coin (#D7E0EA), matte ink-blue rim the color of fountain-pen ink (#2C3A52).
+A dark vertical crack splits the coin into a left half and a right half. The halves are solid, with a flat cut edge.
+
+Frame order, left to right, then top to bottom:
+  Frame 1: a whole solid coin at the cell center, with a thin dark crack down the middle.
+  Frame 2: the crack widens. Two halves still almost touching.
+  Frame 3: PEAK. The two solid halves have slid apart, a clear black gap between them, each half still thick and bright.
+  Frame 4: the halves a little farther apart, still bright.
+  Frame 5: the same gap, dimmer.
+  Frame 6: the ink rims fade, the silver halves remain.
+  Frame 7: two small dim silver shards, still left and right.
+  Frame 8: two tiny specks, left and right of center.
+  Frame 9: a few dim specks. Almost black.
+
+The halves stay inside the central 70% of each cell, with black margin on every side.

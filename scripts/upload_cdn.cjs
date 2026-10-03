@@ -29,6 +29,9 @@ const cdnCfg = require(path.join(PROJECT_ROOT, 'scripts', 'cdnConfig.cjs'))
 
 const FORCE = process.argv.includes('--force')
 const DRY_RUN = process.argv.includes('--dry-run')
+// --only=images/anim/foo.png 只上传这些键，并只改 manifest 里对应条目。
+// 工作区里其它未提交的图不会被带上去，远端也不会被删。
+const ONLY_FILES = process.argv.filter(a => a.startsWith('--only=')).map(a => a.slice('--only='.length))
 const CONCURRENCY = Number(process.env.CDN_UPLOAD_CONCURRENCY || 5)
 const MANIFEST_LOCAL = path.join(PROJECT_ROOT, 'scripts', '.cdn_manifest.cloudbase.json')
 
@@ -232,7 +235,7 @@ async function main() {
   console.log('bucket:', BUCKET)
   console.log('CDN:', CDN_BASE_URL || '(未配置)')
   console.log('云目录:', CDN_FILE_PREFIX)
-  console.log('模式:', FORCE ? '强制全量' : DRY_RUN ? 'dry-run' : '增量')
+  console.log('模式:', FORCE ? '强制全量' : DRY_RUN ? 'dry-run' : '增量', ONLY_FILES.length ? `只传 ${ONLY_FILES.length} 个` : '')
   console.log('')
 
   if (!BUCKET) throw new Error('缺少 CDN_CLOUD_BUCKET / cdnConfig.cloudbaseBucket')
@@ -281,12 +284,20 @@ async function main() {
   const toUpload = []
   const toDelete = []
   let skipped = 0
+  if (ONLY_FILES.length) {
+    for (const rp of ONLY_FILES) {
+      if (!localManifest[rp]) throw new Error(`--only 的文件不在本地 CDN 目录里: ${rp}`)
+    }
+  }
   for (const [rp, info] of Object.entries(localManifest)) {
+    if (ONLY_FILES.length && !ONLY_FILES.includes(rp)) continue
     if (!FORCE && oldFiles[rp]?.hash === info.hash) skipped++
     else toUpload.push(rp)
   }
-  for (const rp of Object.keys(oldFiles)) {
-    if (!localManifest[rp]) toDelete.push(rp)
+  if (!ONLY_FILES.length) {
+    for (const rp of Object.keys(oldFiles)) {
+      if (!localManifest[rp]) toDelete.push(rp)
+    }
   }
 
   console.log(`新增/更新: ${toUpload.length}`)
@@ -336,11 +347,15 @@ async function main() {
     for (const rp of toDelete) await deleteObject(`${CDN_FILE_PREFIX}/${rp}`)
   }
 
+  const files = ONLY_FILES.length ? { ...oldFiles } : localManifest
+  if (ONLY_FILES.length) {
+    for (const rp of ONLY_FILES) files[rp] = localManifest[rp]
+  }
   const newManifest = {
     version: oldVersion + 1,
     updated: new Date().toISOString(),
     filePrefix: CDN_FILE_PREFIX,
-    files: localManifest,
+    files,
   }
   const tmpManifest = path.join(__dirname, '_tmp_cdn_manifest.json')
   fs.writeFileSync(tmpManifest, JSON.stringify(newManifest, null, 2), 'utf-8')

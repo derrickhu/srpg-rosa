@@ -173,9 +173,13 @@ export function describeSkillSpec(spec: SkillSpec): string[] {
       case 'bleed':
         out.push(`${chancePrefix(e)}流血: 每回合 -${e.dmgPerRound} 血，${e.rounds} 回合`);
         break;
-      case 'freeze':
-        out.push(`${chancePrefix(e)}冰冻敌人 ${e.rounds} 回合（跳过下一次行动）`);
+      case 'freeze': {
+        const where = e.onlyOnTerrain
+          ? `，仅当目标站在${getTerrainSpec(e.onlyOnTerrain).name}上`
+          : '';
+        out.push(`${chancePrefix(e)}冰冻敌人 ${e.rounds} 回合${where}（跳过下一次行动）`);
         break;
+      }
       default: exhausted(e);
     }
   }
@@ -191,6 +195,9 @@ export function describeSkillSpec(spec: SkillSpec): string[] {
         );
         break;
       case 'guard': out.push(`友方受到伤害 -${pctOf(e.reduceRatio)}，${e.rounds} 回合`); break;
+      case 'encore':
+        out.push('再动: 只能点本回合已经行动过的友军，让他立刻再行动一次');
+        break;
       default: exhausted(e);
     }
   }

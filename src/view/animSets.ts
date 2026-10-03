@@ -42,6 +42,12 @@ import mistpuppetManifest from '@/data/anim/mistpuppet.json';
 import bronzewlManifest from '@/data/anim/bronzewl.json';
 import misthoofManifest from '@/data/anim/misthoof.json';
 import bellshellManifest from '@/data/anim/bellshell.json';
+import pealshardManifest from '@/data/anim/pealshard.json';
+import silverheronManifest from '@/data/anim/silverheron.json';
+import wellramManifest from '@/data/anim/wellram.json';
+import hushshellManifest from '@/data/anim/hushshell.json';
+import wellwardenManifest from '@/data/anim/wellwarden.json';
+import afterbellManifest from '@/data/anim/afterbell.json';
 import bellringerManifest from '@/data/anim/bellringer.json';
 import mistlordManifest from '@/data/anim/mistlord.json';
 import altarwardenManifest from '@/data/anim/altarwarden.json';
@@ -82,6 +88,11 @@ import holyBoltManifest from '@/data/anim/holy_bolt.json';
 import healFlashManifest from '@/data/anim/heal_flash.json';
 import wardAegisManifest from '@/data/anim/ward_aegis.json';
 import blessRaysManifest from '@/data/anim/bless_rays.json';
+import encoreRibbonManifest from '@/data/anim/encore_ribbon.json';
+import afterShockManifest from '@/data/anim/after_shock.json';
+import tempHwLayManifest from '@/data/anim/temp_hw_lay.json';
+import tempHwClearManifest from '@/data/anim/temp_hw_clear.json';
+import tempHwShoveManifest from '@/data/anim/temp_hw_shove.json';
 // 补齐原先没有配方、只能退回静态贴图的六招（重劈 / 破阵斩 / 速射 / 铁锤 / 长驱突刺 / 践踏）
 import cleaveSlamManifest from '@/data/anim/cleave_slam.json';
 import bladeXManifest from '@/data/anim/blade_x.json';
@@ -226,6 +237,11 @@ const MANIFESTS: Record<string, AnimManifest> = {
   bronzewl: bronzewlManifest as AnimManifest,
   misthoof: misthoofManifest as AnimManifest,
   bellshell: bellshellManifest as AnimManifest,
+  // 第八章杂兵：静钟构装。非人形，进 MOOK_ART_SETS
+  pealshard: pealshardManifest as AnimManifest,
+  silverheron: silverheronManifest as AnimManifest,
+  wellram: wellramManifest as AnimManifest,
+  hushshell: hushshellManifest as AnimManifest,
   // 第二至六章 Boss：和第一章酋长同档的完整图集（四向行走 + 两向攻击）。
   bloodshaman: bloodshamanManifest as AnimManifest,
   bloodcastellan: bloodcastellanManifest as AnimManifest,
@@ -233,6 +249,7 @@ const MANIFESTS: Record<string, AnimManifest> = {
   drakelord: drakelordManifest as AnimManifest,
   ritespeaker: ritespeakerManifest as AnimManifest,
   mistlord: mistlordManifest as AnimManifest,
+  afterbell: afterbellManifest as AnimManifest,
   // 第二至六章精英：单帧静止。**不算 MOOK**（按英雄身高）。
   // 第一章精英沿用 bloodfang，不在这里。
   torun: torunManifest as AnimManifest,
@@ -241,6 +258,7 @@ const MANIFESTS: Record<string, AnimManifest> = {
   drakekin: drakekinManifest as AnimManifest,
   altarwarden: altarwardenManifest as AnimManifest,
   bellringer: bellringerManifest as AnimManifest,
+  wellwarden: wellwardenManifest as AnimManifest,
   roar: roarManifest as AnimManifest,
   bell_peal: bellPealManifest as AnimManifest,
   bloodfang_roar: bloodfangRoarManifest as AnimManifest,
@@ -281,6 +299,11 @@ const MANIFESTS: Record<string, AnimManifest> = {
   heal_flash: healFlashManifest as AnimManifest,
   ward_aegis: wardAegisManifest as AnimManifest,
   bless_rays: blessRaysManifest as AnimManifest,
+  encore_ribbon: encoreRibbonManifest as AnimManifest,
+  after_shock: afterShockManifest as AnimManifest,
+  temp_hw_lay: tempHwLayManifest as AnimManifest,
+  temp_hw_clear: tempHwClearManifest as AnimManifest,
+  temp_hw_shove: tempHwShoveManifest as AnimManifest,
   cleave_slam: cleaveSlamManifest as AnimManifest,
   blade_x: bladeXManifest as AnimManifest,
   snap_hit: snapHitManifest as AnimManifest,
@@ -341,6 +364,8 @@ const MOOK_ART_SETS = new Set([
   'bonepup', 'gorecrow', 'ritehorn', 'slabward',
   // 第七章 · 雾钟回廊。非人形，精英鸣钟人和 Boss 雾钟主不在这里
   'mistpuppet', 'bronzewl', 'misthoof', 'bellshell',
+  // 第八章 · 静钟井。非人形，精英守井人和 Boss 余钟不在这里
+  'pealshard', 'silverheron', 'wellram', 'hushshell',
   // 注意跳过了第三章：那一章是人形兽人守军，见上面的说明
 ]);
 

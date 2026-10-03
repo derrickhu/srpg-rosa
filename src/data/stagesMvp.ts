@@ -299,7 +299,7 @@ const c1_3: StageBlueprint = {
  * 所以同一只怪在这一章的每一关都是同样的威胁。挂在关卡上迟早会出现
  * 「第 17 关的吹箭虫会下毒、第 18 关的不会」，而玩家只会觉得这游戏的怪不讲道理。
  *
- * 投放曲线（第一章 0 条 → 第二、三章各 1 条 → 第四章 2 条 → 终章 4 条 → 祭坛 2 条 → 雾钟 2 条）
+ * 投放曲线（第一章 0 条 → 第二、三章各 1 条 → 第四章 2 条 → 终章 4 条 → 祭坛 2 条 → 雾钟 2 条 → 静钟 2 条）
  * 和技能本身的设计依据都在 `skillCatalog` 的杂兵技能段落。
  */
 export interface MookTemplate {
@@ -1821,6 +1821,170 @@ const c7_6: StageBlueprint = {
   maxDeploy: 5,
 };
 
+// ─── Chapter 8: 静钟井 ───
+//
+// 雾钟敲完，井沿还在响。静域不挡路、不挡箭；站上去打得着，放不了招。
+
+export const CHAPTER8_HUSH: Record<TroopKind, MookTemplate> = {
+  sword: { name: '鸣渣', youngName: '幼鸣渣', animSet: 'pealshard', skillId: 'peal_store' },
+  bow: { name: '银鹭', youngName: '幼银鹭', animSet: 'silverheron' },
+  cavalry: { name: '井碾', youngName: '幼井碾', animSet: 'wellram', skillId: 'well_ram' },
+  shield: { name: '静壳', youngName: '残静壳', animSet: 'hushshell' },
+};
+
+function hushMook(defId: TroopKind, x: number, y: number): StageEnemySpawn {
+  return mook(CHAPTER8_HUSH[defId], defId, x, y);
+}
+
+function hushYoung(defId: TroopKind, x: number, y: number): StageEnemySpawn {
+  return mookYoung(CHAPTER8_HUSH[defId], defId, x, y);
+}
+
+/** 9×10。y=4 一条静域，正中留口。口上射得着，踏进静域就不能放招。 */
+const c8_1: StageBlueprint = {
+  title: '井沿',
+  goldReward: 32,
+  terrain: withCells(emptyTerrain(9, 10), [
+    { x: 0, y: 4, t: 'hush' }, { x: 1, y: 4, t: 'hush' }, { x: 2, y: 4, t: 'hush' },
+    { x: 3, y: 4, t: 'hush' },
+    { x: 5, y: 4, t: 'hush' }, { x: 6, y: 4, t: 'hush' }, { x: 7, y: 4, t: 'hush' },
+    { x: 8, y: 4, t: 'hush' },
+  ]),
+  enemies: [
+    hushMook('bow', 6, 1),
+    hushYoung('bow', 2, 1),
+    hushMook('sword', 4, 2),
+  ],
+  aiDifficulty: 'normal',
+  maxDeploy: 5,
+};
+
+/** 两道静域错开。井碾在南，把人往北推上 y=3。 */
+const c8_2: StageBlueprint = {
+  title: '错缝',
+  goldReward: 36,
+  terrain: withCells(emptyTerrain(9, 10), [
+    { x: 0, y: 3, t: 'hush' }, { x: 1, y: 3, t: 'hush' }, { x: 2, y: 3, t: 'hush' },
+    { x: 3, y: 3, t: 'hush' }, { x: 4, y: 3, t: 'hush' },
+    { x: 4, y: 5, t: 'hush' }, { x: 5, y: 5, t: 'hush' }, { x: 6, y: 5, t: 'hush' },
+    { x: 7, y: 5, t: 'hush' }, { x: 8, y: 5, t: 'hush' },
+  ]),
+  enemies: [
+    hushMook('bow', 6, 1),
+    hushYoung('bow', 8, 1),
+    hushMook('sword', 2, 2),
+    hushMook('cavalry', 2, 6),
+  ],
+  aiDifficulty: 'normal',
+  maxDeploy: 5,
+};
+
+/** 三根竖柱。鸣渣贴着柱，先在平地蓄鸣再踏上去。 */
+const c8_3: StageBlueprint = {
+  title: '井柱',
+  goldReward: 38,
+  terrain: withCells(emptyTerrain(9, 10), [
+    { x: 2, y: 2, t: 'hush' }, { x: 4, y: 2, t: 'hush' }, { x: 6, y: 2, t: 'hush' },
+    { x: 2, y: 3, t: 'hush' }, { x: 4, y: 3, t: 'hush' }, { x: 6, y: 3, t: 'hush' },
+    { x: 2, y: 4, t: 'hush' }, { x: 4, y: 4, t: 'hush' }, { x: 6, y: 4, t: 'hush' },
+  ]),
+  enemies: [
+    hushMook('sword', 1, 2),
+    hushMook('bow', 7, 1),
+    hushYoung('bow', 3, 0),
+    hushMook('cavalry', 8, 4),
+  ],
+  aiDifficulty: 'hard',
+  maxDeploy: 5,
+};
+
+/**
+ * 两道壁加北盖，通道是 x=3–5。
+ * 静域不挡箭，盖外仍射得着；走进去才失去技能。井碾把通道里的人往西推上 x=2。
+ */
+const c8_4: StageBlueprint = {
+  title: '井道',
+  goldReward: 42,
+  terrain: withCells(emptyTerrain(9, 10), [
+    { x: 2, y: 2, t: 'hush' }, { x: 2, y: 3, t: 'hush' }, { x: 2, y: 4, t: 'hush' },
+    { x: 2, y: 5, t: 'hush' }, { x: 2, y: 6, t: 'hush' },
+    { x: 6, y: 2, t: 'hush' }, { x: 6, y: 3, t: 'hush' }, { x: 6, y: 4, t: 'hush' },
+    { x: 6, y: 5, t: 'hush' }, { x: 6, y: 6, t: 'hush' },
+    { x: 3, y: 1, t: 'hush' }, { x: 4, y: 1, t: 'hush' }, { x: 5, y: 1, t: 'hush' },
+  ]),
+  enemies: [
+    hushMook('bow', 4, 0),
+    hushYoung('bow', 7, 0),
+    hushMook('cavalry', 5, 4),
+  ],
+  aiDifficulty: 'hard',
+  maxDeploy: 5,
+};
+
+/**
+ * 精英 · 守井人。环外射得着；踏进环只能普攻。守井人站环心，只普攻。
+ */
+const c8_5: StageBlueprint = {
+  title: '守井人',
+  goldReward: 44,
+  terrain: withCells(emptyTerrain(9, 10), [
+    { x: 2, y: 1, t: 'hush' }, { x: 3, y: 1, t: 'hush' }, { x: 4, y: 1, t: 'hush' },
+    { x: 5, y: 1, t: 'hush' }, { x: 6, y: 1, t: 'hush' },
+    { x: 2, y: 5, t: 'hush' }, { x: 3, y: 5, t: 'hush' }, { x: 4, y: 5, t: 'hush' },
+    { x: 5, y: 5, t: 'hush' }, { x: 6, y: 5, t: 'hush' },
+    { x: 2, y: 2, t: 'hush' }, { x: 2, y: 3, t: 'hush' }, { x: 2, y: 4, t: 'hush' },
+    { x: 6, y: 2, t: 'hush' }, { x: 6, y: 3, t: 'hush' }, { x: 6, y: 4, t: 'hush' },
+  ]),
+  enemies: [
+    {
+      defId: 'sword', x: 4, y: 3, uid: euid(),
+      name: '守井人',
+      animSet: 'wellwarden',
+      // 环里加了两只幼银鹭之后，860/34 胜率掉到个位数。收到 640/26，约 74%。
+      stats: { maxHp: 640, atk: 26, spd: 6 },
+    },
+    hushMook('shield', 4, 2),
+    hushYoung('bow', 5, 3),
+    // 环外留一只幼银鹭，不放整只：整只弓从 y=0 对射会把这一关打到个位数胜率。
+    hushYoung('bow', 4, 0),
+  ],
+  aiDifficulty: 'hard',
+  maxDeploy: 5,
+};
+
+/**
+ * Boss · 余钟。静域铺 y=2、3、4，整列 x=4 留成平地缺口。
+ * 缺口贴着他，站上去能放招，也不会被冻。斜向贴身格在静域上，吃到余震就冻住下一动。
+ */
+const c8_6: StageBlueprint = {
+  title: '余钟',
+  goldReward: 50,
+  terrain: withCells(emptyTerrain(9, 10), [
+    ...[2, 3, 4].flatMap((y) =>
+      [0, 1, 2, 3, 5, 6, 7, 8].map((x) => ({ x, y, t: 'hush' as const })),
+    ),
+    { x: 1, y: 7, t: 'high' },
+    { x: 7, y: 7, t: 'high' },
+  ]),
+  enemies: [
+    {
+      defId: 'sword', x: 4, y: 1, uid: euid(),
+      name: '余钟',
+      boss: true,
+      animSet: 'afterbell',
+      // 北侧换成幼银鹭之后，520/23 带 2 药约 57%。收到 490/22：裸打约 41%，带 2 药约 74%。
+      stats: { maxHp: 490, atk: 22, spd: 5 },
+      skillSkin: 'after_shock',
+    },
+    hushMook('shield', 3, 2),
+    hushMook('bow', 1, 1),
+    hushYoung('bow', 7, 1),
+  ],
+  isBoss: true,
+  aiDifficulty: 'hard',
+  maxDeploy: 5,
+};
+
 /**
  * 章节 → 关卡，顺序即游戏顺序。这是关卡编号与章节归属的**唯一来源**。
  *
@@ -1843,6 +2007,7 @@ const CHAPTERS: StageBlueprint[][] = [
   [c5_1, c5_2, c5_3, c5_4, c5_5, c5_6, c5_7, c5_8],
   [c6_1, c6_2, c6_3, c6_4, c6_5, c6_6],
   [c7_1, c7_2, c7_3, c7_4, c7_5, c7_6],
+  [c8_1, c8_2, c8_3, c8_4, c8_5, c8_6],
 ];
 
 function toStages(blueprints: readonly StageBlueprint[], startId: number): StageDefMvp[] {

@@ -1,4 +1,4 @@
-import type { TimedBattleEffect, UnitState } from './types';
+import type { TerrainId, TimedBattleEffect, UnitState } from './types';
 import type {
   SkillCastAllyEffect,
   SkillCastFoeEffect,
@@ -134,12 +134,14 @@ export function applySkillCastFoeEffects(
   spec: SkillSpec,
   rng: () => number = Math.random,
   poisonTickAdd = 0,
+  standingTerrain?: TerrainId,
 ): AppliedFoeFlags {
   const flags: AppliedFoeFlags = {};
   const raw = spec.onCastFoeEffects;
   if (!raw?.length) return flags;
   let list = [...(target.timedBattleEffects ?? [])];
   for (const e of raw) {
+    if (e.kind === 'freeze' && e.onlyOnTerrain && standingTerrain !== e.onlyOnTerrain) continue;
     if (!foeEffectHits(e, rng)) continue;
     // 冻伤是另一套表现，咒毒只加在中毒上
     const effect = e.kind === 'poison' && e.theme !== 'frost' && poisonTickAdd > 0
