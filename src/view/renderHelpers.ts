@@ -235,6 +235,35 @@ export function drawCheck(r: number, color = 0xffffff): PIXI.Graphics {
   return g;
 }
 
+/**
+ * 布阵棋子右上角那个「i」。
+ *
+ * 整格点击是部署或交技能，查看属性得单独占一个看得见的记号，
+ * 否则玩家不知道头像能点。原点在圆心，调用方自己摆位置。
+ */
+export function createInspectBadge(onTap: () => void): PIXI.Container {
+  const r = 7;
+  const c = new PIXI.Container();
+  const g = new PIXI.Graphics();
+  g.beginFill(0x2a2118, 0.82);
+  g.drawCircle(0, 0, r);
+  g.endFill();
+  g.lineStyle(1, 0xf0e0c0, 0.85);
+  g.drawCircle(0, 0, r);
+  c.addChild(g);
+  const tx = makeText('i', 'caption', { fill: 0xf0e0c0, fontSize: 10, fontWeight: 'bold' });
+  tx.anchor.set(0.5);
+  c.addChild(tx);
+  c.eventMode = 'static';
+  c.cursor = 'pointer';
+  c.hitArea = new PIXI.Rectangle(-r - 3, -r - 3, (r + 3) * 2, (r + 3) * 2);
+  c.on('pointertap', (e: PIXI.FederatedPointerEvent) => {
+    e.stopPropagation();
+    onTap();
+  });
+  return c;
+}
+
 /** 翻页尖角。`dir` 为 -1 指向左、1 指向右，原点在尖角的中心 */
 export function drawChevron(dir: -1 | 1, r: number, color = 0xffffff): PIXI.Graphics {
   const g = new PIXI.Graphics();

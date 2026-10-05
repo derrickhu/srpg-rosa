@@ -18,6 +18,7 @@ import {
   createCurrencyPill,
   createUiIcon,
   createUnitToken,
+  createInspectBadge,
   RUN_GOLD_X,
   runHudRowY,
 } from '@/view/renderHelpers';
@@ -518,10 +519,16 @@ export function createShopView(
     });
     const note = makeGoldCostRow(offer.price);
     picker.body.addChild(note);
-    const hint = makeText('点头像查看属性，点这一行把技能交给他', 'caption', { fill: C.muted });
+    const hint = makeText('点头像角标查看属性，点这一行把技能交给他', 'caption', { fill: C.muted });
     hint.y = note.height + 6;
     picker.body.addChild(hint);
     let py = hint.y + hint.height + 8;
+    const openRosterInfo = (m: (typeof mercs)[number]): void => {
+      if (picker?.wasDragging()) return;
+      closeInfo();
+      info = createUnitInfoOverlay(characterInfoModel(state, m), W, H, closeInfo);
+      root.addChild(info.view);
+    };
     for (const m of mercs) {
       const row = makeCard({
         width: picker.bodySize.width,
@@ -541,10 +548,7 @@ export function createShopView(
       portrait.hitArea = new PIXI.Rectangle(-20, -22, 40, 44);
       portrait.on('pointertap', (ev) => {
         ev.stopPropagation();
-        if (picker?.wasDragging()) return;
-        closeInfo();
-        info = createUnitInfoOverlay(characterInfoModel(state, m), W, H, closeInfo);
-        root.addChild(info.view);
+        openRosterInfo(m);
       });
       row.addChild(portrait);
       const cur = state.run?.runTempSkill[m.rosterId];
@@ -554,9 +558,13 @@ export function createShopView(
         'ui',
         { fill: C.text, fontSize: 13 },
       );
-      rlab.x = 52;
+      rlab.x = 58;
       rlab.y = (rowH - rlab.height) / 2;
       row.addChild(rlab);
+      const badge = createInspectBadge(() => openRosterInfo(m));
+      badge.x = 46;
+      badge.y = 14;
+      row.addChild(badge);
       picker.body.addChild(row);
       py += rowH + 8;
     }

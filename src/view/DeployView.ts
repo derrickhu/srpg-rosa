@@ -44,6 +44,7 @@ import {
   terrainBadge,
   createTerrainCell,
   createUnitToken,
+  createInspectBadge,
   createBackground,
   createUiIcon,
   RUN_GEAR_SIZE,
@@ -106,27 +107,9 @@ export interface DeployLayoutScreen {
  */
 function makeInfoBadge(cell: number, onTap: () => void): PIXI.Container {
   const r = 7;
-  const c = new PIXI.Container();
+  const c = createInspectBadge(onTap);
   c.x = cell / 2 - r - 1;
   c.y = -cell / 2 + r + 1;
-  const g = new PIXI.Graphics();
-  g.beginFill(0x2a2118, 0.82);
-  g.drawCircle(0, 0, r);
-  g.endFill();
-  g.lineStyle(1, 0xf0e0c0, 0.85);
-  g.drawCircle(0, 0, r);
-  c.addChild(g);
-  const tx = makeText('i', 'caption', { fill: 0xf0e0c0, fontSize: 10, fontWeight: 'bold' });
-  tx.anchor.set(0.5);
-  c.addChild(tx);
-  c.eventMode = 'static';
-  c.cursor = 'pointer';
-  // 判定区比画出来的圆大一圈：格子只有 40px 上下，按视觉尺寸给判定必然点不中
-  c.hitArea = new PIXI.Rectangle(-r - 3, -r - 3, (r + 3) * 2, (r + 3) * 2);
-  c.on('pointertap', (e: PIXI.FederatedPointerEvent) => {
-    e.stopPropagation();
-    onTap();
-  });
   return c;
 }
 
