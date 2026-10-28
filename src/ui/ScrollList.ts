@@ -1,7 +1,10 @@
 import * as PIXI from 'pixi.js';
 
+import { getNativePlatformApi } from '@/platform/platformDetect';
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 declare const wx: any;
+declare const tt: any;
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 type NativeTouchApi = {
@@ -22,12 +25,19 @@ type NativeTouchApi = {
 export function nativeTouchApi(): NativeTouchApi | null {
   const candidates: unknown[] = [];
   try {
+    if (typeof tt !== 'undefined') candidates.push(tt);
     if (typeof wx !== 'undefined') candidates.push(wx);
   } catch {
-    /* 非微信编译环境 */
+    /* 非小游戏编译环境 */
   }
-  const g = globalThis as { wx?: unknown; GameGlobal?: { wx?: unknown } };
+  const g = globalThis as {
+    wx?: unknown;
+    tt?: unknown;
+    GameGlobal?: { wx?: unknown; tt?: unknown };
+  };
+  if (g.tt) candidates.push(g.tt);
   if (g.wx) candidates.push(g.wx);
+  if (g.GameGlobal?.tt) candidates.push(g.GameGlobal.tt);
   if (g.GameGlobal?.wx) candidates.push(g.GameGlobal.wx);
   for (const c of candidates) {
     const api = c as NativeTouchApi;
@@ -277,7 +287,7 @@ export function createScrollList(opts: {
   if (useNative && api) {
     let frame: NativeTouchFrame | undefined;
     try {
-      const si = typeof wx !== 'undefined' ? wx.getSystemInfoSync?.() : null;
+      const si = getNativePlatformApi()?.getSystemInfoSync?.() ?? null;
       if (si) {
         frame = {
           windowHeight: si.windowHeight || si.screenHeight || 0,

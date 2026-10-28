@@ -1,0 +1,11 @@
+# 抖音小游戏图标 · 600×600
+# 成品：game_assets/srpg-rosa/assets/douyin-basic/icon_600.png
+# 参考：images/units/sword.png（身份）、images/ui/loading/loading_splash.jpg（只学雷恩的比例和配色，不抄龙和队伍）
+
+Square 1:1 mini-game app icon, full-bleed, every pixel painted. No circular mask, no rounded corners, no transparent edge, no white margin, no badge, no frame.
+
+Subject: the game's chibi swordsman. Spiky cobalt-blue hair #2B6CDB, simple dark oval eyes, thick brows, tiny mouth, no nose, no helmet. Silver-white breastplate and pauldrons, blue tunic, brown boots, warm tan skin #EEC49A. One oversized silver-white greatsword, longer than he is tall, hilt in hand, blade over the shoulder on a diagonal. Huge head, short body, thick near-black outlines #120B0A, flat saturated fills, light cel shading.
+
+Composition: full body in the center 70 percent. Background is one flat bright cobalt blue filling the square. No sky, grass, dragon, other characters, or ground line.
+
+NO TEXT, no letters, no Chinese characters, no numbers, no logo, no watermark, no UI, no QR code.

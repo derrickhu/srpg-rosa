@@ -31,7 +31,7 @@ describe('微信转发卡片', () => {
     expect(share).toContain('showShareMenu');
     expect(share).toContain('onShareAppMessage');
     expect(share).toContain('export function shareAppMessage');
-    expect(share).toContain('wx.onShow');
+    expect(share).toContain('hostApi()?.onShow');
     expect(share).toContain("menus: ['shareAppMessage', 'shareTimeline']");
   });
 });

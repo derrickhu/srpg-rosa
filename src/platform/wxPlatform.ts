@@ -1,8 +1,15 @@
 /**
- * 微信 / H5 平台能力：本地存储、登录、HTTP。
- * 激励视频广告位与公众平台流量主一一对应。
+ * 微信 / 抖音 / 浏览器平台能力：本地存储、登录、HTTP。
+ * 抖音只走 tt。抖音里的 wx 是兼容层，不能拿来登录或存档。
  */
-declare const wx: any;
+import { scopeStorageKey } from '@/config/gameKeyScope';
+import {
+  detectMinigamePlatform,
+  getNativePlatformApi,
+  toBackendPlatformCode,
+  type BackendPlatformCode,
+  type PlatformName,
+} from '@/platform/platformDetect';
 
 export const AdConfigKeys = {
   /** 三选一刷新 */
@@ -19,14 +26,25 @@ export const AdConfigKeys = {
   rewardRecruitCharacter: 'adunit-fef31ada9aa01c07',
 } as const;
 
+/** 当前是微信宿主。抖音即使注入了 wx 也不算。 */
 export function hasWx(): boolean {
-  return typeof wx !== 'undefined';
+  return detectMinigamePlatform() === 'wechat';
 }
 
-function isWxDevtools(): boolean {
-  if (!hasWx()) return false;
+export function hasMinigameHost(): boolean {
+  return detectMinigamePlatform() !== 'web';
+}
+
+/** 抖音返回 tt，微信返回 wx。 */
+export function hostApi(): any | null {
+  return getNativePlatformApi();
+}
+
+function isHostDevtools(): boolean {
+  const api = hostApi();
+  if (!api) return false;
   try {
-    const info = wx.getSystemInfoSync?.();
+    const info = api.getSystemInfoSync?.();
     return !!(info && (
       info.brand === 'devtools'
       || info.environment === 'devtools'
@@ -109,75 +127,95 @@ function requestViaFetch(
   });
 }
 
+export interface LoginCredentials {
+  code: string;
+  anonymousCode: string;
+}
+
 class PlatformClass {
-  get name(): 'wechat' | 'web' {
-    return hasWx() ? 'wechat' : 'web';
+  get name(): PlatformName {
+    return detectMinigamePlatform();
   }
 
   get isWechat(): boolean {
-    return hasWx();
+    return this.name === 'wechat';
+  }
+
+  get isDouyin(): boolean {
+    return this.name === 'douyin';
   }
 
   get isMinigame(): boolean {
-    return hasWx();
+    return this.name !== 'web';
   }
 
   get isDevtools(): boolean {
-    return isWxDevtools();
+    return isHostDevtools();
   }
 
   /**
    * GM 工具：跳过战斗、特效试炼、作弊钮。
-   * 只给微信开发者工具；真机和其他玩家看不到。
+   * 只给微信开发者工具；抖音和真机玩家看不到。
    */
   get isGmTools(): boolean {
-    return this.isDevtools;
+    return this.isWechat && this.isDevtools;
   }
 
   get canUseBackend(): boolean {
-    if (hasWx() && typeof wx.request === 'function') return true;
+    const api = hostApi();
+    if (api && typeof api.request === 'function') return true;
     return typeof fetch === 'function';
   }
 
-  get backendPlatformCode(): 'wx' | 'anon' {
-    return this.isWechat ? 'wx' : 'anon';
+  get backendPlatformCode(): BackendPlatformCode {
+    return toBackendPlatformCode(this.name);
+  }
+
+  private storageKey(key: string): string {
+    return scopeStorageKey(key, this.name);
   }
 
   getStorageSync(key: string): string | null {
-    if (hasWx()) {
+    const scoped = this.storageKey(key);
+    const api = hostApi();
+    if (api && typeof api.getStorageSync === 'function') {
       try {
-        const v = wx.getStorageSync(key);
+        const v = api.getStorageSync(scoped);
         if (v === undefined || v === null || v === '') return null;
         return String(v);
       } catch {
         return null;
       }
     }
-    return localStoreGet(key);
+    return localStoreGet(scoped);
   }
 
   setStorageSync(key: string, value: string): void {
-    if (hasWx()) {
+    const scoped = this.storageKey(key);
+    const api = hostApi();
+    if (api && typeof api.setStorageSync === 'function') {
       try {
-        wx.setStorageSync(key, value);
+        api.setStorageSync(scoped, value);
       } catch {
         /* ignore */
       }
       return;
     }
-    localStoreSet(key, value);
+    localStoreSet(scoped, value);
   }
 
   removeStorageSync(key: string): void {
-    if (hasWx()) {
+    const scoped = this.storageKey(key);
+    const api = hostApi();
+    if (api && typeof api.removeStorageSync === 'function') {
       try {
-        wx.removeStorageSync(key);
+        api.removeStorageSync(scoped);
       } catch {
         /* ignore */
       }
       return;
     }
-    localStoreRemove(key);
+    localStoreRemove(scoped);
   }
 
   request(opts: {
@@ -193,11 +231,13 @@ class PlatformClass {
       ...(opts.headers || {}),
     };
     const timeoutMs = opts.timeoutMs && opts.timeoutMs > 0 ? opts.timeoutMs : 10000;
+    const api = hostApi();
 
-    if (isWxDevtools() && typeof fetch === 'function') {
+    // 只有微信开发者工具走 fetch。抖音开发者工具的 fetch 经常登录失败，必须 tt.request。
+    if (this.isWechat && this.isDevtools && typeof fetch === 'function') {
       return requestViaFetch(opts.url, method, opts.data, headers, timeoutMs);
     }
-    if (hasWx() && typeof wx.request === 'function') {
+    if (api && typeof api.request === 'function') {
       return new Promise((resolve, reject) => {
         let done = false;
         const timer = setTimeout(() => {
@@ -206,7 +246,7 @@ class PlatformClass {
           reject(new Error(`request timeout after ${timeoutMs}ms: ${opts.url}`));
         }, timeoutMs);
         try {
-          wx.request({
+          api.request({
             url: opts.url,
             method,
             data: opts.data === undefined || typeof opts.data === 'string'
@@ -224,7 +264,7 @@ class PlatformClass {
               if (done) return;
               done = true;
               clearTimeout(timer);
-              reject(new Error(err?.errMsg || String(err) || 'wx.request failed'));
+              reject(new Error(err?.errMsg || String(err) || 'request failed'));
             },
           });
         } catch (e) {
@@ -242,52 +282,73 @@ class PlatformClass {
     return Promise.reject(new Error('no http transport available'));
   }
 
-  loginCode(): Promise<string> {
+  /**
+   * 微信 wx.login → code。
+   * 抖音 tt.login({ force: true }) → code，未登录时可能只有 anonymousCode。
+   */
+  loginCredentials(): Promise<LoginCredentials> {
     return new Promise((resolve) => {
-      if (!hasWx() || typeof wx.login !== 'function') {
-        resolve('');
+      const empty: LoginCredentials = { code: '', anonymousCode: '' };
+      const api = hostApi();
+      if (!api || typeof api.login !== 'function') {
+        resolve(empty);
         return;
       }
       let settled = false;
-      const finish = (code: string): void => {
+      const finish = (creds: LoginCredentials): void => {
         if (settled) return;
         settled = true;
-        resolve(code);
+        resolve(creds);
       };
       const timer = setTimeout(() => {
-        console.warn('[Platform] wx.login timed out, skip cloud login');
-        finish('');
+        console.warn(`[Platform] ${this.name}.login timed out, skip cloud login`);
+        finish(empty);
       }, 4000);
       try {
-        wx.login({
+        const opts: {
+          force?: boolean;
+          success: (res: any) => void;
+          fail: () => void;
+        } = {
           success: (res: any) => {
             clearTimeout(timer);
-            finish(res?.code || '');
+            finish({
+              code: String(res?.code || ''),
+              anonymousCode: String(res?.anonymousCode || ''),
+            });
           },
           fail: () => {
             clearTimeout(timer);
-            finish('');
+            finish(empty);
           },
-        });
+        };
+        if (this.isDouyin) opts.force = true;
+        api.login(opts);
       } catch {
         clearTimeout(timer);
-        finish('');
+        finish(empty);
       }
     });
   }
 
+  loginCode(): Promise<string> {
+    return this.loginCredentials().then((creds) => creds.code || creds.anonymousCode);
+  }
+
   getSystemInfoSync(): Record<string, unknown> | null {
-    if (!hasWx()) return null;
+    const api = hostApi();
+    if (!api) return null;
     try {
-      return wx.getSystemInfoSync?.() || null;
+      return api.getSystemInfoSync?.() || null;
     } catch {
       return null;
     }
   }
 
   onHide(handler: () => void): void {
-    if (hasWx() && typeof wx.onHide === 'function') {
-      wx.onHide(handler);
+    const api = hostApi();
+    if (api && typeof api.onHide === 'function') {
+      api.onHide(handler);
       return;
     }
     if (typeof document !== 'undefined') {
@@ -298,8 +359,9 @@ class PlatformClass {
   }
 
   onShow(handler: () => void): void {
-    if (hasWx() && typeof wx.onShow === 'function') {
-      wx.onShow(handler);
+    const api = hostApi();
+    if (api && typeof api.onShow === 'function') {
+      api.onShow(handler);
       return;
     }
     if (typeof document !== 'undefined') {
@@ -307,6 +369,47 @@ class PlatformClass {
         if (document.visibilityState === 'visible') handler();
       });
     }
+  }
+
+  /** 抖音侧边栏：宿主是否支持该场景 */
+  checkScene(opts: {
+    scene: string;
+    success?: (res: { isExist?: boolean }) => void;
+    fail?: (err?: unknown) => void;
+  }): void {
+    const api = hostApi();
+    if (typeof api?.checkScene === 'function') api.checkScene(opts);
+    else opts.fail?.({ errMsg: 'checkScene not supported' });
+  }
+
+  /** 必须在点击回调里同步调用 */
+  navigateToScene(opts: {
+    scene: string;
+    success?: () => void;
+    fail?: (err?: { errMsg?: string }) => void;
+  }): void {
+    const api = hostApi();
+    if (typeof api?.navigateToScene === 'function') api.navigateToScene(opts);
+    else opts.fail?.({ errMsg: 'navigateToScene not supported' });
+  }
+
+  checkShortcut(opts: {
+    success?: (res: { status?: { exist?: boolean; needUpdate?: boolean } }) => void;
+    fail?: (err?: unknown) => void;
+  }): void {
+    const api = hostApi();
+    if (typeof api?.checkShortcut === 'function') api.checkShortcut(opts);
+    else opts.fail?.({ errMsg: 'checkShortcut not supported' });
+  }
+
+  /** 必须在点击回调里同步调用 */
+  addShortcut(opts: {
+    success?: () => void;
+    fail?: (err?: { errMsg?: string }) => void;
+  }): void {
+    const api = hostApi();
+    if (typeof api?.addShortcut === 'function') api.addShortcut(opts);
+    else opts.fail?.({ errMsg: 'addShortcut not supported' });
   }
 }
 

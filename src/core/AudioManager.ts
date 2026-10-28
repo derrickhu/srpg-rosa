@@ -1,7 +1,6 @@
 import { AssetLoader } from '@/core/AssetLoader';
-import { hasWx } from '@/platform/wxPlatform';
-
-declare const wx: any;
+import { getFileSystemManager } from '@/platform/platformBridge';
+import { hasMinigameHost, hostApi, Platform } from '@/platform/wxPlatform';
 
 export type SfxId =
   | 'ui_click'
@@ -156,7 +155,7 @@ const lastSfxAt = new Map<SfxId, number>();
 
 function readMuted(): boolean {
   try {
-    if (hasWx()) return wx.getStorageSync?.(MUTE_KEY) === '1';
+    if (hasMinigameHost()) return Platform.getStorageSync(MUTE_KEY) === '1';
     if (typeof localStorage !== 'undefined') return localStorage.getItem(MUTE_KEY) === '1';
   } catch { /* */ }
   return false;
@@ -164,8 +163,8 @@ function readMuted(): boolean {
 
 function writeMuted(on: boolean): void {
   try {
-    if (hasWx()) {
-      wx.setStorageSync?.(MUTE_KEY, on ? '1' : '0');
+    if (hasMinigameHost()) {
+      Platform.setStorageSync(MUTE_KEY, on ? '1' : '0');
       return;
     }
     if (typeof localStorage !== 'undefined') {
@@ -211,9 +210,10 @@ function wrapHtml(el: HTMLAudioElement): AudioHandle {
 }
 
 function createAudio(src: string, loop: boolean, volume = 1): AudioHandle | null {
-  if (hasWx()) {
+  const api = hostApi();
+  if (api?.createInnerAudioContext) {
     try {
-      const ctx = wx.createInnerAudioContext();
+      const ctx = api.createInnerAudioContext();
       ctx.src = src;
       ctx.loop = loop;
       applyVolume(ctx, volume);
@@ -241,9 +241,10 @@ function createAudio(src: string, loop: boolean, volume = 1): AudioHandle | null
  * 开发者工具 InnerAudio 读不了 `http://usr` 时，再试一次公开 https。
  */
 function createBgmAudio(src: string, logical: string, loop: boolean, volume = 1): AudioHandle | null {
-  if (!hasWx()) return createAudio(src, loop, volume);
+  const api = hostApi();
+  if (!api?.createInnerAudioContext) return createAudio(src, loop, volume);
   try {
-    const ctx = wx.createInnerAudioContext();
+    const ctx = api.createInnerAudioContext();
     ctx.loop = loop;
     applyVolume(ctx, volume);
     let started = false;
@@ -265,7 +266,8 @@ function createBgmAudio(src: string, logical: string, loop: boolean, volume = 1)
       });
     } catch { /* */ }
     ctx.src = playable;
-    setTimeout(tryPlay, 400);
+    // 抖音模拟器在音频还没解码时 play()，会报 no supported source。等 onCanplay。
+    if (!Platform.isDouyin) setTimeout(tryPlay, 400);
     return wrapWx(ctx);
   } catch (e) {
     console.warn('[AudioManager] createInnerAudioContext failed:', e);
@@ -309,6 +311,74 @@ function applyMuteToBgm(): void {
   }
   const seq = ++bgmRequestSeq;
   void startResolvedBgm(currentBgmId, seq);
+}
+
+/** 抖音只在电脑开发者工具里把 InnerAudio 做成网页音频，包内路径会失败。真机可以播包内文件。 */
+function isDouyinPcSimulator(): boolean {
+  if (!Platform.isDouyin) return false;
+  if (Platform.isDevtools) return true;
+  try {
+    const platform = String(hostApi()?.getSystemInfoSync?.()?.platform || '').toLowerCase();
+    return platform === 'windows' || platform === 'mac' || platform === 'devtools';
+  } catch {
+    return false;
+  }
+}
+
+function toArrayBuffer(raw: unknown): ArrayBuffer | null {
+  if (raw instanceof ArrayBuffer) return raw;
+  if (ArrayBuffer.isView(raw)) {
+    const view = raw as ArrayBufferView;
+    return view.buffer.slice(view.byteOffset, view.byteOffset + view.byteLength) as ArrayBuffer;
+  }
+  return null;
+}
+
+function readPackageBytes(path: string): ArrayBuffer | null {
+  const fs = getFileSystemManager();
+  if (!fs || typeof fs.readFileSync !== 'function') return null;
+  try {
+    const direct = toArrayBuffer(fs.readFileSync(path));
+    if (direct && direct.byteLength >= 64) return direct;
+  } catch { /* 再试 base64 */ }
+  try {
+    const b64 = fs.readFileSync(path, 'base64');
+    if (typeof b64 !== 'string' || b64.length < 8 || typeof atob !== 'function') return null;
+    const bin = atob(b64);
+    const out = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i += 1) out[i] = bin.charCodeAt(i);
+    return out.buffer;
+  } catch {
+    return null;
+  }
+}
+
+let webAudio: AudioContext | null = null;
+
+/** 模拟器里不走 InnerAudio，避免 minigame-pc-sdk 刷 NotSupportedError。 */
+function playPackageSfxWeb(path: string): void {
+  const bytes = readPackageBytes(path);
+  const AC = (globalThis as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext }).AudioContext
+    || (globalThis as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  if (!bytes || !AC) return;
+  try {
+    if (!webAudio || webAudio.state === 'closed') webAudio = new AC();
+  } catch {
+    return;
+  }
+  const ctx = webAudio;
+  void ctx.decodeAudioData(bytes.slice(0)).then((buffer) => {
+    if (muted || ctx.state === 'closed') return;
+    const node = ctx.createBufferSource();
+    node.buffer = buffer;
+    const gain = ctx.createGain();
+    gain.gain.value = 1;
+    node.connect(gain);
+    gain.connect(ctx.destination);
+    node.start();
+  }).catch((e) => {
+    console.warn('[AudioManager] 模拟器音效解码失败', path, e);
+  });
 }
 
 export const AudioManager = {
@@ -355,6 +425,11 @@ export const AudioManager = {
       lastSfxAt.set(id, now);
     }
     const src = SFX_MAP[id];
+    // 包内相对路径在抖音电脑模拟器里不是合法音频地址，InnerAudio 会直接报错。
+    if (isDouyinPcSimulator()) {
+      playPackageSfxWeb(src);
+      return;
+    }
     const handle = createAudio(src, false);
     if (!handle) return;
     handle.onEnded(() => handle.destroy());

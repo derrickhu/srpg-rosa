@@ -1,7 +1,6 @@
 import { analytics } from '@/analytics/gpAnalytics';
-import { hasWx, AdConfigKeys } from './wxPlatform';
-
-declare const wx: any;
+import { detectMinigamePlatform } from '@/platform/platformDetect';
+import { hasWx, hostApi, AdConfigKeys } from './wxPlatform';
 
 export type AdScenario =
   | 'lootRefresh'
@@ -20,24 +19,44 @@ const SCENARIO_AD_UNIT: Record<AdScenario, string> = {
   recruitCharacter: AdConfigKeys.rewardRecruitCharacter,
 };
 
+/**
+ * 抖音广告位。空字符串表示还没在抖音流量主创建。
+ * 空位直接不发奖，也不拿微信的 adunit 去抖音创建广告。
+ */
+const DOUYIN_AD_UNIT: Record<AdScenario, string> = {
+  lootRefresh: '',
+  shopRefresh: '',
+  extraDeploy: '',
+  revive: '',
+  emblemRelease: '',
+  recruitCharacter: '',
+};
+
 let rewardedCache: Map<string, any> = new Map();
 let interstitialInstance: any = null;
 let showing = false;
 
 export function adUnitIdFor(scenario: AdScenario): string {
+  if (detectMinigamePlatform() === 'douyin') return DOUYIN_AD_UNIT[scenario];
   return SCENARIO_AD_UNIT[scenario];
 }
 
-/** 微信激励视频默认全局单例，只绑第一次的 adUnitId。多广告位必须 multiton。 */
-export function rewardedVideoCreateOptions(adUnitId: string): { adUnitId: string; multiton: true } {
+/** 微信激励视频默认全局单例，只绑第一次的 adUnitId。多广告位必须 multiton。抖音不传这个字段。 */
+export function rewardedVideoCreateOptions(
+  adUnitId: string,
+  platform: 'wechat' | 'douyin' = 'wechat',
+): { adUnitId: string; multiton?: true } {
+  if (platform === 'douyin') return { adUnitId };
   return { adUnitId, multiton: true };
 }
 
 function getRewardedAd(adUnitId: string): any {
-  if (!hasWx() || typeof wx.createRewardedVideoAd !== 'function') return null;
+  const api = hostApi();
+  if (!api || typeof api.createRewardedVideoAd !== 'function') return null;
   if (rewardedCache.has(adUnitId)) return rewardedCache.get(adUnitId);
   try {
-    const ad = wx.createRewardedVideoAd(rewardedVideoCreateOptions(adUnitId));
+    const platform = detectMinigamePlatform() === 'douyin' ? 'douyin' : 'wechat';
+    const ad = api.createRewardedVideoAd(rewardedVideoCreateOptions(adUnitId, platform));
     ad.onError?.((err: unknown) => {
       console.warn('[AdManager] rewarded error:', err);
     });
@@ -50,16 +69,21 @@ function getRewardedAd(adUnitId: string): any {
 }
 
 /**
- * 非微信环境（浏览器 / 单测）直接发奖，方便把刷新 / 复活整条链路跑通。
- * 真机只在看完激励视频（`isEnded === true`）后发奖。
+ * 浏览器 / 单测直接发奖，方便把刷新 / 复活整条链路跑通。
+ * 微信、抖音真机只在看完激励视频（`isEnded === true`）后发奖。抖音广告位还没配时不发奖。
  */
 export const AdManager = {
   showRewarded(scenario: AdScenario): Promise<boolean> {
-    const adUnitId = SCENARIO_AD_UNIT[scenario];
-    if (!hasWx()) {
+    const platform = detectMinigamePlatform();
+    const adUnitId = adUnitIdFor(scenario);
+    if (platform === 'web') {
       analytics.trackAdShow(scenario, { ad_unit_id: adUnitId, mock: true });
       analytics.trackAdClose(scenario, true, { ad_unit_id: adUnitId, mock: true });
       return Promise.resolve(true);
+    }
+    if (!adUnitId) {
+      console.warn('[AdManager] 当前平台没有广告位，不发奖', platform, scenario);
+      return Promise.resolve(false);
     }
 
     const ad = getRewardedAd(adUnitId);
@@ -97,9 +121,11 @@ export const AdManager = {
 
   showInterstitial(): void {
     if (!hasWx()) return;
+    const api = hostApi();
+    if (!api || typeof api.createInterstitialAd !== 'function') return;
     try {
       if (!interstitialInstance) {
-        interstitialInstance = wx.createInterstitialAd({
+        interstitialInstance = api.createInterstitialAd({
           adUnitId: 'WX_INTERSTITIAL_ADUNIT',
         });
       }

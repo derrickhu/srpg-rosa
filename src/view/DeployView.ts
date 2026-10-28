@@ -437,10 +437,14 @@ export function createDeployView(
   const benchLocals = new Map<string, { x: number; y: number; w: number; h: number }>();
   let unitScroll: ScrollListHandle | null = null;
 
-  /** 点卡回调里重绘会拆掉事件目标，立刻 destroy 会把这次点击的传播打断 */
+  /**
+   * 点卡回调里重绘会拆掉事件目标，立刻 destroy 会把这次点击的传播打断。
+   * 抖音里 queueMicrotask 是宿主方法，裸调用会 TypeError: Illegal invocation，
+   * 替补席刚 removeChildren 就中断，人物卡片画不回来。
+   */
   function destroyLater(nodes: PIXI.DisplayObject[]): void {
     if (nodes.length === 0) return;
-    queueMicrotask(() => {
+    Promise.resolve().then(() => {
       for (const node of nodes) {
         const doomed = node as PIXI.DisplayObject & { destroyed?: boolean };
         if (doomed.destroyed) continue;

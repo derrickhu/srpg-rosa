@@ -1,5 +1,6 @@
 node_modules/
 cloudfunctions/**/node_modules/
+build/
 .DS_Store
 godot/.godot/
 tools/godot/

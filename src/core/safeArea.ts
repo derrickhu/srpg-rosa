@@ -9,8 +9,7 @@
  * 可以直接当 y 用，不需要再乘 dpr。
  */
 import { getWxCanvasLogicalSize } from '@/boot/createPixiApp';
-
-declare const wx: any;
+import { getNativePlatformApi } from '@/platform/platformDetect';
 
 export interface SafeAreaInsets {
   /** 顶部第一个可用 y：状态栏和胶囊都在这条线之上 */
@@ -54,7 +53,8 @@ function isUsableRect(r: unknown): r is { top: number; left: number; width: numb
 function compute(): SafeAreaInsets {
   const { w: screenW, h: screenH } = getWxCanvasLogicalSize();
 
-  if (typeof wx === 'undefined') {
+  const api = getNativePlatformApi();
+  if (!api) {
     const y = FALLBACK.statusBar + FALLBACK.menuGapTop;
     return {
       top: y + FALLBACK.menuHeight,
@@ -71,7 +71,7 @@ function compute(): SafeAreaInsets {
   let statusBar = FALLBACK.statusBar;
   let bottom = FALLBACK.bottom;
   try {
-    const si = wx.getSystemInfoSync();
+    const si = api.getSystemInfoSync();
     statusBar = typeof si.statusBarHeight === 'number' ? si.statusBarHeight : statusBar;
     // safeArea.bottom 是安全区**下边界的 y**，不是高度；离屏幕底还差多少才是要垫的量
     if (si.safeArea && typeof si.safeArea.bottom === 'number') {
@@ -84,7 +84,7 @@ function compute(): SafeAreaInsets {
   let rect: { x: number; y: number; width: number; height: number };
   let raw: unknown = null;
   try {
-    raw = wx.getMenuButtonBoundingClientRect?.();
+    raw = api.getMenuButtonBoundingClientRect?.();
   } catch (e) {
     console.warn('[safeArea] getMenuButtonBoundingClientRect 失败，用兜底值:', e);
   }
@@ -117,10 +117,11 @@ function compute(): SafeAreaInsets {
 export function getSafeAreaInsets(): SafeAreaInsets {
   if (cached) return cached;
   const v = compute();
-  if (typeof wx === 'undefined') {
+  const api = getNativePlatformApi();
+  if (!api) {
     // 浏览器调试环境不会再变，缓存掉省得每帧重算
     cached = v;
-  } else if (isUsableRect(wx.getMenuButtonBoundingClientRect?.())) {
+  } else if (isUsableRect(api.getMenuButtonBoundingClientRect?.())) {
     cached = v;
   }
   return v;

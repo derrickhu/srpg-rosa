@@ -1,3 +1,4 @@
+import { getNativePlatformApi } from '@/platform/platformDetect';
 import { setShowcaseFontFamily, showcaseFontFamily } from '@/theme/typography';
 
 /**
@@ -6,9 +7,7 @@ import { setShowcaseFontFamily, showcaseFontFamily } from '@/theme/typography';
  * 微信：`wx.loadFont` → TrueType；失败则展示角色也回退系统字，不卡死进游戏。
  */
 
-declare const wx: {
-  loadFont?: (path: string) => string;
-} | undefined;
+type FontHost = { loadFont?: (path: string) => string };
 
 /** 子集产物；源文件在 tools/font-src/SmileySans-Oblique.ttf */
 const SHOWCASE_PATH = 'fonts/SmileySans-subset.ttf';
@@ -33,8 +32,9 @@ function formatErr(e: unknown): string {
   return String(e);
 }
 
-function isWechatMinigame(): boolean {
-  return typeof wx !== 'undefined' && typeof wx.loadFont === 'function';
+function isMinigameFontHost(): boolean {
+  const api = getNativePlatformApi() as FontHost | null;
+  return !!api && typeof api.loadFont === 'function';
 }
 
 async function loadH5(url: string): Promise<string> {
@@ -48,9 +48,10 @@ async function loadH5(url: string): Promise<string> {
 }
 
 function loadWx(path: string): string {
+  const api = getNativePlatformApi() as FontHost | null;
   let family: string;
   try {
-    family = wx!.loadFont!(path);
+    family = api!.loadFont!(path);
   } catch (e) {
     throw new Error(`wx.loadFont 抛错 ${path}: ${formatErr(e)}`);
   }
@@ -68,7 +69,7 @@ export async function loadGameFonts(): Promise<void> {
   if (loaded) return;
 
   try {
-    const family = isWechatMinigame()
+    const family = isMinigameFontHost()
       ? loadWx(SHOWCASE_PATH)
       : await loadH5(`/${SHOWCASE_PATH}`);
     setShowcaseFontFamily(family);

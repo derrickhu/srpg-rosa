@@ -15,6 +15,7 @@ import { AssetLoader } from './AssetLoader';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 declare const wx: any;
+declare const tt: any;
 declare const GameGlobal: any;
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
@@ -56,7 +57,9 @@ function loadImageAsTexture(src: string): Promise<PIXI.Texture> {
     try {
       /* eslint-disable @typescript-eslint/no-explicit-any */
       const g = typeof GameGlobal !== 'undefined' ? (GameGlobal as any) : undefined;
-      const wxApi: any = typeof wx !== 'undefined' ? wx : g?.wx;
+      const wxApi: any = typeof tt !== 'undefined' ? tt
+        : typeof wx !== 'undefined' ? wx
+          : g?.tt || g?.wx;
       /* eslint-enable @typescript-eslint/no-explicit-any */
 
       if (wxApi?.createImage) {

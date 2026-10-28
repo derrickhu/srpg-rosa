@@ -7,6 +7,7 @@
  * - manifest.json：增量校验 hash（上传脚本生成）
  */
 import { cdnConfig } from '@/config/cdnConfig';
+import { detectMinigamePlatform } from '@/platform/platformDetect';
 import {
   downloadFile,
   getFileSystemManager,
@@ -309,6 +310,12 @@ function audioFileReady(path: string): boolean {
  * `wxfile://` 只有那边真有文件才用；否则直接 CDN https。
  */
 export function playableAudioSrc(resolved: string, logicalPath: string): string {
+  // 抖音电脑模拟器的 InnerAudio 底层是网页音频，只认 http(s)。
+  // ttfile://、wxfile://、http://usr 和包内相对路径都会报
+  // NotSupportedError: no supported source。BGM 本来就在 CDN 上，直接给 https。
+  if (detectMinigamePlatform() === 'douyin' && isCdnPath(logicalPath)) {
+    return getCdnUrl(logicalPath);
+  }
   if (/^https?:\/\//.test(resolved) && !/^https?:\/\/usr\//.test(resolved)) return resolved;
   if (/^https?:\/\/usr\//.test(resolved)) {
     const alt = toInnerAudioSrc(resolved);

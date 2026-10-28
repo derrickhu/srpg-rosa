@@ -37,9 +37,15 @@ function readEnvPrefer(...keys) {
   return '';
 }
 
-/** 后端 platform 字段 → 集合命名空间段。微信 / 匿名不加段。 */
+/**
+ * 后端 platform 字段 → 集合命名空间段。微信 / 匿名不加段。
+ * tt / douyin 是别名：就算登录字段写错，也不能掉进微信集合。
+ * 正式登录只接受 dy，见 auth.js。
+ */
 const PLATFORM_SCOPE = {
   dy: 'tt',
+  tt: 'tt',
+  douyin: 'tt',
 };
 
 function getPlatformScope(platform) {

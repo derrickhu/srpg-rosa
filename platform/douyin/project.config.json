@@ -1,0 +1,38 @@
+{
+  "description": "无尽纹章 · 抖音。用抖音开发者工具打开 build/douyin/，不要开仓库根目录。",
+  "setting": {
+    "urlCheck": false,
+    "es6": true,
+    "postcss": true,
+    "minified": true,
+    "newFeature": true,
+    "uglifyFileName": false,
+    "uploadWithSourceMap": false,
+    "enhance": false,
+    "packNpmManually": false,
+    "packNpmRelationList": [],
+    "minifyWXSS": true,
+    "localPlugins": false,
+    "condition": false,
+    "swc": false,
+    "compileWorklet": false,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    },
+    "disableUseStrict": false,
+    "minifyWXML": true,
+    "useCompilerPlugins": false,
+    "disableSWC": true
+  },
+  "compileType": "game",
+  "libVersion": "3.19.0",
+  "appid": "tt0dfa7b479384039202",
+  "projectname": "无尽纹章",
+  "condition": {},
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  }
+}

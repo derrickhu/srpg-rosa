@@ -36,11 +36,29 @@ describe('BGM 走 CDN 的音频路径', () => {
     expect(src.startsWith('http://usr')).toBe(false);
   });
 
+  it('抖音的 CDN 音频只给公开 https，不把 usr / ttfile 交给 InnerAudio', () => {
+    const g = globalThis as { tt?: object };
+    g.tt = {};
+    try {
+      expect(playableAudioSrc('http://usr/cdn_cache/audio/bgm/battle.mp3', 'audio/bgm/battle.mp3'))
+        .toBe(getCdnUrl('audio/bgm/battle.mp3'));
+      expect(playableAudioSrc('ttfile://user/cdn_cache/audio/bgm/battle.mp3', 'audio/bgm/battle.mp3'))
+        .toBe(getCdnUrl('audio/bgm/battle.mp3'));
+      const sfx = playableAudioSrc('audio/sfx/ui_click.mp3', 'audio/sfx/ui_click.mp3');
+      expect(sfx).toBe('audio/sfx/ui_click.mp3');
+    } finally {
+      delete g.tt;
+    }
+  });
+
   it('启动诊断只在 boot 没跑起来时弹窗', () => {
     const js = readFileSync('game.js', 'utf8');
     expect(js).toContain('function _booted');
     expect(js).toMatch(/function _showDiag\(\)[\s\S]*if \(_booted\(\)\) return/);
     expect(js).toContain('wx.onError');
+    expect(js).toContain('tt.checkScene');
+    expect(js).toContain('tt.addShortcut');
+    expect(js).toContain("scene: 'sidebar'");
   });
 
   it('AudioManager 播 BGM 前走 resolveAudioSrc，SFX 仍用包内路径', () => {
@@ -49,5 +67,7 @@ describe('BGM 走 CDN 的音频路径', () => {
     expect(audio).toMatch(/playBgm[\s\S]*startResolvedBgm/);
     expect(audio).toContain("ui_click: 'audio/sfx/ui_click.mp3'");
     expect(audio).not.toMatch(/playSfx\([\s\S]*resolveAudioSrc/);
+    expect(audio).toContain('if (!Platform.isDouyin) setTimeout(tryPlay, 400)');
+    expect(audio).toContain('isDouyinPcSimulator');
   });
 });

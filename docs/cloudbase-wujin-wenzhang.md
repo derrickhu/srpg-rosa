@@ -100,12 +100,15 @@ import { GAME_KEY } from '@/config/gameKey';
 |---|---|
 | GameKey | `wujin_wenzhang` |
 | 云函数 / HTTP 前缀 | `wujin-wenzhang-api` / `/wujin-wenzhang-api` |
-| 集合 | `wujin_wenzhang_playerData` |
-| JWT | `{ sub, plt, gk: "wujin_wenzhang" }`，密钥环境变量 `WUJIN_WENZHANG_JWT_SECRET` |
+| 集合 | 微信/匿名 `wujin_wenzhang_playerData`；抖音 `wujin_wenzhang_tt_playerData` |
+| JWT | `{ sub, plt, gk: "wujin_wenzhang" }`，密钥环境变量 `WUJIN_WENZHANG_JWT_SECRET`。`gk` 始终是基础名，不加 `_tt` |
 | 微信 code2session | `WUJIN_WENZHANG_WX_APPID` / `WUJIN_WENZHANG_WX_SECRET`（不要用裸 `WX_APPID`，会被脱敏清空） |
+| 抖音 AppID | `tt0dfa7b479384039202`（写在 `platform/douyin/project.config.json`，打进 `build/douyin`） |
+| 抖音 code2session | `WUJIN_WENZHANG_TT_APPID` / `WUJIN_WENZHANG_TT_SECRET`。客户端登录 `platform=dy`，没有 code 时不退回 anon |
+| 经分 | gameKey 仍是 `wujin_wenzhang`（ingest 白名单已有），抖音只把 `platform` 写成 `douyin`。不要改成 `wujin_wenzhang_tt` |
 | payload | `Record<string, string>`，按 key 合并；冲突 409 `STALE_UPDATE` |
 | 白名单 | `srpg_meta_v3`、`srpg_run_v4`（token / anonId / cloud_meta 不上云） |
-| userId | `wx:{openid}` / `anon:{id}` |
+| userId | `wx:{openid}` / `dy:{openid}` / `anon:{id}` |
 
 源码：
 

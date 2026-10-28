@@ -12,7 +12,7 @@ import { settings } from '@pixi/settings';
 // 直接注入 wx/tt API 调用，完全绕过 document。
 declare const wx: any;
 declare const tt: any;
-const _api: any = typeof wx !== 'undefined' ? wx : typeof tt !== 'undefined' ? tt : null;
+const _api: any = typeof tt !== 'undefined' ? tt : typeof wx !== 'undefined' ? wx : null;
 if (_api) {
   try {
     // 不要探测 createOffscreenCanvas。API 在华为鸿蒙上经常“函数在、一调就原生崩”，
@@ -132,7 +132,7 @@ console.log('[pixiPatch] unsafe-eval patch 已应用');
 // 2) PIXI.Text canvas → 用 toDataURL 转 Image 再上传（Image 上传真机可用）
 const _isRealDevice = (() => {
   try {
-    const p: any = typeof wx !== 'undefined' ? wx : typeof tt !== 'undefined' ? tt : null;
+    const p: any = typeof tt !== 'undefined' ? tt : typeof wx !== 'undefined' ? wx : null;
     if (!p) return false;
     const info = p.getSystemInfoSync();
     console.log('[pixiPatch] platform:', info.platform, 'brand:', info.brand, 'model:', info.model);
@@ -169,7 +169,9 @@ if (_isRealDevice) {
   let _canReadPixels = false;
   const _skipProbe = (() => {
     try {
-      const info = (typeof wx !== 'undefined' && (wx.getDeviceInfo?.() || wx.getSystemInfoSync?.())) || {};
+      const info = (typeof tt !== 'undefined' && (tt.getDeviceInfo?.() || tt.getSystemInfoSync?.()))
+        || (typeof wx !== 'undefined' && (wx.getDeviceInfo?.() || wx.getSystemInfoSync?.()))
+        || {};
       const p = String(info.platform || '').toLowerCase();
       const b = String(info.brand || '').toLowerCase();
       return p === 'android' || p === 'ohos' || p === 'harmony' || p === 'harmonyos'

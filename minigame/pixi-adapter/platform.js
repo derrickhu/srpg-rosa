@@ -3,9 +3,9 @@
  * 所有 adapter 模块通过此模块调用平台 API，不直接写 wx.xxx 或 tt.xxx
  */
 
-const _isWechat = typeof wx !== 'undefined';
 const _isDouyin = typeof tt !== 'undefined';
-const _api = _isWechat ? wx : _isDouyin ? tt : null;
+const _isWechat = typeof wx !== 'undefined' && !_isDouyin;
+const _api = _isDouyin ? tt : _isWechat ? wx : null;
 
 if (!_api) {
   console.error('[platform] 未检测到小游戏运行环境（wx/tt）');
@@ -65,7 +65,7 @@ const platform = {
 
   createInnerAudioContext: () => _api.createInnerAudioContext(),
 
-  name: _isWechat ? 'wechat' : _isDouyin ? 'douyin' : 'unknown',
+  name: _isDouyin ? 'douyin' : _isWechat ? 'wechat' : 'unknown',
   api: _api,
 };
 

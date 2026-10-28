@@ -37,7 +37,7 @@ async function handleLogin(req) {
   if (platform === 'wx') {
     platformUid = await wxCode2Openid(body.code);
   } else if (platform === 'dy') {
-    platformUid = await ttCode2Openid(body.code);
+    platformUid = await ttCode2Openid(body.code, body.anonymousCode);
   } else if (platform === 'tap') {
     const id = String(body.taptapUserId || '').trim();
     if (!id) throw httpError(400, 'NO_TAP_ID', 'taptapUserId 缺失');
@@ -121,15 +121,20 @@ async function wxCode2Openid(code) {
   return data.openid;
 }
 
-async function ttCode2Openid(code) {
+async function ttCode2Openid(code, anonymousCode) {
   const { appid, secret } = readPrefixedCreds('TT');
   if (!appid || !secret) {
     throw httpError(500, 'NO_TT_CFG', `${gameKeyUpper()}_TT_APPID/${gameKeyUpper()}_TT_SECRET 未配置`);
   }
-  if (!code) throw httpError(400, 'NO_CODE', 'dy code 缺失');
+  const loginCode = String(code || '').trim();
+  const anonCode = String(anonymousCode || '').trim();
+  if (!loginCode && !anonCode) throw httpError(400, 'NO_CODE', 'dy code 缺失');
 
   const url = 'https://developer.toutiao.com/api/apps/v2/jscode2session';
-  const data = await httpPostJson(url, { appid, secret, code });
+  const payload = { appid, secret };
+  if (loginCode) payload.code = loginCode;
+  if (anonCode) payload.anonymous_code = anonCode;
+  const data = await httpPostJson(url, payload);
   if (!data || data.err_no !== 0 || !data.data || !data.data.openid) {
     throw httpError(401, 'TT_LOGIN_FAIL', `dy code2session 失败: ${JSON.stringify(data || {})}`);
   }

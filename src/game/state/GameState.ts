@@ -153,6 +153,13 @@ export interface MetaState {
    * 凑满入队后删掉。可选：老档没有。不升 META_VERSION。
    */
   recruitAdWatches?: Record<string, number>;
+  /**
+   * 抖音侧边栏复访奖励的领取日（YYYY-MM-DD）。可选：微信档没有。
+   * 不升 META_VERSION。
+   */
+  douyinSidebarRewardDate?: string;
+  /** 抖音添加到桌面的一次性奖励已领。可选：微信档没有。 */
+  douyinDesktopRewardClaimed?: boolean;
 }
 
 /** 单副本一局的临时状态（roguelike 构筑都在这里，结束即弃） */

@@ -6,6 +6,7 @@
   "description": "无尽纹章 - 微信小游戏（Pixi + TypeScript + Vite）",
   "scripts": {
     "build": "vite build && node scripts/check-package-size.mjs",
+    "build:douyin": "vite build && node scripts/build-platform.mjs douyin",
     "check:size": "node scripts/check-package-size.mjs",
     "anim:build": "node scripts/tres2pixi.mjs",
     "anim:build:sprite": "node scripts/sprite2anim.mjs && node scripts/anim2token.mjs",
@@ -15,7 +16,7 @@
     "map:edit": "vite --open /tools/map-editor/index.html",
     "upload:cdn": "node scripts/upload_cdn.cjs",
     "upload:cdn:dry": "node scripts/upload_cdn.cjs --dry-run",
-    "test": "vitest run",
+    "test": "vitest run && node cloudfunctions/wujin-wenzhang-api/lib/check-scope.mjs",
     "cloud:mock": "node cloudfunctions/wujin-wenzhang-api/scripts/mock.js",
     "test:watch": "vitest",
     "font:subset": "python3 scripts/subset-pixi-fonts.py"

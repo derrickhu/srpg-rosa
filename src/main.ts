@@ -12,6 +12,7 @@ import { installWxShare } from '@/platform/wxShare';
 
 declare const GameGlobal: any;
 declare const wx: any;
+declare const tt: any;
 
 function formatBootErr(e: unknown): string {
   if (e == null) return String(e);
@@ -149,10 +150,12 @@ function scheduleBoot(): void {
     tryBoot('sync');
   }
   try {
-    const wxApi = (typeof GameGlobal !== 'undefined' && GameGlobal.wx)
+    const host = (typeof tt !== 'undefined' ? tt : null)
+      || (typeof GameGlobal !== 'undefined' && GameGlobal.tt)
+      || (typeof GameGlobal !== 'undefined' && GameGlobal.wx)
       || (typeof wx !== 'undefined' ? wx : null);
-    wxApi?.nextTick?.(() => tryBoot('nextTick'));
-    wxApi?.onShow?.(() => tryBoot('onShow'));
+    host?.nextTick?.(() => tryBoot('nextTick'));
+    host?.onShow?.(() => tryBoot('onShow'));
   } catch {
     /* */
   }

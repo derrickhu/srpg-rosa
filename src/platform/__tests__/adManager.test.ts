@@ -49,4 +49,35 @@ describe('激励视频广告位', () => {
   it('rewardedVideoCreateOptions 钉住微信多实例开关', () => {
     expect(rewardedVideoCreateOptions('adunit-x')).toEqual({ adUnitId: 'adunit-x', multiton: true });
   });
+
+  it('抖音没有广告位时不发奖，也不拿微信广告位去创建', async () => {
+    const created: unknown[] = [];
+    const g = globalThis as { wx?: unknown; tt?: unknown };
+    const prevWx = g.wx;
+    const prevTt = g.tt;
+    const rejectAd = (opts: unknown) => {
+      created.push(opts);
+      return {
+        onError() {},
+        onClose() {},
+        offClose() {},
+        show: () => Promise.reject(new Error('should not show')),
+        load: () => Promise.reject(new Error('should not load')),
+      };
+    };
+    g.tt = { createRewardedVideoAd: rejectAd };
+    g.wx = { createRewardedVideoAd: rejectAd };
+    AdManager.destroy();
+    try {
+      await expect(AdManager.showRewarded('lootRefresh')).resolves.toBe(false);
+      expect(adUnitIdFor('lootRefresh')).toBe('');
+      expect(created).toEqual([]);
+    } finally {
+      AdManager.destroy();
+      if (prevWx === undefined) delete g.wx;
+      else g.wx = prevWx;
+      if (prevTt === undefined) delete g.tt;
+      else g.tt = prevTt;
+    }
+  });
 });

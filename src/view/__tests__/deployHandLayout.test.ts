@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { scrollOverflow } from '@/ui/ScrollList';
 import { benchHandMetrics } from '@/view/DeployView';
@@ -21,5 +22,10 @@ describe('部署替补席', () => {
     expect(overflow).toBeLessThan(0);
     const lastRight = m.originX + (count - 1) * (m.slotW + m.gap) + m.slotW;
     expect(lastRight + overflow).toBe(sw - m.pad);
+  });
+
+  it('重绘替补席不调用 queueMicrotask，避免抖音点击时 Illegal invocation', () => {
+    const src = readFileSync(new URL('../DeployView.ts', import.meta.url), 'utf8');
+    expect(src).not.toMatch(/queueMicrotask\s*\(/);
   });
 });

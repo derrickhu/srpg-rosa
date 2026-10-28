@@ -1,7 +1,5 @@
 import { pickShareCard, shareQuery } from '@/data/shareCatalog';
-import { hasWx } from '@/platform/wxPlatform';
-
-declare const wx: any;
+import { hasMinigameHost, hostApi } from '@/platform/wxPlatform';
 
 let installed = false;
 let lifecycleHooked = false;
@@ -36,10 +34,10 @@ function onGameShow(): void {
 }
 
 function hookShareLifecycle(): void {
-  if (lifecycleHooked || !hasWx()) return;
+  if (lifecycleHooked || !hasMinigameHost()) return;
   lifecycleHooked = true;
   try {
-    wx.onShow?.(onGameShow);
+    hostApi()?.onShow?.(onGameShow);
   } catch (e) {
     console.warn('[share] lifecycle hook failed', e);
   }
@@ -50,7 +48,8 @@ function hookShareLifecycle(): void {
  * 真机没有「是否发给了好友」的回执：点下去只打开面板，回到前台才算完成。
  */
 export function shareAppMessage(): Promise<boolean> {
-  if (!hasWx()) return Promise.resolve(true);
+  const api = hostApi();
+  if (!hasMinigameHost() || !api) return Promise.resolve(true);
   if (waiting) return Promise.resolve(false);
   hookShareLifecycle();
   return new Promise((resolve) => {
@@ -58,12 +57,13 @@ export function shareAppMessage(): Promise<boolean> {
     armed = false;
     waitTimer = setTimeout(() => finishShare(false), 60_000);
     try {
-      if (typeof wx.shareAppMessage !== 'function') {
+      if (typeof api.shareAppMessage !== 'function') {
         finishShare(false);
         return;
       }
-      wx.shareAppMessage(sharePayload());
-      queueMicrotask(() => {
+      api.shareAppMessage(sharePayload());
+      // 抖音的 queueMicrotask 裸调用会 Illegal invocation，用微任务推迟即可。
+      Promise.resolve().then(() => {
         if (waiting) armed = true;
       });
     } catch (e) {
@@ -83,12 +83,13 @@ export function abandonPendingShare(): void {
  * 每次点转发现抽一套文案和宣传图。
  */
 export function installWxShare(): void {
-  if (installed || !hasWx()) return;
+  const api = hostApi();
+  if (installed || !hasMinigameHost() || !api) return;
   installed = true;
   hookShareLifecycle();
 
   try {
-    wx.showShareMenu?.({
+    api.showShareMenu?.({
       withShareTicket: true,
       menus: ['shareAppMessage', 'shareTimeline'],
     });
@@ -97,13 +98,13 @@ export function installWxShare(): void {
   }
 
   try {
-    wx.onShareAppMessage?.(sharePayload);
+    api.onShareAppMessage?.(sharePayload);
   } catch (e) {
     console.warn('[share] onShareAppMessage failed', e);
   }
 
   try {
-    wx.onShareTimeline?.(sharePayload);
+    api.onShareTimeline?.(sharePayload);
   } catch (e) {
     console.warn('[share] onShareTimeline failed', e);
   }

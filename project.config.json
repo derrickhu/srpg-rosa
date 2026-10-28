@@ -124,6 +124,14 @@
         "type": "folder"
       },
       {
+        "value": "build",
+        "type": "folder"
+      },
+      {
+        "value": "platform",
+        "type": "folder"
+      },
+      {
         "value": "images/terrain",
         "type": "folder"
       },

@@ -10,8 +10,9 @@
  */
 import * as PIXI from 'pixi.js';
 import { Rectangle } from '@pixi/math';
+import { getNativePlatformApi } from '@/platform/platformDetect';
 
-declare const wx: any;
+declare const GameGlobal: any;
 
 export interface PixiHost {
   stage: PIXI.Container;
@@ -29,20 +30,22 @@ export function isAndroidLikeSystem(si: { platform?: unknown; brand?: unknown } 
 }
 
 function readWxSystemInfo(): Record<string, unknown> {
+  const api = getNativePlatformApi();
+  if (!api) return {};
   try {
-    if (typeof wx.getWindowInfo === 'function' && typeof wx.getDeviceInfo === 'function') {
-      return { ...(wx.getDeviceInfo() || {}), ...(wx.getWindowInfo() || {}) };
+    if (typeof api.getWindowInfo === 'function' && typeof api.getDeviceInfo === 'function') {
+      return { ...(api.getDeviceInfo() || {}), ...(api.getWindowInfo() || {}) };
     }
   } catch { /* 旧基础库 */ }
   try {
-    return wx.getSystemInfoSync?.() || {};
+    return api.getSystemInfoSync?.() || {};
   } catch {
     return {};
   }
 }
 
 function getWxInfo(): { w: number; h: number; dpr: number; androidLike: boolean } {
-  if (typeof wx === 'undefined') {
+  if (!getNativePlatformApi()) {
     return { w: 375, h: 667, dpr: 2, androidLike: false };
   }
   try {

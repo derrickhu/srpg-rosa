@@ -1,7 +1,9 @@
 /**
  * 统一后端访问层（CloudBase HTTP 访问服务）
  *
- * - 微信走 wx.login code，H5 走本地匿名 ID；userId 形如 `wx:{openid}` / `anon:{id}`
+ * - 微信走 wx.login code，抖音走 tt.login（platform=dy），H5 走本地匿名 ID
+ * - userId 形如 `wx:{openid}` / `dy:{openid}` / `anon:{id}`
+ * - 抖音没有 code 时不得退回 anon，否则会写进微信集合
  * - Token：服务端签发 JWT，客户端缓存在本地；过期或 401 自动重新 login
  */
 
@@ -141,7 +143,23 @@ class BackendServiceClass {
     return stored;
   }
 
-  private async _buildLoginBody(): Promise<{ platform: string; code?: string; anonId?: string }> {
+  private async _buildLoginBody(): Promise<{
+    platform: string;
+    code?: string;
+    anonymousCode?: string;
+    anonId?: string;
+  }> {
+    if (Platform.isDouyin) {
+      const creds = await Platform.loginCredentials();
+      if (!creds.code && !creds.anonymousCode) {
+        throw new BackendError(0, 'NO_TT_CODE', 'tt.login 未返回 code');
+      }
+      return {
+        platform: 'dy',
+        code: creds.code || undefined,
+        anonymousCode: creds.anonymousCode || undefined,
+      };
+    }
     if (Platform.isWechat) {
       const code = await Platform.loginCode();
       if (!code) throw new BackendError(0, 'NO_WX_CODE', 'wx.login 未返回 code');

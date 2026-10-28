@@ -10,12 +10,11 @@ declare const GameGlobal: any;
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 function baseApi(): any {
-  if (typeof wx !== 'undefined') return wx;
   if (typeof tt !== 'undefined') return tt;
+  if (typeof wx !== 'undefined') return wx;
   if (typeof GameGlobal !== 'undefined') {
-    return (GameGlobal as { wx?: unknown; tt?: unknown }).wx
-      ?? (GameGlobal as { wx?: unknown; tt?: unknown }).tt
-      ?? GameGlobal;
+    const g = GameGlobal as { wx?: unknown; tt?: unknown };
+    return g.tt ?? g.wx ?? GameGlobal;
   }
   return null;
 }

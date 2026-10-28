@@ -35,12 +35,19 @@ function _booted() {
   }
 }
 
+function _host() {
+  if (typeof tt !== 'undefined') return tt;
+  if (typeof wx !== 'undefined') return wx;
+  return null;
+}
+
 function _showDiag() {
   // 首帧已经出来之后再弹，玩家会当成闪退。后面的 wx.onError（比如 BGM）只打日志。
   if (_booted()) return;
   try {
-    if (typeof wx !== 'undefined' && wx.showModal) {
-      wx.showModal({
+    var host = _host();
+    if (host && host.showModal) {
+      host.showModal({
         title: '启动诊断',
         content: _diagMsgs.join('\n').slice(0, 1000),
         showCancel: false,
@@ -77,15 +84,16 @@ try {
 } catch (_) {}
 
 try {
-  if (typeof wx !== 'undefined') {
-    if (wx.onError) {
-      wx.onError(function (err) {
+  var _errHost = _host();
+  if (_errHost) {
+    if (_errHost.onError) {
+      _errHost.onError(function (err) {
         _diag('wx.onError:' + _fmtErr(err));
         _showDiag();
       });
     }
-    if (wx.onUnhandledRejection) {
-      wx.onUnhandledRejection(function (ev) {
+    if (_errHost.onUnhandledRejection) {
+      _errHost.onUnhandledRejection(function (ev) {
         _diag('wx.unhandledRej:' + _fmtErr(ev && ev.reason || ev));
         _showDiag();
       });
@@ -95,16 +103,59 @@ try {
 
 try {
   var _si = {};
-  if (typeof wx !== 'undefined' && wx.getDeviceInfo && wx.getWindowInfo) {
-    _si = Object.assign({}, wx.getDeviceInfo() || {}, wx.getWindowInfo() || {});
-  } else if (typeof wx !== 'undefined' && wx.getSystemInfoSync) {
-    _si = wx.getSystemInfoSync() || {};
+  var _infoHost = _host();
+  if (_infoHost && _infoHost.getDeviceInfo && _infoHost.getWindowInfo) {
+    _si = Object.assign({}, _infoHost.getDeviceInfo() || {}, _infoHost.getWindowInfo() || {});
+  } else if (_infoHost && _infoHost.getSystemInfoSync) {
+    _si = _infoHost.getSystemInfoSync() || {};
   }
   _diag('platform:' + _si.platform + ' brand:' + _si.brand);
   _diag('model:' + _si.model + ' sdk:' + _si.SDKVersion);
 } catch (e) {
   _diag('getSystemInfo失败:' + e);
 }
+
+// 抖音侧边栏 / 桌面：onShow 可能早于 bundle，启动参数先记在 GameGlobal。
+(function () {
+  if (typeof tt === 'undefined' || typeof GameGlobal === 'undefined') return;
+  GameGlobal.__launchInfo = {};
+  GameGlobal.__sidebarSupported = false;
+  GameGlobal.__desktopShortcutSupported = false;
+  GameGlobal.__desktopShortcutStatus = null;
+  try {
+    if (typeof tt.onShow === 'function') {
+      tt.onShow(function (res) { GameGlobal.__launchInfo = res || {}; });
+    }
+    var launch = typeof tt.getLaunchOptionsSync === 'function' ? tt.getLaunchOptionsSync() : null;
+    if (launch) GameGlobal.__launchInfo = launch;
+    var enter = typeof tt.getEnterOptionsSync === 'function' ? tt.getEnterOptionsSync() : null;
+    if (enter) GameGlobal.__launchInfo = enter;
+  } catch (e) {
+    _diag('抖音 onShow 失败:' + e);
+  }
+  try {
+    if (typeof tt.checkScene === 'function') {
+      tt.checkScene({
+        scene: 'sidebar',
+        success: function (res) {
+          GameGlobal.__sidebarSupported = !!(res && res.isExist);
+        },
+        fail: function () { GameGlobal.__sidebarSupported = false; },
+      });
+    }
+  } catch (_) {}
+  try {
+    if (typeof tt.addShortcut === 'function') GameGlobal.__desktopShortcutSupported = true;
+    if (typeof tt.checkShortcut === 'function') {
+      tt.checkShortcut({
+        success: function (res) {
+          GameGlobal.__desktopShortcutStatus = res && res.status ? res.status : null;
+        },
+        fail: function () {},
+      });
+    }
+  } catch (_) {}
+})();
 
 _diag('加载 pixi-adapter...');
 try {

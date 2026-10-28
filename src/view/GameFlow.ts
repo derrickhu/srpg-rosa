@@ -146,6 +146,8 @@ import { getSkillSpec } from '@/data/skillCatalog';
 import { AudioManager } from '@/core/AudioManager';
 import { analytics, EVENT_NAMES, initAnalytics, setAnalyticsUserId } from '@/analytics/gpAnalytics';
 import { Platform } from '@/platform/wxPlatform';
+import { createDouyinWelfareEntry, createDouyinWelfarePanel } from '@/view/DouyinWelfarePanel';
+import { getSafeAreaInsets } from '@/core/safeArea';
 import { attachTutorialOverlay } from '@/view/tutorial/TutorialOverlay';
 import {
   advanceTutorial,
@@ -495,8 +497,30 @@ export class GameFlow {
       }),
     );
     if (!unlocking) this.attachHubUpgradeGuide(root);
+    if (Platform.isDouyin && !isHubUpgradeGuideActive(this.state.meta)) {
+      root.addChild(createDouyinWelfareEntry({
+        screenW: this.app.screen.width,
+        top: getSafeAreaInsets().top,
+        onOpen: () => this.openDouyinWelfare(),
+      }));
+    }
     this.scenes.replaceAll(containerScene(root));
     AudioManager.playBgm('hub');
+  }
+
+  private openDouyinWelfare(): void {
+    let close = (): void => undefined;
+    const panel = createDouyinWelfarePanel({
+      screenW: this.app.screen.width,
+      screenH: this.app.screen.height,
+      meta: this.state.meta,
+      onChanged: () => SaveManager.saveMeta(this.state.meta),
+      onClose: () => {
+        close();
+        this.renderShell();
+      },
+    });
+    close = this.pushOverlay(panel);
   }
 
   private attachHubUpgradeGuide(root: PIXI.Container): void {

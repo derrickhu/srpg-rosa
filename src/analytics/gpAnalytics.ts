@@ -1,7 +1,8 @@
 /**
  * 经分埋点：@gp/analytics-sdk 初始化 + 业务门面（对齐村口 / 小厨）
  *
- * gameKey 必须用 GAME_KEY（wujin_wenzhang），不要硬编码其它 key。
+ * gameKey 必须用 GAME_KEY（wujin_wenzhang），不要加 _tt。
+ * 抖音和微信的差别只写在 platform 字段；存档隔离走云集合和本地 key。
  */
 import {
   Analytics,
@@ -117,6 +118,7 @@ export const analytics = {
 
 function mapPlatform(): PlatformName {
   if (Platform.name === 'wechat') return 'wechat';
+  if (Platform.name === 'douyin') return 'douyin';
   return 'h5';
 }
 
